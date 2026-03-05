@@ -1,0 +1,360 @@
+/**
+ * UI/UX Refinements – subtle professional touch-ups across the entire system.
+ * Does not change layout structure. Applied to all sports tabs, sidebar,
+ * Member/Admin/Super Admin dashboards, tables, cards, forms, modals, analytics.
+ */
+
+/* ========== 1. Spacing & alignment ========== */
+.main-content {
+  padding: var(--space-8) var(--space-6);
+}
+@media (min-width: 1025px) {
+  .main-content {
+    padding: var(--space-8);
+  }
+}
+
+.top-bar {
+  margin-bottom: var(--space-6);
+  padding-bottom: var(--space-4);
+  gap: var(--space-4);
+}
+
+.content-section h2 {
+  margin-bottom: var(--space-4);
+  line-height: var(--leading-tight);
+}
+.content-section h3 {
+  margin-bottom: var(--space-3);
+  line-height: var(--leading-snug);
+}
+
+.section-header-pro {
+  margin-bottom: var(--space-6);
+  gap: var(--space-4);
+}
+.section-header-pro h3 {
+  line-height: var(--leading-tight);
+}
+
+/* ========== 2. Whitespace where cramped ========== */
+.matches-grid {
+  gap: var(--space-5);
+}
+.table-container {
+  padding: 0;
+  border-radius: var(--radius-xl);
+}
+.league-header {
+  padding: var(--space-6) var(--space-6);
+  gap: var(--space-4);
+}
+.news-content {
+  padding: var(--space-5) var(--space-6);
+  gap: var(--space-3);
+}
+.modal-body {
+  padding: var(--space-6) var(--space-6);
+}
+.modal-hero {
+  padding: var(--space-6);
+}
+.quick-stats {
+  gap: var(--space-5);
+  margin-bottom: var(--space-6);
+}
+.modal-stat {
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+}
+.modal-section-box {
+  margin-bottom: var(--space-6);
+}
+.modal-section-box h4 {
+  margin-bottom: var(--space-4);
+}
+
+/* ========== 3. Typography hierarchy ========== */
+body {
+  line-height: var(--leading-normal);
+}
+.top-bar h2 {
+  line-height: var(--leading-tight);
+  font-weight: 800;
+}
+.content-section h2,
+.section-header-pro h3 {
+  font-weight: 800;
+  line-height: var(--leading-tight);
+}
+.news-title {
+  line-height: var(--leading-snug);
+}
+.news-excerpt {
+  line-height: var(--leading-relaxed);
+}
+
+/* ========== 4. Buttons: consistent padding, radius, hover/focus ========== */
+.filter-btn {
+  padding: var(--btn-padding-y) var(--btn-padding-x);
+  border-radius: var(--btn-radius);
+  font-weight: 600;
+  line-height: var(--leading-snug);
+}
+.filter-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+.filter-btn:focus-visible {
+  outline: 2px solid var(--highlight);
+  outline-offset: 2px;
+}
+.filter-btn.active {
+  box-shadow: 0 2px 12px var(--highlight-glow);
+}
+
+.sport-chip {
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--btn-radius);
+  min-height: 40px;
+  font-weight: 700;
+  line-height: var(--leading-snug);
+}
+.sport-chip:focus-visible {
+  outline: 2px solid var(--highlight);
+  outline-offset: 2px;
+}
+
+.sport-dropdown-trigger {
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--btn-radius);
+  min-height: 40px;
+}
+.sport-dropdown-trigger:focus-visible {
+  outline: 2px solid var(--highlight);
+  outline-offset: 2px;
+}
+
+.nav-item {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--btn-radius);
+  line-height: var(--leading-snug);
+}
+.nav-item:focus-visible {
+  outline: 2px solid var(--highlight);
+  outline-offset: 2px;
+}
+
+.pager-nav-btn,
+.pager-item {
+  border-radius: var(--radius-md);
+}
+.pager-nav-btn:focus-visible,
+.pager-item:focus-visible {
+  outline: 2px solid var(--highlight);
+  outline-offset: 2px;
+}
+
+.toggle-btn {
+  padding: var(--space-2) var(--space-5);
+  border-radius: 100px;
+  line-height: var(--leading-snug);
+}
+.toggle-btn:focus-visible {
+  outline: 2px solid var(--highlight);
+  outline-offset: 2px;
+}
+
+/* ========== 5. Cards: consistent padding, shadow, borders ========== */
+.match-card {
+  padding: var(--space-5) var(--space-5);
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: var(--shadow-card);
+}
+.match-card:hover {
+  box-shadow: var(--shadow-card-hover);
+}
+
+.news-card {
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: var(--shadow-card);
+}
+.news-card:hover {
+  box-shadow: var(--shadow-card-hover);
+}
+
+.tactic-card {
+  padding: var(--space-6);
+  border-radius: var(--radius-xl);
+  border: var(--border-glass);
+  box-shadow: var(--shadow-card);
+}
+
+.table-container {
+  border-radius: var(--radius-xl);
+  border: var(--border-glass);
+  box-shadow: var(--shadow-card);
+}
+
+.stubhub-card-sleek {
+  border-radius: var(--radius-xl);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: var(--shadow-card);
+}
+
+.admin-card {
+  padding: var(--space-5) var(--space-6);
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  box-shadow: var(--shadow-card);
+}
+
+.lineup-section-card,
+.match-detail-section .scoring-plays-section,
+.leaders-preview-section {
+  border-radius: var(--radius-md);
+  padding: var(--space-5);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.toast-card {
+  border-radius: var(--radius-lg);
+  padding: var(--space-5) var(--space-6);
+  box-shadow: var(--shadow-card-hover);
+}
+
+/* ========== 6. Sidebar: alignment, spacing, active state ========== */
+.sidebar {
+  padding: max(var(--space-5), env(safe-area-inset-top, 0px)) var(--space-4) var(--space-5);
+}
+
+.logo-container-pro {
+  padding: var(--space-4) var(--space-4) var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.nav-menu {
+  gap: var(--space-3);
+  padding-right: var(--space-2);
+}
+
+.sport-tabs-group {
+  padding: var(--space-3) 0 var(--space-4);
+  margin-bottom: var(--space-3);
+  gap: var(--space-2);
+}
+
+.nav-item.active {
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+}
+.nav-item.active::after {
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+.user-profile {
+  margin-top: auto;
+  padding-top: var(--space-3);
+}
+
+/* ========== 7. Consistent color usage (contrast) ========== */
+.standings-table th {
+  color: var(--text-secondary);
+  font-weight: 700;
+}
+.standings-table td {
+  color: var(--text-primary);
+}
+
+/* ========== 8. Tables: row spacing, hover, contrast ========== */
+.standings-table th {
+  padding: var(--space-4) var(--space-5);
+  line-height: var(--leading-snug);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+.standings-table td {
+  padding: var(--space-4) var(--space-5);
+  line-height: var(--leading-snug);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+.standings-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.period-score-table th {
+  padding: var(--space-2) var(--space-3);
+}
+.period-score-table td {
+  padding: var(--space-2) var(--space-3);
+}
+
+/* ========== 9. Dashboards: structured, balanced widgets ========== */
+.admin-users-table-wrap {
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+}
+.admin-users-table th,
+.admin-users-table td {
+  padding: 14px 18px;
+  line-height: 1.375;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.08);
+}
+.admin-users-table th {
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+.admin-users-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* ========== 10. Modals & forms ========== */
+.modal-content {
+  border-radius: var(--radius-xl);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.4);
+}
+.close-modal {
+  top: var(--space-5);
+  right: var(--space-5);
+}
+.close-modal:focus-visible {
+  outline: 2px solid var(--highlight);
+  outline-offset: 2px;
+}
+
+.match-tabs .match-tab {
+  padding: var(--space-3) var(--space-4);
+  font-weight: 600;
+  line-height: var(--leading-snug);
+}
+.match-tab:focus-visible {
+  outline: 2px solid var(--highlight);
+  outline-offset: 2px;
+}
+
+/* Responsive: preserve balance on small screens */
+@media (max-width: 768px) {
+  .main-content {
+    padding: var(--space-4) var(--space-4);
+  }
+  .match-card {
+    padding: var(--space-4) var(--space-4);
+  }
+  .modal-body {
+    padding: var(--space-5) var(--space-4);
+  }
+  .league-header {
+    padding: var(--space-4) var(--space-4);
+  }
+  .filter-btn {
+    padding: var(--space-2) var(--space-4);
+  }
+}
+
+@media (max-width: 480px) {
+  .main-content {
+    padding: var(--space-3) var(--space-3);
+  }
+}

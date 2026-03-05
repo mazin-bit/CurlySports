@@ -1,0 +1,20 @@
+{
+  "short_name": "Curly Sports",
+  "name": "Curly Sports - Sports Intelligence Platform",
+  "icons": [
+    {
+      "src": "curlysports-logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "curlysports-logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#0f172a",
+  "background_color": "#0f172a"
+}

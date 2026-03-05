@@ -1,0 +1,23 @@
+---
+description: Do not modify Super Admin Dashboard unless explicitly requested
+alwaysApply: true
+---
+
+# Super Admin Dashboard – Do Not Modify
+
+**Do not edit, refactor, or change the Super Admin Dashboard** unless the user explicitly asks you to change it.
+
+## Protected files
+
+- `src/SuperAdminDashboard.js`
+- `src/SuperAdminDashboard.css`
+- `src/SuperAdminDashboard.test.js`
+
+## Rules
+
+1. **Never** modify these files when working on other features (login, homepage, auth, dashboard, etc.).
+2. **Never** "improve", refactor, or update Super Admin code as part of unrelated changes.
+3. **Only** change Super Admin Dashboard code when the user clearly asks for a change to the Super Admin Dashboard (e.g. "add X to super admin", "fix Y in SuperAdminDashboard").
+4. If a task could affect Super Admin files, **skip those files** and only change the parts of the codebase the user asked for.
+
+Treat the Super Admin Dashboard as locked by default.

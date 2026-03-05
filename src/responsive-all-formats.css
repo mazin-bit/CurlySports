@@ -1,0 +1,1043 @@
+/* Clean responsive layer (conflict-free) */
+
+:root {
+  --touch-min: 44px;
+  --space-xs: clamp(4px, 1vw, 8px);
+  --space-sm: clamp(8px, 2vw, 16px);
+  --space-md: clamp(12px, 3vw, 24px);
+}
+
+html,
+body {
+  overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+}
+
+#root,
+.app-container,
+.main-content,
+.matches-grid,
+.players-grid,
+.news-grid,
+.tactics-grid {
+  min-width: 0;
+}
+
+button,
+.nav-item,
+.sport-chip,
+.source-badge,
+.qty-btn,
+.seat,
+.close-modal,
+.logout-btn-pro {
+  min-height: var(--touch-min);
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+.table-container,
+.bracket-container {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
+}
+
+.standings-table {
+  min-width: 280px;
+}
+
+.modal-content {
+  max-width: min(96vw, 600px);
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+/* Hide top sport strip only on desktop; phone & tablet use it */
+.mobile-sport-selector {
+  display: none !important;
+}
+
+/* DESKTOP ONLY (1024px+): full left sidebar. Phone & tablet use top + bottom tabs instead. */
+@media (min-width: 1024px) {
+  .mobile-sport-selector {
+    display: none !important;
+  }
+
+  .app-container {
+    flex-direction: row !important;
+    overflow: hidden !important;
+    height: 100dvh !important;
+    min-height: 100dvh !important;
+  }
+
+  .sidebar {
+    position: relative !important;
+    top: auto !important;
+    bottom: auto !important;
+    left: auto !important;
+    right: auto !important;
+    width: 272px !important;
+    min-width: 272px !important;
+    max-width: 272px !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-bottom: none !important;
+    z-index: 100 !important;
+    pointer-events: auto !important;
+    flex-shrink: 0 !important;
+  }
+
+  /* Force sports row visible in sidebar (override responsive.css 768px hide) */
+  .sidebar-sports-row {
+    display: flex !important;
+    flex-direction: column !important;
+    flex-shrink: 0 !important;
+    overflow: visible !important;
+  }
+
+  /* Sport dropdown: fill available width, never overflow sidebar (avoids scrollbar overlap) */
+  .sidebar .sport-dropdown-sidebar,
+  .sidebar .sport-dropdown-sidebar .sport-dropdown-trigger {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+
+  .sidebar .sport-dropdown-panel {
+    min-width: 272px !important;
+  }
+
+  .sidebar-leagues-row {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  .sidebar-sports-row {
+    padding: 0 0 10px !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+  }
+
+  .sidebar-sports-row .sport-tabs-group {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 6px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border-bottom: none !important;
+  }
+
+  .sidebar-leagues-row {
+    min-height: 0 !important;
+    flex: 1 !important;
+    padding: 0 !important;
+  }
+
+  .sidebar-leagues-row .nav-menu {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 4px !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    min-width: 0 !important;
+  }
+
+  .sidebar-leagues-row .nav-menu .nav-item {
+    width: 100% !important;
+    justify-content: flex-start !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    pointer-events: auto !important;
+  }
+
+  .sidebar-leagues-row .user-profile {
+    display: flex !important;
+    margin-top: auto !important;
+  }
+
+  .logo-text-wrapper,
+  .user-info {
+    display: flex !important;
+  }
+
+  .sidebar .nav-item span,
+  .sidebar .sport-chip span {
+    display: inline !important;
+  }
+
+  .sidebar .nav-item-league .nav-icon-wrap {
+    display: inline-flex !important;
+    width: 24px !important;
+    height: 24px !important;
+    min-width: 24px !important;
+    min-height: 24px !important;
+    flex-shrink: 0 !important;
+  }
+
+  .sidebar .nav-item-league .nav-icon-wrap img.league-logo-img,
+  .sidebar .nav-item-league .league-logo-img {
+    width: 24px !important;
+    height: 24px !important;
+    min-width: 24px !important;
+    min-height: 24px !important;
+    display: block !important;
+    visibility: visible !important;
+  }
+
+  .logo-container-pro,
+  .sidebar .logo-container-pro,
+  .sidebar-leagues-row .user-profile {
+    display: flex !important;
+  }
+
+  .main-content {
+    flex: 1;
+    min-width: 0;
+    height: 100% !important;
+    max-height: 100% !important;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: clamp(16px, 2.2vw, 28px);
+  }
+
+  /* Sidebar hierarchy: sports = primary (larger), sub-tabs/leagues = secondary (smaller) */
+  .sidebar-sports-row .sport-chip {
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    padding: 8px 10px !important;
+    min-height: 40px !important;
+    border-radius: 10px !important;
+  }
+
+  .sidebar-sports-row .sport-chip .material-icons-round {
+    font-size: 18px !important;
+  }
+
+  .sidebar-leagues-row .nav-menu .nav-item {
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    padding: 6px 10px !important;
+    min-height: 36px !important;
+    border-radius: 8px !important;
+  }
+
+  .sidebar-leagues-row .nav-menu .nav-item .material-icons-round,
+  .sidebar-leagues-row .nav-menu .nav-item .nav-icon {
+    font-size: 18px !important;
+    width: 18px !important;
+    height: 18px !important;
+  }
+}
+
+/* Medium-square desktop: keep same sidebar/dropdown size as full desktop */
+@media (min-width: 1024px) and (max-width: 1200px) {
+  .sidebar {
+    width: 272px !important;
+    min-width: 272px !important;
+    max-width: 272px !important;
+  }
+
+  .sidebar-sports-row .sport-tabs-group {
+    grid-template-columns: 1fr !important;
+  }
+
+  .sidebar-sports-row .sport-chip {
+    font-size: 13px !important;
+    padding: 9px 12px !important;
+    min-height: 44px !important;
+  }
+
+  .sidebar-leagues-row .nav-menu .nav-item {
+    font-size: 12px !important;
+    padding: 7px 12px !important;
+    min-height: 44px !important;
+  }
+
+  .sidebar-leagues-row .nav-menu .nav-item .material-icons-round,
+  .sidebar-leagues-row .nav-menu .nav-item .nav-icon {
+    font-size: 20px !important;
+    width: 20px !important;
+    height: 20px !important;
+  }
+
+  .sidebar-leagues-row .nav-menu {
+    gap: 4px !important;
+  }
+}
+
+/* PHONE & TABLET: no sidebar — top strip = logo + sport + profile + logout */
+@media (max-width: 1023px) {
+  .mobile-sport-selector {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 60 !important;
+    gap: 10px !important;
+    padding: 12px 16px 14px !important;
+    margin-bottom: 6px !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+    scroll-behavior: smooth !important;
+    scrollbar-width: none !important;
+    min-width: 0 !important;
+    flex-shrink: 0 !important;
+    /* Solid bar like live center / top-bar — no overlap when scrolling */
+    background: #0f172a !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    border: 1px solid rgba(148, 163, 184, 0.12) !important;
+    border-radius: 16px !important;
+    box-shadow: 0 4px 20px rgba(2, 6, 23, 0.4) !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+  }
+
+  .mobile-sport-selector::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  /* Left: logo (my logo) — always visible */
+  .mobile-header-logo {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    flex-shrink: 0 !important;
+    cursor: pointer !important;
+    padding: 6px 8px !important;
+    margin: -6px -8px !important;
+    border-radius: 10px !important;
+    transition: background 0.2s, opacity 0.2s !important;
+    min-height: var(--touch-min) !important;
+    box-sizing: content-box !important;
+  }
+
+  .mobile-header-logo:hover,
+  .mobile-header-logo:focus-visible {
+    background: rgba(255, 255, 255, 0.08) !important;
+    outline: none !important;
+  }
+
+  .mobile-header-logo-img {
+    height: 32px !important;
+    width: auto !important;
+    object-fit: contain !important;
+    display: block !important;
+  }
+
+  .mobile-header-logo .shield-icon {
+    width: 28px !important;
+    height: 28px !important;
+    flex-shrink: 0 !important;
+  }
+
+  .mobile-header-logo .shield-icon .shield-stripes {
+    border-width: 2px !important;
+  }
+
+  .mobile-header-logo-text {
+    font-size: 13px !important;
+    font-weight: 800 !important;
+    color: #fff !important;
+    letter-spacing: 0.3px !important;
+    white-space: nowrap !important;
+  }
+
+  @media (max-width: 480px) {
+    .mobile-header-logo-img {
+      height: 28px !important;
+    }
+  }
+
+  @media (max-width: 360px) {
+    .mobile-header-logo-img {
+      height: 24px !important;
+    }
+  }
+
+  /* Center: sport dropdown — takes remaining space */
+  .mobile-header-sport {
+    flex: 1 1 0 !important;
+    min-width: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .mobile-header-sport .sport-dropdown-mobile {
+    width: 100% !important;
+    max-width: 200px !important;
+  }
+
+  /* Right: profile + logout — always visible */
+  .mobile-header-user {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    flex-shrink: 0 !important;
+  }
+
+  .mobile-header-user .mobile-user-profile {
+    display: flex !important;
+    margin-top: 0 !important;
+    padding: 6px 10px !important;
+    border-radius: 10px !important;
+  }
+
+  .mobile-header-user .user-profile {
+    display: flex !important;
+  }
+
+  .mobile-header-user .user-info {
+    display: flex !important;
+  }
+
+  .mobile-header-user .user-info .name {
+    max-width: 70px !important;
+    font-size: 12px !important;
+  }
+
+  .mobile-header-user .user-info .status {
+    font-size: 10px !important;
+  }
+
+  .mobile-header-user .avatar {
+    width: 28px !important;
+    height: 28px !important;
+    font-size: 12px !important;
+  }
+
+  .mobile-logout-btn {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    min-height: 40px !important;
+    padding: 0 !important;
+    border-radius: 10px !important;
+    flex-shrink: 0 !important;
+  }
+
+  .mobile-logout-btn .material-icons-round {
+    font-size: 20px !important;
+  }
+
+  @media (max-width: 480px) {
+    .mobile-header-user .user-info .name {
+      display: none !important;
+    }
+
+    .mobile-header-user .user-info .status {
+      display: none !important;
+    }
+  }
+
+  @media (max-width: 360px) {
+    .mobile-header-user .mobile-user-profile .user-info {
+      display: none !important;
+    }
+  }
+
+  /* Phone: prevent sport selector and profile from clashing */
+  @media (max-width: 480px) {
+    .mobile-sport-selector {
+      padding: 10px 12px 12px !important;
+      gap: 6px !important;
+    }
+
+    .mobile-header-logo {
+      padding: 4px 6px !important;
+      margin: -4px -6px !important;
+    }
+
+    .mobile-header-logo .shield-icon {
+      width: 24px !important;
+      height: 24px !important;
+    }
+
+    .mobile-header-logo-text {
+      font-size: 11px !important;
+      max-width: 72px !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+    }
+
+    /* Cap sport dropdown so it never overlaps profile */
+    .mobile-header-sport {
+      max-width: 42% !important;
+      min-width: 0 !important;
+    }
+
+    .mobile-header-sport .sport-dropdown-mobile {
+      max-width: 100% !important;
+    }
+
+    .mobile-dashboard-btn,
+    .mobile-header-sport .sport-dropdown-trigger {
+      min-width: 0 !important;
+      padding: 6px 8px !important;
+      font-size: 11px !important;
+    }
+
+    .mobile-header-sport .sport-dropdown-trigger-label {
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+      white-space: nowrap !important;
+      min-width: 0 !important;
+    }
+
+    .mobile-dashboard-btn .material-icons-round:first-child,
+    .mobile-header-sport .sport-dropdown-trigger .material-icons-round:first-child {
+      font-size: 16px !important;
+    }
+
+    .mobile-header-sport .sport-dropdown-chevron {
+      font-size: 16px !important;
+    }
+
+    /* Compact profile + logout */
+    .mobile-header-user {
+      gap: 4px !important;
+    }
+
+    .mobile-header-user .mobile-user-profile {
+      padding: 4px 6px !important;
+    }
+
+    .mobile-header-user .avatar {
+      width: 24px !important;
+      height: 24px !important;
+      font-size: 11px !important;
+    }
+
+    .mobile-logout-btn {
+      width: 36px !important;
+      height: 36px !important;
+      min-width: 36px !important;
+      min-height: 36px !important;
+    }
+
+    .mobile-logout-btn .material-icons-round {
+      font-size: 18px !important;
+    }
+  }
+
+  /* Very small phone: logo icon only, more room for sport + profile */
+  @media (max-width: 380px) {
+    .mobile-header-logo-text {
+      display: none !important;
+    }
+
+    .mobile-header-sport {
+      max-width: 48% !important;
+    }
+  }
+
+  /* Top strip: primary — clearly LARGER than bottom nav */
+  .mobile-sport-chip {
+    font-size: 14px !important;
+    font-weight: 700 !important;
+    padding: 10px 16px !important;
+    min-height: 44px !important;
+    border-radius: 12px !important;
+    flex-shrink: 0 !important;
+    gap: 8px !important;
+  }
+
+  .mobile-sport-chip .material-icons-round {
+    font-size: 20px !important;
+  }
+
+  .app-container {
+    flex-direction: column !important;
+    min-height: 100dvh !important;
+    height: 100% !important;
+  }
+
+  .sidebar {
+    position: fixed !important;
+    bottom: 0 !important;
+    top: auto !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    min-width: 100% !important;
+    max-width: 100% !important;
+    height: 70px !important;
+    border-right: none !important;
+    border-bottom: none !important;
+    overflow: hidden !important;
+    z-index: 9999 !important;
+  }
+
+  .sidebar-sports-row {
+    display: none !important;
+  }
+
+  .sidebar-leagues-row {
+    flex-direction: row !important;
+    height: 100% !important;
+    padding: 0 4px !important;
+  }
+
+  .sidebar-leagues-row .user-profile {
+    display: none !important;
+  }
+
+  .sidebar-leagues-row .nav-menu {
+    flex-direction: row !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+    scroll-behavior: smooth !important;
+    width: 100% !important;
+    height: 100% !important;
+    padding: 0 16px !important;
+    gap: 12px !important;
+    align-items: center !important;
+    flex-wrap: nowrap !important;
+    min-width: 0 !important;
+  }
+
+  .sidebar-leagues-row .nav-menu .nav-item {
+    width: auto !important;
+    min-width: 52px !important;
+    flex-shrink: 0 !important;
+    justify-content: center !important;
+    font-size: 11px !important;
+    padding: 6px 10px !important;
+  }
+
+  .sidebar-leagues-row .nav-menu .nav-item .material-icons-round,
+  .sidebar-leagues-row .nav-menu .nav-item .nav-icon {
+    font-size: 20px !important;
+    width: 20px !important;
+    height: 20px !important;
+  }
+
+  .main-content {
+    flex: 1 !important;
+    min-width: 0 !important;
+    padding: 14px 12px 90px !important;
+  }
+
+  /* Top bar sticks below the mobile header so it doesn’t overlap */
+  .main-content .top-bar {
+    top: 60px !important;
+    z-index: 50 !important;
+  }
+}
+
+@supports not (height: 100dvh) {
+  @media (min-width: 1024px) {
+    .app-container {
+      height: 100vh !important;
+      min-height: 100vh !important;
+    }
+  }
+}
+
+/* Safe compacting for very short windows */
+@media (max-height: 700px) {
+  .top-bar h2 {
+    font-size: 17px;
+  }
+
+  .main-content {
+    padding: 14px 12px;
+  }
+}
+
+/* Reduced motion / old browser fallbacks */
+@media (prefers-reduced-motion: reduce) {
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@supports not (height: 100dvh) {
+
+  #root,
+  .app-container {
+    height: 100vh;
+    min-height: 100vh;
+  }
+}
+
+@supports not (gap: 8px) {
+  .matches-grid {
+    gap: 16px;
+  }
+
+  .top-bar {
+    gap: 12px;
+  }
+}
+
+/* ----- Format stability: every viewport ----- */
+.content-section {
+  min-width: 0;
+  overflow-x: hidden;
+}
+
+.date-navigator-container {
+  flex-wrap: wrap;
+  gap: 10px;
+  min-width: 0;
+}
+
+.live-ticker {
+  min-width: 0;
+  overflow: hidden;
+}
+
+/* Desktop short window: compact main content */
+@media (min-width: 1024px) and (max-height: 700px) {
+  .main-content {
+    padding: 14px 12px 20px !important;
+  }
+}
+
+/* Wide desktop: same sidebar width for consistency */
+@media (min-width: 1200px) {
+  .main-content {
+    padding: 20px 28px 28px !important;
+  }
+
+  .sidebar {
+    width: 272px !important;
+    min-width: 272px !important;
+    max-width: 272px !important;
+  }
+
+  .sidebar-sports-row .sport-chip {
+    font-size: 13px !important;
+    padding: 9px 12px !important;
+  }
+
+  .sidebar-leagues-row .nav-menu .nav-item {
+    font-size: 12px !important;
+    padding: 7px 12px !important;
+  }
+}
+
+/* ========== DEVICE COMPATIBILITY: every device ========== */
+
+/* Notched devices / safe areas (iPhone X+, Android with gesture nav) — phone & tablet */
+@supports (padding: env(safe-area-inset-bottom)) {
+  @media (max-width: 1023px) {
+    .sidebar {
+      padding-bottom: env(safe-area-inset-bottom) !important;
+      height: calc(70px + env(safe-area-inset-bottom)) !important;
+    }
+
+    .main-content {
+      padding-bottom: calc(90px + env(safe-area-inset-bottom)) !important;
+    }
+
+    .main-content .mobile-sport-selector {
+      padding-left: max(0px, env(safe-area-inset-left));
+      padding-right: max(0px, env(safe-area-inset-right));
+    }
+  }
+
+  .modal-content,
+  .modal-overlay {
+    padding-left: max(16px, env(safe-area-inset-left));
+    padding-right: max(16px, env(safe-area-inset-right));
+    padding-bottom: max(16px, env(safe-area-inset-bottom));
+  }
+}
+
+/* Touch devices: enforce minimum tap targets (44px) */
+@media (pointer: coarse) {
+
+  .sidebar-leagues-row .nav-menu .nav-item,
+  .mobile-sport-chip,
+  .nav-arrow-btn,
+  .date-trigger-btn,
+  .source-badge,
+  .close-modal {
+    min-height: var(--touch-min) !important;
+    min-width: var(--touch-min) !important;
+  }
+
+  .sidebar-leagues-row .nav-menu .nav-item {
+    min-width: 48px !important;
+  }
+
+  .mobile-sport-chip {
+    padding: 10px 14px !important;
+  }
+}
+
+/* Landscape phone / very short viewport: prevent overlap */
+@media (max-height: 500px) and (max-width: 1023px) {
+  .top-bar {
+    margin-bottom: 10px !important;
+    padding: 8px 12px 10px !important;
+  }
+
+  .top-bar h2 {
+    font-size: 15px !important;
+  }
+
+  .sidebar {
+    height: 60px !important;
+  }
+
+  .sidebar-leagues-row .nav-menu .nav-item {
+    min-width: 48px !important;
+    padding: 4px 8px !important;
+  }
+
+  .main-content {
+    padding: 10px 12px 75px !important;
+  }
+}
+
+/* Small phones (320px – 374px) */
+@media (max-width: 374px) {
+  .main-content {
+    padding: 10px 8px 85px !important;
+  }
+
+  .top-bar h2 {
+    font-size: 16px !important;
+  }
+
+  .sidebar-leagues-row .nav-menu {
+    padding: 0 8px !important;
+    gap: 8px !important;
+  }
+
+  .sidebar-leagues-row .nav-menu .nav-item {
+    min-width: 48px !important;
+  }
+
+  .match-card,
+  .news-card,
+  .player-card {
+    padding: 12px !important;
+  }
+}
+
+/* Standard phones (375px – 413px) */
+@media (min-width: 375px) and (max-width: 413px) {
+  .main-content {
+    padding: 12px 10px 90px !important;
+  }
+}
+
+/* Large phones / phablets (414px – 479px) */
+@media (min-width: 414px) and (max-width: 479px) {
+  .main-content {
+    padding: 14px 12px 90px !important;
+  }
+}
+
+/* Tablets (768px – 1023px): same top+bottom tabs, STRONG size gap so sports ≠ sub-tabs */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .main-content {
+    padding: 18px 20px 90px !important;
+  }
+
+  /* Top strip: clearly PRIMARY — larger */
+  .mobile-sport-chip {
+    font-size: 15px !important;
+    padding: 12px 18px !important;
+    min-height: 48px !important;
+  }
+
+  .mobile-sport-chip .material-icons-round {
+    font-size: 22px !important;
+  }
+
+  /* Bottom nav: clearly SECONDARY — smaller */
+  .sidebar-leagues-row .nav-menu .nav-item {
+    min-width: 54px !important;
+    font-size: 10px !important;
+    padding: 5px 8px !important;
+  }
+
+  .sidebar-leagues-row .nav-menu .nav-item .material-icons-round,
+  .sidebar-leagues-row .nav-menu .nav-item .nav-icon {
+    font-size: 18px !important;
+    width: 18px !important;
+    height: 18px !important;
+  }
+}
+
+/* Narrow middle (480px – 767px): keep clear sport > nav hierarchy */
+@media (min-width: 480px) and (max-width: 767px) {
+  .mobile-sport-chip {
+    font-size: 14px !important;
+    padding: 10px 14px !important;
+    min-height: 44px !important;
+  }
+
+  .mobile-sport-chip .material-icons-round {
+    font-size: 20px !important;
+  }
+
+  .sidebar-leagues-row .nav-menu .nav-item {
+    font-size: 10px !important;
+    padding: 6px 8px !important;
+    min-width: 50px !important;
+  }
+
+  .sidebar-leagues-row .nav-menu .nav-item .material-icons-round,
+  .sidebar-leagues-row .nav-menu .nav-item .nav-icon {
+    font-size: 18px !important;
+    width: 18px !important;
+    height: 18px !important;
+  }
+}
+
+/* Very small (anti-collapse): prevent UI from going nuts */
+@media (max-width: 420px) {
+  .app-container {
+    display: flex !important;
+    flex-direction: column !important;
+    min-height: 100dvh !important;
+    overflow-x: hidden !important;
+  }
+
+  .main-content {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    padding: 10px 10px 85px !important;
+  }
+
+  .mobile-sport-selector {
+    flex-shrink: 0 !important;
+    padding: 10px 12px 12px !important;
+  }
+
+  .mobile-sport-chip {
+    font-size: 13px !important;
+    padding: 8px 12px !important;
+    min-height: 40px !important;
+  }
+
+  .mobile-sport-chip .material-icons-round {
+    font-size: 18px !important;
+  }
+
+  .sidebar-leagues-row .nav-menu .nav-item {
+    font-size: 10px !important;
+    padding: 5px 8px !important;
+    min-width: 46px !important;
+  }
+
+  .sidebar-leagues-row .nav-menu .nav-item .material-icons-round,
+  .sidebar-leagues-row .nav-menu .nav-item .nav-icon {
+    font-size: 16px !important;
+    width: 16px !important;
+    height: 16px !important;
+  }
+
+  .top-bar {
+    padding: 10px 12px 12px !important;
+    gap: 8px !important;
+  }
+
+  .top-bar h2 {
+    font-size: 16px !important;
+  }
+}
+
+/* Minimum width (320px): extra stability so nothing collapses */
+@media (max-width: 360px) {
+  .main-content {
+    padding: 8px 8px 82px !important;
+  }
+
+  .mobile-sport-selector {
+    padding: 8px 10px 10px !important;
+    gap: 8px !important;
+  }
+
+  .mobile-sport-chip {
+    font-size: 12px !important;
+    padding: 8px 10px !important;
+    min-height: 38px !important;
+  }
+
+  .sidebar-leagues-row .nav-menu {
+    padding: 0 10px !important;
+    gap: 8px !important;
+  }
+
+  .sidebar-leagues-row .nav-menu .nav-item {
+    min-width: 44px !important;
+    font-size: 9px !important;
+    padding: 4px 6px !important;
+  }
+}
+
+/* Prevent any horizontal scroll on all viewports */
+html {
+  overflow-x: hidden !important;
+}
+
+body {
+  overflow-x: hidden !important;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+#root {
+  overflow-x: hidden !important;
+  min-width: 0 !important;
+}
+
+.app-container {
+  min-width: 0 !important;
+  max-width: 100vw !important;
+}
+
+.main-content {
+  max-width: 100% !important;
+}
+
+/* Large displays: comfortable max padding */
+@media (min-width: 1600px) {
+  .main-content {
+    padding-left: clamp(28px, 4vw, 48px) !important;
+    padding-right: clamp(28px, 4vw, 48px) !important;
+  }
+}
+
+/* High DPI: sharper borders where supported */
+@media (-webkit-min-device-pixel-ratio: 2),
+(min-resolution: 2dppx) {
+
+  .sidebar,
+  .top-bar,
+  .match-card,
+  .nav-item,
+  .sport-chip {
+    border-width: 0.5px;
+  }
+}

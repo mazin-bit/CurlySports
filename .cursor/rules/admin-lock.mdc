@@ -1,0 +1,22 @@
+---
+description: Do not modify Admin Dashboard unless explicitly requested
+alwaysApply: true
+---
+
+# Admin Dashboard – Do Not Modify
+
+**Do not edit, refactor, or change the Admin Dashboard** unless the user explicitly asks you to change it.
+
+## Protected files
+
+- `src/AdminDashboard.js`
+- `src/AdminDashboard.css`
+
+## Rules
+
+1. **Never** modify these files when working on other features (login, homepage, auth, super admin, etc.).
+2. **Never** "improve", refactor, or update Admin Dashboard code as part of unrelated changes.
+3. **Only** change Admin Dashboard code when the user clearly asks for a change to the Admin Dashboard (e.g. "add X to admin", "fix Y in AdminDashboard").
+4. If a task could affect Admin files, **skip those files** and only change the parts of the codebase the user asked for.
+
+Treat the Admin Dashboard as locked by default.

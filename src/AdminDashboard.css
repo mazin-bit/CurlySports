@@ -1,0 +1,360 @@
+/* Admin Dashboard - responsive */
+
+.admin-dashboard {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #0f172a;
+  color: #f1f5f9;
+  box-sizing: border-box;
+}
+
+.admin-dashboard .ad-sidebar-wrap {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  z-index: 50;
+  width: 256px;
+  border-right: 1px solid rgba(148, 163, 184, 0.2);
+  background: rgba(15, 23, 42, 0.98);
+  padding: 14px 12px;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.admin-dashboard .ad-sidebar-header {
+  padding: 16px 12px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.admin-dashboard .ad-sidebar-header .ad-badge {
+  background: rgba(59, 130, 246, 0.2);
+  color: #60a5fa;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.admin-dashboard .ad-nav {
+  padding-top: 14px;
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.admin-dashboard .ad-nav-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  margin-bottom: 6px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: #94a3b8;
+  cursor: pointer;
+  text-align: left;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.375;
+  box-sizing: border-box;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.admin-dashboard .ad-nav-btn .material-icons-round {
+  flex-shrink: 0;
+  font-size: 20px;
+}
+
+.admin-dashboard .ad-nav-btn:hover {
+  background: rgba(59, 130, 246, 0.1);
+  color: #e2e8f0;
+}
+
+.admin-dashboard .ad-nav-btn.active {
+  background: rgba(59, 130, 246, 0.2);
+  color: #60a5fa;
+}
+
+.admin-dashboard .ad-nav-btn:focus-visible {
+  outline: 2px solid rgba(59, 130, 246, 0.5);
+  outline-offset: 2px;
+}
+
+.admin-dashboard .ad-theme-wrap {
+  border-top: 1px solid rgba(148, 163, 184, 0.2);
+  padding-top: 14px;
+  margin-top: 10px;
+  flex-shrink: 0;
+}
+
+.admin-dashboard .ad-theme-label {
+  font-size: 11px;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 10px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.admin-dashboard .ad-theme-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.admin-dashboard .ad-theme-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 10px;
+  background: transparent;
+  color: #94a3b8;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.admin-dashboard .ad-theme-btn .material-icons-round {
+  font-size: 18px;
+}
+
+.admin-dashboard .ad-theme-btn:hover,
+.admin-dashboard .ad-theme-btn.active {
+  background: rgba(59, 130, 246, 0.15);
+  border-color: rgba(59, 130, 246, 0.4);
+  color: #60a5fa;
+}
+
+.admin-dashboard .ad-theme-btn:focus-visible {
+  outline: 2px solid rgba(59, 130, 246, 0.5);
+  outline-offset: 2px;
+}
+
+.admin-dashboard .ad-theme-modes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.admin-dashboard .ad-theme-mode {
+  padding: 6px 10px;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 8px;
+  background: transparent;
+  color: #94a3b8;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  line-height: 1.25;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.admin-dashboard .ad-theme-mode:hover,
+.admin-dashboard .ad-theme-mode.active {
+  background: rgba(59, 130, 246, 0.15);
+  border-color: rgba(59, 130, 246, 0.4);
+  color: #60a5fa;
+}
+
+.admin-dashboard .ad-sidebar-footer {
+  border-top: 1px solid rgba(148, 163, 184, 0.2);
+  padding-top: 14px;
+  margin-top: 14px;
+  flex-shrink: 0;
+}
+
+.admin-dashboard .ad-logout-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: #94a3b8;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.375;
+  box-sizing: border-box;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.admin-dashboard .ad-logout-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #e2e8f0;
+}
+
+.admin-dashboard .ad-logout-btn:focus-visible {
+  outline: 2px solid rgba(59, 130, 246, 0.5);
+  outline-offset: 2px;
+}
+
+.admin-dashboard .ad-main {
+  flex: 1;
+  min-width: 0;
+  padding: 28px;
+  overflow: auto;
+  margin-left: 256px;
+  transition: margin-left 0.2s ease;
+}
+
+.admin-dashboard .ad-main-heading {
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1.25;
+  margin-bottom: 10px;
+}
+
+.admin-dashboard .ad-main-sub {
+  color: #94a3b8;
+  margin-bottom: 28px;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+.admin-dashboard .ad-card {
+  padding: 22px;
+  background: rgba(30, 41, 59, 0.5);
+  border-radius: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.15);
+  min-width: 0;
+  box-sizing: border-box;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+}
+
+.admin-dashboard .ad-card-label {
+  font-size: 12px;
+  color: #94a3b8;
+  margin-bottom: 6px;
+  font-weight: 600;
+  line-height: 1.375;
+}
+
+.admin-dashboard .ad-card-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.admin-dashboard .ad-mobile-header {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: rgba(15, 23, 42, 0.98);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+  flex-shrink: 0;
+}
+
+.admin-dashboard .ad-mobile-header .ad-menu-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 8px;
+  background: rgba(59, 130, 246, 0.2);
+  color: #60a5fa;
+  cursor: pointer;
+}
+
+.admin-dashboard .ad-mobile-header .ad-title {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.admin-dashboard .ad-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 40;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+/* Responsive: tablet and below */
+@media (max-width: 768px) {
+  .admin-dashboard .ad-main {
+    margin-left: 0;
+    padding: 16px;
+  }
+
+  .admin-dashboard .ad-sidebar-wrap {
+    transform: translateX(-100%);
+    box-shadow: none;
+  }
+
+  .admin-dashboard .ad-sidebar-wrap.open {
+    transform: translateX(0);
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.4);
+  }
+
+  .admin-dashboard .ad-mobile-header {
+    display: flex;
+  }
+
+  .admin-dashboard .ad-main-heading {
+    font-size: 1.25rem;
+  }
+
+  .admin-dashboard.ad-sidebar-open .ad-overlay {
+    display: block;
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .admin-dashboard .ad-card {
+    padding: 16px;
+  }
+
+  .admin-dashboard .ad-card-value {
+    font-size: 1.1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .admin-dashboard .ad-main {
+    padding: 12px;
+  }
+
+  .admin-dashboard .ad-sidebar-wrap {
+    width: 280px;
+    max-width: 85vw;
+  }
+
+  .admin-dashboard .ad-nav-btn {
+    font-size: 13px;
+    padding: 8px 12px;
+  }
+
+}
+
+.admin-dashboard .ad-engagement-streak-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+@media (max-width: 480px) {
+  .admin-dashboard .ad-engagement-streak-grid {
+    grid-template-columns: 1fr;
+  }
+}
