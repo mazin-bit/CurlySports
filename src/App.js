@@ -1895,6 +1895,12 @@ const Sidebar = ({
               <span className="nav-item-text">Penalty King</span>
             </button>
           )}
+          {selectedSport === 'soccer' && (
+            <button className={`nav-item ${currentTab === 'soccer_no_reason' ? 'active' : ''}`} onClick={() => setTab('soccer_no_reason')} title="For no reason">
+              <span className="material-icons-round">mood</span>
+              <span className="nav-item-text">For No Reason</span>
+            </button>
+          )}
           {selectedSport === 'cricket' && (
             <button className={`nav-item ${currentTab === 'game' ? 'active' : ''}`} onClick={() => setTab('game')} title="Super Over">
               <span className="material-icons-round">sports_cricket</span>
@@ -2562,7 +2568,7 @@ function App() {
   }, [featureFlags.live_scores, featureFlags.news, featureFlags.favorites, currentTab, leagueNames]);
 
   useEffect(() => {
-    const isSportTab = currentTab === 'live' || leagueNames[currentTab] != null;
+    const isSportTab = currentTab === 'live' || leagueNames[currentTab] != null || currentTab === 'soccer_no_reason';
     if (isSportTab) setTab('live');
     setTables({});
     setMatches([]);
@@ -5243,6 +5249,18 @@ function App() {
                 }}
               />
             )}
+          </section>
+        );
+
+      case 'soccer_no_reason':
+        if (selectedSport !== 'soccer') return null;
+        return (
+          <section key="soccer_no_reason" className="content-section active">
+            <div style={{ padding: 48, textAlign: 'center', maxWidth: 420, margin: '60px auto' }}>
+              <span className="material-icons-round" style={{ fontSize: 72, color: 'var(--accent, #f59e0b)', marginBottom: 16 }}>mood</span>
+              <h2 style={{ fontSize: '1.5rem', marginBottom: 12 }}>For No Reason</h2>
+              <p style={{ color: 'var(--text-secondary, #94a3b8)', margin: 0 }}>You found the tab that exists for no reason. Congrats.</p>
+            </div>
           </section>
         );
 
