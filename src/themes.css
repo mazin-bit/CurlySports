@@ -16,18 +16,24 @@
 }
 
 [data-color-scheme="light"] .app-container {
-  background: #f1f5f9;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(56, 189, 248, 0.06) 0%, transparent 70%),
+    #f1f5f9;
+}
+
+[data-color-scheme="light"] .main-content {
+  background: transparent;
 }
 
 /* Sidebar: theme-aware so it fits each theme */
 [data-color-scheme="dark"] .sidebar {
   background: var(--sidebar-bg);
-  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  border-right: 1px solid rgba(255, 255, 255, 0.12);
   box-shadow: none;
 }
 
 [data-color-scheme="dark"] .sidebar .logo-container-pro {
-  border-bottom-color: rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 [data-color-scheme="dark"] .sidebar .logo-container-pro:hover {
@@ -37,14 +43,14 @@
 [data-color-scheme="dark"] .sidebar .sidebar-dashboard-btn,
 [data-color-scheme="dark"] .sidebar .sport-dropdown-trigger {
   background: rgba(255, 255, 255, 0.04);
-  border-color: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.16);
   color: #94a3b8;
 }
 
 [data-color-scheme="dark"] .sidebar .sidebar-dashboard-btn:hover,
 [data-color-scheme="dark"] .sidebar .sport-dropdown-trigger:hover {
   background: rgba(255, 255, 255, 0.07);
-  border-color: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.22);
   color: #fff;
 }
 
@@ -52,7 +58,8 @@
 [data-color-scheme="dark"] .sidebar .mobile-dashboard-btn.active {
   background: rgba(255, 255, 255, 0.08);
   color: #fff;
-  border-color: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.06) inset;
 }
 
 [data-color-scheme="dark"] .sidebar .sidebar-dashboard-btn.active .material-icons-round,
@@ -62,27 +69,28 @@
 }
 
 [data-color-scheme="dark"] .sidebar .sport-dropdown-panel {
-  background: rgba(15, 23, 42, 0.98);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  background: rgba(26, 26, 26, 0.98);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.06) inset;
 }
 
 [data-color-scheme="dark"] .sidebar .sport-dropdown-option {
   background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   color: #94a3b8;
 }
 
 [data-color-scheme="dark"] .sidebar .sport-dropdown-option:hover {
   background: rgba(255, 255, 255, 0.07);
-  border-color: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.14);
   color: #fff;
 }
 
 [data-color-scheme="dark"] .sidebar .sport-dropdown-option.active {
   background: rgba(255, 255, 255, 0.08);
   color: #fff;
-  border-color: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.18);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.06) inset;
 }
 
 [data-color-scheme="dark"] .sidebar .sport-dropdown-option .material-icons-round,
@@ -97,12 +105,47 @@
   border-top-color: rgba(255, 255, 255, 0.06);
 }
 
+/* Dark: toggle (on top of Dashboard button) – match other sidebar buttons */
+[data-color-scheme="dark"] .sidebar .sidebar-sports-row .sidebar-toggle-btn {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: #94a3b8;
+}
+
+[data-color-scheme="dark"] .sidebar .sidebar-sports-row .sidebar-toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.22);
+  color: #fff;
+}
+
+/* Dark sidebar: visible outline on nav items (Live Scores, league links) */
+[data-color-scheme="dark"] .sidebar .nav-item {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+[data-color-scheme="dark"] .sidebar .nav-item:hover {
+  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+[data-color-scheme="dark"] .sidebar .nav-item.active {
+  border-color: rgba(56, 189, 248, 0.45);
+  box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.15) inset;
+}
+
+[data-color-scheme="dark"] .sidebar .sidebar-leagues-row {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
 [data-color-scheme="dark"] .sidebar .sidebar-leagues-row .user-profile {
-  border-top-color: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
 }
 
 [data-color-scheme="dark"][data-theme="default"] .sidebar {
-  background: rgba(15, 23, 42, 0.98);
+  background: rgba(18, 18, 18, 0.98);
 }
 
 [data-color-scheme="dark"][data-theme="sunshine"] .sidebar {
@@ -236,23 +279,31 @@
 
 [data-color-scheme="light"] .sidebar .nav-item {
   color: #475569;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(0, 0, 0, 0.02);
 }
 
 [data-color-scheme="light"] .sidebar .nav-item:hover {
   color: #0f172a;
   background: rgba(0, 0, 0, 0.05);
+  border-color: rgba(0, 0, 0, 0.12);
 }
 
 [data-color-scheme="light"] .sidebar .nav-item.active {
   color: #0f172a;
   background: rgba(0, 0, 0, 0.06);
   border-left-color: rgba(0, 0, 0, 0.15);
-  border-color: transparent;
+  border: 1px solid rgba(0, 0, 0, 0.12);
   box-shadow: none;
 }
 
 [data-color-scheme="light"] .sidebar .nav-item.active .material-icons-round {
   color: #475569;
+}
+
+[data-color-scheme="light"] .sidebar .sidebar-dashboard-btn,
+[data-color-scheme="light"] .sidebar .sport-dropdown-trigger {
+  border: 1px solid rgba(0, 0, 0, 0.12);
 }
 
 [data-color-scheme="light"] .sidebar .sidebar-dashboard-btn.active,
@@ -294,13 +345,32 @@
 [data-color-scheme="light"] .sidebar .sport-dropdown-trigger {
   background: rgba(255, 255, 255, 0.8);
   color: #475569;
-  border-color: rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(0, 0, 0, 0.12);
 }
 
 [data-color-scheme="light"] .sidebar .sport-dropdown-trigger:hover {
   color: #0f172a;
   background: rgba(255, 255, 255, 0.95);
   border-color: var(--highlight);
+}
+
+/* Light: toggle (on top of Dashboard button) – match other sidebar buttons */
+[data-color-scheme="light"] .sidebar .sidebar-sports-row .sidebar-toggle-btn {
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  color: #475569;
+}
+
+[data-color-scheme="light"] .sidebar .sidebar-sports-row .sidebar-toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: var(--highlight);
+  color: #0f172a;
+}
+
+/* Light sidebar: league logo container so dark logos are visible */
+[data-color-scheme="light"] .sidebar .nav-item-league .nav-icon-wrap {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(0, 0, 0, 0.12);
 }
 
 [data-color-scheme="light"] .sidebar .sport-dropdown-panel {
@@ -318,7 +388,10 @@
   color: #0f172a;
 }
 
-[data-color-scheme="light"] .sidebar .user-profile,
+[data-color-scheme="light"] .sidebar .user-profile {
+  color: #0f172a;
+}
+
 [data-color-scheme="light"] .sidebar .user-info .name {
   color: #0f172a;
 }
@@ -329,9 +402,43 @@
 }
 
 [data-color-scheme="light"] .sidebar .user-profile {
-  background: rgba(255, 255, 255, 0.7);
+  background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
   border: 1px solid rgba(0, 0, 0, 0.08);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(255, 255, 255, 0.5) inset;
+}
+
+[data-color-scheme="light"] .sidebar .user-profile::before {
+  background: linear-gradient(180deg, #0ea5e9, #38bdf8);
+  opacity: 1;
+}
+
+[data-color-scheme="light"] .sidebar .user-profile:hover {
+  background: linear-gradient(145deg, #f8fafc 0%, #f1f5f9 100%);
+  border-color: rgba(14, 165, 233, 0.25);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.08);
+}
+
+[data-color-scheme="light"] .sidebar .user-profile .status {
+  background: rgba(52, 211, 153, 0.12);
+  border-color: rgba(52, 211, 153, 0.35);
+  color: #059669;
+}
+
+[data-color-scheme="light"] .sidebar .user-profile .logout-btn-pro {
+  color: #64748b;
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+[data-color-scheme="light"] .sidebar .user-profile .logout-btn-pro:hover {
+  background: rgba(239, 68, 68, 0.08);
+  color: #dc2626;
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+[data-color-scheme="light"] .sidebar .user-profile .avatar {
+  border-color: rgba(14, 165, 233, 0.35);
+  box-shadow: 0 4px 14px rgba(14, 165, 233, 0.25);
 }
 
 [data-color-scheme="light"] .sidebar .nav-menu::-webkit-scrollbar-thumb {
@@ -676,7 +783,7 @@
 
 /* ========== LIGHT MODE: Full UI – all text visible, appealing contrast ========== */
 [data-color-scheme="light"] .main-content {
-  background: radial-gradient(circle at 50% 50%, rgba(56, 189, 248, 0.06) 0%, transparent 70%);
+  background: transparent;
 }
 
 [data-color-scheme="light"] .main-content::-webkit-scrollbar-thumb {
@@ -687,6 +794,7 @@
 [data-color-scheme="light"] .top-bar {
   background: linear-gradient(to bottom, rgba(255, 255, 255, 0.98) 0%, rgba(255, 255, 255, 0.95) 85%, transparent 100%);
   border-bottom-color: rgba(0, 0, 0, 0.08);
+  border-radius: 20px;
 }
 
 [data-color-scheme="light"] .top-bar h2 {

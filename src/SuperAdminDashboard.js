@@ -72,7 +72,7 @@ const DEFAULT_PERMISSIONS = [
   { key: 'admin_export_users', label: 'Export user list to CSV' },
 ];
 
-/** Sport keys and labels for feature-flag toggles (must match App.js SPORTS_CONFIG keys). */
+/** Sport keys and labels for feature-flag toggles. For a new sport to appear in the app sidebar, add it here and turn it ON. For leagues/live scores/news, also add it to App.js SPORTS_CONFIG. */
 const SPORTS_FOR_FLAGS = [
   { key: 'soccer', label: 'Soccer' },
   { key: 'basketball', label: 'Basketball' },
@@ -96,8 +96,8 @@ export function SuperAdminDashboard({ user, onLogout, colorScheme = 'dark', setC
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const [admins, setAdmins] = useState([]);
-  const [featureFlags, setFeatureFlags] = useState([]);
-  const [permissions, setPermissions] = useState([]);
+  const [featureFlags, setFeatureFlags] = useState(() => DEFAULT_FLAGS.map((f) => ({ ...f, enabled: true })));
+  const [permissions, setPermissions] = useState(() => DEFAULT_PERMISSIONS.map((p) => ({ ...p, enabled: true })));
   const [auditLog, setAuditLog] = useState([]);
   const [maintenance, setMaintenance] = useState(false);
   const [health, setHealth] = useState({ server: 'OK', db: 'Connected', api: 'OK', uptime: '99.9%' });
@@ -113,6 +113,7 @@ export function SuperAdminDashboard({ user, onLogout, colorScheme = 'dark', setC
   const [usersLoading, setUsersLoading] = useState(false);
   const [usersError, setUsersError] = useState(null);
   const [userSearch, setUserSearch] = useState('');
+  const [usersActionSuccess, setUsersActionSuccess] = useState(null);
 
   const [flagsSaveError, setFlagsSaveError] = useState(null);
   const [flagsSaveSuccess, setFlagsSaveSuccess] = useState(false);
@@ -123,6 +124,11 @@ export function SuperAdminDashboard({ user, onLogout, colorScheme = 'dark', setC
   const [sportsSaveError, setSportsSaveError] = useState(null);
   const [sportsSaveSuccess, setSportsSaveSuccess] = useState(false);
 
+  const [permsSaveError, setPermsSaveError] = useState(null);
+  const [permsSaveSuccess, setPermsSaveSuccess] = useState(false);
+  const [healthSaveError, setHealthSaveError] = useState(null);
+  const [healthSaveSuccess, setHealthSaveSuccess] = useState(false);
+
   // Prevent config listener from overwriting state while a write is in flight
   const pendingMaintenance = useRef(false);
   const pendingFlags = useRef(false);
@@ -131,7 +137,48 @@ export function SuperAdminDashboard({ user, onLogout, colorScheme = 'dark', setC
   const pendingHealth = useRef(false);
   const pendingSports = useRef(false);
   const permissionErrorAutoSyncDone = useRef(false);
+  /** After a successful sports save, ignore listener updates for this long so stale snapshot doesn't overwrite UI */
+  const sportsWrittenAtRef = useRef(0);
+  const flagsWrittenAtRef = useRef(0);
+  const maintenanceWrittenAtRef = useRef(0);
 
+  // Keep a ref of current config so the 1s save interval always writes latest state
+  const configSnapshotRef = useRef({
+    featureFlags: [],
+    permissions: [],
+    maintenance: false,
+    enabledSports: {},
+    health: { server: 'OK', db: 'Connected', api: 'OK', uptime: '99.9%' },
+  });
+  const hasReceivedConfigRef = useRef(false);
+  useEffect(() => {
+    configSnapshotRef.current = {
+      featureFlags,
+      permissions,
+      maintenance,
+      enabledSports,
+      health,
+    };
+  }, [featureFlags, permissions, maintenance, enabledSports, health]);
+
+  // Persist config to Firestore every second so data is always saved (retries if a write failed)
+  useEffect(() => {
+    if (!auth.currentUser?.email) return;
+    const interval = setInterval(() => {
+      if (!hasReceivedConfigRef.current) return;
+      const { featureFlags: f, permissions: p, maintenance: m, enabledSports: s, health: h } = configSnapshotRef.current;
+      const payload = {};
+      if (Array.isArray(f) && f.length > 0) payload.featureFlags = f;
+      if (Array.isArray(p) && p.length > 0) payload.permissions = p;
+      payload.maintenance = !!m;
+      if (typeof s === 'object' && s !== null && Object.keys(s).length > 0) payload.enabledSports = s;
+      if (h && typeof h === 'object' && Object.keys(h).length > 0) payload.health = h;
+      if (Object.keys(payload).length === 0) return;
+      setAppConfig(payload, { currentUserEmail: auth.currentUser?.email })
+        .catch((e) => console.warn('[SuperAdmin] 1s save:', e?.message));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
   const engagementMetrics = useMemo(() => {
     if (!usersList.length) return { dau: 0, last7: [], streakDistribution: { zero: 0, oneToSeven: 0, eightPlus: 0 } };
     const today = new Date().toISOString().slice(0, 10);
@@ -161,28 +208,34 @@ export function SuperAdminDashboard({ user, onLogout, colorScheme = 'dark', setC
 
   useEffect(() => {
     const unsub = subscribeAppConfig((config) => {
+      hasReceivedConfigRef.current = true;
       if (!pendingAdmins.current) {
         setAdmins(Array.isArray(config.saAdmins) ? config.saAdmins : []);
       }
       if (!pendingFlags.current) {
-        setFeatureFlags(Array.isArray(config.featureFlags) && config.featureFlags.length ? config.featureFlags : DEFAULT_FLAGS.map((f) => ({ ...f, enabled: true })));
+        const skipFlags = flagsWrittenAtRef.current && Date.now() - flagsWrittenAtRef.current < 4000;
+        if (!skipFlags) setFeatureFlags(Array.isArray(config.featureFlags) && config.featureFlags.length ? config.featureFlags : DEFAULT_FLAGS.map((f) => ({ ...f, enabled: true })));
       }
       if (!pendingPerms.current) {
         setPermissions(Array.isArray(config.permissions) && config.permissions.length ? config.permissions : DEFAULT_PERMISSIONS.map((p) => ({ ...p, enabled: true })));
       }
       setAuditLog(Array.isArray(config.auditLog) ? config.auditLog : []);
       if (!pendingMaintenance.current) {
-        const maint = config.maintenance === true;
-        setMaintenance(maint);
-        try {
-          localStorage.setItem('sa_maintenance', maint ? 'true' : 'false');
-        } catch (_) { }
+        const skipMaint = maintenanceWrittenAtRef.current && Date.now() - maintenanceWrittenAtRef.current < 4000;
+        if (!skipMaint) {
+          const maint = config.maintenance === true;
+          setMaintenance(maint);
+          try {
+            localStorage.setItem('sa_maintenance', maint ? 'true' : 'false');
+          } catch (_) { }
+        }
       }
       if (!pendingHealth.current) {
         setHealth(config.health && typeof config.health === 'object' ? config.health : { server: 'OK', db: 'Connected', api: 'OK', uptime: '99.9%' });
       }
       if (!pendingSports.current) {
-        setEnabledSports(config.enabledSports && typeof config.enabledSports === 'object' ? config.enabledSports : {});
+        const skipSports = sportsWrittenAtRef.current && Date.now() - sportsWrittenAtRef.current < 4000;
+        if (!skipSports) setEnabledSports(config.enabledSports && typeof config.enabledSports === 'object' ? config.enabledSports : {});
       }
     });
     return () => { if (typeof unsub === 'function') unsub(); };
@@ -210,15 +263,25 @@ export function SuperAdminDashboard({ user, onLogout, colorScheme = 'dark', setC
     setFeatureFlags(next);
     pendingFlags.current = true;
     setAppConfig({ featureFlags: next }, { currentUserEmail: auth.currentUser?.email || undefined })
+      .then(() => { flagsWrittenAtRef.current = Date.now(); })
       .catch((e) => console.error('setAppConfig:', e))
       .finally(() => { pendingFlags.current = false; });
   }, []);
 
   const savePerms = useCallback((next) => {
     setPermissions(next);
+    setPermsSaveError(null);
+    setPermsSaveSuccess(false);
     pendingPerms.current = true;
     setAppConfig({ permissions: next }, { currentUserEmail: auth.currentUser?.email || undefined })
-      .catch((e) => console.error('setAppConfig:', e))
+      .then(() => {
+        setPermsSaveSuccess(true);
+        setTimeout(() => setPermsSaveSuccess(false), 2500);
+      })
+      .catch((e) => {
+        setPermsSaveError(e?.message || 'Failed to save permissions. Check Firestore rules.');
+        setTimeout(() => setPermsSaveError(null), 5000);
+      })
       .finally(() => { pendingPerms.current = false; });
   }, []);
 
@@ -257,8 +320,13 @@ export function SuperAdminDashboard({ user, onLogout, colorScheme = 'dark', setC
     const next = admins.filter((a) => a.id !== id);
     setAdmins(next);
     setAdminSaveError(null);
+    setAdminSaveSuccess(false);
     pendingAdmins.current = true;
     setAppConfig({ saAdmins: next }, { currentUserEmail: auth.currentUser?.email || undefined })
+      .then(() => {
+        setAdminSaveSuccess(true);
+        setTimeout(() => setAdminSaveSuccess(false), 3000);
+      })
       .catch((e) => {
         setAdminSaveError(e?.message || 'Failed to remove. Check Firestore rules.');
         setTimeout(() => setAdminSaveError(null), 5000);
@@ -271,8 +339,13 @@ export function SuperAdminDashboard({ user, onLogout, colorScheme = 'dark', setC
     const next = admins.map((a) => (a.id === id ? { ...a, role } : a));
     setAdmins(next);
     setAdminSaveError(null);
+    setAdminSaveSuccess(false);
     pendingAdmins.current = true;
     setAppConfig({ saAdmins: next }, { currentUserEmail: auth.currentUser?.email || undefined })
+      .then(() => {
+        setAdminSaveSuccess(true);
+        setTimeout(() => setAdminSaveSuccess(false), 3000);
+      })
       .catch((e) => {
         setAdminSaveError(e?.message || 'Failed to update role. Check Firestore rules.');
         setTimeout(() => setAdminSaveError(null), 5000);
@@ -319,6 +392,7 @@ export function SuperAdminDashboard({ user, onLogout, colorScheme = 'dark', setC
     pendingMaintenance.current = true;
     setAppConfig({ maintenance: next }, { currentUserEmail: auth.currentUser?.email || undefined })
       .then(() => {
+        maintenanceWrittenAtRef.current = Date.now();
         setMaintenanceSuccess(true);
         setTimeout(() => setMaintenanceSuccess(false), 2500);
         pushAudit('MAINTENANCE_TOGGLE', 'system', { enabled: next });
@@ -337,20 +411,27 @@ export function SuperAdminDashboard({ user, onLogout, colorScheme = 'dark', setC
     setEnabledSports((prev) => {
       const isCurrentlyOn = prev[key] !== false;
       const newValue = !isCurrentlyOn;
-      const nextMap = { ...prev, [key]: newValue };
+      // Build full map for ALL sports so we never drop keys when saving (prev may only have a subset)
+      const nextMap = SPORTS_FOR_FLAGS.reduce(
+        (acc, s) => ({ ...acc, [s.key]: s.key === key ? newValue : (acc[s.key] ?? prev[s.key] !== false) }),
+        {}
+      );
+      // Ensure the toggled key is set (in case it wasn't in SPORTS_FOR_FLAGS)
+      nextMap[key] = newValue;
 
       pendingSports.current = true;
-      // Send the full locally-merged map to setAppConfig
       setAppConfig({ enabledSports: nextMap }, { currentUserEmail: auth.currentUser?.email || undefined })
         .then(() => {
+          sportsWrittenAtRef.current = Date.now();
           setSportsSaveSuccess(true);
           setTimeout(() => setSportsSaveSuccess(false), 2500);
         })
         .catch((e) => {
-          // Revert optimistic update on failure
           setEnabledSports((revertPrev) => ({ ...revertPrev, [key]: isCurrentlyOn }));
-          setSportsSaveError(e?.message || 'Failed to save. Check Firestore connection.');
-          setTimeout(() => setSportsSaveError(null), 5000);
+          const msg = e?.message || 'Failed to save. Check Firestore connection.';
+          setSportsSaveError(msg);
+          console.error('[SuperAdmin] Sports save failed:', e);
+          setTimeout(() => setSportsSaveError(null), 8000);
         })
         .finally(() => { pendingSports.current = false; });
 
@@ -359,11 +440,20 @@ export function SuperAdminDashboard({ user, onLogout, colorScheme = 'dark', setC
   };
 
   const updateHealth = (field, value) => {
+    setHealthSaveError(null);
+    setHealthSaveSuccess(false);
     const next = { ...health, [field]: value };
     setHealth(next);
     pendingHealth.current = true;
     setAppConfig({ health: next }, { currentUserEmail: auth.currentUser?.email || undefined })
-      .catch((e) => console.error('setAppConfig:', e))
+      .then(() => {
+        setHealthSaveSuccess(true);
+        setTimeout(() => setHealthSaveSuccess(false), 2500);
+      })
+      .catch((e) => {
+        setHealthSaveError(e?.message || 'Failed to save health status.');
+        setTimeout(() => setHealthSaveError(null), 5000);
+      })
       .finally(() => { pendingHealth.current = false; });
     pushAudit('HEALTH_UPDATE', 'health', { field, value });
   };
@@ -489,21 +579,24 @@ export function SuperAdminDashboard({ user, onLogout, colorScheme = 'dark', setC
 
   const handleResetStreak = (uid, email) => {
     if (!window.confirm(`Reset streak for ${email || uid}?`)) return;
+    setUsersActionSuccess(null);
     setStreakForAdmin(uid, 0, 0)
-      .then(() => { loadUsers(); pushAudit('STREAK_RESET', 'users', { uid, email }); })
-      .catch((e) => setUsersError(e?.message || 'Failed to reset streak'));
+      .then(() => { loadUsers(); setUsersActionSuccess('Streak reset.'); setTimeout(() => setUsersActionSuccess(null), 3000); pushAudit('STREAK_RESET', 'users', { uid, email }); })
+      .catch((e) => { setUsersError(e?.message || 'Failed to reset streak'); setUsersActionSuccess(null); });
   };
 
   const handleUpdateUserRole = (uid, email, role) => {
+    setUsersActionSuccess(null);
     setUserRole(uid, role)
-      .then(() => { loadUsers(); pushAudit('USER_ROLE_CHANGE', 'users', { uid, email, role }); })
-      .catch((e) => setUsersError(e?.message || 'Failed to update user role'));
+      .then(() => { loadUsers(); setUsersActionSuccess('Role updated.'); setTimeout(() => setUsersActionSuccess(null), 3000); pushAudit('USER_ROLE_CHANGE', 'users', { uid, email, role }); })
+      .catch((e) => { setUsersError(e?.message || 'Failed to update user role'); setUsersActionSuccess(null); });
   };
 
   const handleUpdateUserStatus = (uid, email, status) => {
+    setUsersActionSuccess(null);
     setUserStatusForAdmin(uid, status)
-      .then(() => { loadUsers(); pushAudit('USER_STATUS_CHANGE', 'users', { uid, email, status }); })
-      .catch((e) => setUsersError(e?.message || 'Failed to update user status'));
+      .then(() => { loadUsers(); setUsersActionSuccess('Status updated.'); setTimeout(() => setUsersActionSuccess(null), 3000); pushAudit('USER_STATUS_CHANGE', 'users', { uid, email, status }); })
+      .catch((e) => { setUsersError(e?.message || 'Failed to update user status'); setUsersActionSuccess(null); });
   };
 
   const filteredAudit = auditLog.filter((e) => {
@@ -524,6 +617,27 @@ export function SuperAdminDashboard({ user, onLogout, colorScheme = 'dark', setC
     a.click();
     URL.revokeObjectURL(a.href);
     pushAudit('AUDIT_EXPORT', 'audit', { rows: filteredAudit.length });
+  };
+
+  const exportUsersCsv = () => {
+    const headers = ['Name', 'Email', 'Role', 'Current Streak', 'Longest Streak', 'Last Active', 'Status'];
+    const rows = filteredUsers.map((u) => [
+      (u.displayName || '—').replace(/"/g, '""'),
+      (u.email || '—').replace(/"/g, '""'),
+      u.role || 'member',
+      typeof u.currentStreak === 'number' ? getDisplayCurrentStreak(u) : '—',
+      typeof u.longestStreak === 'number' ? u.longestStreak : '—',
+      formatLastActive(u.lastLoginDate, u.lastSeen),
+      u.status || 'active',
+    ]);
+    const csv = [headers.join(','), ...rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(','))].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `users-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+    pushAudit('USERS_EXPORT', 'users', { rows: filteredUsers.length });
   };
 
   function selectTab(tabId) {
@@ -682,7 +796,7 @@ export function SuperAdminDashboard({ user, onLogout, colorScheme = 'dark', setC
                 <p style={{ color: '#f87171', fontSize: 13, marginBottom: 12, padding: '8px 12px', background: 'rgba(239,68,68,0.1)', borderRadius: 8 }}>{adminSaveError}</p>
               )}
               {adminSaveSuccess && (
-                <p style={{ color: '#4ade80', fontSize: 13, marginBottom: 12, padding: '8px 12px', background: 'rgba(74,222,128,0.15)', borderRadius: 8 }}>Admin added successfully.</p>
+                <p style={{ color: '#4ade80', fontSize: 13, marginBottom: 12, padding: '8px 12px', background: 'rgba(74,222,128,0.15)', borderRadius: 8 }}>Changes saved.</p>
               )}
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'flex-end' }}>
                 <div>
@@ -748,6 +862,9 @@ export function SuperAdminDashboard({ user, onLogout, colorScheme = 'dark', setC
               <button style={{ ...btnPrimary }} type="button" onClick={handleRefresh} disabled={usersLoading}>
                 {usersLoading ? 'Loading…' : 'Refresh'}
               </button>
+              <button style={{ ...btnStyle, background: 'rgba(148,163,184,0.2)', color: '#e2e8f0' }} type="button" onClick={exportUsersCsv} disabled={usersLoading || filteredUsers.length === 0}>
+                Export CSV
+              </button>
               <div style={{ marginLeft: 'auto', fontSize: 13, background: 'rgba(148,163,184,0.1)', padding: '6px 12px', borderRadius: 8, color: '#94a3b8' }}>
                 Signed in as: <strong style={{ color: '#f1f5f9' }}>{user?.email || auth.currentUser?.email || 'unknown'}</strong> | Local Role: <strong style={{ color: '#f59e0b' }}>{user?.role || 'member'}</strong>
               </div>
@@ -763,6 +880,9 @@ export function SuperAdminDashboard({ user, onLogout, colorScheme = 'dark', setC
                   </p>
                 )}
               </div>
+            )}
+            {usersActionSuccess && (
+              <p style={{ color: '#4ade80', fontSize: 14, marginBottom: 16, padding: '10px 14px', background: 'rgba(34,197,94,0.15)', borderRadius: 8, border: '1px solid rgba(34,197,94,0.3)' }}>{usersActionSuccess}</p>
             )}
             <div style={tableWrap}>
               <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 800 }}>
@@ -935,6 +1055,12 @@ export function SuperAdminDashboard({ user, onLogout, colorScheme = 'dark', setC
           <div>
             <h1 className="sa-main-heading">Role & Permissions</h1>
             <p className="sa-main-sub">Define what Admin accounts can do. Changes are audited.</p>
+            {permsSaveError && (
+              <p style={{ color: '#f87171', fontSize: 14, marginBottom: 16, padding: '10px 14px', background: 'rgba(239,68,68,0.1)', borderRadius: 8, border: '1px solid rgba(239,68,68,0.3)' }}>{permsSaveError}</p>
+            )}
+            {permsSaveSuccess && (
+              <p style={{ color: '#4ade80', fontSize: 14, marginBottom: 16, padding: '10px 14px', background: 'rgba(34,197,94,0.15)', borderRadius: 8, border: '1px solid rgba(34,197,94,0.3)' }}>Permissions saved.</p>
+            )}
             <div style={{ ...cardStyle, marginTop: 24 }}>
               <h2 style={{ fontSize: 16, marginBottom: 16 }}>Admin permissions</h2>
               <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
@@ -992,6 +1118,12 @@ export function SuperAdminDashboard({ user, onLogout, colorScheme = 'dark', setC
           <div>
             <h1 className="sa-main-heading">Server & Database Health</h1>
             <p className="sa-main-sub">Edit status values. In production these would come from your backend.</p>
+            {healthSaveError && (
+              <p style={{ color: '#f87171', fontSize: 14, marginBottom: 16, padding: '10px 14px', background: 'rgba(239,68,68,0.1)', borderRadius: 8, border: '1px solid rgba(239,68,68,0.3)' }}>{healthSaveError}</p>
+            )}
+            {healthSaveSuccess && (
+              <p style={{ color: '#4ade80', fontSize: 14, marginBottom: 16, padding: '10px 14px', background: 'rgba(34,197,94,0.15)', borderRadius: 8, border: '1px solid rgba(34,197,94,0.3)' }}>Health status saved.</p>
+            )}
             <div className="sa-health-grid">
               {['server', 'db', 'api', 'uptime'].map((field) => (
                 <div key={field} className="sa-health-card">
@@ -1022,6 +1154,11 @@ export function SuperAdminDashboard({ user, onLogout, colorScheme = 'dark', setC
           <div>
             <h1 className="sa-main-heading">Feature Flags / Maintenance</h1>
             <p className="sa-main-sub">Enable/disable features. Toggle maintenance mode. Changes are saved and audited.</p>
+            {(!auth.currentUser || !auth.currentUser.email) && (
+              <p style={{ color: '#f59e0b', fontSize: 14, marginBottom: 16, padding: '12px 16px', background: 'rgba(245,158,11,0.15)', borderRadius: 8, border: '1px solid rgba(245,158,11,0.4)' }}>
+                You must be signed in to save changes. Log out and sign in again if toggles do not save.
+              </p>
+            )}
             {flagsSaveError && (
               <p style={{ color: '#f87171', fontSize: 14, marginBottom: 16, padding: '10px 14px', background: 'rgba(239,68,68,0.1)', borderRadius: 8, border: '1px solid rgba(239,68,68,0.3)' }}>{flagsSaveError}</p>
             )}

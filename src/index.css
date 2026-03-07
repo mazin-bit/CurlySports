@@ -2,18 +2,18 @@
 @import url('https://fonts.googleapis.com/icon?family=Material+Icons+Round');
 
 :root {
-  --bg-dark: #020617;
-  --sidebar-bg: rgba(7, 10, 25, 0.95);
-  --card-bg: rgba(15, 23, 42, 0.6);
+  --bg-dark: #121212;
+  --sidebar-bg: rgba(18, 18, 18, 0.96);
+  --card-bg: rgba(26, 26, 26, 0.9);
   --highlight: #38bdf8;
   --highlight-glow: rgba(56, 189, 248, 0.4);
   --accent: #6366f1;
   --text-primary: #ffffff;
-  --text-secondary: #cbd5e1;
+  --text-secondary: #a8a8a8;
   --success: #10b981;
   --success-light: rgba(16, 185, 129, 0.2);
   --danger: #ef4444;
-  --border-glass: 1px solid rgba(255, 255, 255, 0.15);
+  --border-glass: 1px solid rgba(255, 255, 255, 0.1);
   --font-main: 'Outfit', sans-serif;
   --transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   --app-height: 100vh;
@@ -108,7 +108,7 @@ img.modal-player-img {
 }
 
 body {
-  background: radial-gradient(circle at 50% -20%, #111827 0%, #020617 100%);
+  background: #121212;
   color: var(--text-primary);
   min-height: 100vh;
   overflow-x: hidden;
@@ -132,38 +132,17 @@ body {
   min-width: 0;
   position: relative;
   overflow: hidden;
-  background: #020617;
+  background: #121212;
+  padding: 0 0 0 12px;
+  box-sizing: border-box;
 }
 
 .app-container::before {
-  content: '';
-  position: absolute;
-  top: -20%;
-  left: -10%;
-  width: 120%;
-  height: 120%;
-  background:
-    radial-gradient(circle at 10% 10%, rgba(56, 189, 248, 0.25) 0%, transparent 50%),
-    radial-gradient(circle at 90% 90%, rgba(99, 102, 241, 0.25) 0%, transparent 50%),
-    radial-gradient(circle at 50% 10%, rgba(139, 92, 246, 0.18) 0%, transparent 50%),
-    radial-gradient(circle at 10% 90%, rgba(56, 189, 248, 0.18) 0%, transparent 50%);
-  filter: blur(80px);
-  animation: auraFlow 20s ease-in-out infinite alternate;
-  pointer-events: none;
-  z-index: 0;
+  content: none;
 }
 
 .app-container::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: radial-gradient(circle at 30% 70%, rgba(129, 140, 248, 0.03) 0%, transparent 30%);
-  animation: auraFlow 25s ease-in-out infinite alternate-reverse;
-  pointer-events: none;
-  z-index: 0;
+  content: none;
 }
 
 @keyframes auraFlow {
@@ -183,22 +162,176 @@ body {
   }
 }
 
-/* Sidebar – Member dashboard (best-practice UI) */
+/* Sidebar – Member dashboard (best-practice UI). Expanded width 20% smaller than before (272 → 218). */
 .sidebar {
-  width: 272px;
-  min-width: 272px;
-  height: var(--app-height);
-  max-height: 100vh;
+  width: 218px;
+  min-width: 218px;
+  height: calc(100% - 24px);
+  max-height: calc(100% - 24px);
+  align-self: center;
+  margin: 12px 0 12px 0;
   background: #ffffff;
-  border-right: 1px solid #e2e8f0;
+  border: none;
+  border-radius: 16px;
   padding: 20px 12px 16px;
   display: flex;
   flex-direction: column;
   gap: 0;
   z-index: 100;
-  box-shadow: none;
-  transition: width 0.3s ease, min-width 0.3s ease;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.06), 0 4px 24px rgba(0, 0, 0, 0.08);
+  transition: width 0.25s ease, min-width 0.25s ease;
   flex-shrink: 0;
+  overflow-x: visible;
+  overflow-y: auto;
+}
+
+.sidebar-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  position: relative;
+}
+
+/* Center the mascot/logo in the top row */
+.sidebar:not(.sidebar--collapsed) .sidebar-top-row {
+  justify-content: center;
+}
+
+.sidebar:not(.sidebar--collapsed) .sidebar-top-row .logo-container-pro {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-width: 0;
+}
+
+/* Toggle sits on top of Dashboard button – same width and padding as other sidebar buttons */
+.sidebar .sidebar-sports-row .sidebar-toggle-btn {
+  width: 100%;
+  padding: 12px 14px;
+  min-height: 44px;
+  margin-bottom: 6px;
+  border-radius: var(--btn-radius);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(0, 0, 0, 0.04);
+  color: #475569;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sidebar-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  border: none;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.06);
+  color: #475569;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s, border-color 0.2s;
+}
+
+.sidebar-toggle-btn:hover {
+  background: rgba(0, 0, 0, 0.1);
+  color: #0f172a;
+}
+
+.sidebar-toggle-btn .material-icons-round {
+  font-size: 20px;
+}
+
+/* Collapsed state: icon-only with tooltips (title on buttons) */
+.sidebar.sidebar--collapsed {
+  width: 72px !important;
+  min-width: 72px !important;
+  max-width: 72px;
+  padding: 16px 8px 12px;
+  overflow-x: visible;
+  overflow-y: auto;
+}
+
+.sidebar--collapsed .sidebar-top-row {
+  flex-direction: column;
+  justify-content: center;
+  border-bottom: none;
+  margin-bottom: 4px;
+  padding-bottom: 4px;
+  min-width: 0;
+}
+
+.sidebar--collapsed .logo-container-pro {
+  margin-bottom: 0;
+  padding: 8px;
+  border-bottom: none;
+  min-width: 0;
+  flex-shrink: 0;
+}
+
+.sidebar--collapsed .sidebar-logo-img {
+  max-width: 40px;
+  width: 40px;
+  height: auto;
+}
+
+.sidebar--collapsed .sidebar-sports-row .sidebar-toggle-btn {
+  justify-content: center;
+  padding: 10px;
+  margin-bottom: 4px;
+}
+
+.sidebar--collapsed .sidebar-toggle-btn {
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+}
+
+.sidebar--collapsed .sidebar-btn-label,
+.sidebar--collapsed .nav-item-text,
+.sidebar--collapsed .sport-dropdown-trigger-label,
+.sidebar--collapsed .sport-dropdown-chevron,
+.sidebar--collapsed .user-info {
+  display: none !important;
+}
+
+.sidebar--collapsed .sidebar-dashboard-btn,
+.sidebar--collapsed .sport-dropdown-trigger,
+.sidebar--collapsed .nav-item {
+  justify-content: center;
+  padding: 10px;
+  min-height: 44px;
+}
+
+.sidebar--collapsed .sidebar-dashboard-btn .material-icons-round,
+.sidebar--collapsed .sport-dropdown-trigger .material-icons-round:first-child {
+  margin: 0;
+}
+
+.sidebar--collapsed .nav-item .nav-icon-wrap {
+  margin: 0;
+}
+
+.sidebar--collapsed .user-profile .logout-btn-pro {
+  display: none !important;
+}
+.sidebar--collapsed .user-profile {
+  justify-content: center;
+  padding: 10px 8px;
+}
+
+.sidebar--collapsed .user-profile .logout-btn-pro {
+  margin-left: 0;
+}
+
+.sidebar--collapsed .user-profile::before {
+  display: none;
 }
 
 .logo-container-pro {
@@ -227,6 +360,13 @@ body {
   height: auto;
   object-fit: contain;
   display: block;
+}
+
+/* Sidebar expanded: smaller mascot/logo (user asked for logo, not profile) */
+.sidebar:not(.sidebar--collapsed) .logo-container-pro .sidebar-logo-img {
+  max-width: 72px;
+  width: 72px;
+  height: auto;
 }
 
 .shield-icon {
@@ -325,6 +465,90 @@ body {
   min-width: 0;
 }
 
+/* Same content width for sports + leagues rows (no extra right padding so all buttons same width) */
+.sidebar .sidebar-leagues-row .nav-menu {
+  padding-right: 2px;
+}
+
+/* Unified size and padding for ALL sidebar buttons (dashboard, sport tab, nav items, profile card) */
+.sidebar .sidebar-dashboard-btn,
+.sidebar .sport-dropdown-sidebar .sport-dropdown-trigger,
+.sidebar .nav-item,
+.sidebar .sidebar-leagues-row .user-profile {
+  padding: 12px 14px !important;
+  min-height: 44px;
+  box-sizing: border-box;
+  width: 100%;
+  gap: 12px;
+}
+
+/* Sport dropdown must align with Dashboard: zero any wrapper offset, same padding as dashboard */
+.sidebar .sidebar-sports-row .sport-tabs-group,
+.sidebar .sidebar-sports-row .sport-tabs-group .sport-dropdown-sidebar {
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100% !important;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Make Soccer button same width as Dashboard: containers must not shrink, stretch to full row width */
+.sidebar .sidebar-sports-row .sport-tabs-group {
+  flex: 0 0 auto;
+  width: 100%;
+}
+
+.sidebar .sidebar-sports-row .sport-dropdown-sidebar {
+  flex: 0 0 auto;
+  width: 100%;
+}
+
+.sidebar .sidebar-sports-row .sport-dropdown-sidebar {
+  flex: 0 0 auto;
+  width: 100%;
+}
+
+.sidebar .sport-dropdown-sidebar .sport-dropdown-trigger {
+  width: 100% !important;
+  min-width: 0;
+  max-width: 100%;
+  display: flex !important;
+}
+
+/* Show full sport name in expanded sidebar; no truncation to "S..." */
+.sidebar:not(.sidebar--collapsed) .sport-dropdown-sidebar .sport-dropdown-trigger .sport-dropdown-trigger-label {
+  min-width: 5em;
+  overflow: visible;
+  text-overflow: clip;
+  white-space: nowrap;
+  flex: 1 1 auto;
+}
+
+.sidebar .sidebar-sports-row .sidebar-dashboard-btn,
+.sidebar .sidebar-sports-row .sport-dropdown-sidebar .sport-dropdown-trigger {
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+
+.sidebar .sport-tabs-group {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+.sidebar .sidebar-sports-row .sidebar-dashboard-btn .material-icons-round:first-child,
+.sidebar .sidebar-sports-row .sport-dropdown-sidebar .sport-dropdown-trigger .material-icons-round:first-child {
+  margin: 0 !important;
+  flex-shrink: 0;
+}
+
+/* Keep sport dropdown trigger clickable and above sidebar content */
+.sidebar .sport-dropdown,
+.sidebar .sport-dropdown-trigger {
+  position: relative;
+  z-index: 10;
+}
+
 /* --- Sidebar Core Selectors (Dashboard & Sports) --- */
 .sidebar-dashboard-btn,
 .mobile-dashboard-btn,
@@ -384,7 +608,7 @@ body {
   flex-direction: column;
   flex: 1;
   min-height: 0;
-  padding: 12px 4px 0;
+  padding: 12px 2px 0;
   border-top: 1px solid rgba(0, 0, 0, 0.08);
   margin-top: 8px;
 }
@@ -392,13 +616,8 @@ body {
 .sidebar-leagues-row .nav-menu {
   flex: 1;
   min-height: 0;
-}
-
-.sidebar-leagues-row .user-profile {
-  margin-top: auto;
-  padding-top: 12px;
-  border-top: 1px solid rgba(0, 0, 0, 0.08);
-  flex-shrink: 0;
+  padding-left: 0;
+  padding-right: 2px;
 }
 
 .sport-tabs-group {
@@ -406,6 +625,8 @@ body {
   flex-direction: column;
   padding: 0;
   margin: 0;
+  gap: 8px;
+  min-width: 0;
 }
 
 
@@ -437,7 +658,7 @@ body {
   left: 0;
   right: 0;
   top: calc(100% + 6px);
-  min-width: 272px;
+  min-width: 218px;
   background: rgba(15, 23, 42, 0.95);
   backdrop-filter: blur(32px) saturate(200%);
   -webkit-backdrop-filter: blur(32px) saturate(200%);
@@ -497,16 +718,27 @@ body {
 
 .sport-dropdown-sidebar {
   width: 100%;
-  margin-bottom: 0px;
+  min-width: 0;
+  max-width: 100%;
+  margin-bottom: 0;
+  flex: 1 1 auto;
+  box-sizing: border-box;
 }
 
 .sport-dropdown-sidebar .sport-dropdown-trigger {
   width: 100%;
+  min-width: 0;
+  max-width: 100%;
   display: flex !important;
+  align-items: center;
   padding: 12px 14px !important;
   min-height: 44px !important;
   margin-bottom: 0 !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
   gap: 12px;
+  text-align: left;
+  box-sizing: border-box;
 }
 
 /* Sidebar dropdown: match Dashboard & Soccer trigger style */
@@ -573,6 +805,8 @@ body {
   box-shadow: 0 12px 48px rgba(0, 0, 0, 0.5) !important;
   position: fixed !important;
   pointer-events: auto !important;
+  visibility: visible !important;
+  opacity: 1 !important;
 }
 
 .nav-item {
@@ -669,23 +903,29 @@ body {
 .sidebar .nav-item-league .nav-icon-wrap {
   display: flex !important;
   align-items: center;
+  justify-content: center;
   flex-shrink: 0;
-  width: 24px;
-  height: 24px;
-  min-width: 24px;
-  min-height: 24px;
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  min-height: 28px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-sizing: border-box;
+  padding: 2px;
 }
 
 .sidebar-leagues-row .nav-item-league .league-logo-img,
 .sidebar .nav-item-league .league-logo-img,
 .sidebar-leagues-row .nav-item-league .nav-icon,
 .sidebar .nav-item-league .nav-icon {
-  width: 24px !important;
-  height: 24px !important;
-  min-width: 24px !important;
-  min-height: 24px !important;
-  max-width: 24px !important;
-  max-height: 24px !important;
+  width: 22px !important;
+  height: 22px !important;
+  min-width: 22px !important;
+  min-height: 22px !important;
+  max-width: 22px !important;
+  max-height: 22px !important;
   display: block !important;
   visibility: visible !important;
   object-fit: contain;
@@ -1063,39 +1303,62 @@ body {
   object-fit: contain;
 }
 
-/* User Profile – Member sidebar */
+/* User Profile – Member sidebar (clean, aligned, professional) */
+.sidebar-leagues-row .user-profile {
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  flex-shrink: 0;
+}
+
 .user-profile {
   display: flex;
   align-items: center;
   gap: 12px;
   padding: 12px 14px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 12px;
-  transition: all 0.2s ease;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--btn-radius);
+  transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
   flex-shrink: 0;
   min-width: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.user-profile::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: linear-gradient(180deg, var(--highlight) 0%, #0ea5e9 100%);
+  border-radius: var(--btn-radius) 0 0 var(--btn-radius);
+  opacity: 0.8;
 }
 
 .user-profile:hover {
-  background: rgba(255, 255, 255, 0.07);
-  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(56, 189, 248, 0.2);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
 }
 
 .avatar {
-  width: 34px;
-  height: 34px;
-  background: linear-gradient(135deg, var(--highlight), #8b5cf6);
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #0ea5e9 0%, #38bdf8 50%, #6366f1 100%);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 800;
+  font-weight: 700;
   font-size: 14px;
-  color: white;
+  color: #fff;
   flex-shrink: 0;
   overflow: hidden;
-  border: 2px solid rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  transition: transform 0.2s ease;
 }
 
 .avatar-img {
@@ -1107,57 +1370,70 @@ body {
 .user-info {
   display: flex;
   flex-direction: column;
+  gap: 2px;
   min-width: 0;
-  /* Container for child ellipsis */
+  flex: 1;
+  justify-content: center;
 }
 
 .user-info .name {
   font-weight: 700;
-  font-size: 13px;
-  color: white;
+  font-size: 14px;
+  letter-spacing: -0.02em;
+  color: #fff;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 110px;
+  line-height: 1.3;
 }
 
 .user-info .status {
-  font-size: 11px;
-  color: #10b981;
+  font-size: 10px;
+  color: #34d399;
   font-weight: 600;
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
+  width: fit-content;
+  padding: 2px 6px;
+  background: rgba(52, 211, 153, 0.12);
+  border: 1px solid rgba(52, 211, 153, 0.25);
+  border-radius: 999px;
+  letter-spacing: 0.02em;
 }
 
 .user-info .status::before {
   content: '';
-  width: 6px;
-  height: 6px;
-  background: #10b981;
+  width: 4px;
+  height: 4px;
+  background: #34d399;
   border-radius: 50%;
-  box-shadow: 0 0 8px #10b981;
+  flex-shrink: 0;
 }
 
 .user-info .user-role-badge {
-  font-size: 10px;
+  font-size: 9px;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: rgba(148, 163, 184, 0.9);
-  margin-top: 2px;
+  letter-spacing: 0.06em;
+  color: rgba(148, 163, 184, 0.85);
+  font-weight: 600;
+  margin-top: 0;
 }
 
 .user-info .user-streak {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
   font-size: 11px;
-  color: #f59e0b;
-  margin-top: 2px;
+  color: #fbbf24;
+  margin-top: 0;
+  font-weight: 600;
+  white-space: nowrap;
 }
 
 .user-info .user-streak .streak-icon {
-  font-size: 14px;
+  font-size: 13px;
+  flex-shrink: 0;
 }
 
 .user-info .user-streak.mobile-streak .streak-icon {
@@ -1168,27 +1444,52 @@ body {
   cursor: pointer;
 }
 
-/* Profile Menu (Personalize + options) */
+/* Logout: aligned right, same height as row */
+.user-profile .logout-btn-pro {
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(148, 163, 184, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.user-profile .logout-btn-pro:hover {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+  border-color: rgba(239, 68, 68, 0.35);
+}
+
+.user-profile .logout-btn-pro .material-icons-round {
+  font-size: 18px;
+}
+
+/* Profile Menu – full facelift (homepage-aligned, professional) */
 .profile-menu-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(18, 18, 18, 0.7);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   z-index: 10000;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 24px;
-  animation: fadeIn 0.2s ease;
+  animation: profileMenuFadeIn 0.25s ease;
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-
-  to {
-    opacity: 1;
-  }
+@keyframes profileMenuFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .profile-menu-panel {
@@ -1196,157 +1497,256 @@ body {
   max-width: 420px;
   max-height: 90vh;
   overflow-y: auto;
-  background: var(--card-bg);
+  background: linear-gradient(180deg, rgba(22, 22, 22, 0.98) 0%, rgba(18, 18, 18, 0.98) 100%);
   border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.4);
-  animation: slideUp 0.25s ease;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 32px 64px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.06) inset;
+  animation: profileMenuSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
 }
 
-[data-color-scheme="light"] .profile-menu-panel {
-  border-color: rgba(0, 0, 0, 0.08);
-  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.12);
+.profile-menu-panel::-webkit-scrollbar {
+  width: 8px;
 }
 
-@keyframes slideUp {
+.profile-menu-panel::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.profile-menu-panel::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+}
+
+.profile-menu-panel::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+@keyframes profileMenuSlideUp {
   from {
     opacity: 0;
-    transform: translateY(16px);
+    transform: translateY(24px);
   }
-
   to {
     opacity: 1;
     transform: translateY(0);
   }
 }
 
+[data-color-scheme="light"] .profile-menu-panel {
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: 0 32px 64px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.04) inset;
+}
+
 .profile-menu-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 20px 20px 12px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 24px 24px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 [data-color-scheme="light"] .profile-menu-header {
-  border-bottom-color: rgba(0, 0, 0, 0.08);
+  border-bottom-color: rgba(0, 0, 0, 0.06);
 }
 
 .profile-menu-title {
-  font-size: 1.25rem;
-  font-weight: 700;
+  font-size: 1.375rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
   color: var(--text-primary);
   margin: 0;
 }
 
 .profile-menu-close {
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   border: none;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
   color: var(--text-secondary);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.2s;
+  transition: background 0.2s ease, color 0.2s ease;
 }
 
 .profile-menu-close:hover {
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
 }
 
 [data-color-scheme="light"] .profile-menu-close {
-  background: rgba(0, 0, 0, 0.06);
+  background: rgba(0, 0, 0, 0.05);
+  color: #64748b;
 }
 
 [data-color-scheme="light"] .profile-menu-close:hover {
-  background: rgba(0, 0, 0, 0.1);
+  background: rgba(0, 0, 0, 0.08);
+  color: #0f172a;
 }
 
+.profile-menu-close .material-icons-round {
+  font-size: 22px;
+}
+
+/* User block – hero-style strip */
 .profile-menu-user {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 20px;
+  gap: 18px;
+  padding: 24px 24px;
+  background: rgba(255, 255, 255, 0.03);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+[data-color-scheme="light"] .profile-menu-user {
+  background: linear-gradient(135deg, rgba(14, 165, 233, 0.08) 0%, rgba(56, 189, 248, 0.04) 50%, transparent 100%);
+  border-bottom-color: rgba(0, 0, 0, 0.06);
 }
 
 .profile-menu-user .avatar {
-  width: 48px;
-  height: 48px;
-  font-size: 18px;
+  width: 56px;
+  height: 56px;
+  font-size: 20px;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+}
+
+[data-color-scheme="light"] .profile-menu-user .avatar {
+  border-color: rgba(14, 165, 233, 0.35);
+  box-shadow: 0 4px 16px rgba(14, 165, 233, 0.2);
 }
 
 .profile-menu-user-info {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 6px;
+  min-width: 0;
 }
 
 .profile-menu-user-info .name {
-  font-weight: 700;
-  font-size: 1rem;
+  font-weight: 800;
+  font-size: 1.125rem;
+  letter-spacing: -0.025em;
   color: var(--text-primary);
+  line-height: 1.25;
 }
 
 .profile-menu-user-info .status {
-  font-size: 0.8125rem;
-  color: var(--success);
+  font-size: 0.75rem;
+  color: #34d399;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  padding: 4px 10px;
+  background: rgba(52, 211, 153, 0.15);
+  border: 1px solid rgba(52, 211, 153, 0.3);
+  border-radius: 999px;
+  letter-spacing: 0.03em;
+}
+
+.profile-menu-user-info .status::before {
+  content: '';
+  width: 5px;
+  height: 5px;
+  background: #34d399;
+  border-radius: 50%;
+  box-shadow: 0 0 6px rgba(52, 211, 153, 0.6);
+  flex-shrink: 0;
 }
 
 .profile-menu-user-info .user-role-badge {
   font-size: 0.6875rem;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.1em;
   color: var(--text-secondary);
+  font-weight: 600;
 }
 
+.profile-menu-user-info .profile-menu-streak {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.profile-menu-user-info .profile-menu-streak .streak-icon {
+  font-size: 18px;
+  color: #f59e0b;
+}
+
+.profile-menu-user-info .profile-menu-streak-longest {
+  opacity: 0.85;
+  font-weight: 500;
+}
+
+/* Section & Personalize – card-style */
 .profile-menu-section {
-  padding: 0 20px 20px;
+  padding: 20px 24px 24px;
 }
 
 .profile-menu-section-head {
   width: 100%;
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 14px 0;
+  gap: 12px;
+  padding: 14px 16px;
   border: none;
-  background: none;
+  background: rgba(255, 255, 255, 0.04);
   color: var(--text-primary);
   font-size: 0.9375rem;
   font-weight: 600;
   cursor: pointer;
   text-align: left;
-  border-radius: 10px;
-  transition: background 0.2s;
+  border-radius: 14px;
+  transition: background 0.2s ease, border-color 0.2s ease;
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .profile-menu-section-head:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+[data-color-scheme="light"] .profile-menu-section-head {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.06);
 }
 
 [data-color-scheme="light"] .profile-menu-section-head:hover {
-  background: rgba(0, 0, 0, 0.04);
+  background: rgba(0, 0, 0, 0.05);
+  border-color: rgba(14, 165, 233, 0.25);
 }
 
-.profile-menu-section-head .material-icons-round {
+.profile-menu-section-head .material-icons-round:first-child {
   font-size: 22px;
-  color: var(--highlight);
+  color: var(--text-secondary);
+}
+
+[data-color-scheme="light"] .profile-menu-section-head .material-icons-round:first-child {
+  color: #38bdf8;
 }
 
 .profile-menu-chevron {
   margin-left: auto;
   color: var(--text-secondary) !important;
+  font-size: 20px !important;
 }
 
 .profile-menu-personalize {
-  padding: 0 0 16px 8px;
+  padding: 16px 0 0 4px;
 }
 
 .personalize-row {
-  margin-bottom: 18px;
+  margin-bottom: 20px;
 }
 
 .personalize-row:last-child {
@@ -1355,17 +1755,17 @@ body {
 
 .personalize-label {
   display: block;
-  font-size: 0.75rem;
-  font-weight: 600;
+  font-size: 0.6875rem;
+  font-weight: 700;
   color: var(--text-secondary);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: 10px;
+  letter-spacing: 0.08em;
+  margin-bottom: 12px;
 }
 
 .personalize-toggle-wrap {
   display: flex;
-  gap: 8px;
+  gap: 10px;
 }
 
 .personalize-toggle-option {
@@ -1374,82 +1774,92 @@ body {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 12px 16px;
+  padding: 14px 18px;
   border: 2px solid rgba(255, 255, 255, 0.12);
-  border-radius: 12px;
+  border-radius: 14px;
   background: rgba(255, 255, 255, 0.04);
   color: var(--text-secondary);
   font-size: 0.875rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
 }
 
 .personalize-toggle-option:hover {
-  border-color: var(--highlight);
+  border-color: rgba(255, 255, 255, 0.2);
   color: var(--text-primary);
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.07);
 }
 
 .personalize-toggle-option.active {
-  border-color: var(--highlight);
-  background: var(--highlight);
+  border-color: rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.12);
   color: #fff;
 }
 
 [data-color-scheme="light"] .personalize-toggle-option {
-  border-color: rgba(0, 0, 0, 0.12);
+  border-color: rgba(0, 0, 0, 0.1);
   background: rgba(0, 0, 0, 0.03);
+  color: #64748b;
+}
+
+[data-color-scheme="light"] .personalize-toggle-option:hover {
+  border-color: rgba(14, 165, 233, 0.4);
+  color: #0f172a;
+  background: rgba(14, 165, 233, 0.06);
 }
 
 [data-color-scheme="light"] .personalize-toggle-option.active {
-  background: var(--highlight);
-  border-color: var(--highlight);
-  color: #fff;
+  border-color: #0ea5e9;
+  background: rgba(14, 165, 233, 0.15);
+  color: #0369a1;
 }
 
 .theme-mode-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
+  gap: 12px;
 }
 
 .theme-mode-card {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
-  padding: 14px 10px;
+  gap: 8px;
+  padding: 16px 12px;
   border: 2px solid rgba(255, 255, 255, 0.1);
   border-radius: 14px;
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.03);
   color: var(--text-primary);
   font-size: 0.8125rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
   text-align: center;
 }
 
 .theme-mode-card:hover {
-  border-color: var(--highlight);
-  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.06);
 }
 
+/* Default theme: neutral selection in dark (no blue) */
 .theme-mode-card.active {
-  border-color: var(--highlight);
-  background: rgba(56, 189, 248, 0.15);
-  box-shadow: 0 0 0 1px var(--highlight);
+  border-color: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08) inset;
 }
 
 [data-theme="sunshine"] .theme-mode-card.active {
   background: rgba(245, 158, 11, 0.2);
-  box-shadow: 0 0 0 1px var(--highlight);
+  border-color: #f59e0b;
+  box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.4);
 }
 
 [data-theme="sea"] .theme-mode-card.active {
   background: rgba(6, 182, 212, 0.2);
-  box-shadow: 0 0 0 1px var(--highlight);
+  border-color: #06b6d4;
+  box-shadow: 0 0 0 1px rgba(6, 182, 212, 0.4);
 }
 
 [data-theme="fire"] .theme-mode-card.active,
@@ -1458,41 +1868,56 @@ body {
 [data-theme="flower"] .theme-mode-card.active,
 [data-theme="star"] .theme-mode-card.active {
   background: var(--highlight-glow);
+  border-color: var(--highlight);
   box-shadow: 0 0 0 1px var(--highlight);
 }
 
 [data-color-scheme="light"] .theme-mode-card {
-  border-color: rgba(0, 0, 0, 0.1);
-  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.08);
+  background: rgba(0, 0, 0, 0.02);
+}
+
+[data-color-scheme="light"] .theme-mode-card:hover {
+  border-color: rgba(14, 165, 233, 0.3);
+  background: rgba(14, 165, 233, 0.06);
 }
 
 [data-color-scheme="light"] .theme-mode-card.active {
-  background: rgba(3, 105, 161, 0.12);
+  background: rgba(14, 165, 233, 0.12);
+  border-color: #0ea5e9;
+  box-shadow: 0 0 0 1px rgba(14, 165, 233, 0.35);
 }
 
 .theme-mode-card .theme-mode-icon {
-  font-size: 28px;
+  font-size: 26px;
   line-height: 1;
-  color: var(--highlight);
+  color: var(--text-secondary);
+}
+
+[data-color-scheme="light"] .theme-mode-card .theme-mode-icon {
+  color: #0ea5e9;
 }
 
 .theme-mode-name {
   font-weight: 700;
+  font-size: 0.8125rem;
 }
 
 .theme-mode-desc {
-  font-size: 0.6875rem;
+  font-size: 0.625rem;
   color: var(--text-secondary);
   font-weight: 500;
+  line-height: 1.3;
 }
 
+/* Footer – secondary action (homepage-style outline) */
 .profile-menu-footer {
-  padding: 16px 20px 20px;
+  padding: 20px 24px 24px;
   border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 [data-color-scheme="light"] .profile-menu-footer {
-  border-top-color: rgba(0, 0, 0, 0.08);
+  border-top-color: rgba(0, 0, 0, 0.06);
 }
 
 .profile-menu-logout {
@@ -1501,19 +1926,36 @@ body {
   align-items: center;
   justify-content: center;
   gap: 10px;
-  padding: 14px 20px;
-  border: none;
-  border-radius: 12px;
-  background: rgba(239, 68, 68, 0.15);
-  color: #ef4444;
+  padding: 14px 24px;
+  border: 2px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  background: transparent;
+  color: var(--text-secondary);
   font-size: 0.9375rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 }
 
 .profile-menu-logout:hover {
-  background: rgba(239, 68, 68, 0.25);
+  background: rgba(239, 68, 68, 0.1);
+  color: #f87171;
+  border-color: rgba(239, 68, 68, 0.35);
+}
+
+[data-color-scheme="light"] .profile-menu-logout {
+  border-color: rgba(0, 0, 0, 0.12);
+  color: #64748b;
+}
+
+[data-color-scheme="light"] .profile-menu-logout:hover {
+  background: rgba(239, 68, 68, 0.06);
+  color: #dc2626;
+  border-color: rgba(239, 68, 68, 0.35);
+}
+
+.profile-menu-logout .material-icons-round {
+  font-size: 20px;
 }
 
 /* Main Content */
@@ -1524,10 +1966,9 @@ body {
   overflow-y: auto;
   overflow-x: hidden;
   position: relative;
-  background: radial-gradient(ellipse 120% 80% at 50% 0%, rgba(56, 189, 248, 0.06) 0%, transparent 50%),
-    radial-gradient(ellipse 80% 60% at 80% 100%, rgba(99, 102, 241, 0.04) 0%, transparent 45%);
+  background: transparent;
   scrollbar-width: thin;
-  scrollbar-color: rgba(56, 189, 248, 0.25) transparent;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
 }
 
 .main-content::-webkit-scrollbar {
@@ -1539,7 +1980,7 @@ body {
 }
 
 .main-content::-webkit-scrollbar-thumb {
-  background-color: rgba(56, 189, 248, 0.25);
+  background-color: rgba(255, 255, 255, 0.2);
   border-radius: 10px;
 }
 
@@ -1561,9 +2002,10 @@ body {
   position: sticky;
   top: 0;
   z-index: 50;
-  background: linear-gradient(to bottom, rgba(2, 6, 23, 0.98) 0%, rgba(2, 6, 23, 0.94) 88%, transparent 100%);
+  background: linear-gradient(to bottom, rgba(18, 18, 18, 0.98) 0%, rgba(22, 22, 22, 0.94) 88%, transparent 100%);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
+  border-radius: 20px;
 }
 
 .top-bar h2 {
@@ -1667,7 +2109,7 @@ body {
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   padding: var(--space-3) var(--space-5);
-  border-radius: var(--radius-md);
+  border-radius: 24px;
   display: flex;
   align-items: center;
   gap: var(--space-3);
@@ -4717,40 +5159,6 @@ tr.ucl-out .pos-cell {
   flex-shrink: 0;
 }
 
-/* Cricket-aware UI: green accent for Cricket Center */
-.main-content[data-sport="cricket"] .section-header-pro h3 {
-  color: var(--text-primary);
-}
-
-.main-content[data-sport="cricket"] .match-card.is-live .live-dot,
-.main-content[data-sport="cricket"] .match-card .live-badge {
-  background: #22c55e;
-  color: #fff;
-}
-
-.main-content[data-sport="cricket"] .nav-item.active {
-  border-color: rgba(34, 197, 94, 0.5);
-  background: rgba(34, 197, 94, 0.1);
-}
-
-.main-content[data-sport="cricket"] .nav-item .nav-icon {
-  width: 24px;
-  height: 24px;
-  min-width: 24px;
-  min-height: 24px;
-}
-
-.main-content[data-sport="cricket"] .table-container .league-header h3::before {
-  content: '';
-  display: inline-block;
-  width: 4px;
-  height: 1em;
-  background: #22c55e;
-  border-radius: 2px;
-  margin-right: 8px;
-  vertical-align: middle;
-}
-
 /* Players tab: clear layout so Top Players grid is always visible */
 .players-tab-section .players-section-header {
   margin-bottom: var(--space-4);
@@ -5624,9 +6032,13 @@ tr.uecl {
 
   .logo-text-wrapper,
   .user-info,
+  .sidebar-btn-label,
+  .nav-item-text,
+  .sport-dropdown-trigger-label,
+  .sport-dropdown-chevron,
   .nav-item span:not(.material-icons-round):not(.nav-icon-wrap):not(.nav-item-text),
   .sport-chip span:not(.material-icons-round) {
-    display: none;
+    display: none !important;
   }
 
   .sport-chip {
@@ -5654,7 +6066,11 @@ tr.uecl {
 
   .user-profile {
     justify-content: center;
-    padding: 8px;
+    padding: 10px 8px;
+  }
+
+  .user-profile::before {
+    display: none;
   }
 
   .logout-btn-pro {

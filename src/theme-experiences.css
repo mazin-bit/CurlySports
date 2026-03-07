@@ -1,0 +1,275 @@
+/**
+ * Theme experiences – immersive, refined ambient layers.
+ * Sunshine: technique from CSS In Real Life (css-irl.info/heatwave-animated-sun-illustration):
+ * radial glow + conic-gradient rays + mask for soft edges, slow rotation/pulse.
+ */
+
+.theme-experience {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+/* Default: no experience */
+.theme-experience--default {
+  display: none;
+}
+
+/* ========== SUNSHINE: disabled (no effect) ========== */
+.theme-experience--sunshine {
+  display: none;
+}
+
+/* ========== SEA: subtle caustics / light on water ========== */
+.theme-experience--sea {
+  background: linear-gradient(180deg, transparent 0%, rgba(6, 182, 212, 0.03) 60%, rgba(8, 145, 178, 0.05) 100%);
+}
+
+.theme-experience--sea::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 45%;
+  background: linear-gradient(to top, rgba(6, 182, 212, 0.06) 0%, transparent 60%);
+  animation: theme-caustic-drift 14s ease-in-out infinite;
+}
+
+.theme-experience--sea::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 35%;
+  background: linear-gradient(95deg, transparent 0%, rgba(34, 211, 238, 0.04) 30%, transparent 60%, rgba(6, 182, 212, 0.03) 100%);
+  animation: theme-caustic-drift 12s ease-in-out infinite reverse;
+  animation-delay: 2s;
+}
+
+@keyframes theme-caustic-drift {
+  0%, 100% { opacity: 0.9; transform: translateY(0); }
+  50% { opacity: 1; transform: translateY(-6px); }
+}
+
+/* ========== FIRE: warm glow from below, ember flicker ========== */
+.theme-experience--fire {
+  background: linear-gradient(0deg, rgba(251, 146, 60, 0.06) 0%, rgba(239, 68, 68, 0.02) 35%, transparent 60%);
+}
+
+.theme-experience--fire::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 55%;
+  background: radial-gradient(ellipse 120% 100% at 50% 100%, rgba(249, 115, 22, 0.08) 0%, rgba(239, 68, 68, 0.03) 50%, transparent 70%);
+  animation: theme-ember 6s ease-in-out infinite;
+}
+
+.theme-experience--fire::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 20%;
+  right: 20%;
+  height: 40%;
+  background: radial-gradient(ellipse 80% 60% at 50% 100%, rgba(251, 146, 60, 0.05) 0%, transparent 60%);
+  animation: theme-ember 5s ease-in-out infinite reverse;
+  animation-delay: 0.5s;
+}
+
+@keyframes theme-ember {
+  0%, 100% { opacity: 0.88; }
+  50% { opacity: 1; }
+}
+
+/* ========== FOREST: dappled light from above ========== */
+.theme-experience--forest {
+  background: linear-gradient(180deg, rgba(34, 197, 94, 0.03) 0%, transparent 30%, rgba(22, 163, 74, 0.02) 100%);
+}
+
+.theme-experience--forest::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 70%;
+  background: radial-gradient(ellipse 80% 50% at 30% 0%, rgba(134, 239, 172, 0.04) 0%, transparent 50%),
+              radial-gradient(ellipse 60% 40% at 70% 10%, rgba(34, 197, 94, 0.03) 0%, transparent 45%);
+  animation: theme-dapple 15s ease-in-out infinite;
+}
+
+.theme-experience--forest::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 60%;
+  background: radial-gradient(ellipse 50% 30% at 55% 5%, rgba(74, 222, 128, 0.03) 0%, transparent 50%);
+  animation: theme-dapple 12s ease-in-out infinite reverse;
+  animation-delay: 3s;
+}
+
+@keyframes theme-dapple {
+  0%, 100% { opacity: 0.9; }
+  50% { opacity: 1; }
+}
+
+/* ========== FLOWER: soft bokeh / garden light ========== */
+.theme-experience--flower {
+  background: radial-gradient(ellipse 90% 60% at 75% 85%, rgba(244, 114, 182, 0.05) 0%, transparent 50%),
+              radial-gradient(ellipse 70% 50% at 20% 75%, rgba(236, 72, 153, 0.04) 0%, transparent 50%);
+}
+
+.theme-experience--flower::before {
+  content: '';
+  position: absolute;
+  bottom: 5%;
+  right: 10%;
+  width: 40%;
+  max-width: 280px;
+  height: 35%;
+  max-height: 200px;
+  background: radial-gradient(circle at 60% 70%, rgba(251, 113, 133, 0.08) 0%, rgba(244, 114, 182, 0.03) 45%, transparent 70%);
+  border-radius: 50%;
+  animation: theme-bokeh 20s ease-in-out infinite;
+}
+
+.theme-experience--flower::after {
+  content: '';
+  position: absolute;
+  bottom: 10%;
+  left: 5%;
+  width: 35%;
+  max-width: 220px;
+  height: 30%;
+  max-height: 180px;
+  background: radial-gradient(circle at 40% 60%, rgba(244, 114, 182, 0.06) 0%, transparent 60%);
+  border-radius: 50%;
+  animation: theme-bokeh 18s ease-in-out infinite reverse;
+  animation-delay: 2s;
+}
+
+@keyframes theme-bokeh {
+  0%, 100% { opacity: 0.85; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.05); }
+}
+
+/* ========== STAR: deep space, subtle starfield ========== */
+.theme-experience--star {
+  background: radial-gradient(ellipse 100% 100% at 50% 50%, rgba(30, 27, 75, 0.25) 0%, rgba(15, 12, 35, 0.4) 50%, rgba(0, 0, 0, 0.2) 100%);
+}
+
+.theme-experience--star::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(1.2px 1.2px at 18% 22%, rgba(255, 255, 255, 0.5), transparent),
+    radial-gradient(1px 1px at 42% 68%, rgba(255, 255, 255, 0.4), transparent),
+    radial-gradient(1.2px 1.2px at 65% 18%, rgba(255, 255, 255, 0.45), transparent),
+    radial-gradient(1px 1px at 88% 55%, rgba(255, 255, 255, 0.35), transparent),
+    radial-gradient(1px 1px at 12% 75%, rgba(255, 255, 255, 0.4), transparent),
+    radial-gradient(1.2px 1.2px at 78% 88%, rgba(255, 255, 255, 0.4), transparent),
+    radial-gradient(1px 1px at 52% 42%, rgba(255, 255, 255, 0.35), transparent),
+    radial-gradient(1px 1px at 35% 92%, rgba(255, 255, 255, 0.3), transparent);
+  background-size: 100% 100%;
+  animation: theme-star-twinkle 6s ease-in-out infinite;
+}
+
+.theme-experience--star::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 80% 50% at 50% 20%, rgba(129, 140, 248, 0.06) 0%, transparent 50%);
+  animation: theme-star-twinkle 8s ease-in-out infinite reverse;
+  animation-delay: 1s;
+}
+
+@keyframes theme-star-twinkle {
+  0%, 100% { opacity: 0.82; }
+  50% { opacity: 1; }
+}
+
+/* ========== ICE: cool glow from above ========== */
+.theme-experience--ice {
+  background: linear-gradient(180deg, rgba(186, 230, 253, 0.06) 0%, transparent 40%, rgba(56, 189, 248, 0.02) 100%);
+}
+
+.theme-experience--ice::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background: radial-gradient(ellipse 100% 80% at 50% -20%, rgba(224, 242, 254, 0.08) 0%, transparent 60%);
+  animation: theme-frost 10s ease-in-out infinite;
+}
+
+.theme-experience--ice::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(1px 1px at 25% 30%, rgba(255, 255, 255, 0.25), transparent),
+                    radial-gradient(1px 1px at 60% 70%, rgba(255, 255, 255, 0.2), transparent),
+                    radial-gradient(1px 1px at 85% 25%, rgba(255, 255, 255, 0.22), transparent);
+  background-size: 100% 100%;
+  animation: theme-frost 12s ease-in-out infinite reverse;
+  animation-delay: 2s;
+}
+
+@keyframes theme-frost {
+  0%, 100% { opacity: 0.88; }
+  50% { opacity: 1; }
+}
+
+/* Light mode: keep experiences visible but softer */
+[data-color-scheme="light"] .theme-experience--sunshine::before {
+  opacity: 0.9;
+}
+
+[data-color-scheme="light"] .theme-experience--sunshine::after {
+  opacity: 0.7;
+}
+
+[data-color-scheme="light"] .theme-experience--sea::before,
+[data-color-scheme="light"] .theme-experience--sea::after {
+  opacity: 0.75;
+}
+
+[data-color-scheme="light"] .theme-experience--fire::before,
+[data-color-scheme="light"] .theme-experience--fire::after {
+  opacity: 0.7;
+}
+
+[data-color-scheme="light"] .theme-experience--forest::before,
+[data-color-scheme="light"] .theme-experience--forest::after {
+  opacity: 0.8;
+}
+
+[data-color-scheme="light"] .theme-experience--flower::before,
+[data-color-scheme="light"] .theme-experience--flower::after {
+  opacity: 0.8;
+}
+
+[data-color-scheme="light"] .theme-experience--star {
+  background: radial-gradient(ellipse 100% 100% at 50% 50%, rgba(30, 27, 75, 0.12) 0%, transparent 55%);
+}
+
+[data-color-scheme="light"] .theme-experience--star::before,
+[data-color-scheme="light"] .theme-experience--star::after {
+  opacity: 0.55;
+}
+
+[data-color-scheme="light"] .theme-experience--ice::before,
+[data-color-scheme="light"] .theme-experience--ice::after {
+  opacity: 0.75;
+}

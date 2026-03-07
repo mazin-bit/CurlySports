@@ -281,8 +281,14 @@ export function AdminDashboard({ user, onLogout, colorScheme = 'dark', setColorS
     }
     setSportsSaveError(null);
     setSportsSaveSuccess(false);
-    const map = { ...(enabledSports || {}) };
-    map[key] = map[key] === false;
+    const prev = enabledSports || {};
+    const newValue = prev[key] === false;
+    // Build full map for ALL sports so we never drop keys when saving
+    const map = SPORTS_FOR_FLAGS.reduce(
+      (acc, s) => ({ ...acc, [s.key]: s.key === key ? newValue : (prev[s.key] !== false) }),
+      {}
+    );
+    map[key] = newValue;
     setEnabledSports(map);
     pendingSports.current = true;
     setAppConfig({ enabledSports: map }, { currentUserEmail: auth.currentUser?.email || undefined })

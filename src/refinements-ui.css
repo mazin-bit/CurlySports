@@ -130,6 +130,16 @@ body {
   border-radius: var(--btn-radius);
   min-height: 40px;
 }
+/* Sidebar: alignment handled in index.css; avoid overriding padding */
+.sidebar .sport-dropdown-sidebar .sport-dropdown-trigger {
+  padding: 12px 14px !important;
+}
+/* Sidebar: Soccer button same width as Dashboard (override responsive-all-formats 2-column grid) */
+.sidebar .sidebar-sports-row .sport-tabs-group {
+  display: flex !important;
+  flex-direction: column !important;
+  width: 100% !important;
+}
 .sport-dropdown-trigger:focus-visible {
   outline: 2px solid var(--highlight);
   outline-offset: 2px;

@@ -288,40 +288,37 @@ export async function setAppConfig(updates, options = {}) {
     const payload = { ...updates };
     const currentEmail = options.currentUserEmail || (auth.currentUser && auth.currentUser.email) || null;
 
-    // Detect if we actually need to touch super_admin_emails
     const isUpdatingAdmins = Array.isArray(payload.saAdmins);
-    const isExplicitEmailsUpdate = payload.super_admin_emails != null && typeof payload.super_admin_emails === 'object';
 
-    let existing = {};
-    if (isUpdatingAdmins || (currentEmail && !isExplicitEmailsUpdate)) {
-        try {
-            const snap = await getDoc(CONFIG_REF);
-            existing = snap.exists() ? snap.data() : {};
-        } catch (e) {
-            console.warn('setAppConfig: could not fetch existing config for merge:', e.message);
-        }
-    }
-
-    // Update super_admin_emails only if needed
+    // Only add super_admin_emails when saving the admins list. Sports/flags/maintenance write without reading config.
     if (isUpdatingAdmins) {
         payload.super_admin_emails = buildSuperAdminEmailsMap(payload.saAdmins, currentEmail);
-    } else if (currentEmail && !isExplicitEmailsUpdate) {
-        // If we have a current email but NOT a direct emails update, ensure currentEmail is preserved in the map
-        const existingMap = existing.super_admin_emails && typeof existing.super_admin_emails === 'object' ? existing.super_admin_emails : {};
-        const saAdmins = existing.saAdmins || [];
-        const newMap = buildSuperAdminEmailsMap(saAdmins, currentEmail);
-
-        // Merge existing map into new map to preserve other super admins
-        Object.keys(existingMap).forEach((k) => {
-            if (existingMap[k] === true) newMap[k] = true;
-        });
-        payload.super_admin_emails = newMap;
     }
 
-    // enabledSports deep-merges automatically via setDoc merge: true
+    if (payload.enabledSports != null && typeof payload.enabledSports === 'object') {
+        const cleaned = {};
+        Object.keys(payload.enabledSports).forEach((k) => {
+            const v = payload.enabledSports[k];
+            if (v === true || v === false) cleaned[k] = v;
+        });
+        payload.enabledSports = cleaned;
+    }
 
     const safePayload = firestoreSafePayload(payload);
-    await setDoc(CONFIG_REF, safePayload != null && typeof safePayload === 'object' ? safePayload : payload, { merge: true });
+    const toWrite = safePayload != null && typeof safePayload === 'object' ? safePayload : payload;
+    if (Object.keys(toWrite).length === 0) return;
+
+    const doWrite = async () => {
+        await setDoc(CONFIG_REF, toWrite, { merge: true });
+        await waitForPendingWrites(db);
+    };
+    try {
+        await doWrite();
+    } catch (e) {
+        console.warn('setAppConfig failed, retrying once:', e?.message);
+        await new Promise((r) => setTimeout(r, 1200));
+        await doWrite();
+    }
 }
 
 /** Append one audit entry to config. Keeps last 500. */

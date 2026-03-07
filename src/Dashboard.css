@@ -8,15 +8,13 @@
 .dashboard-bg-overlay {
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at center, rgba(15, 23, 42, 0.5), rgba(15, 23, 42, 0.8));
-  backdrop-filter: blur(4px) saturate(120%);
+  background: radial-gradient(circle at center, rgba(18, 18, 18, 0.25), transparent 70%);
   pointer-events: none;
   z-index: 0;
 }
 
 [data-color-scheme="light"] .dashboard-bg-overlay {
-  background: radial-gradient(circle at center, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.4));
-  backdrop-filter: blur(4px) saturate(100%);
+  background: radial-gradient(circle at center, rgba(255, 255, 255, 0.15), transparent 70%);
 }
 
 /* New top bar: hamburger + two tabs + right actions */
@@ -24,7 +22,7 @@
   position: sticky;
   top: 0;
   z-index: 100;
-  background: rgba(15, 23, 42, 0.98);
+  background: rgba(18, 18, 18, 0.98);
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   padding: 12px 20px;
 }

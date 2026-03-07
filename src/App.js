@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom';
 import { Link, Navigate, useLocation } from 'react-router-dom';
 import './App.css';
 import './public-pages.css';
-import './sport-layouts.css';
+import './theme-experiences.css';
 import {
   auth,
   googleProvider,
@@ -262,6 +262,13 @@ const SPORT_DECOR_ICONS = {
 };
 
 const SPORTS_TABS = Object.keys(SPORTS_CONFIG);
+/** Label/icon for a sport key; use when sport may have been added in Super Admin but not yet in SPORTS_CONFIG. */
+function getSportConfig(sportKey) {
+  const c = SPORTS_CONFIG[sportKey];
+  if (c) return c;
+  const label = (sportKey || '').replace(/_/g, ' ').replace(/\b\w/g, (ch) => ch.toUpperCase());
+  return { label: label || sportKey, icon: 'sports', path: sportKey };
+}
 /** Cricket leagues that have a knockout/playoff phase (show League Table | Knockout toggle) */
 const CRICKET_KNOCKOUT_LEAGUES = ['ipl', 'bbl', 'ilt20', 'sa20', 't20wc', 'psl', 'ranji'];
 
@@ -905,7 +912,7 @@ const PublicHeader = ({ isAuthenticated = false, homeTheme = 'light', setHomeThe
               <Link to="/dashboard" className="public-nav-cta public-nav-cta--signin">Go to Dashboard</Link>
             ) : (
               <>
-                <Link to="/login" className="public-nav-cta public-nav-cta--signin">Sign in</Link>
+                <Link to="/login" className="public-nav-cta public-nav-cta--signin">Login</Link>
                 <span className="public-nav-icon material-icons-round" aria-hidden="true">menu</span>
               </>
             )}
@@ -1551,7 +1558,7 @@ const LoginPage = ({ mode = 'login', isAuthenticated = false, homeTheme = 'light
 
 // --- Sub-components ---
 
-const SportDropdown = ({ selectedSport, setSelectedSport, enabledSportKeys, setTab, className = '' }) => {
+const SportDropdown = ({ selectedSport, setSelectedSport, enabledSportKeys, setTab, className = '', collapsed = false }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [panelStyle, setPanelStyle] = useState({});
   const containerRef = useRef(null);
@@ -1564,7 +1571,7 @@ const SportDropdown = ({ selectedSport, setSelectedSport, enabledSportKeys, setT
     const maxPanelHeight = 400;
     const spaceBelow = window.innerHeight - rect.bottom - padding;
     const spaceAbove = rect.top - padding;
-    const openDown = spaceBelow >= spaceAbove;
+    const openDown = spaceBelow >= 120;
     const maxHeight = Math.min(
       maxPanelHeight,
       openDown ? spaceBelow : spaceAbove
@@ -1573,12 +1580,12 @@ const SportDropdown = ({ selectedSport, setSelectedSport, enabledSportKeys, setT
       position: 'fixed',
       top: openDown ? rect.bottom + 4 : undefined,
       bottom: openDown ? undefined : window.innerHeight - rect.top + 4,
-      left: rect.left,
-      minWidth: rect.width,
-      maxWidth: Math.max(rect.width, 200),
+      left: collapsed ? 72 : rect.left,
+      minWidth: collapsed ? 200 : rect.width,
+      maxWidth: Math.max(collapsed ? 200 : rect.width, 200),
       maxHeight: Math.max(120, maxHeight),
     });
-  }, [isOpen]);
+  }, [isOpen, collapsed]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -1614,7 +1621,7 @@ const SportDropdown = ({ selectedSport, setSelectedSport, enabledSportKeys, setT
     setIsOpen(false);
   };
 
-  const current = SPORTS_CONFIG[selectedSport] || SPORTS_CONFIG.soccer;
+  const current = getSportConfig(selectedSport);
 
   const sportOptions = Array.isArray(enabledSportKeys) ? enabledSportKeys : [];
 
@@ -1622,9 +1629,19 @@ const SportDropdown = ({ selectedSport, setSelectedSport, enabledSportKeys, setT
     <div
       className={`sport-dropdown-panel sport-dropdown-panel-overlay ${className}`.trim()}
       role="listbox"
-      style={panelStyle}
+      style={{
+        position: 'fixed',
+        left: (panelStyle.left != null ? panelStyle.left : 20),
+        top: (panelStyle.top != null ? panelStyle.top : 120),
+        bottom: panelStyle.bottom,
+        minWidth: panelStyle.minWidth != null ? panelStyle.minWidth : 200,
+        maxWidth: panelStyle.maxWidth,
+        maxHeight: panelStyle.maxHeight != null ? panelStyle.maxHeight : 400,
+      }}
     >
-      {sportOptions.map((sportKey) => (
+      {sportOptions.map((sportKey) => {
+        const cfg = getSportConfig(sportKey);
+        return (
         <button
           key={sportKey}
           type="button"
@@ -1633,10 +1650,11 @@ const SportDropdown = ({ selectedSport, setSelectedSport, enabledSportKeys, setT
           className={`sport-dropdown-option ${selectedSport === sportKey ? 'active' : ''}`}
           onClick={() => handleSelect(sportKey)}
         >
-          <span className="material-icons-round">{SPORTS_CONFIG[sportKey].icon}</span>
-          <span>{SPORTS_CONFIG[sportKey].label}</span>
+          <span className="material-icons-round">{cfg.icon}</span>
+          <span>{cfg.label}</span>
         </button>
-      ))}
+        );
+      })}
     </div>
   );
 
@@ -1646,7 +1664,8 @@ const SportDropdown = ({ selectedSport, setSelectedSport, enabledSportKeys, setT
         ref={triggerRef}
         type="button"
         className="sport-dropdown-trigger"
-        onClick={() => setIsOpen((o) => !o)}
+        onMouseDown={(e) => { e.stopPropagation(); setIsOpen((o) => !o); }}
+        onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
         aria-expanded={isOpen}
         aria-haspopup="listbox"
         aria-label={`Sport: ${current.label}. Click to change.`}
@@ -1685,6 +1704,15 @@ const ProfileMenu = ({ user, onClose, onLogout, colorScheme, setColorScheme, the
             {user?.role && (
               <span className="user-role-badge">{user.role === 'super_admin' ? 'Super Admin' : user.role === 'admin' ? 'Admin' : 'Member'}</span>
             )}
+            {typeof user?.currentStreak === 'number' && user.currentStreak > 0 && (
+              <span className="profile-menu-streak" title="Login streak">
+                <span className="material-icons-round streak-icon">local_fire_department</span>
+                {user.currentStreak} day{user.currentStreak !== 1 ? 's' : ''} streak
+                {typeof user?.longestStreak === 'number' && user.longestStreak > 0 && user.longestStreak !== user.currentStreak && (
+                  <span className="profile-menu-streak-longest"> · Best: {user.longestStreak}d</span>
+                )}
+              </span>
+            )}
           </div>
         </div>
 
@@ -1715,7 +1743,7 @@ const ProfileMenu = ({ user, onClose, onLogout, colorScheme, setColorScheme, the
                   <button type="button" className={`theme-mode-card ${themeMode === 'default' ? 'active' : ''}`} onClick={() => setThemeMode('default')}>
                     <span className="material-icons-round theme-mode-icon">palette</span>
                     <span className="theme-mode-name">Default</span>
-                    <span className="theme-mode-desc">Classic blue & slate</span>
+                    <span className="theme-mode-desc">Neutral dark & light</span>
                   </button>
                   <button type="button" className={`theme-mode-card ${themeMode === 'sunshine' ? 'active' : ''}`} onClick={() => setThemeMode('sunshine')}>
                     <span className="material-icons-round theme-mode-icon">wb_sunny</span>
@@ -1782,76 +1810,119 @@ const Sidebar = ({
   leagueLogos,
   leagueShortNames = {},
   leagues = {},
-  featureFlags = {}
+  featureFlags = {},
+  collapsed = false,
+  onToggleCollapsed,
 }) => {
+  const leagueLogoUrl = (key) => {
+    if (selectedSport === 'cricket' && leagues[key])
+      return leagueLogos[key] || `https://a.espncdn.com/i/leaguelogos/cricket/500/${leagues[key]}.png`;
+    return leagueLogos[key] || FALLBACK_LEAGUE_LOGO;
+  };
   return (
-    <aside className="sidebar">
-      {/* Top row: logo + dashboard + sports (in horizontal layout); stacked in vertical sidebar */}
+    <aside className={`sidebar ${collapsed ? 'sidebar--collapsed' : ''}`} aria-label="Main navigation">
       <div className="sidebar-sports-row">
-        <div className="logo-container-pro" onClick={() => setTab('live')}>
-          <img src="/curlysports-logo.png" alt="Curly Sports" className="sidebar-logo-img" />
+        <div className="sidebar-top-row">
+          <div className="logo-container-pro" onClick={() => setTab('dashboard')} title="Go to Dashboard" role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setTab('dashboard'); } }} aria-label="Go to Dashboard">
+            <img
+              src={`${process.env.PUBLIC_URL || ''}/curlysports-logo.png`}
+              alt="Curly Sports"
+              className="sidebar-logo-img"
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = FALLBACK_LEAGUE_LOGO;
+              }}
+            />
+          </div>
         </div>
-        <button type="button" className={`sidebar-dashboard-btn ${currentTab === 'dashboard' ? 'active' : ''}`} onClick={() => setTab('dashboard')} aria-label="Dashboard">
+        <button
+          type="button"
+          className="sidebar-toggle-btn"
+          onClick={(e) => { e.stopPropagation(); onToggleCollapsed?.(); }}
+          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+        >
+          <span className="material-icons-round">{collapsed ? 'chevron_right' : 'chevron_left'}</span>
+        </button>
+        <button type="button" className={`sidebar-dashboard-btn ${currentTab === 'dashboard' ? 'active' : ''}`} onClick={() => setTab('dashboard')} aria-label="Dashboard" title="Dashboard">
           <span className="material-icons-round">dashboard</span>
-          <span>Dashboard</span>
+          <span className="sidebar-btn-label">Dashboard</span>
         </button>
         <div className="sport-tabs-group">
-          <SportDropdown selectedSport={selectedSport} setSelectedSport={setSelectedSport} enabledSportKeys={enabledSportKeys} setTab={setTab} className="sport-dropdown-sidebar" />
+          <SportDropdown selectedSport={selectedSport} setSelectedSport={setSelectedSport} enabledSportKeys={enabledSportKeys} setTab={setTab} className="sport-dropdown-sidebar" collapsed={collapsed} />
         </div>
       </div>
 
-      {/* Bottom row: leagues + pages + user (in horizontal layout); scrollable nav in vertical */}
       <div className="sidebar-leagues-row">
         <nav className="nav-menu">
           {featureFlags.live_scores !== false && (
-            <button className={`nav-item ${currentTab === 'live' ? 'active' : ''}`} onClick={() => setTab('live')}>
-              <span className="material-icons-round">timer</span> Live Scores
+            <button className={`nav-item ${currentTab === 'live' ? 'active' : ''}`} onClick={() => setTab('live')} title="Live Scores">
+              <span className="material-icons-round">timer</span>
+              <span className="nav-item-text">Live Scores</span>
             </button>
           )}
           {featureFlags.live_scores !== false && Object.keys(leagueNames).map(key => (
             <button key={key} className={`nav-item nav-item-league ${currentTab === key ? 'active' : ''}`} onClick={() => setTab(key)} title={leagueNames[key]}>
               <span className="nav-icon-wrap" aria-hidden="true">
-                <img loading="lazy" decoding="async" src={selectedSport === 'cricket' && leagues[key] ? (leagueLogos[key] || `https://a.espncdn.com/i/leaguelogos/cricket/500/${leagues[key]}.png`) : leagueLogos[key]} className="nav-icon league-logo-img" alt="" onError={(e) => { e.target.src = FALLBACK_LEAGUE_LOGO; }} />
+                <img loading="lazy" decoding="async" src={leagueLogoUrl(key)} className="nav-icon league-logo-img" alt="" onError={(e) => { e.target.onerror = null; e.target.src = FALLBACK_LEAGUE_LOGO; }} />
               </span>
               <span className="nav-item-text">{leagueShortNames[key] || leagueNames[key]}</span>
             </button>
           ))}
           {featureFlags.favorites !== false && (
-            <button className={`nav-item ${currentTab === 'favorites' ? 'active' : ''}`} onClick={() => setTab('favorites')}>
-              <span className="material-icons-round">favorite</span> My Favorites
+            <button className={`nav-item ${currentTab === 'favorites' ? 'active' : ''}`} onClick={() => setTab('favorites')} title="My Favorites">
+              <span className="material-icons-round">favorite</span>
+              <span className="nav-item-text">My Favorites</span>
             </button>
           )}
-          <button className={`nav-item ${currentTab === 'players' ? 'active' : ''}`} onClick={() => setTab('players')}>
-            <span className="material-icons-round">{selectedSport === 'f1' ? 'emoji_events' : 'person'}</span> {selectedSport === 'f1' ? 'Top Drivers' : 'Top Players'}
+          <button className={`nav-item ${currentTab === 'players' ? 'active' : ''}`} onClick={() => setTab('players')} title={selectedSport === 'f1' ? 'Top Drivers' : 'Top Players'}>
+            <span className="material-icons-round">{selectedSport === 'f1' ? 'emoji_events' : 'person'}</span>
+            <span className="nav-item-text">{selectedSport === 'f1' ? 'Top Drivers' : 'Top Players'}</span>
           </button>
-          <button className={`nav-item ${currentTab === 'tactics' ? 'active' : ''}`} onClick={() => setTab('tactics')}>
-            <span className="material-icons-round">groups</span> Teams
+          <button className={`nav-item ${currentTab === 'tactics' ? 'active' : ''}`} onClick={() => setTab('tactics')} title="Teams">
+            <span className="material-icons-round">groups</span>
+            <span className="nav-item-text">Teams</span>
           </button>
           {featureFlags.news !== false && (
-            <button className={`nav-item ${currentTab === 'news' ? 'active' : ''}`} onClick={() => setTab('news')}>
-              <span className="material-icons-round">article</span> News & Updates
+            <button className={`nav-item ${currentTab === 'news' ? 'active' : ''}`} onClick={() => setTab('news')} title="News & Updates">
+              <span className="material-icons-round">article</span>
+              <span className="nav-item-text">News & Updates</span>
             </button>
           )}
           {selectedSport === 'soccer' && (
-            <button className={`nav-item ${currentTab === 'game' ? 'active' : ''}`} onClick={() => setTab('game')}>
-              <span className="material-icons-round">sports_esports</span> Penalty King
+            <button className={`nav-item ${currentTab === 'game' ? 'active' : ''}`} onClick={() => setTab('game')} title="Penalty King">
+              <span className="material-icons-round">sports_esports</span>
+              <span className="nav-item-text">Penalty King</span>
             </button>
           )}
           {selectedSport === 'cricket' && (
-            <button className={`nav-item ${currentTab === 'game' ? 'active' : ''}`} onClick={() => setTab('game')}>
-              <span className="material-icons-round">sports_cricket</span> Super Over
+            <button className={`nav-item ${currentTab === 'game' ? 'active' : ''}`} onClick={() => setTab('game')} title="Super Over">
+              <span className="material-icons-round">sports_cricket</span>
+              <span className="nav-item-text">Super Over</span>
             </button>
           )}
-          <button className={`nav-item ${currentTab === 'tickets' ? 'active' : ''}`} onClick={() => setTab('tickets')}>
-            <span className="material-icons-round">event</span> Tickets
+          <button className={`nav-item ${currentTab === 'tickets' ? 'active' : ''}`} onClick={() => setTab('tickets')} title="Tickets">
+            <span className="material-icons-round">event</span>
+            <span className="nav-item-text">Tickets</span>
           </button>
         </nav>
-        <div className="user-profile" onClick={onOpenProfileMenu} role="button" tabIndex={0} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOpenProfileMenu(); } }} aria-label="Open profile menu">
+        <div className="user-profile" onClick={onOpenProfileMenu} role="button" tabIndex={0} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOpenProfileMenu(); } }} aria-label="Open profile menu" title={user?.name || 'Profile'}>
           <div className="avatar">
             {user?.avatar && user.avatar.length > 2 ? (
-              <img loading="lazy" decoding="async" src={user.avatar} alt="" className="avatar-img" />
+              <img
+                loading="lazy"
+                decoding="async"
+                src={user.avatar}
+                alt=""
+                className="avatar-img"
+                onError={(e) => {
+                  e.target.onerror = null;
+                  const letter = (user?.name || user?.email || 'M').charAt(0).toUpperCase();
+                  e.target.src = `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 44 44"><circle cx="22" cy="22" r="22" fill="%230ea5e9"/><text x="22" y="28" text-anchor="middle" fill="white" font-size="18" font-family="sans-serif" font-weight="bold">' + letter + '</text></svg>')}`;
+                }}
+              />
             ) : (
-              user?.avatar || 'M'
+              (user?.avatar || (user?.name || user?.email || 'M').charAt(0).toUpperCase())
             )}
           </div>
           <div className="user-info">
@@ -2098,11 +2169,12 @@ function App() {
   });
   const featureFlags = useMemo(() => featureFlagsFromConfig(appConfig.featureFlags), [appConfig.featureFlags]);
 
-  /** Sport keys that are enabled (not turned off in config). Empty config = all enabled. */
+  /** Sport keys that are enabled (not turned off in config). Includes any key set to true in config so Super Admin–added sports show up. */
   const enabledSportKeys = useMemo(() => {
     const m = appConfig.enabledSports && typeof appConfig.enabledSports === 'object' ? appConfig.enabledSports : {};
-    console.log('[DEBUG] appConfig.enabledSports:', m);
-    return SPORTS_TABS.filter((s) => m[s] !== false);
+    const fromTabs = SPORTS_TABS.filter((s) => m[s] !== false);
+    const fromConfigTrue = Object.keys(m).filter((k) => m[k] === true && !SPORTS_TABS.includes(k));
+    return [...new Set([...fromTabs, ...fromConfigTrue])];
   }, [appConfig.enabledSports]);
 
   const THEME_STORAGE_KEY = 'mazin_theme';
@@ -2129,12 +2201,20 @@ function App() {
   });
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
 
+  const SIDEBAR_COLLAPSED_KEY = 'curly_sidebar_collapsed';
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
+  useEffect(() => {
+    try {
+      localStorage.setItem(SIDEBAR_COLLAPSED_KEY, sidebarCollapsed ? 'true' : 'false');
+    } catch (_) {}
+  }, [sidebarCollapsed]);
+
   const HOME_THEME_KEY = 'curly_home_theme';
   const [homeTheme, setHomeTheme] = useState(() => {
     try {
       const t = localStorage.getItem(HOME_THEME_KEY);
       if (t === 'light' || t === 'dark') return t;
-      if (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) return 'dark';
+      // First visit / no preference: always default to light for the home page
     } catch (_) { }
     return 'light';
   });
@@ -2459,7 +2539,13 @@ function App() {
   const [nbaConferenceTab, setNbaConferenceTab] = useState('east'); // 'east' | 'west' — sub-tabs when on NBA
   /** Selected season year for cricket standings (null = current/latest from API). 2008–current+1. */
   const [cricketSeasonYear, setCricketSeasonYear] = useState(null);
-  const sportConfig = SPORTS_CONFIG[selectedSport];
+  const sportConfig = SPORTS_CONFIG[selectedSport] || {
+    ...getSportConfig(selectedSport),
+    path: selectedSport,
+    leagues: {},
+    leagueNames: {},
+    leagueLogos: {}
+  };
   const leagueNames = sportConfig.leagueNames;
   const leagueLogos = sportConfig.leagueLogos;
   const leagues = sportConfig.leagues;
@@ -5233,7 +5319,7 @@ function App() {
   const isMaintenanceMode = appConfig.maintenance === true || (typeof localStorage !== 'undefined' && localStorage.getItem('sa_maintenance') === 'true');
   if (isMaintenanceMode) {
     return (
-      <div className="app-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: '#0f172a', color: '#f1f5f9', flexDirection: 'column', gap: 16, padding: 24 }}>
+      <div className="app-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: '#121212', color: '#f1f5f9', flexDirection: 'column', gap: 16, padding: 24 }}>
         <h1 style={{ fontSize: '1.5rem', margin: 0 }}>Under maintenance</h1>
         <p style={{ color: '#94a3b8', margin: 0 }}>We’ll be back shortly. Please try again later.</p>
         <button type="button" onClick={handleLogout} style={{ padding: '10px 20px', borderRadius: 8, border: 'none', background: '#f59e0b', color: '#0a0e1a', cursor: 'pointer', fontWeight: 600 }}>Log out</button>
@@ -5269,7 +5355,8 @@ function App() {
   /* Main app: sidebar + content. Dashboard is a tab inside the app (no /dashboard route). */
   return (
     <>
-      <div className="app-container" data-sport={selectedSport}>
+      <div className="app-container">
+        <div className={`theme-experience theme-experience--${themeMode}`} aria-hidden="true" />
         <Sidebar
           currentTab={currentTab}
           setTab={setTab}
@@ -5284,6 +5371,8 @@ function App() {
           leagueShortNames={sportConfig.leagueShortNames || {}}
           leagues={leagues}
           featureFlags={featureFlags}
+          collapsed={sidebarCollapsed}
+          onToggleCollapsed={() => setSidebarCollapsed((c) => !c)}
         />
 
         {profileMenuOpen && user && (
@@ -5297,7 +5386,7 @@ function App() {
             setThemeMode={setThemeMode}
           />
         )}
-        <main className="main-content" data-sport={selectedSport} data-tab={currentTab}>
+        <main className="main-content" data-tab={currentTab}>
           {currentTab === 'dashboard' ? (
             <>
               <div className="dashboard-bg-overlay" aria-hidden="true" />
@@ -5321,7 +5410,6 @@ function App() {
             </>
           ) : (
             <>
-              {/* Sport field background only (no decorative icons) – see sport-layouts.css for field patterns */}
               {/* Mobile/tablet: logo + sport dropdown + profile + logout (all formats) */}
               <div className="mobile-sport-selector">
                 <div className="mobile-header-logo" onClick={() => setTab('live')} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setTab('live'); }} aria-label="Go to Live Scores">
