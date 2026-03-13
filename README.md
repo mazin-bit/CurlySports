@@ -45,16 +45,19 @@ You don't have to ever use `eject`. The curated feature set is suitable for smal
 - **Admin** and **Super Admin** are separate account types. When they sign in here, they are redirected to the separate Admin Panel app.
 - Set `REACT_APP_ADMIN_PANEL_URL` to the base URL of the Admin Panel (e.g. `http://localhost:3001` in dev) so redirects work. See the `admin/` folder for that app.
 
-## Firebase & data storage
+## Supabase & data storage
 
-- **Authentication** is handled by Firebase Auth (Google + email/password).
-- **User data** (favorite teams, favorite players, booked tickets, penalty best score) is stored in **Firebase Firestore** when the user is logged in, and in **localStorage** when logged out or as a fallback.
+- **Authentication** is handled by Supabase Auth (Google OAuth + email/password).
+- **User data** (favorite teams, favorite players, booked tickets, penalty best score) is stored in **Supabase PostgreSQL** when the user is logged in, and in **localStorage** when logged out or as a fallback.
+- **Real-time updates** are powered by Supabase Realtime (Postgres Changes) for the `users`, `app_config`, and `notifications` tables.
+- **Row Level Security (RLS)** is enabled on all tables to enforce access control at the database level.
 
-To use Firestore:
+To set up Supabase:
 
-1. In the [Firebase Console](https://console.firebase.google.com/), open your project (e.g. **mazinshub**).
-2. Go to **Build → Firestore Database** and click **Create database** (start in test mode or set rules as needed).
-3. Data is stored per user in: `users/{uid}` with fields `favoriteClubs`, `favoritePlayers`, `bookedTickets`, `penaltyBest`.
+1. Create a project at [supabase.com](https://supabase.com).
+2. Run `supabase/schema.sql` in the SQL Editor to create tables, indexes, RLS policies, and triggers.
+3. Copy your project URL and anon key into `.env` as `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`.
+4. Enable Google OAuth in Supabase Dashboard → Authentication → Providers.
 
 ## Learn More
 

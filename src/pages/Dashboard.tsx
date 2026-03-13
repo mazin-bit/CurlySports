@@ -1,5 +1,6 @@
 // @ts-nocheck
 import React, { useMemo, useState, useEffect } from 'react';
+import { Newspaper, FileText, ArrowLeftRight, PlayCircle, Star, User, ChevronLeft, ChevronRight, LayoutDashboard, PenLine, SlidersHorizontal, ArrowRight, Play } from 'lucide-react';
 import '../styles/Dashboard.css';
 
 /**
@@ -182,12 +183,12 @@ function Dashboard({
         <main className="dashboard-main-new">
           <div className="dashboard-content">
             <div className="dashboard-empty-state">
-              <span className="material-icons-round dashboard-empty-state-icon">dashboard_customize</span>
+              <LayoutDashboard size={56} className="dashboard-empty-state-icon" strokeWidth={1.5} />
               <h1 className="dashboard-greeting">Your dashboard is empty</h1>
               <p className="dashboard-tagline">Fill in the short survey to get news, match reports, and highlights tailored to your favorite teams and players.</p>
               {onOpenSurvey && (
                 <button type="button" className="dashboard-cta-btn" onClick={onOpenSurvey}>
-                  <span className="material-icons-round">edit_note</span>
+                  <PenLine size={20} />
                   Fill the survey
                 </button>
               )}
@@ -213,7 +214,7 @@ function Dashboard({
               </div>
               {surveyCompleted && onOpenSurvey && (
                 <button type="button" className="dashboard-update-interests-btn" onClick={onOpenSurvey}>
-                  <span className="material-icons-round">tune</span>
+                  <SlidersHorizontal size={18} />
                   Configure interests
                 </button>
               )}
@@ -223,7 +224,7 @@ function Dashboard({
           {showNews && (
             <section className="dashboard-section">
               <h2 className="dashboard-section-title">
-                <span className="material-icons-round">article</span> Latest news
+                <Newspaper size={22} className="section-icon" /> Latest news
               </h2>
               {dashboardNews.length > 0 ? (
                 <>
@@ -251,7 +252,7 @@ function Dashboard({
                         onClick={() => { setDashboardNewsPage((p) => Math.max(1, p - 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                         aria-label="Previous page"
                       >
-                        <span className="material-icons-round">chevron_left</span>
+                        <ChevronLeft size={18} />
                       </button>
                       <div className="pager-list">
                         {Array.from({ length: dashboardNewsTotalPages }, (_, i) => i + 1).map((p) => (
@@ -272,7 +273,7 @@ function Dashboard({
                         onClick={() => { setDashboardNewsPage((p) => Math.min(dashboardNewsTotalPages, p + 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                         aria-label="Next page"
                       >
-                        <span className="material-icons-round">chevron_right</span>
+                        <ChevronRight size={18} />
                       </button>
                     </div>
                   )}
@@ -290,7 +291,7 @@ function Dashboard({
           {contentTypes.matchReports !== false && (
             <section className="dashboard-section">
               <h2 className="dashboard-section-title">
-                <span className="material-icons-round">description</span> Match reports
+                <FileText size={22} className="section-icon" /> Match reports
               </h2>
               {reportsList.length > 0 ? (
                 <>
@@ -306,7 +307,6 @@ function Dashboard({
                         <div className="dashboard-report-img-wrap">
                           <img src={n.image} alt="" className="dashboard-report-img" onError={(e) => { e.target.src = 'https://via.placeholder.com/400x220?text=Match+Report'; }} />
                           <span className="dashboard-report-badge">
-                            <span className="material-icons-round" aria-hidden="true">sports_soccer</span>
                             {n.source || n.tag}
                           </span>
                         </div>
@@ -326,7 +326,7 @@ function Dashboard({
                         onClick={() => { setMatchReportsPage((p) => Math.max(1, p - 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                         aria-label="Previous page"
                       >
-                        <span className="material-icons-round">chevron_left</span>
+                        <ChevronLeft size={18} />
                       </button>
                       <div className="pager-list">
                         {Array.from({ length: matchReportsTotalPages }, (_, i) => i + 1).map((p) => (
@@ -347,7 +347,7 @@ function Dashboard({
                         onClick={() => { setMatchReportsPage((p) => Math.min(matchReportsTotalPages, p + 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                         aria-label="Next page"
                       >
-                        <span className="material-icons-round">chevron_right</span>
+                        <ChevronRight size={18} />
                       </button>
                     </div>
                   )}
@@ -365,7 +365,7 @@ function Dashboard({
           {contentTypes.transferNews !== false && (
             <section className="dashboard-section">
               <h2 className="dashboard-section-title">
-                <span className="material-icons-round">swap_horiz</span> Transfer news
+                <ArrowLeftRight size={22} className="section-icon" /> Transfer news
               </h2>
               <p className="dashboard-section-desc">From league feeds — transfers, signings, deals &amp; rumours.</p>
               {(transferNews || []).length > 0 ? (
@@ -382,7 +382,7 @@ function Dashboard({
                         <div className="dashboard-transfer-card-img-wrap">
                           <img src={n.image} alt="" className="dashboard-transfer-card-img" onError={(e) => { e.target.src = 'https://via.placeholder.com/400x220?text=Transfer'; }} />
                           <span className="dashboard-transfer-card-badge">
-                            <span className="material-icons-round">swap_horiz</span>
+                            <ArrowLeftRight size={14} />
                             {n.source || n.tag}
                           </span>
                         </div>
@@ -390,7 +390,7 @@ function Dashboard({
                           <h3 className="dashboard-transfer-card-title">{n.title}</h3>
                           {n.excerpt && <p className="dashboard-transfer-card-excerpt">{n.excerpt.slice(0, 120)}{n.excerpt.length > 120 ? '…' : ''}</p>}
                           <span className="dashboard-transfer-card-link">
-                            Read more <span className="material-icons-round">arrow_forward</span>
+                            Read more <ArrowRight size={14} />
                           </span>
                         </div>
                       </a>
@@ -404,7 +404,7 @@ function Dashboard({
                       onClick={() => { setTransferNewsPage((p) => Math.max(1, p - 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                       aria-label="Previous page"
                     >
-                      <span className="material-icons-round">chevron_left</span>
+                      <ChevronLeft size={18} />
                     </button>
                     <div className="pager-list">
                       {Array.from({ length: transferNewsTotalPages }, (_, i) => i + 1).map((p) => (
@@ -425,7 +425,7 @@ function Dashboard({
                       onClick={() => { setTransferNewsPage((p) => Math.min(transferNewsTotalPages, p + 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                       aria-label="Next page"
                     >
-                      <span className="material-icons-round">chevron_right</span>
+                      <ChevronRight size={18} />
                     </button>
                   </div>
                 </>
@@ -440,7 +440,7 @@ function Dashboard({
           {contentTypes.videos !== false && videoHighlights.length > 0 && (
             <section className="dashboard-section">
               <h2 className="dashboard-section-title">
-                <span className="material-icons-round">play_circle</span> Match highlights
+                <PlayCircle size={22} className="section-icon" /> Match highlights
               </h2>
               <div className="dashboard-videos-grid">
                 {videoHighlights.map((v) => (
@@ -448,7 +448,7 @@ function Dashboard({
                     <div className="dashboard-video-img-wrap">
                       <img src={v.image} alt="" className="dashboard-video-img" onError={(e) => { e.target.src = 'https://via.placeholder.com/400x220?text=Highlights'; }} />
                       <div className="dashboard-video-play-overlay">
-                        <span className="material-icons-round">play_arrow</span>
+                        <Play size={28} fill="currentColor" />
                       </div>
                       {v.isEspn && (
                         <span className="dashboard-video-espn-badge">ESPN recap</span>
@@ -467,7 +467,7 @@ function Dashboard({
           {(favTeams.length > 0 || favoritePlayersList.length > 0) && (
             <section className="dashboard-section">
               <h2 className="dashboard-section-title">
-                <span className="material-icons-round">star</span> Your favorites
+                <Star size={22} className="section-icon" /> Your favorites
               </h2>
               {(favoriteClubsList.length > 0 || favTeamNamesOnly.length > 0) && (
                 <div className="dashboard-fav-teams">
@@ -481,7 +481,7 @@ function Dashboard({
                     ))}
                     {favTeamNamesOnly.map((name) => (
                       <div key={name} className="dashboard-fav-chip dashboard-fav-chip-name-only">
-                        <span className="material-icons-round">sports_soccer</span>
+                        <Star size={16} />
                         <span>{name}</span>
                       </div>
                     ))}
@@ -494,7 +494,7 @@ function Dashboard({
                   <div className="dashboard-players-grid">
                     {favoritePlayersList.map((p) => (
                       <div key={p.id} className="dashboard-player-fav-card">
-                        <span className="material-icons-round">person</span>
+                        <User size={20} />
                         <div className="dashboard-player-fav-info">
                           <span className="dashboard-player-fav-name">{p.name}</span>
                         </div>

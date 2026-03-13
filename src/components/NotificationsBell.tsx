@@ -1,5 +1,6 @@
 import React from 'react';
 import { addNotification, subscribeNotifications, markNotificationRead, markAllNotificationsRead } from '../services/database';
+import { Bell, Clock, Trophy, CircleDot, User, ArrowLeftRight, Info } from 'lucide-react';
 import '../styles/NotificationsBell.css';
 
 export { addNotification };
@@ -44,16 +45,17 @@ function NotificationsBell({ userId, onShowToast }: NotificationsBellProps) {
     await markAllNotificationsRead(userId);
   };
 
-  const getTypeIcon = (type: string): string => {
-    const map: Record<string, string> = {
-      match_start: 'schedule',
-      match_result: 'emoji_events',
-      goal: 'sports_soccer',
-      player_news: 'person',
-      transfer: 'swap_horiz',
-      info: 'notifications',
-    };
-    return map[type] || 'notifications';
+  const TYPE_ICON_MAP: Record<string, React.ComponentType<{ size?: number }>> = {
+    match_start: Clock,
+    match_result: Trophy,
+    goal: CircleDot,
+    player_news: User,
+    transfer: ArrowLeftRight,
+    info: Info,
+  };
+
+  const getTypeIconComponent = (type: string) => {
+    return TYPE_ICON_MAP[type] || Bell;
   };
 
   return (
@@ -65,7 +67,7 @@ function NotificationsBell({ userId, onShowToast }: NotificationsBellProps) {
         aria-label={`Notifications${unreadCount > 0 ? `, ${unreadCount} unread` : ''}`}
         aria-expanded={open}
       >
-        <span className="material-icons-round">notifications</span>
+        <Bell size={20} />
         {unreadCount > 0 && (
           <span className="notifications-bell-badge" aria-hidden="true">
             {unreadCount > 99 ? '99+' : unreadCount}
@@ -99,9 +101,7 @@ function NotificationsBell({ userId, onShowToast }: NotificationsBellProps) {
                     }}
                     role="menuitem"
                   >
-                    <span className="material-icons-round notifications-bell-item-icon">
-                      {getTypeIcon(n.type)}
-                    </span>
+                    {(() => { const Icon = getTypeIconComponent(n.type); return <span className="notifications-bell-item-icon"><Icon size={18} /></span>; })()}
                     <div className="notifications-bell-item-body">
                       <span className="notifications-bell-item-title">{n.title}</span>
                       {n.body ? <span className="notifications-bell-item-body-text">{n.body}</span> : null}

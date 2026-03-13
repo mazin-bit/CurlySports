@@ -3,6 +3,7 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { listUsersForAdmin, listUsersForAdminFromCache, setUserData, setUserRole, setStreakForAdmin, setUserStatusForAdmin, subscribeAppConfig, setAppConfig, pushAuditLog, buildSuperAdminEmailsMap } from '../services/database';
 import { auth } from '../services/auth';
 import '../styles/SuperAdminDashboard.css';
+import { LayoutDashboard, SlidersHorizontal, Shield, Users, Flame, Lock, FileText, Database, LogOut, Sun, Moon, Menu, Search, RefreshCw, ChevronDown, ToggleLeft, ToggleRight, Download, CheckCircle, XCircle, Trophy, X, Activity, Plus, Trash2, Eye, EyeOff } from 'lucide-react';
 
 const ACTIVE_THRESHOLD_MS = 10 * 60 * 1000; // 10 min
 
@@ -55,6 +56,17 @@ const TABS = [
   { id: 'health', label: 'Server & Database Health', icon: 'dns' },
 ];
 
+const LUCIDE_TAB_ICONS = {
+  dashboard: LayoutDashboard,
+  features: SlidersHorizontal,
+  admins: Shield,
+  users: Users,
+  leaderboard: Flame,
+  roles: Lock,
+  audit: FileText,
+  health: Database,
+};
+
 const DEFAULT_FLAGS = [
   { key: 'live_scores', label: 'Live scores', description: 'Show live scores to members' },
   { key: 'streaks', label: 'Streaks', description: 'Enable streak tracking' },
@@ -85,9 +97,9 @@ const SPORTS_FOR_FLAGS = [
   { key: 'f1', label: 'Formula 1' },
 ];
 
-/** Message shown when Firestore denies listing users (Super Admin allowlist / role). */
+/** Message shown when Supabase RLS denies listing users (Super Admin allowlist / role). */
 export const USERS_PERMISSION_ERROR_MESSAGE =
-  'Missing or insufficient permissions. Ensure your email is in the Super Admin allowlist in firestore.rules, or run "Sync my access & retry" below.';
+  'Missing or insufficient permissions. Ensure your email is in the Super Admin allowlist in Supabase, or run "Sync my access & retry" below.';
 
 function isUsersPermissionError(msg) {
   return msg && /permission|insufficient/i.test(String(msg));
@@ -163,7 +175,7 @@ export function SuperAdminDashboard({ user, onLogout, colorScheme = 'dark', setC
     };
   }, [featureFlags, permissions, maintenance, enabledSports, health]);
 
-  // Persist config to Firestore every second so data is always saved (retries if a write failed)
+  // Persist config to Supabase every second so data is always saved (retries if a write failed)
   useEffect(() => {
     if (!auth.currentUser?.email) return;
     const interval = setInterval(() => {
@@ -199,7 +211,7 @@ export function SuperAdminDashboard({ user, onLogout, colorScheme = 'dark', setC
     const dist8plus = streaks.filter((s) => s > 7).length;
     return { dau, last7, streakDistribution: { zero: dist0, oneToSeven: dist1to7, eightPlus: dist8plus } };
   }, [usersList]);
-  // Ensure Super Admin's Firestore doc and config grant access so User Management / Streak Leaderboard load without permission errors
+  // Ensure Super Admin's user doc and config grant access so User Management / Streak Leaderboard load without permission errors
   useEffect(() => {
     const uid = auth.currentUser?.uid;
     const email = user?.email || auth.currentUser?.email;
@@ -281,7 +293,7 @@ export function SuperAdminDashboard({ user, onLogout, colorScheme = 'dark', setC
         setTimeout(() => setPermsSaveSuccess(false), 2500);
       })
       .catch((e) => {
-        setPermsSaveError(e?.message || 'Failed to save permissions. Check Firestore rules.');
+        setPermsSaveError(e?.message || 'Failed to save permissions. Check Supabase RLS policies.');
         setTimeout(() => setPermsSaveError(null), 5000);
       })
       .finally(() => { pendingPerms.current = false; });
@@ -311,7 +323,7 @@ export function SuperAdminDashboard({ user, onLogout, colorScheme = 'dark', setC
       pushAudit('ADMIN_ADD', 'admins', { email, role });
       setTimeout(() => setAdminSaveSuccess(false), 3000);
     } catch (e) {
-      setAdminSaveError(e?.message || 'Failed to save. Check Firestore rules: config/app must be writable by super_admin.');
+      setAdminSaveError(e?.message || 'Failed to save. Check Supabase RLS policies: app_config must be writable by super_admin.');
     } finally {
       pendingAdmins.current = false;
     }
@@ -330,7 +342,7 @@ export function SuperAdminDashboard({ user, onLogout, colorScheme = 'dark', setC
         setTimeout(() => setAdminSaveSuccess(false), 3000);
       })
       .catch((e) => {
-        setAdminSaveError(e?.message || 'Failed to remove. Check Firestore rules.');
+        setAdminSaveError(e?.message || 'Failed to remove. Check Supabase RLS policies.');
         setTimeout(() => setAdminSaveError(null), 5000);
       })
       .finally(() => { pendingAdmins.current = false; });
@@ -349,7 +361,7 @@ export function SuperAdminDashboard({ user, onLogout, colorScheme = 'dark', setC
         setTimeout(() => setAdminSaveSuccess(false), 3000);
       })
       .catch((e) => {
-        setAdminSaveError(e?.message || 'Failed to update role. Check Firestore rules.');
+        setAdminSaveError(e?.message || 'Failed to update role. Check Supabase RLS policies.');
         setTimeout(() => setAdminSaveError(null), 5000);
       })
       .finally(() => { pendingAdmins.current = false; });
@@ -370,7 +382,7 @@ export function SuperAdminDashboard({ user, onLogout, colorScheme = 'dark', setC
         pushAudit('FEATURE_FLAG_CHANGE', 'features', { key, enabled: flag?.enabled });
       })
       .catch((e) => {
-        setFlagsSaveError(e?.message || 'Failed to save. Check Firestore rules: config/app writable by super_admin.');
+        setFlagsSaveError(e?.message || 'Failed to save. Check Supabase RLS policies: app_config writable by super_admin.');
         setTimeout(() => setFlagsSaveError(null), 5000);
       })
       .finally(() => { pendingFlags.current = false; });
@@ -430,7 +442,7 @@ export function SuperAdminDashboard({ user, onLogout, colorScheme = 'dark', setC
         })
         .catch((e) => {
           setEnabledSports((revertPrev) => ({ ...revertPrev, [key]: isCurrentlyOn }));
-          const msg = e?.message || 'Failed to save. Check Firestore connection.';
+          const msg = e?.message || 'Failed to save. Check Supabase connection.';
           setSportsSaveError(msg);
           console.error('[SuperAdmin] Sports save failed:', e);
           setTimeout(() => setSportsSaveError(null), 8000);
@@ -467,9 +479,9 @@ export function SuperAdminDashboard({ user, onLogout, colorScheme = 'dark', setC
     listUsersForAdminFromCache().then((cached) => {
       if (cached.length > 0) setUsersList(cached);
     });
-    // Timeout so we never load forever (e.g. Firestore rules or network hang)
+    // Timeout so we never load forever (e.g. RLS policies or network hang)
     const timeout = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error('Request timed out. Using cached data if available. Check your connection and Firestore read rules for the users collection.')), 10000)
+      setTimeout(() => reject(new Error('Request timed out. Using cached data if available. Check your connection and Supabase RLS policies for the users table.')), 10000)
     );
     Promise.race([listUsersForAdmin(), timeout])
       .then((list) => {
@@ -490,10 +502,10 @@ export function SuperAdminDashboard({ user, onLogout, colorScheme = 'dark', setC
     setUsersError(null);
     setUsersLoading(true);
     console.log('[SuperAdminDebug] Starting sync for:', email);
-    // 1) Bootstrap: set own user doc role to super_admin so Firestore getRole() grants access (rule allows member -> super_admin once)
+    // 1) Bootstrap: set own user doc role to super_admin so RLS getRole() grants access
     const bootstrapRole = uid
       ? Promise.resolve(setUserData(uid, { role: 'super_admin' }))
-        .then(() => console.log('[SuperAdminDebug] Local user role updated in Firestore.'))
+        .then(() => console.log('[SuperAdminDebug] Local user role updated in Supabase.'))
         .catch((e) => { console.warn('[SuperAdminDebug] Bootstrap role failed (perhaps already non-member?):', e?.message); })
       : Promise.resolve();
     bootstrapRole
@@ -509,11 +521,11 @@ export function SuperAdminDashboard({ user, onLogout, colorScheme = 'dark', setC
       .catch((e) => {
         console.error('[SuperAdminDebug] Sync process failed:', e);
         setUsersLoading(false);
-        setUsersError(e?.message || 'Failed to sync access. Ensure you have network connectivity and the firestore rules are deployed.');
+        setUsersError(e?.message || 'Failed to sync access. Ensure you have network connectivity and Supabase RLS policies are configured.');
       });
   }, [user?.email, admins, loadUsers]);
 
-  /** Sync role + config first so Firestore grants access, then load users. Use this when opening User Management / Leaderboard so the read succeeds. */
+  /** Sync role + config first so RLS grants access, then load users. Use this when opening User Management / Leaderboard so the read succeeds. */
   const ensureAccessThenLoadUsers = useCallback(() => {
     const uid = auth.currentUser?.uid;
     const email = user?.email || auth.currentUser?.email;
@@ -543,7 +555,7 @@ export function SuperAdminDashboard({ user, onLogout, colorScheme = 'dark', setC
     syncRef.current?.();
   }, [usersError, syncMyAccessAndRetry]);
 
-  // When opening Dashboard, User Management or Streak Leaderboard, sync access first then load users so Firestore rules allow the read
+  // When opening Dashboard, User Management or Streak Leaderboard, sync access first then load users so RLS policies allow the read
   useEffect(() => {
     if (tab === 'dashboard' || tab === 'users' || tab === 'leaderboard') ensureAccessThenLoadUsers();
   }, [tab, ensureAccessThenLoadUsers]);
@@ -665,7 +677,7 @@ export function SuperAdminDashboard({ user, onLogout, colorScheme = 'dark', setC
         <nav className="sa-nav">
           {TABS.map((t) => (
             <button key={t.id} type="button" onClick={() => selectTab(t.id)} className={`sa-nav-btn ${tab === t.id ? 'active' : ''}`}>
-              <span className="material-icons-round">{t.icon}</span>
+              {(() => { const Icon = LUCIDE_TAB_ICONS[t.id]; return Icon ? <Icon size={20} /> : null; })()}
               {t.label}
             </button>
           ))}
@@ -675,10 +687,10 @@ export function SuperAdminDashboard({ user, onLogout, colorScheme = 'dark', setC
             <div className="sa-theme-label">Theme</div>
             <div className="sa-theme-row">
               <button type="button" className={`sa-theme-btn ${colorScheme === 'light' ? 'active' : ''}`} onClick={() => setColorScheme('light')} title="Light">
-                <span className="material-icons-round">light_mode</span>
+                <Sun size={16} />
               </button>
               <button type="button" className={`sa-theme-btn ${colorScheme === 'dark' ? 'active' : ''}`} onClick={() => setColorScheme('dark')} title="Dark">
-                <span className="material-icons-round">dark_mode</span>
+                <Moon size={16} />
               </button>
             </div>
             <div className="sa-theme-modes">
@@ -694,14 +706,14 @@ export function SuperAdminDashboard({ user, onLogout, colorScheme = 'dark', setC
           </div>
         )}
         <div className="sa-sidebar-footer">
-          <div className="sa-logged-in-as" title="This email is used for config writes; Firestore rules allowlist must match.">
+          <div className="sa-logged-in-as" title="This email is used for config writes; Supabase RLS allowlist must match.">
             Logged in as: {user?.email || auth.currentUser?.email || '—'}
           </div>
-          <button type="button" className="sa-logout-btn" onClick={onLogout}>Log out</button>
+          <button type="button" className="sa-logout-btn" onClick={onLogout}><LogOut size={18} /> Log out</button>
         </div>
       </aside>
       <header className="sa-mobile-header">
-        <button type="button" className="sa-menu-btn" onClick={() => setSidebarOpen((o) => !o)} aria-label="Open menu"><span className="material-icons-round" style={{ fontSize: 24 }}>menu</span></button>
+        <button type="button" className="sa-menu-btn" onClick={() => setSidebarOpen((o) => !o)} aria-label="Open menu"><Menu size={22} /></button>
         <span className="sa-title">Super Admin</span>
         <span style={{ width: 40 }} />
       </header>
@@ -748,7 +760,7 @@ export function SuperAdminDashboard({ user, onLogout, colorScheme = 'dark', setC
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: 24, marginTop: 24 }}>
               <div style={cardStyle}>
                 <h2 style={{ fontSize: 14, color: '#94a3b8', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <span className="material-icons-round" style={{ fontSize: 18 }}>show_chart</span>
+                  <Activity size={18} />
                   Member Logins (Last 7 Days)
                 </h2>
                 <div className="bar-chart-container">
@@ -766,7 +778,7 @@ export function SuperAdminDashboard({ user, onLogout, colorScheme = 'dark', setC
 
               <div style={cardStyle}>
                 <h2 style={{ fontSize: 14, color: '#94a3b8', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <span className="material-icons-round" style={{ fontSize: 18 }}>history</span>
+                  <RefreshCw size={18} />
                   Recent System Activity
                 </h2>
                 <div style={{ maxHeight: 120, overflowY: 'auto' }}>
@@ -987,7 +999,7 @@ export function SuperAdminDashboard({ user, onLogout, colorScheme = 'dark', setC
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(400px, 1fr))', gap: 24 }}>
               <div style={{ ...cardStyle }}>
                 <h2 style={{ fontSize: 16, marginBottom: 16, color: '#f59e0b', display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span className="material-icons-round" style={{ fontSize: 18 }}>local_fire_department</span>
+                  <Flame size={18} />
                   Top by current streak
                 </h2>
                 <div style={{ overflowX: 'auto' }}>
@@ -1019,7 +1031,7 @@ export function SuperAdminDashboard({ user, onLogout, colorScheme = 'dark', setC
               </div>
               <div style={{ ...cardStyle }}>
                 <h2 style={{ fontSize: 16, marginBottom: 16, color: '#f59e0b', display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span className="material-icons-round" style={{ fontSize: 18 }}>emoji_events</span>
+                  <Trophy size={18} />
                   Top by longest streak
                 </h2>
                 <div style={{ overflowX: 'auto' }}>
@@ -1182,7 +1194,7 @@ export function SuperAdminDashboard({ user, onLogout, colorScheme = 'dark', setC
             </div>
             <div style={cardStyle}>
               <h2 style={{ fontSize: 16, marginBottom: 16 }}>Feature flags</h2>
-              <p style={{ color: '#94a3b8', fontSize: 13, marginBottom: 16 }}>Toggle each feature. Changes save to Firestore and apply app-wide in real time.</p>
+              <p style={{ color: '#94a3b8', fontSize: 13, marginBottom: 16 }}>Toggle each feature. Changes save to Supabase and apply app-wide in real time.</p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 {featureFlags.map((f) => (
                   <div key={f.key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, padding: '12px 0', borderBottom: '1px solid rgba(148,163,184,0.1)' }}>

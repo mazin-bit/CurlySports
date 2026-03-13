@@ -788,6 +788,11 @@ img {
     min-width: var(--touch-min) !important;
   }
 
+  .nav-arrow-btn {
+    width: var(--touch-min) !important;
+    height: var(--touch-min) !important;
+  }
+
   .sidebar-leagues-row .nav-menu .nav-item {
     min-width: 48px !important;
   }

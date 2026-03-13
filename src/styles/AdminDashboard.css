@@ -60,23 +60,26 @@
   border: none;
   border-radius: 10px;
   background: transparent;
-  color: #94a3b8;
+  color: var(--text-secondary, #94a3b8);
   cursor: pointer;
   text-align: left;
-  font-size: 14px;
-  font-weight: 600;
-  line-height: 1.375;
+  font-size: var(--text-sm, 14px);
+  font-weight: var(--fw-semibold, 600);
+  line-height: var(--leading-snug, 1.375);
   box-sizing: border-box;
-  transition: background 0.2s ease, color 0.2s ease;
+  transition: background var(--duration-fast) ease, color var(--duration-fast) ease;
 }
 
-.admin-dashboard .ad-nav-btn .material-icons-round {
+.admin-dashboard .ad-nav-btn .material-icons-round,
+.admin-dashboard .ad-nav-btn svg {
   flex-shrink: 0;
   font-size: 20px;
+  width: 20px;
+  height: 20px;
 }
 
 .admin-dashboard .ad-nav-btn:hover {
-  background: rgba(59, 130, 246, 0.1);
+  background: var(--state-hover-bg);
   color: #e2e8f0;
 }
 
@@ -86,7 +89,7 @@
 }
 
 .admin-dashboard .ad-nav-btn:focus-visible {
-  outline: 2px solid rgba(59, 130, 246, 0.5);
+  outline: 2px solid var(--state-focus-ring);
   outline-offset: 2px;
 }
 
@@ -127,8 +130,11 @@
   transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
 
-.admin-dashboard .ad-theme-btn .material-icons-round {
+.admin-dashboard .ad-theme-btn .material-icons-round,
+.admin-dashboard .ad-theme-btn svg {
   font-size: 18px;
+  width: 18px;
+  height: 18px;
 }
 
 .admin-dashboard .ad-theme-btn:hover,

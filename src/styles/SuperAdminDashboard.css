@@ -68,14 +68,14 @@
   border: none;
   border-radius: 10px;
   background: transparent;
-  color: #94a3b8;
+  color: var(--text-secondary, #94a3b8);
   cursor: pointer;
   text-align: left;
-  font-size: 13px;
-  font-weight: 600;
-  line-height: 1.375;
+  font-size: var(--text-sm, 13px);
+  font-weight: var(--fw-semibold, 600);
+  line-height: var(--leading-snug, 1.375);
   box-sizing: border-box;
-  transition: background 0.2s ease, color 0.2s ease;
+  transition: background var(--duration-fast) ease, color var(--duration-fast) ease;
 }
 
 .super-admin-dashboard .sa-nav-btn>span:first-child {
@@ -83,9 +83,11 @@
   min-width: 20px;
 }
 
-.super-admin-dashboard .sa-nav-btn .material-icons-round {
+.super-admin-dashboard .sa-nav-btn .material-icons-round,
+.super-admin-dashboard .sa-nav-btn svg {
   flex-shrink: 0;
   width: 20px;
+  height: 20px;
   font-size: 18px !important;
   display: inline-flex;
   align-items: center;
@@ -289,10 +291,9 @@
 }
 
 .super-admin-dashboard .sa-card:hover {
-  transform: translateY(-4px);
+  transform: translateY(-2px);
   border-color: rgba(251, 191, 36, 0.4);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: var(--shadow-card-hover);
 }
 
 .super-admin-dashboard .sa-card {

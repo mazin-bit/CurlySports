@@ -16,8 +16,8 @@
   --curly-text: #f8fafc;
   --curly-text-secondary: rgba(248, 250, 252, 0.75);
   --curly-text-muted: rgba(248, 250, 252, 0.55);
-  --curly-font: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-  --curly-font-display: 'Syne', sans-serif;
+  --curly-font: var(--font-main, 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif);
+  --curly-font-display: var(--font-display, 'Syne', sans-serif);
   --curly-radius: 12px;
   --curly-radius-sm: 8px;
   --curly-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
@@ -167,7 +167,7 @@
 .public-nav-cta:hover {
   background: var(--curly-accent-hover);
   color: #fff;
-  transform: translateY(-1px);
+  transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(14, 165, 233, 0.35);
 }
 .public-logo-link:focus-visible,
@@ -322,7 +322,7 @@
 }
 .home-card:hover {
   border-color: rgba(14, 165, 233, 0.25);
-  transform: translateY(-3px);
+  transform: translateY(-2px);
   box-shadow: var(--curly-shadow);
 }
 .home-card-icon {
@@ -607,7 +607,7 @@
   align-items: stretch;
   justify-content: stretch;
   padding: 0;
-  overflow: hidden;
+  overflow: visible;
   /* Override index.css so we don't get a centered "box" */
   background: transparent;
 }
@@ -699,41 +699,57 @@
 .public-auth-shell--curly .login-card-curly-wrap {
   position: relative;
   width: 100%;
-  max-width: 320px;
+  max-width: 380px;
 }
 .public-auth-shell--curly .login-avatar-peek {
   position: absolute;
   left: 50%;
-  transform: translateX(-50%);
   bottom: 100%;
-  margin-bottom: -48px;
-  width: 180px;
+  margin-bottom: -24px;
+  width: 160px;
   height: auto;
-  z-index: 2;
+  z-index: 3;
   pointer-events: none;
+  animation: avatarPeekUp 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s both;
+  filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.12));
+}
+@keyframes avatarPeekUp {
+  0% {
+    transform: translateX(-50%) translateY(20px);
+    opacity: 0;
+  }
+  60% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+  }
 }
 .public-auth-shell--curly .login-card-curly {
   background: #fff;
-  border-radius: 18px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.04);
-  padding: 20px 18px 18px;
+  border-radius: 20px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08), 0 8px 24px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(0, 0, 0, 0.03);
+  padding: 32px 28px 28px;
   width: 100%;
   position: relative;
-  z-index: 1;
+  z-index: 2;
 }
 .public-auth-shell--curly.public-home--dark .login-card-curly {
-  background: rgba(15, 23, 42, 0.98);
+  background: rgba(15, 23, 42, 0.97);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
 }
 .public-auth-shell--curly .login-card-title {
-  font-size: 2.25rem;
+  font-size: 2rem;
   font-weight: 800;
   text-align: center;
-  margin: 0 0 10px;
-  letter-spacing: -0.02em;
+  margin: 0 0 6px;
+  letter-spacing: -0.025em;
   font-family: var(--curly-font-display);
-  line-height: 1.15;
+  line-height: 1.1;
 }
 .public-auth-shell--curly .login-card-title--split {
   background: none;
@@ -760,26 +776,50 @@
   color: inherit;
 }
 .public-auth-shell--curly .login-form-header {
-  margin-bottom: 10px;
+  margin-bottom: 16px;
   text-align: center;
 }
 .public-auth-shell--curly .login-form-title {
-  font-size: 1.125rem;
-  font-weight: 700;
-  color: #1e293b;
-  margin: 0 0 4px;
+  font-size: 1.0625rem;
+  font-weight: 600;
+  color: #475569;
+  margin: 0;
+  letter-spacing: -0.01em;
 }
 .public-auth-shell--curly.public-home--dark .login-form-title {
   color: #f1f5f9;
 }
 .public-auth-shell--curly .login-form-switch {
   font-size: 0.8125rem;
-  color: #64748b;
-  margin: 12px 0 0;
+  color: #94a3b8;
+  margin: 8px 0 0;
   text-align: center;
 }
 .public-auth-shell--curly.public-home--dark .login-form-switch {
-  color: #94a3b8;
+  color: #64748b;
+}
+.public-auth-shell--curly .login-terms {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8125rem;
+  color: #64748b;
+  cursor: pointer;
+}
+.public-auth-shell--curly .login-terms input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  accent-color: #0ea5e9;
+}
+.public-auth-shell--curly .login-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 32px 0;
+  color: #64748b;
+  font-size: 0.875rem;
 }
 .public-auth-shell--curly .auth-back-home {
   display: inline-block;
@@ -790,30 +830,31 @@
 .public-auth-shell--curly .login-body {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 14px;
 }
 .public-auth-shell--curly .input-group-pro--curly {
   display: flex;
   align-items: center;
-  gap: 20px;
-  padding: 6px 10px 6px 14px;
-  min-height: 0;
-  border-radius: 10px;
-  border: 1px solid #e2e8f0;
+  gap: 10px;
+  padding: 10px 14px;
+  min-height: 44px;
+  border-radius: 12px;
+  border: 1.5px solid #e2e8f0;
   background: #f8fafc;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
 }
 .public-auth-shell--curly .login-field-wrap {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
 }
 .public-auth-shell--curly .login-field-label {
   font-size: 0.8125rem;
-  font-weight: 600;
-  color: #475569;
+  font-weight: 500;
+  color: #64748b;
   text-align: left;
   margin: 0;
+  letter-spacing: 0.01em;
 }
 .public-auth-shell--curly.public-home--dark .login-field-label {
   color: #94a3b8;
@@ -830,16 +871,19 @@
   border-color: #38bdf8;
   box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2);
 }
-.public-auth-shell--curly .input-group-pro--curly .material-icons-round {
+.public-auth-shell--curly .input-group-pro--curly .material-icons-round,
+.public-auth-shell--curly .input-group-pro--curly .lucide-icon {
   color: #94a3b8;
   font-size: 18px;
+  width: 18px;
+  height: 18px;
   flex-shrink: 0;
 }
 .public-auth-shell--curly .input-group-pro--curly input {
   flex: 1;
   min-height: 0;
   min-width: 0;
-  padding: 2px 0 2px 20px;
+  padding: 2px 0;
   border: none;
   background: transparent;
   font-size: 0.9375rem;
@@ -862,36 +906,42 @@
   background: linear-gradient(180deg, #0ea5e9 0%, #0284c7 100%);
   color: #fff;
   cursor: pointer;
-  box-shadow: 0 4px 14px rgba(14, 165, 233, 0.4);
-  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 2px 8px rgba(14, 165, 233, 0.3);
+  transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
+  margin-top: 4px;
 }
 .public-auth-shell--curly .login-main-btn--curly:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(14, 165, 233, 0.45);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(14, 165, 233, 0.4);
+}
+.public-auth-shell--curly .login-main-btn--curly:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 1px 4px rgba(14, 165, 233, 0.3);
 }
 .public-auth-shell--curly .login-main-btn--curly:disabled {
-  opacity: 0.6;
+  opacity: 0.5;
   cursor: not-allowed;
 }
 .public-auth-shell--curly .google-auth-btn--curly {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 10px;
   width: 100%;
-  padding: 10px 16px;
+  padding: 11px 16px;
   border-radius: 12px;
-  border: 1px solid #e2e8f0;
+  border: 1.5px solid #e2e8f0;
   background: #fff;
   color: #1e293b;
   font-size: 0.9375rem;
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
-  transition: background 0.2s, border-color 0.2s;
+  transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
 }
 .public-auth-shell--curly .google-auth-btn--curly:hover {
   background: #f8fafc;
   border-color: #cbd5e1;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 .public-auth-shell--curly.public-home--dark .google-auth-btn--curly {
   border-color: rgba(255, 255, 255, 0.15);
@@ -902,42 +952,66 @@
   background: rgba(255, 255, 255, 0.12);
 }
 .public-auth-shell--curly .auth-divider span {
-  color: #64748b;
+  color: #94a3b8;
+  font-size: 0.8125rem;
+  font-weight: 400;
+  padding: 0 14px;
 }
 .public-auth-shell--curly .auth-divider {
   justify-content: center;
+  align-items: center;
+  display: flex;
+  gap: 0;
 }
 .public-auth-shell--curly .auth-divider::before,
 .public-auth-shell--curly .auth-divider::after {
   flex: 1;
-}
-.public-auth-shell--curly .auth-divider::before {
+  height: 1px;
+  background: #e2e8f0;
+  content: '';
   display: block;
+}
+.public-auth-shell--curly.public-home--dark .auth-divider::before,
+.public-auth-shell--curly.public-home--dark .auth-divider::after {
+  background: rgba(255, 255, 255, 0.1);
 }
 .public-auth-shell--curly .auth-error-msg {
   padding: 10px 14px;
   border-radius: 10px;
-  background: rgba(239, 68, 68, 0.1);
-  border: 1px solid rgba(239, 68, 68, 0.25);
+  background: rgba(239, 68, 68, 0.06);
+  border: 1px solid rgba(239, 68, 68, 0.2);
   color: #dc2626;
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 8px;
+  line-height: 1.5;
+}
+.public-auth-shell--curly .auth-error-msg .material-icons-round,
+.public-auth-shell--curly .auth-error-msg .lucide-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  margin-top: 2px;
 }
 @media (max-width: 480px) {
   .public-auth-shell--curly .login-layout--curly {
     padding: 16px 12px 24px;
   }
   .public-auth-shell--curly .login-card-curly {
-    padding: 18px 14px 14px;
+    padding: 24px 18px 20px;
+    border-radius: 16px;
   }
   .public-auth-shell--curly .login-card-curly-wrap {
     max-width: 100%;
   }
   .public-auth-shell--curly .login-avatar-peek {
-    width: 140px;
-    margin-bottom: -36px;
+    width: 120px;
+    margin-bottom: -18px;
+  }
+  .public-auth-shell--curly .login-card-title {
+    font-size: 1.75rem;
   }
 }
 
@@ -1715,21 +1789,21 @@
 .home-sports-section {
   position: relative;
   z-index: 3;
-  padding: 24px 0 20px;
+  padding: 24px 24px 20px;
 }
 @media (min-width: 1400px) {
   .home-sports-section {
-    padding: 32px 0 28px;
+    padding: 32px 32px 28px;
   }
 }
 @media (max-width: 768px) {
   .home-sports-section {
-    padding: 20px 0 16px;
+    padding: 20px 20px 16px;
   }
 }
 @media (max-width: 480px) {
   .home-sports-section {
-    padding: 16px 0 12px;
+    padding: 16px 16px 12px;
   }
 }
 .home-sports-scroll-hint {
@@ -1966,6 +2040,27 @@
 }
 .home-scard-front {
   background: #fff;
+  padding: 14px 16px 16px;
+  box-sizing: border-box;
+}
+.home-scard-front-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
+}
+.home-scard-front .home-scard-figure-wrap {
+  position: relative;
+  z-index: 1;
+}
+.home-scard-front .home-scard-label {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1;
 }
 .home-scard-back {
   transform: rotateY(180deg);
@@ -1974,6 +2069,7 @@
 .home-scard-back-bg {
   position: absolute;
   inset: 0;
+  z-index: 1;
   border-radius: 24px;
   pointer-events: none;
   overflow: hidden;
@@ -2427,7 +2523,7 @@
   transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
 }
 .public-home--curly .home-card:hover {
-  transform: translateY(-4px);
+  transform: translateY(-2px);
   border-color: rgba(96, 165, 250, 0.25);
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
 }

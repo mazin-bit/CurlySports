@@ -1,15 +1,25 @@
 // @ts-nocheck
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { setUserData } from '../services/database';
+import { X, ChevronUp, ChevronDown, Newspaper, FileText, ArrowLeftRight, Radio, BarChart3, PlayCircle } from 'lucide-react';
 import '../styles/SurveyInterests.css';
 
+const CONTENT_TYPE_ICONS = {
+  news: Newspaper,
+  matchReports: FileText,
+  transferNews: ArrowLeftRight,
+  liveScores: Radio,
+  playerStats: BarChart3,
+  videos: PlayCircle,
+};
+
 const CONTENT_TYPES = [
-  { key: 'news', label: 'News & updates', icon: 'article' },
-  { key: 'matchReports', label: 'Match reports', icon: 'sports_soccer' },
-  { key: 'transferNews', label: 'Transfer news', icon: 'swap_horiz' },
-  { key: 'liveScores', label: 'Live scores', icon: 'live_tv' },
-  { key: 'playerStats', label: 'Player stats', icon: 'bar_chart' },
-  { key: 'videos', label: 'Videos', icon: 'play_circle' },
+  { key: 'news', label: 'News & updates' },
+  { key: 'matchReports', label: 'Match reports' },
+  { key: 'transferNews', label: 'Transfer news' },
+  { key: 'liveScores', label: 'Live scores' },
+  { key: 'playerStats', label: 'Player stats' },
+  { key: 'videos', label: 'Videos' },
 ];
 
 const DEFAULT_CONTENT_TYPES = {
@@ -224,15 +234,15 @@ function SurveyInterests({
     return true;
   };
 
-  /** Remove undefined so Firestore accepts the payload (Firestore rejects undefined values). */
-  const sanitizeForFirestore = (obj) => {
+  /** Remove undefined values from the payload before persisting. */
+  const sanitizePayload = (obj) => {
     if (obj === null || obj === undefined) return null;
-    if (Array.isArray(obj)) return obj.map(sanitizeForFirestore);
+    if (Array.isArray(obj)) return obj.map(sanitizePayload);
     if (typeof obj !== 'object') return obj;
     const out = {};
     Object.keys(obj).forEach((k) => {
       const v = obj[k];
-      if (v !== undefined) out[k] = sanitizeForFirestore(v);
+      if (v !== undefined) out[k] = sanitizePayload(v);
     });
     return out;
   };
@@ -260,7 +270,7 @@ function SurveyInterests({
     const uniquePlayers = [...new Set(allPlayers)].map((p) =>
       typeof p === 'number' || typeof p === 'string' ? p : String(p)
     );
-    return sanitizeForFirestore({
+    return sanitizePayload({
       surveyCompleted: selectedSports.length > 0,
       surveySkipped: false,
       surveyInterests: { sports },
@@ -407,7 +417,7 @@ function SurveyInterests({
             onClick={onClose}
             aria-label="Close"
           >
-            <span className="material-icons-round">close</span>
+            <X size={20} />
           </button>
         )}
         <h2 id="survey-title" className="survey-title">
@@ -461,9 +471,7 @@ function SurveyInterests({
                             onClick={() => toggleExpanded(sportKey)}
                             aria-expanded={isExpanded}
                           >
-                            <span className="material-icons-round">
-                              {isExpanded ? 'expand_less' : 'expand_more'}
-                            </span>
+                            {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
                           </button>
                         )}
                       </div>
@@ -517,17 +525,20 @@ function SurveyInterests({
                               <div className="survey-subsection">
                                 <h4 className="survey-subtitle">Content you want (at least one)</h4>
                                 <div className="survey-content-types">
-                                  {CONTENT_TYPES.map(({ key, label: ctLabel, icon }) => (
-                                    <label key={key} className="survey-check-wrap survey-content-check">
-                                      <input
-                                        type="checkbox"
-                                        checked={selections.contentTypes[key] === true}
-                                        onChange={() => toggleContentType(sportKey, key)}
-                                      />
-                                      <span className="material-icons-round">{icon}</span>
-                                      <span>{ctLabel}</span>
-                                    </label>
-                                  ))}
+                                  {CONTENT_TYPES.map(({ key, label: ctLabel }) => {
+                                    const Icon = CONTENT_TYPE_ICONS[key];
+                                    return (
+                                      <label key={key} className="survey-check-wrap survey-content-check">
+                                        <input
+                                          type="checkbox"
+                                          checked={selections.contentTypes[key] === true}
+                                          onChange={() => toggleContentType(sportKey, key)}
+                                        />
+                                        {Icon && <Icon size={16} />}
+                                        <span>{ctLabel}</span>
+                                      </label>
+                                    );
+                                  })}
                                 </div>
                               </div>
                             </>

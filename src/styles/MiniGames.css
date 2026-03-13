@@ -1,0 +1,277 @@
+/* Mini games: Basketball + F1 */
+.minigames-section {
+  margin-top: 24px;
+  padding-bottom: 32px;
+  width: 100%;
+  max-width: 100%;
+}
+
+.minigames-section-title {
+  font-size: 20px;
+  font-weight: 800;
+  margin-bottom: 20px;
+  color: var(--text-primary, #f1f5f9);
+  letter-spacing: -0.02em;
+}
+
+.minigames-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+  justify-items: center;
+  width: 100%;
+}
+
+.minigame-card {
+  width: 100%;
+  max-width: 560px;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.02) 100%);
+  border-radius: 16px;
+  padding: 28px 32px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: border-color 0.2s, box-shadow 0.2s;
+  box-sizing: border-box;
+}
+
+.minigame-card:hover {
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+.minigame-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 20px;
+  font-weight: 800;
+  margin: 0 0 10px 0;
+  color: var(--text-primary);
+}
+
+.minigame-title .material-icons-round {
+  font-size: 26px;
+  color: #38bdf8;
+}
+
+.minigame-desc {
+  font-size: 14px;
+  color: var(--text-secondary, #94a3b8);
+  margin: 0 0 24px 0;
+  line-height: 1.5;
+}
+
+.minigame-btn {
+  padding: 12px 24px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+}
+
+.minigame-btn:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.minigame-btn:active {
+  transform: scale(0.98);
+}
+
+.minigame-btn-primary {
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.35) 0%, rgba(6, 182, 212, 0.25) 100%);
+  border-color: rgba(56, 189, 248, 0.5);
+  color: #fff;
+}
+
+.minigame-btn-primary:hover {
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.45) 0%, rgba(6, 182, 212, 0.35) 100%);
+}
+
+.minigame-btn-shoot,
+.minigame-btn-go {
+  margin-top: 20px;
+  font-size: 17px;
+  padding: 16px 32px;
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+  border-color: rgba(34, 197, 94, 0.6);
+  color: #fff;
+}
+
+.minigame-btn-shoot:hover,
+.minigame-btn-go:hover {
+  background: linear-gradient(135deg, #2dd66e 0%, #15803d 100%);
+}
+
+.minigame-stats {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin: 8px 0 12px 0;
+  font-weight: 600;
+}
+
+.minigame-result {
+  padding-top: 8px;
+}
+
+.minigame-result-text {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0 0 8px 0;
+}
+
+/* Buzzer Beater */
+.minigame-buzzer-zone {
+  cursor: pointer;
+}
+
+.minigame-buzzer-bar-wrap {
+  height: 32px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  overflow: hidden;
+  position: relative;
+}
+
+.minigame-buzzer-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #ef4444 0%, #f97316 50%, #22c55e 100%);
+  border-radius: 14px;
+  transition: width 0.05s linear;
+}
+
+.minigame-buzzer-green {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: rgba(34, 197, 94, 0.35);
+  border: 2px solid #22c55e;
+  border-radius: 12px;
+  pointer-events: none;
+  right: 0;
+  width: 24%;
+}
+
+.minigame-buzzer-timer {
+  font-size: 28px;
+  font-weight: 800;
+  text-align: center;
+  margin: 16px 0;
+  color: #38bdf8;
+}
+
+/* Free Throw */
+.minigame-freethrow-wrap {
+  padding-top: 8px;
+}
+
+.minigame-freethrow-meter {
+  height: 20px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  position: relative;
+  margin-bottom: 16px;
+}
+
+.minigame-freethrow-green {
+  position: absolute;
+  left: 45%;
+  width: 10%;
+  top: 0;
+  bottom: 0;
+  background: rgba(34, 197, 94, 0.4);
+  border-radius: 10px;
+}
+
+.minigame-freethrow-needle {
+  position: absolute;
+  top: -4px;
+  width: 4px;
+  height: 28px;
+  background: #38bdf8;
+  border-radius: 2px;
+  margin-left: -2px;
+  transition: left 0.04s linear;
+}
+
+/* F1 Start Lights */
+.minigame-lights {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 28px 0;
+  min-height: 100px;
+}
+
+.minigame-light {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: #334155;
+  border: 3px solid #475569;
+  transition: background 0.15s, box-shadow 0.15s;
+}
+
+.minigame-lights:not(.go) .minigame-light {
+  background: #f59e0b;
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.6);
+}
+
+.minigame-lights.go .minigame-light {
+  background: #334155;
+  box-shadow: none;
+}
+
+.minigame-lights.go {
+  cursor: pointer;
+}
+
+/* Pit Stop */
+.minigame-pitstop-tyres {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  max-width: 240px;
+  margin: 0 auto 16px;
+}
+
+.minigame-tyre {
+  padding: 20px;
+  border-radius: 12px;
+  border: 2px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.minigame-tyre:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-primary);
+}
+
+.minigame-tyre.active {
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.3) 0%, rgba(6, 182, 212, 0.2) 100%);
+  border-color: #38bdf8;
+  color: #38bdf8;
+  box-shadow: 0 0 24px rgba(56, 189, 248, 0.3);
+  animation: minigame-pulse 0.6s ease-in-out infinite alternate;
+}
+
+@keyframes minigame-pulse {
+  from { opacity: 1; transform: scale(1); }
+  to { opacity: 0.9; transform: scale(1.02); }
+}
+
+@media (max-width: 600px) {
+  .minigame-card {
+    padding: 22px 20px;
+  }
+}

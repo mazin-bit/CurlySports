@@ -13,7 +13,7 @@ const mockListUsers = jest.fn();
 const mockListUsersFromCache = jest.fn();
 const mockSetAppConfig = jest.fn();
 
-jest.mock('./firebase', () => ({
+jest.mock('../services/database', () => ({
   listUsersForAdmin: (...args) => mockListUsers(...args),
   listUsersForAdminFromCache: () => mockListUsersFromCache().then(() => []),
   setUserData: jest.fn(() => Promise.resolve()),
@@ -23,8 +23,11 @@ jest.mock('./firebase', () => ({
   }),
   setAppConfig: (...args) => mockSetAppConfig(...args),
   pushAuditLog: jest.fn(() => Promise.resolve()),
-  auth: { currentUser: { uid: 'test-uid', email: 'admin@test.com' } },
   buildSuperAdminEmailsMap: jest.fn(() => ({})),
+}));
+
+jest.mock('../services/auth', () => ({
+  auth: { currentUser: { uid: 'test-uid', email: 'admin@test.com' } },
 }));
 
 describe('SuperAdminDashboard – User Management & Streak Leaderboard refresh', () => {

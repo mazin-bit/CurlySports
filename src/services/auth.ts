@@ -4,7 +4,7 @@ import type { User, Session, AuthChangeEvent } from '@supabase/supabase-js';
 export type { User, Session };
 
 // ============================================================
-// Cached current user (synchronous access, mirrors Firebase's auth.currentUser)
+// Cached current user (synchronous access)
 // ============================================================
 
 let _cachedUser: User | null = null;
@@ -18,15 +18,12 @@ supabase.auth.getSession().then(({ data }) => {
   _cachedUser = data.session?.user ?? null;
 }).catch(() => { /* Supabase not configured yet */ });
 
-/** Synchronous access to the current user (like Firebase's auth.currentUser). */
+/** Synchronous access to the current user. */
 export function getCurrentUser(): User | null {
   return _cachedUser;
 }
 
-/**
- * Compatibility shim: mirrors Firebase's `auth` object shape so existing code
- * that does `auth.currentUser?.email` works without rewriting every call site.
- */
+/** Convenience accessor so existing code can use `auth.currentUser?.email`. */
 export const auth = {
   get currentUser() {
     return _cachedUser;

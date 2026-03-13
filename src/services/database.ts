@@ -30,7 +30,7 @@ interface UserRow {
   updated_at: string;
 }
 
-/** Maps Supabase snake_case row to the camelCase shape the app expects (matching old Firestore documents). */
+/** Maps Supabase snake_case row to the camelCase shape the app expects. */
 function mapUserRow(row: UserRow): Record<string, unknown> {
   return {
     uid: row.auth_id,

@@ -7,6 +7,7 @@ import './styles/responsive.css';
 import './styles/responsive-all-formats.css';
 import './styles/ui-sleek.css';
 import './styles/refinements-ui.css';
+import './styles/mobile-app.css';
 import App from './App';
 
 const root = ReactDOM.createRoot(document.getElementById('root')!);

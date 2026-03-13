@@ -2,6 +2,7 @@
 import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { listUsersForAdmin, listUsersForAdminFromCache, setUserData, subscribeAppConfig, setAppConfig } from '../services/database';
 import { auth } from '../services/auth';
+import { LayoutDashboard, SlidersHorizontal, Users, Flame, TrendingUp, Settings, LogOut, Sun, Moon, Menu, Search, RefreshCw, ChevronDown, ToggleLeft, ToggleRight, Shield, Download, CheckCircle, XCircle, Trophy, X, Wrench, Calendar, Lock } from 'lucide-react';
 import '../styles/AdminDashboard.css';
 
 const ACTIVE_THRESHOLD_MS = 10 * 60 * 1000; // 10 min
@@ -52,6 +53,15 @@ const TABS = [
   { id: 'engagement', label: 'Engagement Analytics', icon: 'trending_up', permission: 'admin_engagement' },
   { id: 'settings', label: 'Settings', icon: 'settings', permission: null },
 ];
+
+const LUCIDE_TAB_ICONS = {
+  dashboard: LayoutDashboard,
+  features: SlidersHorizontal,
+  users: Users,
+  leaderboard: Flame,
+  engagement: TrendingUp,
+  settings: Settings,
+};
 
 const DEFAULT_FLAGS = [
   { key: 'live_scores', label: 'Live scores', description: 'Show live scores to members' },
@@ -137,9 +147,9 @@ export function AdminDashboard({ user, onLogout, colorScheme = 'dark', setColorS
     listUsersForAdminFromCache().then((cached) => {
       if (cached.length > 0) setUsersList(cached);
     });
-    // Timeout so we never load forever (e.g. Firestore rules or network hang)
+    // Timeout so we never load forever (e.g. RLS policies or network hang)
     const timeout = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error('Request timed out. Using cached data if available. Check your connection and Firestore read rules for the users collection.')), 10000)
+      setTimeout(() => reject(new Error('Request timed out. Using cached data if available. Check your connection and Supabase RLS policies for the users table.')), 10000)
     );
     Promise.race([listUsersForAdmin(), timeout])
       .then((list) => {
@@ -150,7 +160,7 @@ export function AdminDashboard({ user, onLogout, colorScheme = 'dark', setColorS
         const msg = e?.message || 'Failed to load users';
         const isPermission = /permission|insufficient/i.test(msg);
         setUsersError(isPermission
-          ? 'You don\'t have permission to view users. Your Firestore role may be "member" — ask a Super Admin to set your role to admin or add you to the allowlist.'
+          ? 'You don\'t have permission to view users. Your role may be "member" — ask a Super Admin to set your role to admin or add you to the allowlist.'
           : msg);
       })
       .finally(() => setUsersLoading(false));
@@ -314,7 +324,7 @@ export function AdminDashboard({ user, onLogout, colorScheme = 'dark', setColorS
     <div className={`admin-dashboard ${sidebarOpen ? 'ad-sidebar-open' : ''}`}>
       <header className="ad-mobile-header">
         <button type="button" className="ad-menu-btn" onClick={() => setSidebarOpen(true)} aria-label="Open menu">
-          <span className="material-icons-round">menu</span>
+          <Menu size={22} />
         </button>
         <span className="ad-title">Admin</span>
         <span style={{ width: 40 }} />
@@ -328,7 +338,7 @@ export function AdminDashboard({ user, onLogout, colorScheme = 'dark', setColorS
         <nav className="ad-nav">
           {visibleTabs.map((t) => (
             <button key={t.id} type="button" className={`ad-nav-btn ${tab === t.id ? 'active' : ''}`} onClick={() => handleTab(t.id)}>
-              <span className="material-icons-round">{t.icon}</span>
+              {(() => { const Icon = LUCIDE_TAB_ICONS[t.id]; return Icon ? <Icon size={20} /> : null; })()}
               {t.label}
             </button>
           ))}
@@ -338,10 +348,10 @@ export function AdminDashboard({ user, onLogout, colorScheme = 'dark', setColorS
             <div className="ad-theme-label">Theme</div>
             <div className="ad-theme-row">
               <button type="button" className={`ad-theme-btn ${colorScheme === 'light' ? 'active' : ''}`} onClick={() => setColorScheme('light')} title="Light">
-                <span className="material-icons-round">light_mode</span>
+                <Sun size={16} />
               </button>
               <button type="button" className={`ad-theme-btn ${colorScheme === 'dark' ? 'active' : ''}`} onClick={() => setColorScheme('dark')} title="Dark">
-                <span className="material-icons-round">dark_mode</span>
+                <Moon size={16} />
               </button>
             </div>
             <div className="ad-theme-modes">
@@ -358,7 +368,7 @@ export function AdminDashboard({ user, onLogout, colorScheme = 'dark', setColorS
         )}
         <div className="ad-sidebar-footer">
           <button type="button" className="ad-logout-btn" onClick={onLogout}>
-            <span className="material-icons-round">logout</span>
+            <LogOut size={18} />
             Log out
           </button>
         </div>
@@ -403,7 +413,7 @@ export function AdminDashboard({ user, onLogout, colorScheme = 'dark', setColorS
             )}
             <div className="ad-card" style={{ marginBottom: 24 }}>
               <h2 style={{ fontSize: 16, marginBottom: 12, color: '#94a3b8', display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span className="material-icons-round" style={{ fontSize: 18 }}>build</span>
+                <Wrench size={18} />
                 Maintenance mode
               </h2>
               <p style={{ color: '#94a3b8', fontSize: 14, marginBottom: 12 }}>When ON, the app can show a global maintenance message.</p>
@@ -426,10 +436,10 @@ export function AdminDashboard({ user, onLogout, colorScheme = 'dark', setColorS
             </div>
             <div className="ad-card">
               <h2 style={{ fontSize: 16, marginBottom: 16, color: '#94a3b8', display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span className="material-icons-round" style={{ fontSize: 18 }}>tune</span>
+                <SlidersHorizontal size={18} />
                 Feature flags
               </h2>
-              <p style={{ color: '#94a3b8', fontSize: 13, marginBottom: 16 }}>Toggle each feature. Changes save to Firestore and apply app-wide in real time.</p>
+              <p style={{ color: '#94a3b8', fontSize: 13, marginBottom: 16 }}>Toggle each feature. Changes save to Supabase and apply app-wide in real time.</p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 {featureFlags.map((f) => (
                   <div key={f.key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, padding: '12px 0', borderBottom: '1px solid rgba(148,163,184,0.1)' }}>
@@ -457,7 +467,7 @@ export function AdminDashboard({ user, onLogout, colorScheme = 'dark', setColorS
             </div>
             <div className="ad-card" style={{ marginTop: 24 }}>
               <h2 style={{ fontSize: 16, marginBottom: 16, color: '#94a3b8', display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span className="material-icons-round" style={{ fontSize: 18 }}>sports</span>
+                <Trophy size={18} />
                 Sports
               </h2>
               <p style={{ color: '#94a3b8', fontSize: 13, marginBottom: 16 }}>Turn a sport OFF to hide it from the app. Users who had that sport selected will see &quot;Sorry, this sport is not currently available. Coming soon.&quot;</p>
@@ -517,7 +527,7 @@ export function AdminDashboard({ user, onLogout, colorScheme = 'dark', setColorS
               <p style={{ color: '#f87171', marginBottom: 12, fontSize: 14 }}>
                 {usersError}
                 {usersError.includes('permissions') && (
-                  <span style={{ display: 'block', marginTop: 6, color: '#94a3b8', fontSize: 12 }}>Deploy Firestore rules so admin/super_admin can read all users: firebase deploy --only firestore:rules</span>
+                  <span style={{ display: 'block', marginTop: 6, color: '#94a3b8', fontSize: 12 }}>Ensure Supabase RLS policies allow admin/super_admin to read all users.</span>
                 )}
               </p>
             )}
@@ -577,7 +587,7 @@ export function AdminDashboard({ user, onLogout, colorScheme = 'dark', setColorS
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(400px, 1fr))', gap: 24 }}>
               <div style={{ padding: 20, background: 'rgba(30,41,59,0.5)', borderRadius: 12, border: '1px solid rgba(148,163,184,0.15)' }}>
                 <h2 style={{ fontSize: 16, marginBottom: 16, color: '#f59e0b', display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span className="material-icons-round" style={{ fontSize: 18 }}>local_fire_department</span>
+                  <Flame size={18} />
                   Top by current streak
                 </h2>
                 <div style={{ overflowX: 'auto' }}>
@@ -609,7 +619,7 @@ export function AdminDashboard({ user, onLogout, colorScheme = 'dark', setColorS
               </div>
               <div style={{ padding: 20, background: 'rgba(30,41,59,0.5)', borderRadius: 12, border: '1px solid rgba(148,163,184,0.15)' }}>
                 <h2 style={{ fontSize: 16, marginBottom: 16, color: '#f59e0b', display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span className="material-icons-round" style={{ fontSize: 18 }}>emoji_events</span>
+                  <Trophy size={18} />
                   Top by longest streak
                 </h2>
                 <div style={{ overflowX: 'auto' }}>
@@ -662,7 +672,7 @@ export function AdminDashboard({ user, onLogout, colorScheme = 'dark', setColorS
             </div>
             <div className="ad-card" style={{ marginBottom: 24 }}>
               <h2 style={{ fontSize: 14, color: '#94a3b8', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span className="material-icons-round" style={{ fontSize: 18 }}>calendar_today</span>
+                <Calendar size={18} />
                 Logins in last 7 days
               </h2>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'flex-end' }}>
@@ -677,7 +687,7 @@ export function AdminDashboard({ user, onLogout, colorScheme = 'dark', setColorS
             </div>
             <div className="ad-card">
               <h2 style={{ fontSize: 14, color: '#94a3b8', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span className="material-icons-round" style={{ fontSize: 18 }}>local_fire_department</span>
+                <Flame size={18} />
                 Streak distribution
               </h2>
               <div className="ad-engagement-streak-grid">
@@ -703,7 +713,7 @@ export function AdminDashboard({ user, onLogout, colorScheme = 'dark', setColorS
             <p className="ad-main-sub">Your permissions and export. Super Admin can change system-wide flags and create other admins.</p>
             <div className="ad-card" style={{ marginBottom: 24 }}>
               <h2 style={{ fontSize: 14, color: '#94a3b8', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span className="material-icons-round" style={{ fontSize: 18 }}>lock</span>
+                <Lock size={18} />
                 Your permissions
               </h2>
               <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
@@ -712,7 +722,7 @@ export function AdminDashboard({ user, onLogout, colorScheme = 'dark', setColorS
                 ) : (
                   permissionsList.map((p) => (
                     <li key={p.key} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0', borderBottom: '1px solid rgba(148,163,184,0.1)', fontSize: 14 }}>
-                      <span className="material-icons-round" style={{ fontSize: 18, color: p.enabled !== false ? '#4ade80' : '#64748b' }}>{p.enabled !== false ? 'check_circle' : 'cancel'}</span>
+                      {p.enabled !== false ? <CheckCircle size={18} style={{ color: '#4ade80' }} /> : <XCircle size={18} style={{ color: '#64748b' }} />}
                       <code style={{ background: 'rgba(148,163,184,0.15)', padding: '2px 6px', borderRadius: 4 }}>{p.key}</code>
                       <span style={{ color: '#94a3b8' }}>{p.enabled !== false ? 'Enabled' : 'Disabled'}</span>
                     </li>
@@ -722,7 +732,7 @@ export function AdminDashboard({ user, onLogout, colorScheme = 'dark', setColorS
             </div>
             <div className="ad-card" style={{ marginBottom: 24 }}>
               <h2 style={{ fontSize: 14, color: '#94a3b8', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span className="material-icons-round" style={{ fontSize: 18 }}>download</span>
+                <Download size={18} />
                 Export user list
               </h2>
               <p style={{ color: '#94a3b8', fontSize: 14, marginBottom: 12 }}>Download all users (email, name, role, streaks, last login) as CSV.</p>

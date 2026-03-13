@@ -1,0 +1,1060 @@
+/* =============================================================================
+   Mobile App Experience – Native-feeling mobile interface
+   Handles: transitions, touch UX, scroll, layout, and app-like behavior
+   ============================================================================= */
+
+/* ============ GLOBAL APP-LIKE BEHAVIOR ============ */
+
+body {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Public pages (homepage, login, signup) need natural page scroll.
+   The root height is locked to 100dvh for the authenticated app,
+   but public pages must break out of that constraint. */
+#root:has(.public-home),
+#root:has(.public-auth-shell) {
+  height: auto !important;
+  min-height: 100vh !important;
+  min-height: 100dvh !important;
+  overflow: visible !important;
+}
+
+/* Authenticated app container: lock to viewport */
+.app-container:has(.sidebar) {
+  overscroll-behavior: none;
+}
+
+/* ============ PAGE TRANSITIONS ============ */
+
+/* Fade + slide up transition for main content changes */
+@keyframes mobilePageIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes mobilePageOut {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes mobileFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes mobileSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes mobileSlideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes mobileScaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Bottom sheet slide up */
+@keyframes mobileSheetUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0.5;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes mobileSheetDown {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+}
+
+/* Overlay fade */
+@keyframes mobileOverlayIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ============ MAIN CONTENT TRANSITIONS (ALL VIEWPORTS) ============ */
+
+/* Animate content area on tab change */
+.main-content {
+  animation: mobilePageIn 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Dashboard sections stagger in */
+.dashboard-section {
+  animation: mobileSlideUp 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+}
+
+.dashboard-section:nth-child(1) { animation-delay: 0.05s; }
+.dashboard-section:nth-child(2) { animation-delay: 0.1s; }
+.dashboard-section:nth-child(3) { animation-delay: 0.15s; }
+.dashboard-section:nth-child(4) { animation-delay: 0.2s; }
+.dashboard-section:nth-child(5) { animation-delay: 0.25s; }
+
+/* Content section entry */
+.content-section {
+  animation: mobilePageIn 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+}
+
+/* Card grid items stagger */
+.dashboard-news-card,
+.dashboard-report-card,
+.dashboard-transfer-card,
+.dashboard-video-card,
+.dashboard-match-card {
+  animation: mobileScaleIn 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+}
+
+.dashboard-news-card:nth-child(1),
+.dashboard-report-card:nth-child(1),
+.dashboard-transfer-card:nth-child(1),
+.dashboard-match-card:nth-child(1) { animation-delay: 0.05s; }
+.dashboard-news-card:nth-child(2),
+.dashboard-report-card:nth-child(2),
+.dashboard-transfer-card:nth-child(2),
+.dashboard-match-card:nth-child(2) { animation-delay: 0.1s; }
+.dashboard-news-card:nth-child(3),
+.dashboard-report-card:nth-child(3),
+.dashboard-transfer-card:nth-child(3),
+.dashboard-match-card:nth-child(3) { animation-delay: 0.15s; }
+.dashboard-news-card:nth-child(4),
+.dashboard-report-card:nth-child(4),
+.dashboard-transfer-card:nth-child(4),
+.dashboard-match-card:nth-child(4) { animation-delay: 0.2s; }
+.dashboard-news-card:nth-child(5),
+.dashboard-report-card:nth-child(5),
+.dashboard-transfer-card:nth-child(5),
+.dashboard-match-card:nth-child(5) { animation-delay: 0.22s; }
+.dashboard-news-card:nth-child(6),
+.dashboard-report-card:nth-child(6),
+.dashboard-transfer-card:nth-child(6),
+.dashboard-match-card:nth-child(6) { animation-delay: 0.24s; }
+
+/* F1 section entry */
+.f1-section {
+  animation: mobilePageIn 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* ============ MOBILE-SPECIFIC STYLES (< 768px) ============ */
+
+@media (max-width: 768px) {
+
+  /* --- App Container: full viewport, no overflow (only when sidebar is present = authenticated view) --- */
+  .app-container:has(.sidebar) {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+  }
+
+  /* --- Main Content: momentum scroll --- */
+  .main-content {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
+    scroll-behavior: smooth;
+  }
+
+  /* --- Top Bar: compact mobile app style --- */
+  .top-bar {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    background: rgba(15, 23, 42, 0.92) !important;
+    border-radius: 0 0 16px 16px;
+    margin: 0 -12px 16px;
+    padding: 14px 16px !important;
+  }
+
+  .top-bar h2 {
+    font-size: 1.15rem !important;
+    font-weight: 700;
+  }
+
+  /* --- Bottom Nav: iOS/Android style --- */
+  .sidebar {
+    border-radius: 20px 20px 0 0 !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+    background: rgba(15, 23, 42, 0.97) !important;
+    backdrop-filter: blur(24px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
+    box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.3) !important;
+    transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+
+  .sidebar-leagues-row .nav-menu .nav-item {
+    flex-direction: column !important;
+    gap: 3px !important;
+    font-size: 10px !important;
+    font-weight: 600 !important;
+    transition: color 0.2s, background 0.2s, transform 0.15s;
+    border-radius: 10px !important;
+    padding: 6px 8px !important;
+    min-width: 56px !important;
+  }
+
+  .sidebar-leagues-row .nav-menu .nav-item:active {
+    transform: scale(0.92);
+  }
+
+  .sidebar-leagues-row .nav-menu .nav-item.active {
+    color: var(--highlight, #38bdf8) !important;
+    background: rgba(56, 189, 248, 0.12) !important;
+  }
+
+  .sidebar-leagues-row .nav-menu .nav-item .material-icons-round,
+  .sidebar-leagues-row .nav-menu .nav-item .nav-icon {
+    font-size: 22px !important;
+    width: 22px !important;
+    height: 22px !important;
+    transition: transform 0.15s;
+  }
+
+  .sidebar-leagues-row .nav-menu .nav-item:active .material-icons-round,
+  .sidebar-leagues-row .nav-menu .nav-item:active .nav-icon {
+    transform: scale(0.9);
+  }
+
+  /* --- Mobile Sport Selector (top bar) --- */
+  .mobile-sport-selector {
+    border-radius: 0 !important;
+    margin: 0 -12px 8px !important;
+    padding: 10px 14px 12px !important;
+    border: none !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2) !important;
+    background: rgba(15, 23, 42, 0.98) !important;
+    animation: mobileFadeIn 0.3s ease-out;
+  }
+
+  /* --- Match Cards: full width, touch-optimized --- */
+  .matches-grid {
+    gap: 12px !important;
+  }
+
+  .match-card {
+    border-radius: 16px !important;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+
+  .match-card:active {
+    transform: scale(0.98);
+  }
+
+  /* --- News Cards: full width stack --- */
+  .news-grid {
+    gap: 12px !important;
+  }
+
+  .news-card {
+    border-radius: 16px !important;
+  }
+
+  .news-card:active {
+    transform: scale(0.98);
+    transition: transform 0.1s;
+  }
+
+  /* --- Player Cards: 2-col grid --- */
+  .players-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px !important;
+  }
+
+  .player-card {
+    border-radius: 14px !important;
+  }
+
+  .player-card:active {
+    transform: scale(0.97);
+    transition: transform 0.1s;
+  }
+
+  /* --- Modals: Bottom Sheet Style --- */
+  .modal-overlay {
+    padding: 0 !important;
+    align-items: flex-end !important;
+    animation: mobileOverlayIn 0.2s ease-out;
+  }
+
+  .modal-content {
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: 92vh !important;
+    border-radius: 20px 20px 0 0 !important;
+    border: none !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.15) !important;
+    animation: mobileSheetUp 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Sheet handle indicator */
+  .modal-content::before {
+    content: '';
+    display: block;
+    width: 36px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 2px;
+    margin: 10px auto 8px;
+    flex-shrink: 0;
+  }
+
+  .close-modal {
+    top: 12px !important;
+    right: 12px !important;
+    width: 36px !important;
+    height: 36px !important;
+    border-radius: 50% !important;
+    background: rgba(255, 255, 255, 0.1) !important;
+    backdrop-filter: blur(8px) !important;
+  }
+
+  /* --- Toast: full-width mobile style --- */
+  .toast-container {
+    top: auto !important;
+    bottom: 80px !important;
+    left: 12px !important;
+    right: 12px !important;
+  }
+
+  .toast-card {
+    border-radius: 14px !important;
+    animation: mobileSlideUp 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+
+  /* --- Standings Table: horizontal scroll with momentum --- */
+  .table-container {
+    border-radius: 14px !important;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+  }
+
+  /* --- Search Bar: full-width pill --- */
+  .search-bar {
+    border-radius: 14px !important;
+    font-size: 15px !important;
+    padding: 12px 16px !important;
+  }
+
+  /* --- F1 Tabs: horizontal scroll --- */
+  .f1-tabs {
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 12px !important;
+    gap: 6px !important;
+    scroll-snap-type: x mandatory;
+  }
+
+  .f1-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .f1-tab {
+    flex-shrink: 0 !important;
+    scroll-snap-align: start;
+    padding: 8px 14px !important;
+    font-size: 13px !important;
+    border-radius: 10px !important;
+  }
+
+  .f1-tab:active {
+    transform: scale(0.95);
+    transition: transform 0.1s;
+  }
+
+  /* --- F1 Section: full-width --- */
+  .f1-section {
+    max-width: 100% !important;
+    padding-bottom: 16px !important;
+  }
+
+  /* --- MiniGames: responsive --- */
+  .game-container {
+    padding: 12px !important;
+    border-radius: 16px !important;
+  }
+
+  /* --- Dashboard Top Bar: mobile-optimized --- */
+  .dashboard-top-bar-new {
+    padding: 10px 14px !important;
+  }
+
+  .dashboard-top-bar-inner-new {
+    gap: 10px !important;
+  }
+
+  .dashboard-main-tabs {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .dashboard-main-tab {
+    padding: 8px 14px !important;
+    font-size: 0.85rem !important;
+    flex: 1;
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  .dashboard-hamburger {
+    width: 40px !important;
+    height: 40px !important;
+  }
+
+  /* --- Dashboard Content: tighter spacing --- */
+  .dashboard-main-new,
+  .dashboard-main {
+    padding: 16px 12px !important;
+  }
+
+  .dashboard-section {
+    margin-bottom: 24px !important;
+    padding: 16px !important;
+    border-radius: 16px !important;
+  }
+
+  .dashboard-section-title {
+    font-size: 1.1rem !important;
+    gap: 8px !important;
+  }
+
+  .dashboard-section-title .material-icons-round,
+  .dashboard-section-title .section-icon {
+    font-size: 22px !important;
+  }
+
+  /* --- Dashboard Grids: single column on mobile --- */
+  .dashboard-news-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  .dashboard-matches-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  .dashboard-transfer-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  .dashboard-reports-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  .dashboard-videos-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px !important;
+  }
+
+  .dashboard-players-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 10px !important;
+  }
+
+  .dashboard-analytics-sports {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  /* Dashboard cards: touch feedback */
+  .dashboard-match-card:active,
+  .dashboard-news-card:active,
+  .dashboard-report-card:active,
+  .dashboard-transfer-card:active,
+  .dashboard-video-card:active {
+    transform: scale(0.97) !important;
+    transition: transform 0.1s !important;
+  }
+
+  /* --- Dashboard Header: compact --- */
+  .dashboard-header {
+    padding: 16px 12px !important;
+  }
+
+  .greeting-name {
+    font-size: clamp(1.5rem, 6vw, 2rem) !important;
+  }
+
+  .greeting-small {
+    font-size: 0.8rem !important;
+  }
+
+  /* --- Dashboard Pagination: touch-friendly --- */
+  .dashboard-section .dashboard-pagination {
+    gap: 8px;
+  }
+
+  .dashboard-section .dashboard-pagination button {
+    min-width: 44px;
+    min-height: 44px;
+    border-radius: 10px;
+  }
+
+  /* --- Survey Overlay: bottom sheet on mobile --- */
+  .survey-interests-overlay {
+    padding: 0 !important;
+    align-items: flex-end !important;
+    background: rgba(0, 0, 0, 0.5) !important;
+  }
+
+  .survey-interests-panel {
+    max-width: 100% !important;
+    max-height: 95vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    background: var(--bg-dark, #0f172a);
+    border-radius: 20px 20px 0 0;
+    padding: 20px 16px 32px;
+    margin: 0;
+    animation: mobileSheetUp 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+
+  /* Sheet handle for survey */
+  .survey-interests-panel::before {
+    content: '';
+    display: block;
+    width: 36px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 2px;
+    margin: 0 auto 16px;
+  }
+
+  .survey-chip {
+    padding: 10px 14px !important;
+    font-size: 0.9rem !important;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .survey-chip:active {
+    transform: scale(0.95);
+    transition: transform 0.1s;
+  }
+
+  .survey-accordion-header {
+    padding: 14px 14px !important;
+    min-height: 52px;
+  }
+
+  .survey-submit,
+  .survey-skip {
+    min-height: 48px !important;
+    font-size: 1rem !important;
+  }
+
+  /* --- Admin Dashboard: responsive --- */
+  .admin-sidebar {
+    width: 100% !important;
+    max-width: 100% !important;
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    top: auto !important;
+    height: auto !important;
+    max-height: 70px !important;
+    z-index: 100;
+    flex-direction: row !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    border-radius: 16px 16px 0 0 !important;
+    padding: 8px !important;
+  }
+
+  .admin-sidebar .admin-nav-btn {
+    flex-direction: column !important;
+    font-size: 10px !important;
+    padding: 6px 10px !important;
+    flex-shrink: 0;
+    min-width: 60px;
+    text-align: center;
+  }
+
+  .admin-sidebar .admin-nav-btn .material-icons-round {
+    font-size: 20px !important;
+  }
+
+  .admin-main {
+    padding-bottom: 80px !important;
+  }
+
+  /* --- Notifications: full-width dropdown --- */
+  .notifications-bell-dropdown {
+    position: fixed !important;
+    left: 8px !important;
+    right: 8px !important;
+    top: auto !important;
+    bottom: 80px !important;
+    width: auto !important;
+    max-width: none !important;
+    max-height: 60vh !important;
+    border-radius: 16px !important;
+    animation: mobileSlideUp 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+
+  /* --- Profile Menu: bottom sheet --- */
+  .profile-menu-overlay {
+    align-items: flex-end !important;
+  }
+
+  .profile-menu-content {
+    width: 100% !important;
+    max-width: 100% !important;
+    border-radius: 20px 20px 0 0 !important;
+    max-height: 85vh !important;
+    animation: mobileSheetUp 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+
+  /* --- Dashboard Menu Drawer: slide in --- */
+  .dashboard-menu-drawer {
+    animation: mobileSlideInRight 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+
+  .dashboard-menu-overlay {
+    animation: mobileOverlayIn 0.2s ease-out;
+  }
+}
+
+/* ============ SMALL PHONES (< 480px) ============ */
+
+@media (max-width: 480px) {
+  /* Tighter spacing */
+  .dashboard-section {
+    padding: 14px !important;
+    border-radius: 14px !important;
+  }
+
+  .dashboard-videos-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .dashboard-players-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px !important;
+  }
+
+  /* Compact header greeting */
+  .greeting-name {
+    font-size: 1.5rem !important;
+  }
+
+  /* Tabs: scrollable */
+  .dashboard-sport-tabs {
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    gap: 6px !important;
+  }
+
+  .dashboard-sport-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .dashboard-sport-tab {
+    flex-shrink: 0;
+    padding: 6px 12px !important;
+    font-size: 0.82rem !important;
+    white-space: nowrap;
+  }
+}
+
+/* ============ VERY SMALL PHONES (< 375px) ============ */
+
+@media (max-width: 374px) {
+  .dashboard-section {
+    padding: 12px !important;
+    margin-bottom: 16px !important;
+  }
+
+  .dashboard-section-title {
+    font-size: 1rem !important;
+  }
+
+  .dashboard-players-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+}
+
+/* ============ PUBLIC PAGES MOBILE FIXES ============ */
+
+@media (max-width: 768px) {
+
+  /* --- Homepage Header: clean mobile layout --- */
+  .public-header--curly .public-header-inner--ref {
+    padding: 10px 14px !important;
+    gap: 8px !important;
+  }
+
+  .public-header--curly .public-logo-link--ref {
+    flex: 0 0 auto !important;
+  }
+
+  .public-header--curly .public-logo-img {
+    height: 40px !important;
+  }
+
+  /* Hide nav links on mobile - use hamburger instead */
+  .public-header--curly .public-nav--ref {
+    order: 3;
+    width: 100%;
+    justify-content: center;
+    gap: 4px;
+  }
+
+  .public-header--curly .public-nav-link {
+    padding: 6px 12px !important;
+    font-size: 0.85rem !important;
+  }
+
+  .public-header--curly .public-header-right {
+    flex: 0 0 auto !important;
+    gap: 8px !important;
+  }
+
+  .public-header--curly .public-nav-cta--signin {
+    padding: 7px 16px !important;
+    font-size: 0.85rem !important;
+    border-radius: 10px !important;
+  }
+
+  /* --- Hero: reduce whitespace --- */
+  .home-hero--curly {
+    padding: 16px 16px 24px !important;
+  }
+
+  .home-hero--curly .home-hero-content {
+    margin-top: 12px !important;
+  }
+
+  .home-hero-title--split {
+    font-size: clamp(2rem, 11vw, 3rem) !important;
+    margin-bottom: 10px !important;
+  }
+
+  .home-hero-tagline {
+    font-size: 1rem !important;
+  }
+
+  /* --- Sports Cards: proper mobile scroll --- */
+  .home-sports-section {
+    padding: 12px 0 16px !important;
+  }
+
+  .home-sports-grid--ref {
+    padding: 0 16px !important;
+    gap: 12px !important;
+    scroll-snap-type: x mandatory !important;
+    scroll-padding-left: 16px;
+  }
+
+  .home-sports-grid--ref .home-scard {
+    flex: 0 0 min(200px, 72vw) !important;
+    max-width: 200px !important;
+    min-height: 240px !important;
+    scroll-snap-align: start !important;
+  }
+
+  .home-scard {
+    border-radius: 18px !important;
+    min-height: 240px !important;
+  }
+
+  /* --- News Section: full-width --- */
+  .home-section {
+    padding: 40px 16px !important;
+  }
+
+  .home-section h2 {
+    font-size: 1.4rem !important;
+    margin-bottom: 24px !important;
+  }
+
+  .home-feature-grid {
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+  }
+
+  .home-card {
+    padding: 20px !important;
+    border-radius: 14px !important;
+  }
+
+  /* --- CTA Section --- */
+  .home-final-cta {
+    padding: 48px 16px !important;
+  }
+
+  .home-final-cta h2 {
+    font-size: 1.4rem !important;
+  }
+
+  /* --- Footer: compact --- */
+  .public-footer {
+    padding: 32px 16px 24px !important;
+  }
+
+  .public-footer-links,
+  .public-footer-socials {
+    gap: 6px 20px !important;
+  }
+
+  /* --- Comparison table: scrollable --- */
+  .home-table-wrap {
+    margin: 0 -8px;
+    padding: 8px;
+    border-radius: 12px;
+  }
+
+  /* --- Login Page: compact --- */
+  .public-auth-shell--curly .login-layout--curly {
+    padding: 12px 12px 20px !important;
+  }
+
+  .public-auth-shell--curly .login-card-curly {
+    padding: 24px 16px 20px !important;
+    border-radius: 18px !important;
+  }
+
+  .public-auth-shell--curly .login-card-title {
+    font-size: 1.75rem !important;
+  }
+
+  /* --- Login minimal header --- */
+  .public-header--minimal .public-header-inner {
+    padding: 10px 14px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .home-hero--curly {
+    padding: 10px 12px 20px !important;
+  }
+
+  .home-hero--curly .home-hero-content {
+    margin-top: 8px !important;
+  }
+
+  .home-hero-title--split {
+    font-size: clamp(1.75rem, 10vw, 2.5rem) !important;
+  }
+
+  .home-sports-grid--ref .home-scard {
+    flex: 0 0 min(180px, 68vw) !important;
+    max-width: 180px !important;
+    min-height: 220px !important;
+  }
+
+  .home-scard {
+    min-height: 220px !important;
+    border-radius: 16px !important;
+  }
+
+  .home-scard-label--pill {
+    font-size: 0.8rem !important;
+    padding: 6px 12px !important;
+  }
+
+  /* Feature grid already 1fr */
+  .home-section {
+    padding: 32px 12px !important;
+  }
+
+  /* CTA */
+  .home-final-cta {
+    padding: 36px 12px !important;
+  }
+
+  .public-btn-primary,
+  .public-btn-secondary {
+    padding: 14px 24px !important;
+    font-size: 0.9375rem !important;
+    width: 100%;
+    text-align: center;
+  }
+}
+
+/* ============ TABLET LANDSCAPE / MEDIUM (768px - 1023px) ============ */
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .dashboard-news-grid,
+  .dashboard-transfer-grid,
+  .dashboard-reports-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  .dashboard-matches-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  .dashboard-videos-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+}
+
+/* ============ LANDSCAPE PHONE ============ */
+
+@media (max-height: 500px) and (orientation: landscape) {
+  .sidebar {
+    height: 56px !important;
+  }
+
+  .main-content {
+    padding-bottom: 70px !important;
+  }
+
+  .modal-content {
+    max-height: 90vh !important;
+    border-radius: 16px !important;
+  }
+
+  .survey-interests-panel {
+    max-height: 90vh !important;
+  }
+}
+
+/* ============ DARK THEME ADJUSTMENTS ============ */
+
+.public-home--curly.public-home--dark .home-hero-title-sports {
+  color: #f1f5f9;
+}
+
+/* ============ TOUCH DEVICE ENHANCEMENTS ============ */
+
+@media (pointer: coarse) {
+  /* Larger touch targets for all interactive elements */
+  .dashboard-sport-tab,
+  .dashboard-main-tab,
+  .dashboard-fav-chip,
+  .dashboard-back-btn,
+  .dashboard-back-btn-new,
+  .dashboard-update-interests-btn,
+  .dashboard-cta-btn {
+    min-height: 44px !important;
+  }
+
+  /* Active state feedback */
+  .dashboard-sport-tab:active,
+  .dashboard-main-tab:active,
+  .dashboard-fav-chip:active {
+    transform: scale(0.95);
+    transition: transform 0.1s;
+  }
+
+  /* Buttons press effect */
+  .dashboard-cta-btn:active,
+  .dashboard-back-btn:active,
+  .dashboard-update-interests-btn:active,
+  .survey-submit:active,
+  .survey-skip:active {
+    transform: scale(0.97) !important;
+    transition: transform 0.1s !important;
+  }
+
+  /* Nav items */
+  .sidebar-leagues-row .nav-menu .nav-item:active {
+    transform: scale(0.92) !important;
+    transition: transform 0.1s !important;
+  }
+}
+
+/* ============ REDUCED MOTION ============ */
+
+@media (prefers-reduced-motion: reduce) {
+  .main-content,
+  .dashboard-section,
+  .content-section,
+  .dashboard-news-card,
+  .dashboard-report-card,
+  .dashboard-transfer-card,
+  .dashboard-video-card,
+  .dashboard-match-card,
+  .f1-section,
+  .modal-content,
+  .survey-interests-panel,
+  .toast-card,
+  .mobile-sport-selector,
+  .dashboard-menu-drawer,
+  .dashboard-menu-overlay {
+    animation: none !important;
+  }
+}
+
+/* ============ SAFE AREA (NOTCHED DEVICES) ============ */
+
+@supports (padding: env(safe-area-inset-bottom)) {
+  @media (max-width: 768px) {
+    /* Bottom nav respects safe area */
+    .sidebar {
+      padding-bottom: max(8px, env(safe-area-inset-bottom)) !important;
+    }
+
+    /* Main content has room for nav + safe area */
+    .main-content {
+      padding-bottom: calc(90px + env(safe-area-inset-bottom)) !important;
+    }
+
+    /* Toast above nav + safe area */
+    .toast-container {
+      bottom: calc(80px + env(safe-area-inset-bottom)) !important;
+    }
+
+    /* Survey panel bottom padding */
+    .survey-interests-panel {
+      padding-bottom: calc(32px + env(safe-area-inset-bottom)) !important;
+    }
+  }
+}

@@ -1,11 +1,11 @@
 -- Curly Sports Supabase Schema
--- Run this in the Supabase SQL Editor to create all tables
+-- Run this in the Supabase SQL Editor to create all tables, indexes, and RLS policies
 
 -- ============================================================
 -- TABLES
 -- ============================================================
 
--- Users table (maps Firestore users/{uid})
+-- Users table
 CREATE TABLE IF NOT EXISTS public.users (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   auth_id UUID UNIQUE NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -32,8 +32,9 @@ CREATE TABLE IF NOT EXISTS public.users (
 
 CREATE INDEX IF NOT EXISTS idx_users_role ON public.users(role);
 CREATE INDEX IF NOT EXISTS idx_users_email ON public.users(email);
+CREATE INDEX IF NOT EXISTS idx_users_auth_id ON public.users(auth_id);
 
--- Notifications table (maps Firestore notifications/{docId})
+-- Notifications table
 CREATE TABLE IF NOT EXISTS public.notifications (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
@@ -47,8 +48,9 @@ CREATE TABLE IF NOT EXISTS public.notifications (
 
 CREATE INDEX IF NOT EXISTS idx_notifications_user ON public.notifications(user_id);
 CREATE INDEX IF NOT EXISTS idx_notifications_user_created ON public.notifications(user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_notifications_user_read ON public.notifications(user_id, read) WHERE read = false;
 
--- App config table (maps Firestore config/app singleton)
+-- App config table (singleton)
 CREATE TABLE IF NOT EXISTS public.app_config (
   id TEXT PRIMARY KEY DEFAULT 'app',
   feature_flags JSONB DEFAULT '[]'::jsonb,
@@ -65,7 +67,7 @@ CREATE TABLE IF NOT EXISTS public.app_config (
 -- Insert default app config row
 INSERT INTO public.app_config (id) VALUES ('app') ON CONFLICT (id) DO NOTHING;
 
--- Login logs (maps Firestore login_logs/{docId})
+-- Login logs
 CREATE TABLE IF NOT EXISTS public.login_logs (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_auth_id UUID,
@@ -143,7 +145,14 @@ CREATE POLICY "users_insert_own" ON public.users
   FOR INSERT WITH CHECK (auth.uid() = auth_id);
 
 CREATE POLICY "users_update_own" ON public.users
-  FOR UPDATE USING (auth.uid() = auth_id);
+  FOR UPDATE USING (auth.uid() = auth_id)
+  WITH CHECK (
+    auth.uid() = auth_id
+    AND (
+      -- Allow updating any column EXCEPT role: the new role must equal the existing role
+      role = (SELECT u.role FROM public.users u WHERE u.auth_id = auth.uid())
+    )
+  );
 
 CREATE POLICY "users_admin_update_others" ON public.users
   FOR UPDATE USING (public.is_admin(auth.uid()));
@@ -152,11 +161,11 @@ CREATE POLICY "users_admin_update_others" ON public.users
 CREATE POLICY "config_read_all" ON public.app_config
   FOR SELECT USING (true);
 
-CREATE POLICY "config_update_authenticated" ON public.app_config
-  FOR UPDATE USING (auth.uid() IS NOT NULL);
+CREATE POLICY "config_update_admin" ON public.app_config
+  FOR UPDATE USING (public.is_admin(auth.uid()));
 
-CREATE POLICY "config_insert_authenticated" ON public.app_config
-  FOR INSERT WITH CHECK (auth.uid() IS NOT NULL);
+CREATE POLICY "config_insert_admin" ON public.app_config
+  FOR INSERT WITH CHECK (public.is_admin(auth.uid()));
 
 -- Notifications policies
 CREATE POLICY "notifications_read_own" ON public.notifications

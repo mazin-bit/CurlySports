@@ -247,7 +247,7 @@
     }
 
     .matches-grid {
-        grid-template-columns: repeat(auto-fill, minmax(min(280px, 100%), 1fr));
+        grid-template-columns: repeat(2, 1fr);
     }
 }
 
@@ -558,6 +558,11 @@
         height: 140px;
     }
 
+    .player-image-container .player-image {
+        width: 100px;
+        height: 100px;
+    }
+
     .player-card {
         border-radius: 16px;
     }
@@ -677,7 +682,9 @@
     }
 
     .modal-player-img {
-        height: 200px;
+        width: 140px;
+        height: 140px;
+        border-radius: 50%;
         right: -30px;
         bottom: -10px;
     }
