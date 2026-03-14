@@ -1,88 +1,166 @@
--- Curly Sports Supabase Schema
--- Run this in the Supabase SQL Editor to create all tables, indexes, and RLS policies
+-- Curly Sports – Supabase schema
+-- Run this in Supabase Dashboard → SQL Editor (Project: your project)
+-- Then run seed.sql to insert initial app_config.
 
 -- ============================================================
--- TABLES
+-- USERS
 -- ============================================================
-
--- Users table
 CREATE TABLE IF NOT EXISTS public.users (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  auth_id UUID UNIQUE NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  email TEXT NOT NULL,
-  display_name TEXT DEFAULT '',
-  photo_url TEXT,
-  role TEXT NOT NULL DEFAULT 'member' CHECK (role IN ('super_admin', 'admin', 'member')),
-  status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'suspended', 'banned')),
-  current_streak INTEGER NOT NULL DEFAULT 0,
-  longest_streak INTEGER NOT NULL DEFAULT 0,
-  last_login_date TEXT,
-  last_seen TIMESTAMPTZ,
-  favorite_clubs JSONB DEFAULT '[]'::jsonb,
-  favorite_players JSONB DEFAULT '[]'::jsonb,
-  booked_tickets JSONB DEFAULT '{}'::jsonb,
-  penalty_best INTEGER DEFAULT 0,
-  super_over_best INTEGER DEFAULT 0,
-  survey_interests JSONB,
-  survey_completed BOOLEAN DEFAULT false,
-  survey_skipped BOOLEAN DEFAULT false,
-  created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now()
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  auth_id text UNIQUE NOT NULL,
+  email text NOT NULL DEFAULT '',
+  display_name text DEFAULT '',
+  photo_url text,
+  role text NOT NULL DEFAULT 'member' CHECK (role IN ('super_admin', 'admin', 'member')),
+  status text NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'suspended', 'banned')),
+  current_streak int NOT NULL DEFAULT 0,
+  longest_streak int NOT NULL DEFAULT 0,
+  last_login_date date,
+  last_seen timestamptz,
+  favorite_clubs jsonb NOT NULL DEFAULT '[]',
+  favorite_players jsonb NOT NULL DEFAULT '[]',
+  booked_tickets jsonb NOT NULL DEFAULT '{}',
+  penalty_best int NOT NULL DEFAULT 0,
+  super_over_best int NOT NULL DEFAULT 0,
+  survey_interests jsonb,
+  survey_completed boolean NOT NULL DEFAULT false,
+  survey_skipped boolean NOT NULL DEFAULT false,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
 );
 
-CREATE INDEX IF NOT EXISTS idx_users_role ON public.users(role);
-CREATE INDEX IF NOT EXISTS idx_users_email ON public.users(email);
-CREATE INDEX IF NOT EXISTS idx_users_auth_id ON public.users(auth_id);
+CREATE INDEX IF NOT EXISTS users_auth_id_idx ON public.users (auth_id);
 
--- Notifications table
-CREATE TABLE IF NOT EXISTS public.notifications (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
-  type TEXT NOT NULL DEFAULT 'info',
-  title TEXT NOT NULL,
-  body TEXT DEFAULT '',
-  read BOOLEAN NOT NULL DEFAULT false,
-  payload JSONB DEFAULT '{}'::jsonb,
-  created_at TIMESTAMPTZ DEFAULT now()
-);
-
-CREATE INDEX IF NOT EXISTS idx_notifications_user ON public.notifications(user_id);
-CREATE INDEX IF NOT EXISTS idx_notifications_user_created ON public.notifications(user_id, created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_notifications_user_read ON public.notifications(user_id, read) WHERE read = false;
-
--- App config table (singleton)
-CREATE TABLE IF NOT EXISTS public.app_config (
-  id TEXT PRIMARY KEY DEFAULT 'app',
-  feature_flags JSONB DEFAULT '[]'::jsonb,
-  sa_admins JSONB DEFAULT '[]'::jsonb,
-  permissions JSONB DEFAULT '[]'::jsonb,
-  maintenance BOOLEAN DEFAULT false,
-  health JSONB DEFAULT '{"server":"OK","db":"Connected","api":"OK","uptime":"99.9%"}'::jsonb,
-  audit_log JSONB DEFAULT '[]'::jsonb,
-  enabled_sports JSONB DEFAULT '{}'::jsonb,
-  super_admin_emails JSONB DEFAULT '{}'::jsonb,
-  updated_at TIMESTAMPTZ DEFAULT now()
-);
-
--- Insert default app config row
-INSERT INTO public.app_config (id) VALUES ('app') ON CONFLICT (id) DO NOTHING;
-
--- Login logs
+-- ============================================================
+-- LOGIN LOGS
+-- ============================================================
 CREATE TABLE IF NOT EXISTS public.login_logs (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_auth_id UUID,
-  email TEXT DEFAULT '',
-  display_name TEXT DEFAULT '',
-  role TEXT DEFAULT 'member',
-  logged_at TIMESTAMPTZ DEFAULT now()
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_auth_id text,
+  email text NOT NULL DEFAULT '',
+  display_name text NOT NULL DEFAULT '',
+  role text NOT NULL DEFAULT 'member',
+  logged_at timestamptz NOT NULL DEFAULT now()
 );
 
-CREATE INDEX IF NOT EXISTS idx_login_logs_time ON public.login_logs(logged_at DESC);
+CREATE INDEX IF NOT EXISTS login_logs_logged_at_idx ON public.login_logs (logged_at DESC);
 
 -- ============================================================
--- AUTO-UPDATE TRIGGER for updated_at
+-- APP CONFIG (single row: id = 'app')
 -- ============================================================
-CREATE OR REPLACE FUNCTION public.handle_updated_at()
+CREATE TABLE IF NOT EXISTS public.app_config (
+  id text PRIMARY KEY DEFAULT 'app',
+  feature_flags jsonb NOT NULL DEFAULT '[]',
+  sa_admins jsonb NOT NULL DEFAULT '[]',
+  permissions jsonb NOT NULL DEFAULT '[]',
+  maintenance boolean NOT NULL DEFAULT false,
+  health jsonb NOT NULL DEFAULT '{}',
+  audit_log jsonb NOT NULL DEFAULT '[]',
+  enabled_sports jsonb NOT NULL DEFAULT '{}',
+  super_admin_emails jsonb NOT NULL DEFAULT '{}',
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+-- ============================================================
+-- NOTIFICATIONS (user_id stores auth_id or users.id::text)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS public.notifications (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id text NOT NULL,
+  type text NOT NULL DEFAULT 'info',
+  title text NOT NULL,
+  body text NOT NULL DEFAULT '',
+  read boolean NOT NULL DEFAULT false,
+  payload jsonb NOT NULL DEFAULT '{}',
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS notifications_user_id_idx ON public.notifications (user_id);
+CREATE INDEX IF NOT EXISTS notifications_created_at_idx ON public.notifications (created_at DESC);
+
+-- ============================================================
+-- ROW LEVEL SECURITY (RLS)
+-- ============================================================
+ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.login_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.app_config ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
+
+-- Users: read own row
+CREATE POLICY "users_select_own" ON public.users
+  FOR SELECT USING (auth_id = auth.uid()::text);
+
+-- Users: admins/super_admins can read all (for admin dashboard)
+CREATE POLICY "users_select_admin" ON public.users
+  FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM public.users u
+      WHERE u.auth_id = auth.uid()::text AND u.role IN ('admin', 'super_admin')
+    )
+  );
+
+-- Users: insert own row (first login)
+CREATE POLICY "users_insert_own" ON public.users
+  FOR INSERT WITH CHECK (auth_id = auth.uid()::text);
+
+-- Users: update own row
+CREATE POLICY "users_update_own" ON public.users
+  FOR UPDATE USING (auth_id = auth.uid()::text);
+
+-- Users: admins can update any (role/status/streak)
+CREATE POLICY "users_update_admin" ON public.users
+  FOR UPDATE USING (
+    EXISTS (
+      SELECT 1 FROM public.users u
+      WHERE u.auth_id = auth.uid()::text AND u.role IN ('admin', 'super_admin')
+    )
+  );
+
+-- Login logs: any authenticated user can insert
+CREATE POLICY "login_logs_insert" ON public.login_logs
+  FOR INSERT WITH CHECK (auth.role() = 'authenticated');
+
+-- Login logs: admins can read
+CREATE POLICY "login_logs_select_admin" ON public.login_logs
+  FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM public.users u
+      WHERE u.auth_id = auth.uid()::text AND u.role IN ('admin', 'super_admin')
+    )
+  );
+
+-- App config: anyone authenticated can read
+CREATE POLICY "app_config_select" ON public.app_config
+  FOR SELECT TO authenticated USING (true);
+
+-- App config: authenticated can update (app restricts to super_admin in code)
+CREATE POLICY "app_config_update" ON public.app_config
+  FOR UPDATE TO authenticated USING (true);
+
+-- App config: allow insert for initial seed (run as postgres or with service role)
+CREATE POLICY "app_config_insert" ON public.app_config
+  FOR INSERT WITH CHECK (true);
+
+-- Notifications: read/update own (user_id = auth_id or user's internal id)
+CREATE POLICY "notifications_select_own" ON public.notifications
+  FOR SELECT USING (
+    user_id = auth.uid()::text
+    OR user_id IN (SELECT id::text FROM public.users WHERE auth_id = auth.uid()::text)
+  );
+
+CREATE POLICY "notifications_insert" ON public.notifications
+  FOR INSERT WITH CHECK (auth.role() = 'authenticated');
+
+CREATE POLICY "notifications_update_own" ON public.notifications
+  FOR UPDATE USING (
+    user_id = auth.uid()::text
+    OR user_id IN (SELECT id::text FROM public.users WHERE auth_id = auth.uid()::text)
+  );
+
+-- ============================================================
+-- TRIGGER: users.updated_at
+-- ============================================================
+CREATE OR REPLACE FUNCTION public.set_updated_at()
 RETURNS TRIGGER AS $$
 BEGIN
   NEW.updated_at = now();
@@ -90,100 +168,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER set_users_updated_at
+DROP TRIGGER IF EXISTS users_updated_at ON public.users;
+CREATE TRIGGER users_updated_at
   BEFORE UPDATE ON public.users
-  FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
-
-CREATE TRIGGER set_app_config_updated_at
-  BEFORE UPDATE ON public.app_config
-  FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
-
--- ============================================================
--- ENABLE REALTIME
--- ============================================================
-ALTER PUBLICATION supabase_realtime ADD TABLE public.users;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.app_config;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.notifications;
-
--- ============================================================
--- ROW LEVEL SECURITY (RLS)
--- ============================================================
-ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.app_config ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.login_logs ENABLE ROW LEVEL SECURITY;
-
--- Helper function: get user role
-CREATE OR REPLACE FUNCTION public.get_user_role(user_auth_id UUID)
-RETURNS TEXT AS $$
-  SELECT COALESCE(
-    (SELECT role FROM public.users WHERE auth_id = user_auth_id),
-    'member'
-  );
-$$ LANGUAGE sql SECURITY DEFINER STABLE;
-
--- Helper: check admin
-CREATE OR REPLACE FUNCTION public.is_admin(user_auth_id UUID)
-RETURNS BOOLEAN AS $$
-  SELECT public.get_user_role(user_auth_id) IN ('admin', 'super_admin');
-$$ LANGUAGE sql SECURITY DEFINER STABLE;
-
--- Helper: check super admin
-CREATE OR REPLACE FUNCTION public.is_super_admin(user_auth_id UUID)
-RETURNS BOOLEAN AS $$
-  SELECT public.get_user_role(user_auth_id) = 'super_admin';
-$$ LANGUAGE sql SECURITY DEFINER STABLE;
-
--- Users policies
-CREATE POLICY "users_read_own" ON public.users
-  FOR SELECT USING (auth.uid() = auth_id);
-
-CREATE POLICY "users_admin_read_all" ON public.users
-  FOR SELECT USING (public.is_admin(auth.uid()));
-
-CREATE POLICY "users_insert_own" ON public.users
-  FOR INSERT WITH CHECK (auth.uid() = auth_id);
-
-CREATE POLICY "users_update_own" ON public.users
-  FOR UPDATE USING (auth.uid() = auth_id)
-  WITH CHECK (
-    auth.uid() = auth_id
-    AND (
-      -- Allow updating any column EXCEPT role: the new role must equal the existing role
-      role = (SELECT u.role FROM public.users u WHERE u.auth_id = auth.uid())
-    )
-  );
-
-CREATE POLICY "users_admin_update_others" ON public.users
-  FOR UPDATE USING (public.is_admin(auth.uid()));
-
--- App config policies
-CREATE POLICY "config_read_all" ON public.app_config
-  FOR SELECT USING (true);
-
-CREATE POLICY "config_update_admin" ON public.app_config
-  FOR UPDATE USING (public.is_admin(auth.uid()));
-
-CREATE POLICY "config_insert_admin" ON public.app_config
-  FOR INSERT WITH CHECK (public.is_admin(auth.uid()));
-
--- Notifications policies
-CREATE POLICY "notifications_read_own" ON public.notifications
-  FOR SELECT USING (
-    user_id IN (SELECT id FROM public.users WHERE auth_id = auth.uid())
-  );
-
-CREATE POLICY "notifications_insert_authenticated" ON public.notifications
-  FOR INSERT WITH CHECK (auth.uid() IS NOT NULL);
-
-CREATE POLICY "notifications_update_own" ON public.notifications
-  FOR UPDATE USING (
-    user_id IN (SELECT id FROM public.users WHERE auth_id = auth.uid())
-  );
-
--- Login logs policies
-CREATE POLICY "login_logs_admin_read" ON public.login_logs
-  FOR SELECT USING (public.is_admin(auth.uid()));
-
-CREATE POLICY "login_logs_insert_authenticated" ON public.login_logs
-  FOR INSERT WITH CHECK (auth.uid() IS NOT NULL);
+  FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();

@@ -3,7 +3,7 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { listUsersForAdmin, listUsersForAdminFromCache, setUserData, setUserRole, setStreakForAdmin, setUserStatusForAdmin, subscribeAppConfig, setAppConfig, pushAuditLog, buildSuperAdminEmailsMap } from '../services/database';
 import { auth } from '../services/auth';
 import '../styles/SuperAdminDashboard.css';
-import { LayoutDashboard, SlidersHorizontal, Shield, Users, Flame, Lock, FileText, Database, LogOut, Sun, Moon, Menu, Search, RefreshCw, ChevronDown, ToggleLeft, ToggleRight, Download, CheckCircle, XCircle, Trophy, X, Activity, Plus, Trash2, Eye, EyeOff } from 'lucide-react';
+import { LayoutDashboard, SlidersHorizontal, Shield, Users, Flame, Lock, FileText, Database, LogOut, Sun, Moon, Menu, Search, RefreshCw, ChevronDown, ToggleLeft, ToggleRight, Download, CheckCircle, XCircle, Trophy, X, Activity, Plus, Trash2, Eye, EyeOff, Mail } from 'lucide-react';
 
 const ACTIVE_THRESHOLD_MS = 10 * 60 * 1000; // 10 min
 
@@ -54,6 +54,7 @@ const TABS = [
   { id: 'roles', label: 'Role & Permissions', icon: 'lock' },
   { id: 'audit', label: 'Audit Logs / System Logs', icon: 'list_alt' },
   { id: 'health', label: 'Server & Database Health', icon: 'dns' },
+  { id: 'emails', label: 'Email Templates', icon: 'emails' },
 ];
 
 const LUCIDE_TAB_ICONS = {
@@ -65,6 +66,7 @@ const LUCIDE_TAB_ICONS = {
   roles: Lock,
   audit: FileText,
   health: Database,
+  emails: Mail,
 };
 
 const DEFAULT_FLAGS = [
@@ -105,6 +107,121 @@ function isUsersPermissionError(msg) {
   return msg && /permission|insufficient/i.test(String(msg));
 }
 
+const EmailTemplateEditor = ({ templateId, title, desc, content, onUpdate, onTest }) => {
+  const [mode, setMode] = useState('preview'); // 'preview' or 'code'
+
+  return (
+    <div style={{ padding: 24, background: 'rgba(15,23,42,0.6)', borderRadius: 16, border: '1px solid rgba(251,191,36,0.1)', marginBottom: 24 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+        <div>
+          <h2 style={{ fontSize: 20, color: '#f1f5f9', fontWeight: 700, marginBottom: 4 }}>{title}</h2>
+          <p style={{ color: '#94a3b8', fontSize: 13, margin: 0 }}>{desc}</p>
+        </div>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+          <div style={{ display: 'flex', background: 'rgba(0,0,0,0.3)', padding: 4, borderRadius: 10, border: '1px solid rgba(255,255,255,0.08)' }}>
+            <button
+              onClick={() => setMode('preview')}
+              style={{
+                padding: '6px 16px',
+                borderRadius: 8,
+                border: 'none',
+                background: mode === 'preview' ? 'linear-gradient(135deg, #38bdf8, #6366f1)' : 'transparent',
+                color: mode === 'preview' ? '#fff' : '#94a3b8',
+                fontSize: 12,
+                fontWeight: 600,
+                cursor: 'pointer',
+                transition: 'all 0.2s'
+              }}
+            >Preview View</button>
+            <button
+              onClick={() => setMode('code')}
+              style={{
+                padding: '6px 16px',
+                borderRadius: 8,
+                border: 'none',
+                background: mode === 'code' ? 'linear-gradient(135deg, #38bdf8, #6366f1)' : 'transparent',
+                color: mode === 'code' ? '#fff' : '#94a3b8',
+                fontSize: 12,
+                fontWeight: 600,
+                cursor: 'pointer',
+                transition: 'all 0.2s'
+              }}
+            >View HTML</button>
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button
+              type="button"
+              onClick={() => onTest(templateId)}
+              style={{
+                padding: '10px 16px',
+                borderRadius: 10,
+                border: 'none',
+                background: 'rgba(56, 189, 248, 0.1)',
+                color: '#38bdf8',
+                fontWeight: 700,
+                cursor: 'pointer',
+                fontSize: 12,
+                border: '1px solid rgba(56, 189, 248, 0.2)'
+              }}>
+              Send test
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                navigator.clipboard.writeText(content);
+                alert(title + ' template copied to clipboard!');
+              }}
+              style={{
+                padding: '10px 16px',
+                borderRadius: 10,
+                border: 'none',
+                background: 'rgba(255,255,255,0.05)',
+                color: '#ffffff',
+                fontWeight: 700,
+                cursor: 'pointer',
+                fontSize: 12,
+                border: '1px solid rgba(255,255,255,0.1)'
+              }}>
+              Copy code
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div style={{ background: '#0a0e1a', borderRadius: 12, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)', height: '500px', position: 'relative' }}>
+        {mode === 'preview' ? (
+          <iframe
+            title={`Preview of ${title}`}
+            srcDoc={content || ''}
+            style={{ width: '100%', height: '100%', border: 'none', background: '#121212' }}
+          />
+        ) : (
+          <textarea
+            spellCheck="false"
+            style={{
+              width: '100%',
+              height: '100%',
+              background: 'transparent',
+              padding: 20,
+              border: 'none',
+              color: '#38bdf8',
+              fontSize: 12,
+              fontFamily: 'monospace',
+              margin: 0,
+              resize: 'none',
+              outline: 'none',
+              boxSizing: 'border-box',
+              lineHeight: '1.5'
+            }}
+            value={content || ''}
+            onChange={(e) => onUpdate(e.target.value)}
+          />
+        )}
+      </div>
+    </div>
+  );
+};
+
 export function SuperAdminDashboard({ user, onLogout, colorScheme = 'dark', setColorScheme = () => { }, themeMode = 'default', setThemeMode = () => { } }) {
   const [tab, setTab] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -142,6 +259,207 @@ export function SuperAdminDashboard({ user, onLogout, colorScheme = 'dark', setC
   const [permsSaveSuccess, setPermsSaveSuccess] = useState(false);
   const [healthSaveError, setHealthSaveError] = useState(null);
   const [healthSaveSuccess, setHealthSaveSuccess] = useState(false);
+  const [testEmailAddress, setTestEmailAddress] = useState('');
+  const [testEmailStatus, setTestEmailStatus] = useState(null);
+
+  const [emailTemplates, setEmailTemplates] = useState({
+    confirm_signup: `<!-- Curly Sports – Confirm signup email template -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Confirm your signup</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Syne', 'DM Sans', -apple-system, sans-serif; background-color: #121212; -webkit-font-smoothing: antialiased; color: #ffffff;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #121212; padding: 60px 20px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width: 480px; background: rgba(26, 26, 26, 0.95); border-radius: 20px; border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 16px 32px rgba(0, 0, 0, 0.4); overflow: hidden;">
+          <tr>
+            <td style="padding: 32px 32px 24px; text-align: center; border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
+              <span style="font-size: 28px; font-weight: 800; color: #ffffff; letter-spacing: -0.02em;">Curly</span><span style="font-size: 28px; font-weight: 800; color: #38bdf8; letter-spacing: -0.02em;">Sports</span>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 40px 32px; text-align: center;">
+              <img src="https://ialexnohsrkrkmbnuqgd.supabase.co/storage/v1/object/public/public/curly-sports-mascot.png" alt="Curly Sports Mascot" style="height: 140px; margin-bottom: 24px; display: block; margin-left: auto; margin-right: auto;" />
+              <h1 style="margin: 0 0 16px; font-size: 24px; font-weight: 700; color: #ffffff; letter-spacing: -0.02em;">Confirm your email</h1>
+              <p style="margin: 0 0 32px; font-size: 15px; line-height: 1.6; color: #a8a8a8;">
+                You’re almost in. Click the button below to verify <strong style="color: #ffffff; font-weight: 600;">{{ .Email }}</strong> and start your journey with Curly Sports.
+              </p>
+              <table role="presentation" cellspacing="0" cellpadding="0" style="margin: 0 auto;">
+                <tr>
+                  <td style="border-radius: 12px; background: linear-gradient(135deg, #38bdf8, #6366f1); box-shadow: 0 4px 16px rgba(56, 189, 248, 0.3);">
+                    <a href="{{ .ConfirmationURL }}" target="_blank" rel="noopener" style="display: inline-block; padding: 16px 32px; font-size: 16px; font-weight: 600; color: #ffffff; text-decoration: none; letter-spacing: 0.01em;">Confirm your email</a>
+                  </td>
+                </tr>
+              </table>
+              <p style="margin: 32px 0 0; font-size: 13px; line-height: 1.5; color: #64748b;">If the button doesn’t work, copy and paste this link into your browser:</p>
+              <p style="margin: 8px 0 0; font-size: 12px; word-break: break-all; color: #38bdf8;">{{ .ConfirmationURL }}</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 24px 32px; border-top: 1px solid rgba(255, 255, 255, 0.05); background: rgba(18, 18, 18, 0.4);">
+              <p style="margin: 0; font-size: 12px; line-height: 1.5; color: #64748b; text-align: center;">
+                You’re receiving this because you signed up for Curly Sports. If you didn’t request this, you can ignore this email.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`,
+    reset_password: `<!-- Curly Sports – Reset Password email template -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reset your password</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Syne', 'DM Sans', -apple-system, sans-serif; background-color: #121212; -webkit-font-smoothing: antialiased; color: #ffffff;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #121212; padding: 60px 20px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width: 480px; background: rgba(26, 26, 26, 0.95); border-radius: 20px; border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 16px 32px rgba(0, 0, 0, 0.4); overflow: hidden;">
+          <tr>
+            <td style="padding: 32px 32px 24px; text-align: center; border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
+              <span style="font-size: 28px; font-weight: 800; color: #ffffff; letter-spacing: -0.02em;">Curly</span><span style="font-size: 28px; font-weight: 800; color: #38bdf8; letter-spacing: -0.02em;">Sports</span>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 40px 32px; text-align: center;">
+              <img src="https://ialexnohsrkrkmbnuqgd.supabase.co/storage/v1/object/public/public/curly-sports-mascot.png" alt="Curly Sports Mascot" style="height: 140px; margin-bottom: 24px; display: block; margin-left: auto; margin-right: auto;" />
+              <h1 style="margin: 0 0 16px; font-size: 24px; font-weight: 700; color: #ffffff; letter-spacing: -0.02em;">Reset your password</h1>
+              <p style="margin: 0 0 32px; font-size: 15px; line-height: 1.6; color: #a8a8a8;">
+                We received a request to reset the password for your Curly Sports account. Click the button below to choose a new password.
+              </p>
+              <table role="presentation" cellspacing="0" cellpadding="0" style="margin: 0 auto;">
+                <tr>
+                  <td style="border-radius: 12px; background: linear-gradient(135deg, #38bdf8, #6366f1); box-shadow: 0 4px 16px rgba(56, 189, 248, 0.3);">
+                    <a href="{{ .ConfirmationURL }}" target="_blank" rel="noopener" style="display: inline-block; padding: 16px 32px; font-size: 16px; font-weight: 600; color: #ffffff; text-decoration: none; letter-spacing: 0.01em;">Reset Password</a>
+                  </td>
+                </tr>
+              </table>
+              <p style="margin: 32px 0 0; font-size: 13px; line-height: 1.5; color: #64748b;">If the button doesn’t work, copy and paste this link into your browser:</p>
+              <p style="margin: 8px 0 0; font-size: 12px; word-break: break-all; color: #38bdf8;">{{ .ConfirmationURL }}</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 24px 32px; border-top: 1px solid rgba(255, 255, 255, 0.05); background: rgba(18, 18, 18, 0.4);">
+              <p style="margin: 0; font-size: 12px; line-height: 1.5; color: #64748b; text-align: center;">
+                You’re receiving this because a password reset was requested for your account. If you didn’t request this, you can ignore this email.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`,
+    invite_user: `<!-- Curly Sports – Invite User email template -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>You've been invited!</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Syne', 'DM Sans', -apple-system, sans-serif; background-color: #121212; -webkit-font-smoothing: antialiased; color: #ffffff;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #121212; padding: 60px 20px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width: 480px; background: rgba(26, 26, 26, 0.95); border-radius: 20px; border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 16px 32px rgba(0, 0, 0, 0.4); overflow: hidden;">
+          <tr>
+            <td style="padding: 32px 32px 24px; text-align: center; border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
+              <span style="font-size: 28px; font-weight: 800; color: #ffffff; letter-spacing: -0.02em;">Curly</span><span style="font-size: 28px; font-weight: 800; color: #38bdf8; letter-spacing: -0.02em;">Sports</span>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 40px 32px; text-align: center;">
+              <img src="https://ialexnohsrkrkmbnuqgd.supabase.co/storage/v1/object/public/public/curly-sports-mascot.png" alt="Curly Sports Mascot" style="height: 140px; margin-bottom: 24px; display: block; margin-left: auto; margin-right: auto;" />
+              <h1 style="margin: 0 0 16px; font-size: 24px; font-weight: 700; color: #ffffff; letter-spacing: -0.02em;">You're Invited!</h1>
+              <p style="margin: 0 0 32px; font-size: 15px; line-height: 1.6; color: #a8a8a8;">
+                You have been invited to join the Curly Sports platform. Click the button below to accept your invitation, verify your email, and create your profile.
+              </p>
+              <table role="presentation" cellspacing="0" cellpadding="0" style="margin: 0 auto;">
+                <tr>
+                  <td style="border-radius: 12px; background: linear-gradient(135deg, #38bdf8, #6366f1); box-shadow: 0 4px 16px rgba(56, 189, 248, 0.3);">
+                    <a href="{{ .ConfirmationURL }}" target="_blank" rel="noopener" style="display: inline-block; padding: 16px 32px; font-size: 16px; font-weight: 600; color: #ffffff; text-decoration: none; letter-spacing: 0.01em;">Accept Invitation</a>
+                  </td>
+                </tr>
+              </table>
+              <p style="margin: 32px 0 0; font-size: 13px; line-height: 1.5; color: #64748b;">If the button doesn’t work, copy and paste this link into your browser:</p>
+              <p style="margin: 8px 0 0; font-size: 12px; word-break: break-all; color: #38bdf8;">{{ .ConfirmationURL }}</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 24px 32px; border-top: 1px solid rgba(255, 255, 255, 0.05); background: rgba(18, 18, 18, 0.4);">
+              <p style="margin: 0; font-size: 12px; line-height: 1.5; color: #64748b; text-align: center;">
+                You’re receiving this because you were invited to Curly Sports. If you believe this is a mistake, you can ignore this email.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`,
+    notification: `<!-- Curly Sports – General Notification email template -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>New Notification</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Syne', 'DM Sans', -apple-system, sans-serif; background-color: #121212; -webkit-font-smoothing: antialiased; color: #ffffff;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #121212; padding: 60px 20px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width: 480px; background: rgba(26, 26, 26, 0.95); border-radius: 20px; border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 16px 32px rgba(0, 0, 0, 0.4); overflow: hidden;">
+          <tr>
+            <td style="padding: 32px 32px 24px; text-align: center; border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
+              <span style="font-size: 28px; font-weight: 800; color: #ffffff; letter-spacing: -0.02em;">Curly</span><span style="font-size: 28px; font-weight: 800; color: #38bdf8; letter-spacing: -0.02em;">Sports</span>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 40px 32px; text-align: center;">
+              <img src="https://ialexnohsrkrkmbnuqgd.supabase.co/storage/v1/object/public/public/curly-sports-mascot.png" alt="Curly Sports Mascot" style="height: 140px; margin-bottom: 24px; display: block; margin-left: auto; margin-right: auto;" />
+              <h1 style="margin: 0 0 16px; font-size: 24px; font-weight: 700; color: #ffffff; letter-spacing: -0.02em;">Important Update</h1>
+              <p style="margin: 0 0 32px; font-size: 15px; line-height: 1.6; color: #a8a8a8;">
+                We have an important notification regarding your Curly Sports account.
+              </p>
+              <table role="presentation" cellspacing="0" cellpadding="0" style="margin: 0 auto;">
+                <tr>
+                  <td style="border-radius: 12px; background: linear-gradient(135deg, #38bdf8, #6366f1); box-shadow: 0 4px 16px rgba(56, 189, 248, 0.3);">
+                    <a href="https://curlysports.com/dashboard" target="_blank" rel="noopener" style="display: inline-block; padding: 16px 32px; font-size: 16px; font-weight: 600; color: #ffffff; text-decoration: none; letter-spacing: 0.01em;">Go to Dashboard</a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 24px 32px; border-top: 1px solid rgba(255, 255, 255, 0.05); background: rgba(18, 18, 18, 0.4);">
+              <p style="margin: 0; font-size: 12px; line-height: 1.5; color: #64748b; text-align: center;">
+                You’re receiving this because you signed up for Curly Sports.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`
+  });
+  const [templatesSaveSuccess, setTemplatesSaveSuccess] = useState(false);
+  const [templatesSaveError, setTemplatesSaveError] = useState(null);
 
   // Prevent config listener from overwriting state while a write is in flight
   const pendingMaintenance = useRef(false);
@@ -150,6 +468,7 @@ export function SuperAdminDashboard({ user, onLogout, colorScheme = 'dark', setC
   const pendingAdmins = useRef(false);
   const pendingHealth = useRef(false);
   const pendingSports = useRef(false);
+  const pendingTemplates = useRef(false);
   const permissionErrorAutoSyncDone = useRef(false);
   /** After a successful sports save, ignore listener updates for this long so stale snapshot doesn't overwrite UI */
   const sportsWrittenAtRef = useRef(0);
@@ -163,6 +482,7 @@ export function SuperAdminDashboard({ user, onLogout, colorScheme = 'dark', setC
     maintenance: false,
     enabledSports: {},
     health: { server: 'OK', db: 'Connected', api: 'OK', uptime: '99.9%' },
+    emailTemplates: {},
   });
   const hasReceivedConfigRef = useRef(false);
   useEffect(() => {
@@ -172,23 +492,28 @@ export function SuperAdminDashboard({ user, onLogout, colorScheme = 'dark', setC
       maintenance,
       enabledSports,
       health,
+      emailTemplates,
     };
-  }, [featureFlags, permissions, maintenance, enabledSports, health]);
+  }, [featureFlags, permissions, maintenance, enabledSports, health, emailTemplates]);
 
   // Persist config to Supabase every second so data is always saved (retries if a write failed)
   useEffect(() => {
     if (!auth.currentUser?.email) return;
     const interval = setInterval(() => {
       if (!hasReceivedConfigRef.current) return;
-      const { featureFlags: f, permissions: p, maintenance: m, enabledSports: s, health: h } = configSnapshotRef.current;
+      const { featureFlags: f, permissions: p, maintenance: m, enabledSports: s, health: h, emailTemplates: et } = configSnapshotRef.current;
       const payload = {};
       if (Array.isArray(f) && f.length > 0) payload.featureFlags = f;
       if (Array.isArray(p) && p.length > 0) payload.permissions = p;
       payload.maintenance = !!m;
       if (typeof s === 'object' && s !== null && Object.keys(s).length > 0) payload.enabledSports = s;
       if (h && typeof h === 'object' && Object.keys(h).length > 0) payload.health = h;
+      if (typeof et === 'object' && et !== null && Object.keys(et).length > 0) payload.emailTemplates = et;
       if (Object.keys(payload).length === 0) return;
       setAppConfig(payload, { currentUserEmail: auth.currentUser?.email })
+        .then(() => {
+          // Templates saved successfully to DB
+        })
         .catch((e) => console.warn('[SuperAdmin] 1s save:', e?.message));
     }, 1000);
     return () => clearInterval(interval);
@@ -250,6 +575,13 @@ export function SuperAdminDashboard({ user, onLogout, colorScheme = 'dark', setC
       if (!pendingSports.current) {
         const skipSports = sportsWrittenAtRef.current && Date.now() - sportsWrittenAtRef.current < 4000;
         if (!skipSports) setEnabledSports(config.enabledSports && typeof config.enabledSports === 'object' ? config.enabledSports : {});
+      }
+      if (!pendingTemplates.current) {
+        // Only update local state if the server actually has templates.
+        // This prevents the high-quality local defaults from being overwritten by an empty DB on first load.
+        if (config.emailTemplates && typeof config.emailTemplates === 'object' && Object.keys(config.emailTemplates).length > 0) {
+          setEmailTemplates(config.emailTemplates);
+        }
       }
     });
     return () => { if (typeof unsub === 'function') unsub(); };
@@ -797,6 +1129,92 @@ export function SuperAdminDashboard({ user, onLogout, colorScheme = 'dark', setC
           </div>
         )}
 
+        {tab === 'emails' && (
+          <div>
+            <h1 className="sa-main-heading">Email Templates</h1>
+            <p className="sa-main-sub">Design and edit your modern, dark-themed email templates here. These use standard Supabase placeholders (e.g. <code>{"{{ .ConfirmationURL }}"}</code>). Changes are persisted to the database and synced with the Custom Mailer hook.</p>
+
+            <div style={{ marginBottom: 24, padding: 20, background: 'rgba(30,41,59,0.5)', borderRadius: 16, border: '1px solid rgba(255,255,255,0.08)' }}>
+              <h3 style={{ fontSize: 14, color: '#f1f5f9', marginBottom: 16 }}>Test Email Integration</h3>
+              <div style={{ display: 'flex', gap: 12, alignItems: 'flex-end' }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ display: 'block', fontSize: 12, color: '#94a3b8', marginBottom: 6 }}>Recipient Email (for testing)</label>
+                  <input
+                    type="email"
+                    placeholder="your-email@example.com"
+                    value={testEmailAddress || user?.email || ''}
+                    onChange={(e) => setTestEmailAddress(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '10px 14px',
+                      borderRadius: 8,
+                      background: 'rgba(15,23,42,0.6)',
+                      border: '1px solid rgba(255,255,255,0.1)',
+                      color: '#fff',
+                      fontSize: 13
+                    }}
+                  />
+                </div>
+                <div style={{ flex: 1, fontSize: 12, color: '#64748b' }}>
+                  Status: <span style={{ color: testEmailStatus?.success ? '#4ade80' : testEmailStatus?.error ? '#f87171' : '#94a3b8' }}>
+                    {testEmailStatus?.msg || 'Ready to test'}
+                  </span>
+                </div>
+              </div>
+              <p style={{ marginTop: 12, fontSize: 12, color: '#64748b', margin: '12px 0 0' }}>
+                <strong>Note:</strong> To use these templates in "actual" emails, ensure the <code>custom-mailer</code> Edge Function is deployed and set as your Supabase Auth Hook.
+              </p>
+            </div>
+
+            <div style={{ marginTop: 24, display: 'flex', flexDirection: 'column', gap: 32 }}>
+              {[
+                { id: 'confirm_signup', title: 'Confirm Signup', desc: 'Sent when a new user signs up. Placeholders: {{ .ConfirmationURL }}, {{ .Email }}' },
+                { id: 'reset_password', title: 'Reset Password', desc: 'Sent when a user requests a password reset. Placeholders: {{ .ConfirmationURL }}, {{ .Email }}' },
+                { id: 'invite_user', title: 'Invite User', desc: 'Sent when an admin invites a new user. Placeholders: {{ .ConfirmationURL }}, {{ .Email }}' },
+                { id: 'notification', title: 'System Notification', desc: 'General system update notification.' }
+              ].map(template => (
+                <EmailTemplateEditor
+                  key={template.id}
+                  templateId={template.id}
+                  title={template.title}
+                  desc={template.desc}
+                  content={emailTemplates[template.id] || ''}
+                  onUpdate={(val) => setEmailTemplates(prev => ({ ...prev, [template.id]: val }))}
+                  onTest={async (id) => {
+                    const email = testEmailAddress || user?.email;
+                    if (!email) {
+                      alert('Please enter a test email address first.');
+                      return;
+                    }
+                    setTestEmailStatus({ msg: 'Sending test...', success: false, error: false });
+                    try {
+                      // Call the custom-mailer Edge Function
+                      const { data, error } = await supabase.functions.invoke('custom-mailer', {
+                        body: {
+                          to: email,
+                          subject: `CurlySports Test: ${template.title}`,
+                          templateId: id,
+                          htmlOverride: emailTemplates[id], // Pass the current editor content directly for instant testing
+                          placeholders: {
+                            ConfirmationURL: 'https://curlysports.com/confirm-test',
+                            Email: email
+                          }
+                        }
+                      });
+                      if (error) throw error;
+                      setTestEmailStatus({ msg: 'Test email sent successfully!', success: true, error: false });
+                      setTimeout(() => setTestEmailStatus(null), 5000);
+                    } catch (err) {
+                      console.error('Test email failed:', err);
+                      setTestEmailStatus({ msg: `Failed: ${err.message}`, success: false, error: true });
+                    }
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
         {tab === 'admins' && (
           <div>
             <h1 className="sa-main-heading">Admin Management</h1>
@@ -908,6 +1326,8 @@ export function SuperAdminDashboard({ user, onLogout, colorScheme = 'dark', setC
                     <th style={{ textAlign: 'left', padding: 12, fontSize: 11, color: '#94a3b8', textTransform: 'uppercase' }}>Current streak</th>
                     <th style={{ textAlign: 'left', padding: 12, fontSize: 11, color: '#94a3b8', textTransform: 'uppercase' }}>Longest streak</th>
                     <th style={{ textAlign: 'left', padding: 12, fontSize: 11, color: '#94a3b8', textTransform: 'uppercase' }}>Last active</th>
+                    <th style={{ textAlign: 'left', padding: 12, fontSize: 11, color: '#94a3b8', textTransform: 'uppercase' }}>Survey</th>
+                    <th style={{ textAlign: 'left', padding: 12, fontSize: 11, color: '#94a3b8', textTransform: 'uppercase' }}>Extras</th>
                     <th style={{ textAlign: 'left', padding: 12, fontSize: 11, color: '#94a3b8', textTransform: 'uppercase' }}>Status</th>
                     <th style={{ textAlign: 'left', padding: 12, fontSize: 11, color: '#94a3b8', textTransform: 'uppercase' }}>Actions</th>
                   </tr>
@@ -951,6 +1371,22 @@ export function SuperAdminDashboard({ user, onLogout, colorScheme = 'dark', setC
                           <td style={{ padding: 12 }}>{typeof u.currentStreak === 'number' ? getDisplayCurrentStreak(u) : '—'}</td>
                           <td style={{ padding: 12 }}>{typeof u.longestStreak === 'number' ? u.longestStreak : '—'}</td>
                           <td style={{ padding: 12, fontSize: 13, color: '#94a3b8' }}>{formatLastActive(u.lastLoginDate, u.lastSeen)}</td>
+                          <td style={{ padding: 12, fontSize: 12 }}>
+                            {u.surveyCompleted ? (
+                              <span style={{ color: '#4ade80' }}>✅ Done</span>
+                            ) : u.surveySkipped ? (
+                              <span style={{ color: '#fbbf24' }}>⏩ Skipped</span>
+                            ) : (
+                              <span style={{ color: '#64748b' }}>⏳ Pending</span>
+                            )}
+                          </td>
+                          <td style={{ padding: 12, fontSize: 11, color: '#94a3b8' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                              <span>🎟️ Tickets: {Object.keys(u.bookedTickets || {}).length}</span>
+                              <span>🎮 Penalty: {u.penaltyBest || 0}</span>
+                              <span>🏏 Super Over: {u.superOverBest || 0}</span>
+                            </div>
+                          </td>
                           <td style={{ padding: 12 }}>
                             <select
                               style={{ ...inputStyle, width: 'auto', padding: '4px 8px', fontSize: 12, color: u.status === 'suspended' ? '#f87171' : u.status === 'banned' ? '#ef4444' : '#4ade80' }}

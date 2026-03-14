@@ -1,0 +1,82 @@
+// Curly Sports – Prisma schema for Supabase PostgreSQL
+// Run: yarn prisma migrate dev (creates tables); yarn prisma db seed (seeds app_config)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  authId          String    @unique @map("auth_id")
+  email           String    @default("")
+  displayName     String?   @default("") @map("display_name")
+  photoUrl        String?   @map("photo_url")
+  role            String    @default("member") // super_admin | admin | member
+  status          String    @default("active") // active | suspended | banned
+  currentStreak   Int       @default(0) @map("current_streak")
+  longestStreak   Int       @default(0) @map("longest_streak")
+  lastLoginDate   DateTime? @map("last_login_date") @db.Date
+  lastSeen        DateTime? @map("last_seen") @db.Timestamptz
+  favoriteClubs   Json      @default("[]") @map("favorite_clubs")
+  favoritePlayers Json      @default("[]") @map("favorite_players")
+  bookedTickets   Json      @default("{}") @map("booked_tickets")
+  penaltyBest     Int       @default(0) @map("penalty_best")
+  superOverBest   Int       @default(0) @map("super_over_best")
+  surveyInterests Json?     @map("survey_interests")
+  surveyCompleted Boolean   @default(false) @map("survey_completed")
+  surveySkipped   Boolean   @default(false) @map("survey_skipped")
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@index([authId])
+  @@map("users")
+}
+
+model LoginLog {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userAuthId  String?  @map("user_auth_id")
+  email       String   @default("")
+  displayName String   @default("") @map("display_name")
+  role        String   @default("member")
+  loggedAt    DateTime @default(now()) @map("logged_at") @db.Timestamptz
+
+  @@index([loggedAt(sort: Desc)])
+  @@map("login_logs")
+}
+
+model AppConfig {
+  id                String   @id @default("app")
+  featureFlags       Json     @default("[]") @map("feature_flags")
+  saAdmins           Json     @default("[]") @map("sa_admins")
+  permissions        Json     @default("[]") @map("permissions")
+  maintenance        Boolean  @default(false)
+  health             Json     @default("{}") @map("health")
+  auditLog           Json     @default("[]") @map("audit_log")
+  enabledSports      Json     @default("{}") @map("enabled_sports")
+  superAdminEmails   Json     @default("{}") @map("super_admin_emails")
+  emailTemplates      Json     @default("{}") @map("email_templates")
+  updatedAt          DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@map("app_config")
+}
+
+model Notification {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String   @map("user_id")
+  type      String   @default("info")
+  title     String
+  body      String   @default("")
+  read      Boolean  @default(false)
+  payload   Json     @default("{}")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@index([userId])
+  @@index([createdAt(sort: Desc)])
+  @@map("notifications")
+}

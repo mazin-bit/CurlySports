@@ -355,12 +355,33 @@
 .home-founder .home-founder-wrap {
   max-width: 640px;
   margin: 0 auto;
+  text-align: center;
+}
+.home-founder-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 .home-founder-wrap p {
-  font-size: 1.0625rem;
-  line-height: 1.7;
+  font-family: var(--curly-font);
+  font-size: 1.125rem;
+  line-height: 1.75;
   color: var(--curly-text-secondary);
   margin: 0 0 24px;
+  max-width: 580px;
+  letter-spacing: 0.01em;
+}
+.home-founder-wrap p + p {
+  margin-top: 0.25rem;
+}
+.home-founder-vision {
+  font-weight: 600;
+  color: var(--curly-text) !important;
+  margin-top: 8px !important;
+}
+.home-founder-vision strong {
+  font-weight: 700;
+  color: var(--curly-accent);
 }
 .home-founder-tags {
   display: flex;
@@ -376,6 +397,60 @@
   color: #f1f5f9;
   border: 1px solid rgba(255, 255, 255, 0.12);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+/* --- Why Curly Sports: feature cards (replaces comparison table) --- */
+.home-section-heading-accent {
+  color: var(--curly-accent);
+}
+.home-why-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+.home-why-card {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(8px);
+  border-radius: 16px;
+  padding: 28px 24px;
+  text-align: center;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+.home-why-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.1);
+  border-color: rgba(14, 165, 233, 0.2);
+}
+.home-why-card-icon {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 20px;
+  border-radius: 50%;
+  background: rgba(14, 165, 233, 0.15);
+  color: var(--curly-accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.home-why-card-icon .material-icons-round {
+  font-size: 28px;
+}
+.home-why-card-title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 12px;
+  letter-spacing: -0.02em;
+}
+.home-why-card-desc {
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  color: #475569;
+  margin: 0;
 }
 
 /* --- Comparison table (capsule rows, home-matching colors, no white) --- */
@@ -2503,11 +2578,15 @@
 .public-home--curly .home-feature-grid,
 .public-home--curly .home-founder-wrap,
 .public-home--curly .home-table-wrap,
+.public-home--curly .home-why-cards,
 .public-home--curly .home-preview-grid,
 .public-home--curly .home-proof-grid,
 .public-home--curly .home-final-cta a {
   position: relative;
   z-index: 1;
+}
+.public-home--curly .home-section-heading-accent {
+  color: var(--curly-accent);
 }
 .home-feature-grid--curly {
   display: grid;
@@ -2535,7 +2614,13 @@
 }
 .public-home--curly .home-founder-wrap p,
 .public-home--curly .home-proof-grid p {
-  color: #475569;
+  color: #334155;
+}
+.public-home--curly .home-founder-vision {
+  color: #0f172a !important;
+}
+.public-home--curly .home-founder-vision strong {
+  color: #0369a1;
 }
 .public-home--curly .home-compare-table {
   background: transparent;
@@ -2985,6 +3070,28 @@
 .public-home--curly.public-home--dark .home-compare-table tbody tr:nth-child(even):hover td:nth-child(3) {
   background: rgba(56, 189, 248, 0.4) !important;
 }
+.public-home--curly.public-home--dark .home-why-card {
+  background: rgba(15, 23, 42, 0.9);
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+.public-home--curly.public-home--dark .home-why-card:hover {
+  border-color: rgba(56, 189, 248, 0.3);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
+}
+.public-home--curly.public-home--dark .home-why-card-icon {
+  background: rgba(56, 189, 248, 0.2);
+  color: #38bdf8;
+}
+.public-home--curly.public-home--dark .home-why-card-title {
+  color: #f1f5f9;
+}
+.public-home--curly.public-home--dark .home-why-card-desc {
+  color: #94a3b8;
+}
+.public-home--curly.public-home--dark .home-section-heading-accent {
+  color: #38bdf8;
+}
 .public-home--curly.public-home--dark .home-card h3,
 .public-home--curly.public-home--dark .home-compare-table thead th {
   color: #f1f5f9;
@@ -2993,6 +3100,12 @@
 .public-home--curly.public-home--dark .home-founder-wrap p,
 .public-home--curly.public-home--dark .home-proof-grid p {
   color: #cbd5e1;
+}
+.public-home--curly.public-home--dark .home-founder-vision {
+  color: #e2e8f0 !important;
+}
+.public-home--curly.public-home--dark .home-founder-vision strong {
+  color: #38bdf8;
 }
 .public-home--curly.public-home--dark .home-proof-grid p {
   background: rgba(10, 10, 10, 0.9);
@@ -3308,7 +3421,13 @@
 }
 .public-home--light .home-founder-wrap p,
 .public-home--light .home-proof-grid p {
-  color: #475569;
+  color: #334155;
+}
+.public-home--light .home-founder-vision {
+  color: #0f172a !important;
+}
+.public-home--light .home-founder-vision strong {
+  color: #0369a1;
 }
 .public-home--light .home-compare-table tbody td {
   color: #475569;

@@ -21,7 +21,7 @@ import {
   signUpWithEmail,
   signInWithEmail,
 } from './services/auth';
-import { supabase } from './lib/supabase';
+import { supabase, supabaseConfigured } from './lib/supabase';
 import { addNotification } from './components/NotificationsBell';
 import SurveyInterests from './components/SurveyInterests';
 import Dashboard from './pages/Dashboard';
@@ -38,9 +38,9 @@ import { Mail, Lock, User, AlertCircle, ChevronLeft, ChevronRight, Search, LogOu
 
 // Bootstrap admin emails — used only until the first super admin configures sa_admins in Supabase app_config.
 // Once sa_admins is populated these are effectively redundant but kept as a safety net for initial setup.
-const BOOTSTRAP_SUPER_ADMIN_EMAIL = 'mazcis2011@gmail.com';
+const BOOTSTRAP_SUPER_ADMIN_EMAILS = ['mazcis2011@gmail.com', 'mazin@curlysports.com'];
 const BOOTSTRAP_ADMIN_EMAIL = 'nasarpk20@gmail.com';
-const isSuperAdminEmail = (email) => (email || '').toLowerCase().trim() === BOOTSTRAP_SUPER_ADMIN_EMAIL;
+const isSuperAdminEmail = (email) => BOOTSTRAP_SUPER_ADMIN_EMAILS.includes((email || '').toLowerCase().trim());
 const isAdminEmail = (email) => (email || '').toLowerCase().trim() === BOOTSTRAP_ADMIN_EMAIL;
 
 /** Build feature-flags object from config array. Defaults all true. */
@@ -1653,31 +1653,54 @@ const HomePage = ({ isAuthenticated = false, homeTheme = 'light', setHomeTheme, 
         <section className="home-section home-founder">
           <h2>Meet the Founder</h2>
           <div className="home-founder-wrap">
-            <div>
+            <div className="home-founder-content">
               <p>
-                Mazin, Founder of Curly Sports, is a competitive football captain and tournament MVP, recognized with a Golden Boot.
-                As a team leader, he understands the value of data and performance analytics. Curly Sports was built from firsthand
-                experience - combining football passion with modern sports intelligence.
+                Curly Sports was founded by Mazin, a sports fan who was tired of jumping between apps. He wanted one place to follow the games he loves—the same thing you want.
               </p>
-              <div className="home-founder-tags">
-                <span>Football captain</span><span>Golden Boot</span><span>Tournament MVP</span><span>Analytics passion</span><span>Founder-led vision</span>
-              </div>
+              <p>
+                With a passion for technology and sports, he built Curly Sports so fans get everything in one place: personalized updates, real-time scores, and the moments that matter—so you never miss a beat.
+              </p>
+              <p>
+                Starting with football, cricket, basketball, and Formula 1, Curly Sports is growing into the platform that connects fans with real-time news, insights, and content that actually matters.
+              </p>
+              <p className="home-founder-vision">
+                Mazin’s vision is simple: make following sports <strong>smarter</strong>, <strong>faster</strong>, and <strong>more fun</strong> for fans everywhere.
+              </p>
             </div>
           </div>
         </section>
 
         <section className="home-section home-section--compare">
-          <h2>Why Curly Sports</h2>
-          <div className="home-table-wrap">
-            <table className="home-compare-table">
-              <thead><tr><th>Category</th><th>Other Apps</th><th>Curly Sports</th></tr></thead>
-              <tbody>
-                <tr><td>Personalization</td><td>Generic feeds</td><td>Survey-driven and role-based</td></tr>
-                <tr><td>Analytics depth</td><td>Basic stats only</td><td>Performance, context, and trends</td></tr>
-                <tr><td>Coverage</td><td>Single-purpose experience</td><td>Dashboard, analytics, news, and insights</td></tr>
-                <tr><td>Product direction</td><td>Slow roadmap cycles</td><td>Founder-led and athlete-focused iteration</td></tr>
-              </tbody>
-            </table>
+          <h2>Why <span className="home-section-heading-accent">Curly Sports</span></h2>
+          <div className="home-why-cards">
+            <article className="home-why-card">
+              <div className="home-why-card-icon">
+                <span className="material-icons-round" aria-hidden="true">tune</span>
+              </div>
+              <h3 className="home-why-card-title">Personalization</h3>
+              <p className="home-why-card-desc">Survey-driven and role-based so your feed matches how you follow the game.</p>
+            </article>
+            <article className="home-why-card">
+              <div className="home-why-card-icon">
+                <span className="material-icons-round" aria-hidden="true">analytics</span>
+              </div>
+              <h3 className="home-why-card-title">Analytics depth</h3>
+              <p className="home-why-card-desc">Performance, context, and trends—not just basic stats.</p>
+            </article>
+            <article className="home-why-card">
+              <div className="home-why-card-icon">
+                <span className="material-icons-round" aria-hidden="true">dashboard</span>
+              </div>
+              <h3 className="home-why-card-title">Coverage</h3>
+              <p className="home-why-card-desc">Dashboard, analytics, news, and insights in one place.</p>
+            </article>
+            <article className="home-why-card">
+              <div className="home-why-card-icon">
+                <span className="material-icons-round" aria-hidden="true">rocket_launch</span>
+              </div>
+              <h3 className="home-why-card-title">Product direction</h3>
+              <p className="home-why-card-desc">Founder-led and athlete-focused iteration so we build what fans need.</p>
+            </article>
           </div>
         </section>
 
@@ -1764,20 +1787,31 @@ const LoginPage = ({ mode = 'login', isAuthenticated = false, homeTheme = 'light
   const [isRegistering, setIsRegistering] = useState(mode === 'signup');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [signUpConfirmMessage, setSignUpConfirmMessage] = useState('');
 
   useEffect(() => {
     setIsRegistering(mode === 'signup');
     setError('');
+    setSignUpConfirmMessage('');
   }, [mode]);
 
   const handleGoogleLogin = async () => {
-    setLoading(true);
     setError('');
+    if (!supabaseConfigured) {
+      setError('Sign-in is not configured. Add VITE_SUPABASE_ANON_KEY to your .env file (get it from Supabase Dashboard → Settings → API).');
+      return;
+    }
+    setLoading(true);
     try {
       const { error: authError } = await signInWithGoogle();
       if (authError) throw authError;
     } catch (err) {
-      setError(err.message || 'Sign-in failed. Try again.');
+      const msg = err?.message || '';
+      if (msg.toLowerCase().includes('invalid api key') || msg.toLowerCase().includes('invalid key')) {
+        setError('Invalid Supabase API key. Check VITE_SUPABASE_ANON_KEY in .env (Supabase Dashboard → Settings → API).');
+      } else {
+        setError(msg || 'Sign-in failed. Try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -1790,14 +1824,23 @@ const LoginPage = ({ mode = 'login', isAuthenticated = false, homeTheme = 'light
       setError('Please agree to the Terms & Conditions to create an account.');
       return;
     }
+    if (isRegistering && !supabaseConfigured) {
+      setError('Sign-up is not configured. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to your .env (Supabase Dashboard → Settings → API).');
+      return;
+    }
     setLoading(true);
     setError('');
+    setSignUpConfirmMessage('');
     try {
       if (isRegistering) {
         const name = (displayName || '').trim() || email.split('@')[0];
-        const { error: signUpError } = await signUpWithEmail(email, password);
+        const { data: signUpData, error: signUpError } = await signUpWithEmail(email, password);
         if (signUpError) throw signUpError;
-        if (name) {
+        if (signUpData?.user && !signUpData?.session) {
+          setSignUpConfirmMessage('Account created. Check your email for the confirmation link, then sign in below or from the login page.');
+          return;
+        }
+        if (name && signUpData?.user) {
           await supabase.auth.updateUser({ data: { full_name: name } }).catch(() => {});
         }
       } else {
@@ -1805,17 +1848,25 @@ const LoginPage = ({ mode = 'login', isAuthenticated = false, homeTheme = 'light
         if (signInError) throw signInError;
       }
     } catch (err) {
-      const msg = (err.message || '').toLowerCase();
-      if (msg.includes('user not found') || msg.includes('invalid login')) {
+      const msg = (err?.message || '').toLowerCase();
+      if (!supabaseConfigured) {
+        setError('Sign-in is not configured. Add VITE_SUPABASE_ANON_KEY to your .env file (Supabase Dashboard → Settings → API).');
+      } else if (msg.includes('user not found') || msg.includes('invalid login')) {
         setError("No account with this email or wrong password. Try again or create a new account.");
       } else if (msg.includes('invalid email')) {
         setError("Please enter a valid email address.");
-      } else if (msg.includes('rate limit') || msg.includes('too many')) {
-        setError("Too many attempts. Wait a few minutes and try again.");
       } else if (msg.includes('already registered') || msg.includes('already been registered')) {
         setError("This email is already registered. Sign in instead.");
+      } else if (msg.includes('invalid api key') || msg.includes('invalid key')) {
+        setError('Invalid Supabase API key. Check VITE_SUPABASE_ANON_KEY in .env (Supabase Dashboard → Settings → API).');
+      } else if (msg.includes('rate limit') || msg.includes('too many') || msg.includes('email rate limit')) {
+        setError("Too many attempts. Wait a few minutes or try from another network.");
+      } else if (msg.includes('signup disabled') || msg.includes('sign up disabled')) {
+        setError("Sign-up is currently disabled. Use Google to sign in or contact support.");
+      } else if (msg.includes('password') && (msg.includes('at least') || msg.includes('6 character'))) {
+        setError("Password must be at least 6 characters.");
       } else {
-        setError(err.message || "Sign-in failed. Try again.");
+        setError(err?.message || (isRegistering ? "Sign-up failed. Try again." : "Sign-in failed. Try again."));
       }
     } finally {
       setLoading(false);
@@ -1878,6 +1929,14 @@ const LoginPage = ({ mode = 'login', isAuthenticated = false, homeTheme = 'light
                 </div>
               ) : (
                 <div className="login-body">
+                  {signUpConfirmMessage && (
+                    <div className="auth-success-msg" role="status" style={{ marginBottom: 16, padding: '12px 16px', background: 'rgba(34,197,94,0.15)', border: '1px solid rgba(34,197,94,0.4)', borderRadius: 8, color: 'var(--text-primary, #e2e8f0)', fontSize: 14 }}>
+                      {signUpConfirmMessage}
+                      <p style={{ marginTop: 8, marginBottom: 0 }}>
+                        <Link to="/login" className="login-form-switch-btn" onClick={() => { setSignUpConfirmMessage(''); setError(''); }}>Go to Sign in</Link>
+                      </p>
+                    </div>
+                  )}
                   {error && (
                     <div className="auth-error-msg" role="alert" aria-live="assertive">
                       <AlertCircle size={16} className="lucide-icon" aria-hidden="true" />
@@ -2785,21 +2844,17 @@ function App() {
         });
         setIsAuthenticated(true);
 
-        // Immediately write core profile data (email, displayName, photoURL) so all users — including
-        // Google sign-in users — always appear in admin User Management, even on first login.
-        const isGoogleUser = supabaseUser.app_metadata?.provider === 'google';
+        // Immediately upsert core profile + role so every user has a row (Google, email, first login).
+        const initialRole = isBootstrapEmail ? 'super_admin' : isBootstrapAdmin ? 'admin' : 'member';
         const profilePayload = {
           email: userEmail || '',
           displayName: userDisplayName || userEmail?.split('@')[0] || '',
+          role: initialRole,
           ...(userPhotoURL ? { photoURL: userPhotoURL } : {}),
-          ...(isGoogleUser ? { provider: 'google' } : {}),
         };
         setUserData(userId, profilePayload).catch(() => { });
-
-        if (isBootstrapEmail) {
-          setUserData(userId, { role: 'super_admin', ...profilePayload }).catch(() => { });
-          addLoginLog(userId, userEmail, userDisplayName || userEmail?.split('@')[0], 'super_admin').catch(() => { });
-        }
+        // Record every login so "all users who have ever logged in" are tracked (users + login_logs).
+        addLoginLog(userId, userEmail, userDisplayName || userEmail?.split('@')[0], initialRole).catch(() => { });
 
         let hasRunLoginLogic = false;
         unsubUser = subscribeUserData(userId, (data) => {
@@ -2873,8 +2928,6 @@ function App() {
                 setUserData(userId, { lastLoginDate: today, currentStreak, longestStreak, displayName: userDisplayName || '', email: userEmail || '' }).catch(() => { });
               }
               setCachedStreak(userId, currentStreak, longestStreak);
-              const finalRole = isBootstrapE ? 'super_admin' : isBootstrapA ? 'admin' : role;
-              addLoginLog(userId, userEmail, userDisplayName || userEmail?.split('@')[0], finalRole).catch(() => { });
               setUserData(userId, { displayName: userDisplayName || userEmail?.split('@')[0] || '', email: userEmail || '' }).catch(() => { });
             }
             setUser(prev => prev ? { ...prev, role, currentStreak, longestStreak } : null);
@@ -2902,7 +2955,6 @@ function App() {
                 setUserData(userId, streakPayload).catch(() => { });
               }
               setCachedStreak(userId, 1, 1);
-              addLoginLog(userId, userEmail, userDisplayName || userEmail?.split('@')[0], initialRole).catch(() => { });
               setUser(prev => prev ? { ...prev, role: initialRole, currentStreak: 1, longestStreak: 1 } : null);
             }
           }

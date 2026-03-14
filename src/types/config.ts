@@ -45,4 +45,5 @@ export interface AppConfig {
   auditLog: AuditLogEntry[];
   enabledSports: Record<string, boolean>;
   super_admin_emails?: Record<string, boolean>;
+  emailTemplates?: Record<string, string>;
 }

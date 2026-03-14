@@ -54,7 +54,15 @@ function mapUserRow(row: UserRow): Record<string, unknown> {
   };
 }
 
-/** Maps camelCase app data to Supabase snake_case columns. */
+/** Snake_case column names that exist on public.users (so we never send invalid columns like provider). */
+const USERS_TABLE_COLUMNS = new Set([
+  'auth_id', 'email', 'display_name', 'photo_url', 'role', 'status',
+  'current_streak', 'longest_streak', 'last_login_date', 'last_seen',
+  'favorite_clubs', 'favorite_players', 'booked_tickets', 'penalty_best', 'super_over_best',
+  'survey_interests', 'survey_completed', 'survey_skipped',
+]);
+
+/** Maps camelCase app data to Supabase snake_case columns. Only includes columns that exist on users table. */
 function mapUserDataToRow(data: Record<string, unknown>): Record<string, unknown> {
   const mapping: Record<string, string> = {
     displayName: 'display_name',
@@ -71,13 +79,14 @@ function mapUserDataToRow(data: Record<string, unknown>): Record<string, unknown
     surveyInterests: 'survey_interests',
     surveyCompleted: 'survey_completed',
     surveySkipped: 'survey_skipped',
+    role: 'role',
   };
 
   const result: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(data)) {
     if (value === undefined) continue;
-    const snakeKey = mapping[key] || key;
-    result[snakeKey] = value;
+    const snakeKey = mapping[key] ?? key;
+    if (USERS_TABLE_COLUMNS.has(snakeKey)) result[snakeKey] = value;
   }
   return result;
 }
@@ -105,6 +114,7 @@ const DEFAULT_APP_CONFIG: AppConfig = {
   health: { server: 'OK', db: 'Connected', api: 'OK', uptime: '99.9%' },
   auditLog: [],
   enabledSports: {},
+  emailTemplates: {},
 };
 
 function parseAppConfigRow(row: Record<string, unknown>): AppConfig {
@@ -116,6 +126,7 @@ function parseAppConfigRow(row: Record<string, unknown>): AppConfig {
     health: (row.health && typeof row.health === 'object' ? row.health : DEFAULT_APP_CONFIG.health) as HealthStatus,
     auditLog: Array.isArray(row.audit_log) ? (row.audit_log as AuditLogEntry[]) : DEFAULT_APP_CONFIG.auditLog,
     enabledSports: (row.enabled_sports && typeof row.enabled_sports === 'object' ? row.enabled_sports : DEFAULT_APP_CONFIG.enabledSports) as Record<string, boolean>,
+    emailTemplates: (row.email_templates && typeof row.email_templates === 'object' ? row.email_templates : {}) as Record<string, string>,
   };
 }
 
@@ -135,29 +146,21 @@ export async function getUserData(uid: string): Promise<Record<string, unknown> 
   return mapUserRow(data as UserRow);
 }
 
-/** Save/update user data. Upserts by auth_id. */
+/** Save/update user data. Upserts by auth_id so every user gets a row on first write. */
 export async function setUserData(uid: string, data: Record<string, unknown>): Promise<void> {
   const mapped = mapUserDataToRow(data);
-
-  // Try update first
-  const { error: updateError } = await supabase
+  const { error } = await supabase
     .from('users')
-    .update(mapped)
-    .eq('auth_id', uid);
-
-  if (updateError) {
-    // If no rows matched, insert
-    const { error: insertError } = await supabase
-      .from('users')
-      .upsert({
+    .upsert(
+      {
         auth_id: uid,
-        email: (data.email as string) || '',
         ...mapped,
-      }, { onConflict: 'auth_id' });
+      },
+      { onConflict: 'auth_id' }
+    );
 
-    if (insertError) {
-      console.error('setUserData error:', insertError.message);
-    }
+  if (error) {
+    console.error('setUserData error:', error.message);
   }
 }
 
@@ -360,6 +363,7 @@ export async function setAppConfig(updates: Record<string, unknown>, options: { 
     auditLog: 'audit_log',
     enabledSports: 'enabled_sports',
     super_admin_emails: 'super_admin_emails',
+    emailTemplates: 'email_templates',
   };
 
   for (const [key, value] of Object.entries(updates)) {
@@ -506,7 +510,7 @@ export function subscribeNotifications(
   userId: string,
   callback: (list: Array<{ id: string } & Record<string, unknown>>) => void
 ): () => void {
-  if (!userId) return () => {};
+  if (!userId) return () => { };
 
   const fetchNotifications = async () => {
     const { data } = await supabase
