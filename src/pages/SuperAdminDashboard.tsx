@@ -3,7 +3,7 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { listUsersForAdmin, listUsersForAdminFromCache, setUserData, setUserRole, setStreakForAdmin, setUserStatusForAdmin, subscribeAppConfig, setAppConfig, pushAuditLog, buildSuperAdminEmailsMap } from '../services/database';
 import { auth } from '../services/auth';
 import '../styles/SuperAdminDashboard.css';
-import { LayoutDashboard, SlidersHorizontal, Shield, Users, Flame, Lock, FileText, Database, LogOut, Sun, Moon, Menu, Search, RefreshCw, ChevronDown, ToggleLeft, ToggleRight, Download, CheckCircle, XCircle, Trophy, X, Activity, Plus, Trash2, Eye, EyeOff, Mail } from 'lucide-react';
+import { LayoutDashboard, SlidersHorizontal, Shield, Users, Flame, Lock, FileText, Database, LogOut, Sun, Moon, Menu, Search, RefreshCw, ChevronDown, ToggleLeft, ToggleRight, Download, CheckCircle, XCircle, Trophy, X, Activity, Plus, Trash2, Eye, EyeOff, Mail, Palette, ExternalLink } from 'lucide-react';
 
 const ACTIVE_THRESHOLD_MS = 10 * 60 * 1000; // 10 min
 
@@ -68,6 +68,19 @@ const LUCIDE_TAB_ICONS = {
   health: Database,
   emails: Mail,
 };
+
+const TAB_TITLES = Object.fromEntries(TABS.map((t) => [t.id, t.label]));
+
+const THEME_OPTIONS = [
+  { id: 'default', label: 'Default', gradient: 'linear-gradient(135deg, #f59e0b, #d97706)' },
+  { id: 'sunshine', label: 'Sunshine', gradient: 'linear-gradient(135deg, #facc15, #eab308)' },
+  { id: 'sea', label: 'Sea', gradient: 'linear-gradient(135deg, #38bdf8, #0ea5e9)' },
+  { id: 'fire', label: 'Fire', gradient: 'linear-gradient(135deg, #f87171, #ef4444)' },
+  { id: 'forest', label: 'Forest', gradient: 'linear-gradient(135deg, #4ade80, #22c55e)' },
+  { id: 'ice', label: 'Ice', gradient: 'linear-gradient(135deg, #a5f3fc, #67e8f9)' },
+  { id: 'flower', label: 'Flower', gradient: 'linear-gradient(135deg, #f0abfc, #d946ef)' },
+  { id: 'star', label: 'Star', gradient: 'linear-gradient(135deg, #c4b5fd, #8b5cf6)' },
+];
 
 const DEFAULT_FLAGS = [
   { key: 'live_scores', label: 'Live scores', description: 'Show live scores to members' },
@@ -222,9 +235,23 @@ const EmailTemplateEditor = ({ templateId, title, desc, content, onUpdate, onTes
   );
 };
 
-export function SuperAdminDashboard({ user, onLogout, colorScheme = 'dark', setColorScheme = () => { }, themeMode = 'default', setThemeMode = () => { } }) {
+export function SuperAdminDashboard({ user, onLogout, colorScheme = 'light', setColorScheme = () => { }, themeMode = 'default', setThemeMode = () => { }, onViewPlatform }) {
   const [tab, setTab] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [themePopoverOpen, setThemePopoverOpen] = useState(false);
+  const themePopoverRef = useRef<HTMLDivElement>(null);
+
+  // Close theme popover on click outside
+  useEffect(() => {
+    if (!themePopoverOpen) return;
+    function handleClick(e: MouseEvent) {
+      if (themePopoverRef.current && !themePopoverRef.current.contains(e.target as Node)) {
+        setThemePopoverOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [themePopoverOpen]);
 
   const [admins, setAdmins] = useState([]);
   const [featureFlags, setFeatureFlags] = useState(() => DEFAULT_FLAGS.map((f) => ({ ...f, enabled: true })));
@@ -1014,45 +1041,79 @@ export function SuperAdminDashboard({ user, onLogout, colorScheme = 'dark', setC
             </button>
           ))}
         </nav>
-        {typeof setColorScheme === 'function' && typeof setThemeMode === 'function' && (
-          <div className="sa-theme-wrap">
-            <div className="sa-theme-label">Theme</div>
-            <div className="sa-theme-row">
-              <button type="button" className={`sa-theme-btn ${colorScheme === 'light' ? 'active' : ''}`} onClick={() => setColorScheme('light')} title="Light">
-                <Sun size={16} />
-              </button>
-              <button type="button" className={`sa-theme-btn ${colorScheme === 'dark' ? 'active' : ''}`} onClick={() => setColorScheme('dark')} title="Dark">
-                <Moon size={16} />
-              </button>
-            </div>
-            <div className="sa-theme-modes">
-              <button type="button" className={`sa-theme-mode ${themeMode === 'default' ? 'active' : ''}`} onClick={() => setThemeMode('default')}>Default</button>
-              <button type="button" className={`sa-theme-mode ${themeMode === 'sunshine' ? 'active' : ''}`} onClick={() => setThemeMode('sunshine')}>Sunshine</button>
-              <button type="button" className={`sa-theme-mode ${themeMode === 'sea' ? 'active' : ''}`} onClick={() => setThemeMode('sea')}>Sea</button>
-              <button type="button" className={`sa-theme-mode ${themeMode === 'fire' ? 'active' : ''}`} onClick={() => setThemeMode('fire')}>Fire</button>
-              <button type="button" className={`sa-theme-mode ${themeMode === 'forest' ? 'active' : ''}`} onClick={() => setThemeMode('forest')}>Forest</button>
-              <button type="button" className={`sa-theme-mode ${themeMode === 'ice' ? 'active' : ''}`} onClick={() => setThemeMode('ice')}>Ice</button>
-              <button type="button" className={`sa-theme-mode ${themeMode === 'flower' ? 'active' : ''}`} onClick={() => setThemeMode('flower')}>Flower</button>
-              <button type="button" className={`sa-theme-mode ${themeMode === 'star' ? 'active' : ''}`} onClick={() => setThemeMode('star')}>Star</button>
-            </div>
-          </div>
-        )}
-        <div className="sa-sidebar-footer">
-          <div className="sa-logged-in-as" title="This email is used for config writes; Supabase RLS allowlist must match.">
-            Logged in as: {user?.email || auth.currentUser?.email || '—'}
-          </div>
-          <button type="button" className="sa-logout-btn" onClick={onLogout}><LogOut size={18} /> Log out</button>
-        </div>
       </aside>
+
+      {/* ── Desktop toolbar ── */}
+      <div className="sa-toolbar">
+        <div className="sa-toolbar-left">
+          <span className="sa-toolbar-title">{TAB_TITLES[tab] || 'Dashboard'}</span>
+        </div>
+        <div className="sa-toolbar-right">
+          <button
+            type="button"
+            className="sa-toolbar-icon-btn"
+            title={colorScheme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+            onClick={() => setColorScheme(colorScheme === 'dark' ? 'light' : 'dark')}
+          >
+            {colorScheme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+          </button>
+          <div className="sa-theme-popover-anchor" ref={themePopoverRef}>
+            <button
+              type="button"
+              className={`sa-toolbar-icon-btn${themePopoverOpen ? ' active' : ''}`}
+              title="Color themes"
+              onClick={() => setThemePopoverOpen((o) => !o)}
+            >
+              <Palette size={18} />
+            </button>
+            {themePopoverOpen && (
+              <div className="sa-theme-popover">
+                <div className="sa-theme-popover-title">Color Theme</div>
+                <div className="sa-theme-popover-grid">
+                  {THEME_OPTIONS.map((t) => (
+                    <button
+                      key={t.id}
+                      type="button"
+                      className={`sa-theme-swatch${themeMode === t.id ? ' active' : ''}`}
+                      title={t.label}
+                      onClick={() => { setThemeMode(t.id); setThemePopoverOpen(false); }}
+                    >
+                      <span className="sa-theme-swatch-color" style={{ background: t.gradient }} />
+                      <span className="sa-theme-swatch-label">{t.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+          {onViewPlatform && (
+            <button type="button" className="sa-toolbar-platform-btn" title="Visit Platform" onClick={onViewPlatform}>
+              <ExternalLink size={14} />
+              <span>Visit Platform</span>
+            </button>
+          )}
+          <span className="sa-toolbar-divider" />
+          <span className="sa-toolbar-email" title={user?.email || auth.currentUser?.email || ''}>{user?.email || auth.currentUser?.email || '—'}</span>
+          <button type="button" className="sa-toolbar-icon-btn sa-toolbar-logout" title="Log out" onClick={onLogout}>
+            <LogOut size={18} />
+          </button>
+        </div>
+      </div>
       <header className="sa-mobile-header">
         <button type="button" className="sa-menu-btn" onClick={() => setSidebarOpen((o) => !o)} aria-label="Open menu"><Menu size={22} /></button>
         <span className="sa-title">Super Admin</span>
-        <span style={{ width: 40 }} />
+        <div className="sa-mobile-header-actions">
+          <button type="button" className="sa-toolbar-icon-btn" onClick={() => setColorScheme(colorScheme === 'dark' ? 'light' : 'dark')}>
+            {colorScheme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+          </button>
+          <button type="button" className="sa-toolbar-icon-btn" onClick={() => setThemePopoverOpen((o) => !o)}>
+            <Palette size={18} />
+          </button>
+        </div>
       </header>
       <main className="sa-main">
         {tab === 'dashboard' && (
           <div>
-            <h1 className="sa-main-heading">Dashboard / System Overview</h1>
             <p className="sa-main-sub">System control only. No sports or member data.</p>
             <div className="sa-cards">
               <div className="sa-card">
@@ -1131,7 +1192,6 @@ export function SuperAdminDashboard({ user, onLogout, colorScheme = 'dark', setC
 
         {tab === 'emails' && (
           <div>
-            <h1 className="sa-main-heading">Email Templates</h1>
             <p className="sa-main-sub">Design and edit your modern, dark-themed email templates here. These use standard Supabase placeholders (e.g. <code>{"{{ .ConfirmationURL }}"}</code>). Changes are persisted to the database and synced with the Custom Mailer hook.</p>
 
             <div style={{ marginBottom: 24, padding: 20, background: 'rgba(30,41,59,0.5)', borderRadius: 16, border: '1px solid rgba(255,255,255,0.08)' }}>
@@ -1217,7 +1277,6 @@ export function SuperAdminDashboard({ user, onLogout, colorScheme = 'dark', setC
 
         {tab === 'admins' && (
           <div>
-            <h1 className="sa-main-heading">Admin Management</h1>
             <p className="sa-main-sub">Create / Delete Admin. Assign / Revoke roles. View all Admins.</p>
             <p style={{ fontSize: 13, color: '#94a3b8', marginBottom: 16, padding: '10px 14px', background: 'rgba(148,163,184,0.1)', borderRadius: 8, border: '1px solid rgba(148,163,184,0.2)' }}>
               <strong>Bootstrap admins</strong> (Super Admin: mazcis2011@gmail.com, Admin: nasarpk20@gmail.com) always have access and do not need to be in the list below. Anyone you add here will see the Admin or Super Admin dashboard when they log in.
@@ -1281,7 +1340,6 @@ export function SuperAdminDashboard({ user, onLogout, colorScheme = 'dark', setC
 
         {tab === 'users' && (
           <div>
-            <h1 className="sa-main-heading">User Management</h1>
             <p className="sa-main-sub">All users who have ever logged in (member, admin, or super admin). View roles, streaks, active/offline status, last activity. Search by name or email, reset streak when needed.</p>
             <div style={{ marginBottom: 16, display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center' }}>
               <input
@@ -1415,7 +1473,6 @@ export function SuperAdminDashboard({ user, onLogout, colorScheme = 'dark', setC
 
         {tab === 'leaderboard' && (
           <div>
-            <h1 className="sa-main-heading">Streak Leaderboard</h1>
             <p className="sa-main-sub">Only users with streaks are shown. Top 20 by current streak and by longest streak.</p>
             <div style={{ marginBottom: 16 }}>
               <button style={btnPrimary} type="button" onClick={handleRefresh} disabled={usersLoading}>{usersLoading ? 'Loading…' : 'Refresh'}</button>
@@ -1503,7 +1560,6 @@ export function SuperAdminDashboard({ user, onLogout, colorScheme = 'dark', setC
 
         {tab === 'roles' && (
           <div>
-            <h1 className="sa-main-heading">Role & Permissions</h1>
             <p className="sa-main-sub">Define what Admin accounts can do. Changes are audited.</p>
             {permsSaveError && (
               <p style={{ color: '#f87171', fontSize: 14, marginBottom: 16, padding: '10px 14px', background: 'rgba(239,68,68,0.1)', borderRadius: 8, border: '1px solid rgba(239,68,68,0.3)' }}>{permsSaveError}</p>
@@ -1527,7 +1583,6 @@ export function SuperAdminDashboard({ user, onLogout, colorScheme = 'dark', setC
 
         {tab === 'audit' && (
           <div>
-            <h1 className="sa-main-heading">Audit Logs / System Logs</h1>
             <p className="sa-main-sub">View all actions. Filter by date / user. Export logs.</p>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginBottom: 16 }}>
               <input style={{ ...inputStyle, maxWidth: 180 }} placeholder="Filter by user (email)" value={auditFilterUser} onChange={(e) => setAuditFilterUser(e.target.value)} />
@@ -1566,7 +1621,6 @@ export function SuperAdminDashboard({ user, onLogout, colorScheme = 'dark', setC
 
         {tab === 'health' && (
           <div>
-            <h1 className="sa-main-heading">Server & Database Health</h1>
             <p className="sa-main-sub">Edit status values. In production these would come from your backend.</p>
             {healthSaveError && (
               <p style={{ color: '#f87171', fontSize: 14, marginBottom: 16, padding: '10px 14px', background: 'rgba(239,68,68,0.1)', borderRadius: 8, border: '1px solid rgba(239,68,68,0.3)' }}>{healthSaveError}</p>
@@ -1602,7 +1656,6 @@ export function SuperAdminDashboard({ user, onLogout, colorScheme = 'dark', setC
 
         {tab === 'features' && (
           <div>
-            <h1 className="sa-main-heading">Feature Flags / Maintenance</h1>
             <p className="sa-main-sub">Enable/disable features. Toggle maintenance mode. Changes are saved and audited.</p>
             {(!auth.currentUser || !auth.currentUser.email) && (
               <p style={{ color: '#f59e0b', fontSize: 14, marginBottom: 16, padding: '12px 16px', background: 'rgba(245,158,11,0.15)', borderRadius: 8, border: '1px solid rgba(245,158,11,0.4)' }}>

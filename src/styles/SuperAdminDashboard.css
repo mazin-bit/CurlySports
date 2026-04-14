@@ -1,50 +1,51 @@
-/* Super Admin Dashboard - responsive */
+/* Super Admin Dashboard - responsive, theme-aware */
 
 .super-admin-dashboard {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: #0a0e1a;
-  color: #f1f5f9;
+  background: var(--bg-dark, #0a0e1a);
+  color: var(--text-primary, #f1f5f9);
   box-sizing: border-box;
 }
 
+/* ── Sidebar ── */
 .super-admin-dashboard .sa-sidebar-wrap {
   position: fixed;
   top: 0;
   left: 0;
   bottom: 0;
   z-index: 50;
-  width: 240px;
-  border-right: 1px solid rgba(251, 191, 36, 0.15);
-  background: rgba(10, 14, 26, 0.98);
-  padding: 12px 10px;
+  width: 220px;
+  border-right: 1px solid var(--border-glass, rgba(251, 191, 36, 0.15));
+  background: var(--sidebar-bg, rgba(10, 14, 26, 0.98));
+  padding: 10px 8px;
   display: flex;
   flex-direction: column;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .super-admin-dashboard .sa-sidebar-header {
-  padding: 16px 12px;
-  border-bottom: 1px solid rgba(251, 191, 36, 0.15);
+  padding: 12px 10px;
+  border-bottom: 1px solid var(--border-glass, rgba(251, 191, 36, 0.15));
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   flex-shrink: 0;
 }
 
 .super-admin-dashboard .sa-sidebar-header span:first-child {
   font-weight: 700;
-  font-size: 14px;
+  font-size: 13px;
   line-height: 1.25;
 }
 
 .super-admin-dashboard .sa-sidebar-header .sa-badge {
-  background: rgba(245, 158, 11, 0.2);
-  color: #f59e0b;
-  padding: 4px 10px;
-  border-radius: 8px;
-  font-size: 10px;
+  background: var(--state-active-bg, rgba(245, 158, 11, 0.2));
+  color: var(--highlight, #f59e0b);
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 9px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -52,7 +53,7 @@
 }
 
 .super-admin-dashboard .sa-nav {
-  padding-top: 12px;
+  padding-top: 8px;
   flex: 1;
   overflow-y: auto;
   min-height: 0;
@@ -62,33 +63,33 @@
   width: 100%;
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 12px 12px;
-  margin-bottom: 4px;
+  gap: 8px;
+  padding: 8px 10px;
+  margin-bottom: 2px;
   border: none;
-  border-radius: 10px;
+  border-radius: 8px;
   background: transparent;
   color: var(--text-secondary, #94a3b8);
   cursor: pointer;
   text-align: left;
-  font-size: var(--text-sm, 13px);
-  font-weight: var(--fw-semibold, 600);
-  line-height: var(--leading-snug, 1.375);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.375;
   box-sizing: border-box;
-  transition: background var(--duration-fast) ease, color var(--duration-fast) ease;
+  transition: background 0.15s ease, color 0.15s ease;
 }
 
 .super-admin-dashboard .sa-nav-btn>span:first-child {
   flex-shrink: 0;
-  min-width: 20px;
+  min-width: 18px;
 }
 
 .super-admin-dashboard .sa-nav-btn .material-icons-round,
 .super-admin-dashboard .sa-nav-btn svg {
   flex-shrink: 0;
-  width: 20px;
-  height: 20px;
-  font-size: 18px !important;
+  width: 16px;
+  height: 16px;
+  font-size: 16px !important;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -96,228 +97,302 @@
 }
 
 .super-admin-dashboard .sa-nav-btn:hover {
-  background: rgba(245, 158, 11, 0.1);
-  color: #e2e8f0;
+  background: var(--state-active-bg, rgba(245, 158, 11, 0.1));
+  color: var(--text-primary, #e2e8f0);
 }
 
 .super-admin-dashboard .sa-nav-btn.active {
-  background: rgba(245, 158, 11, 0.18);
-  color: #f59e0b;
+  background: var(--state-active-bg, rgba(245, 158, 11, 0.18));
+  color: var(--highlight, #f59e0b);
 }
 
 .super-admin-dashboard .sa-nav-btn:focus-visible {
-  outline: 2px solid rgba(245, 158, 11, 0.5);
+  outline: 2px solid color-mix(in srgb, var(--highlight, #f59e0b) 50%, transparent);
   outline-offset: 2px;
 }
 
-.super-admin-dashboard .sa-theme-wrap {
-  border-top: 1px solid rgba(251, 191, 36, 0.15);
-  padding-top: 12px;
-  margin-top: 10px;
-  flex-shrink: 0;
-}
-
-.super-admin-dashboard .sa-theme-label {
-  font-size: 10px;
-  color: #94a3b8;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: 8px;
-  font-weight: 700;
-  line-height: 1.25;
-}
-
-.super-admin-dashboard .sa-theme-row {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-
-.super-admin-dashboard .sa-theme-btn {
-  flex: 1;
+/* ── Toolbar ── */
+.super-admin-dashboard .sa-toolbar {
+  position: fixed;
+  top: 0;
+  left: 220px;
+  right: 0;
+  height: 48px;
+  z-index: 45;
   display: flex;
   align-items: center;
-  justify-content: center;
-  padding: 8px;
-  border: 1px solid rgba(251, 191, 36, 0.2);
-  border-radius: 10px;
-  background: transparent;
-  color: #94a3b8;
-  cursor: pointer;
-  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+  justify-content: space-between;
+  padding: 0 20px;
+  background: var(--sidebar-bg, rgba(10, 14, 26, 0.95));
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border-glass, rgba(251, 191, 36, 0.12));
 }
 
-.super-admin-dashboard .sa-theme-btn .material-icons-round {
-  font-size: 18px;
-}
-
-.super-admin-dashboard .sa-theme-btn:hover,
-.super-admin-dashboard .sa-theme-btn.active {
-  background: rgba(245, 158, 11, 0.15);
-  border-color: rgba(245, 158, 11, 0.4);
-  color: #f59e0b;
-}
-
-.super-admin-dashboard .sa-theme-btn:focus-visible {
-  outline: 2px solid rgba(245, 158, 11, 0.5);
-  outline-offset: 2px;
-}
-
-.super-admin-dashboard .sa-theme-modes {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.super-admin-dashboard .sa-theme-mode {
-  padding: 6px 10px;
-  border: 1px solid rgba(251, 191, 36, 0.2);
-  border-radius: 8px;
-  background: transparent;
-  color: #94a3b8;
-  font-size: 11px;
-  font-weight: 600;
-  cursor: pointer;
-  line-height: 1.25;
-  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
-}
-
-.super-admin-dashboard .sa-theme-mode:hover,
-.super-admin-dashboard .sa-theme-mode.active {
-  background: rgba(245, 158, 11, 0.15);
-  border-color: rgba(245, 158, 11, 0.4);
-  color: #f59e0b;
-}
-
-.super-admin-dashboard .sa-sidebar-footer {
-  border-top: 1px solid rgba(251, 191, 36, 0.15);
-  padding-top: 14px;
-  margin-top: 14px;
-  flex-shrink: 0;
-}
-
-.super-admin-dashboard .sa-logged-in-as {
-  font-size: 11px;
-  color: #64748b;
-  margin-bottom: 10px;
-  word-break: break-all;
-  line-height: 1.35;
-}
-
-.super-admin-dashboard .sa-logout-btn {
-  width: 100%;
+.super-admin-dashboard .sa-toolbar-left {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 12px 12px;
-  border: none;
-  border-radius: 10px;
-  background: transparent;
-  color: #94a3b8;
+  min-width: 0;
+}
+
+.super-admin-dashboard .sa-toolbar-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary, #f1f5f9);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.super-admin-dashboard .sa-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.super-admin-dashboard .sa-toolbar-platform-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border: 1px solid var(--border-glass, rgba(251, 191, 36, 0.2));
+  border-radius: 8px;
+  background: var(--state-active-bg, rgba(245, 158, 11, 0.08));
+  color: var(--highlight, #f59e0b);
+  font-size: 11px;
+  font-weight: 700;
   cursor: pointer;
-  font-size: 13px;
-  font-weight: 600;
-  line-height: 1.375;
-  box-sizing: border-box;
-  transition: background 0.2s ease, color 0.2s ease;
+  transition: background 0.15s ease, border-color 0.15s ease;
+  white-space: nowrap;
 }
 
-.super-admin-dashboard .sa-logout-btn:hover {
-  background: rgba(255, 255, 255, 0.06);
-  color: #e2e8f0;
+.super-admin-dashboard .sa-toolbar-platform-btn:hover {
+  background: color-mix(in srgb, var(--highlight, #f59e0b) 18%, transparent);
+  border-color: color-mix(in srgb, var(--highlight, #f59e0b) 40%, transparent);
 }
 
-.super-admin-dashboard .sa-logout-btn:focus-visible {
-  outline: 2px solid rgba(245, 158, 11, 0.5);
+.super-admin-dashboard .sa-toolbar-divider {
+  width: 1px;
+  height: 20px;
+  background: var(--border-glass, rgba(251, 191, 36, 0.15));
+  margin: 0 4px;
+}
+
+.super-admin-dashboard .sa-toolbar-icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--border-glass, rgba(251, 191, 36, 0.15));
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-secondary, #94a3b8);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.super-admin-dashboard .sa-toolbar-icon-btn svg {
+  width: 15px;
+  height: 15px;
+}
+
+.super-admin-dashboard .sa-toolbar-icon-btn:hover,
+.super-admin-dashboard .sa-toolbar-icon-btn.active {
+  background: var(--state-active-bg, rgba(245, 158, 11, 0.12));
+  border-color: color-mix(in srgb, var(--highlight, #f59e0b) 35%, transparent);
+  color: var(--highlight, #f59e0b);
+}
+
+.super-admin-dashboard .sa-toolbar-icon-btn:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--highlight, #f59e0b) 50%, transparent);
   outline-offset: 2px;
 }
 
+.super-admin-dashboard .sa-toolbar-email {
+  font-size: 11px;
+  color: var(--text-secondary, #64748b);
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 0 6px;
+}
+
+.super-admin-dashboard .sa-toolbar-logout {
+  color: var(--text-secondary, #94a3b8);
+}
+.super-admin-dashboard .sa-toolbar-logout:hover {
+  color: var(--danger, #f87171);
+  border-color: color-mix(in srgb, var(--danger, #ef4444) 30%, transparent);
+  background: color-mix(in srgb, var(--danger, #ef4444) 8%, transparent);
+}
+
+/* ── Theme Popover ── */
+.super-admin-dashboard .sa-theme-popover-anchor {
+  position: relative;
+}
+
+.super-admin-dashboard .sa-theme-popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 220px;
+  padding: 14px;
+  background: var(--card-bg, rgba(15, 23, 42, 0.98));
+  border: 1px solid var(--border-glass, rgba(251, 191, 36, 0.2));
+  border-radius: 12px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+  z-index: 100;
+  animation: sa-popover-in 0.15s ease;
+}
+
+.super-admin-dashboard .sa-theme-popover-title {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-secondary, #94a3b8);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 10px;
+}
+
+.super-admin-dashboard .sa-theme-popover-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.super-admin-dashboard .sa-theme-swatch {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 8px;
+  border: 1px solid var(--border-glass, rgba(255, 255, 255, 0.08));
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.super-admin-dashboard .sa-theme-swatch:hover {
+  background: color-mix(in srgb, var(--highlight, #f59e0b) 6%, transparent);
+  border-color: color-mix(in srgb, var(--highlight, #f59e0b) 20%, transparent);
+}
+
+.super-admin-dashboard .sa-theme-swatch.active {
+  background: var(--state-active-bg, rgba(245, 158, 11, 0.1));
+  border-color: color-mix(in srgb, var(--highlight, #f59e0b) 35%, transparent);
+}
+
+.super-admin-dashboard .sa-theme-swatch-color {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.super-admin-dashboard .sa-theme-swatch-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-primary, #e2e8f0);
+}
+
+@keyframes sa-popover-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* ── Main Content ── */
 .super-admin-dashboard .sa-main {
   flex: 1;
   min-width: 0;
-  padding: 28px;
+  padding: 24px;
+  padding-top: 16px;
   overflow: auto;
-  margin-left: 240px;
+  margin-left: 220px;
+  margin-top: 48px;
   transition: margin-left 0.2s ease;
 }
 
 .super-admin-dashboard .sa-main-heading {
-  font-size: 1.5rem;
+  font-size: 1.35rem;
   font-weight: 800;
   line-height: 1.25;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
   word-wrap: break-word;
 }
 
 .super-admin-dashboard .sa-main-sub {
-  color: #94a3b8;
-  margin-bottom: 28px;
-  font-size: 0.9375rem;
+  color: var(--text-secondary, #94a3b8);
+  margin-bottom: 24px;
+  font-size: 13px;
   line-height: 1.5;
 }
 
+/* ── Cards ── */
 .super-admin-dashboard .sa-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(200px, 100%), 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(min(180px, 100%), 1fr));
+  gap: 16px;
 }
 
 .super-admin-dashboard .sa-card {
-  padding: 22px;
-  background: rgba(15, 23, 42, 0.8);
-  border-radius: 14px;
-  border: 1px solid rgba(251, 191, 36, 0.15);
+  padding: 18px;
+  background: var(--card-bg, rgba(15, 23, 42, 0.8));
+  border-radius: 12px;
+  border: 1px solid var(--border-glass, rgba(251, 191, 36, 0.15));
   min-width: 0;
   box-sizing: border-box;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .super-admin-dashboard .sa-card-label {
-  font-size: 12px;
-  color: #94a3b8;
-  margin-bottom: 6px;
+  font-size: 11px;
+  color: var(--text-secondary, #94a3b8);
+  margin-bottom: 4px;
   font-weight: 600;
   line-height: 1.375;
 }
 
 .super-admin-dashboard .sa-card-value {
-  font-size: 1.5rem;
+  font-size: 1.35rem;
   font-weight: 800;
   line-height: 1.25;
-  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--highlight, #f59e0b);
 }
 
 .super-admin-dashboard .sa-card:hover {
   transform: translateY(-2px);
-  border-color: rgba(251, 191, 36, 0.4);
-  box-shadow: var(--shadow-card-hover);
-}
-
-.super-admin-dashboard .sa-card {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border-color: color-mix(in srgb, var(--highlight, #f59e0b) 40%, transparent);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12);
 }
 
 /* Server & Database Health tab: clean 2x2 grid */
 .super-admin-dashboard .sa-health-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 20px;
-  max-width: 560px;
-  margin-top: 28px;
+  gap: 16px;
+  max-width: 520px;
+  margin-top: 24px;
 }
 
 .super-admin-dashboard .sa-health-card {
-  padding: 20px;
-  background: rgba(15, 23, 42, 0.8);
-  border-radius: 14px;
-  border: 1px solid rgba(251, 191, 36, 0.15);
+  padding: 16px;
+  background: var(--card-bg, rgba(15, 23, 42, 0.8));
+  border-radius: 12px;
+  border: 1px solid var(--border-glass, rgba(251, 191, 36, 0.15));
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+  gap: 10px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
 }
 
 .super-admin-dashboard .sa-health-card .sa-card-label {
@@ -326,25 +401,25 @@
 
 .super-admin-dashboard .sa-health-select {
   width: 100%;
-  padding: 10px 12px;
+  padding: 8px 10px;
   border-radius: 8px;
-  border: 1px solid rgba(148, 163, 184, 0.3);
-  background: rgba(15, 23, 42, 0.9);
-  color: #f1f5f9;
-  font-size: 14px;
+  border: 1px solid var(--border-glass, rgba(148, 163, 184, 0.3));
+  background: var(--card-bg, rgba(15, 23, 42, 0.9));
+  color: var(--text-primary, #f1f5f9);
+  font-size: 13px;
   cursor: pointer;
   appearance: none;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='%2394a3b8'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-position: right 8px center;
-  background-size: 20px;
-  padding-right: 36px;
+  background-position: right 6px center;
+  background-size: 18px;
+  padding-right: 30px;
 }
 
 .super-admin-dashboard .sa-health-select:focus {
   outline: none;
-  border-color: rgba(251, 191, 36, 0.5);
-  box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.1);
+  border-color: color-mix(in srgb, var(--highlight, #f59e0b) 50%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--highlight, #f59e0b) 10%, transparent);
 }
 
 /* User Management Table Styles */
@@ -355,15 +430,15 @@
 }
 
 .super-admin-dashboard th {
-  background: rgba(15, 23, 42, 0.95);
+  background: var(--sidebar-bg, rgba(15, 23, 42, 0.95));
   position: sticky;
   top: 0;
   z-index: 10;
-  border-bottom: 2px solid rgba(251, 191, 36, 0.2);
+  border-bottom: 2px solid color-mix(in srgb, var(--highlight, #f59e0b) 20%, transparent);
 }
 
 .super-admin-dashboard tr:hover td {
-  background: rgba(255, 255, 255, 0.03);
+  background: color-mix(in srgb, var(--highlight, #f59e0b) 4%, transparent);
 }
 
 .super-admin-dashboard td {
@@ -376,17 +451,16 @@
 }
 
 .super-admin-dashboard select:hover {
-  border-color: rgba(251, 191, 36, 0.4);
-  background: rgba(30, 41, 59, 1);
+  border-color: color-mix(in srgb, var(--highlight, #f59e0b) 40%, transparent);
 }
 
 /* Chart Styles */
 .super-admin-dashboard .bar-chart-container {
   display: flex;
-  gap: 12px;
+  gap: 10px;
   align-items: flex-end;
-  height: 120px;
-  padding-top: 20px;
+  height: 100px;
+  padding-top: 16px;
 }
 
 .super-admin-dashboard .bar-column {
@@ -394,36 +468,37 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .super-admin-dashboard .bar-fill {
   width: 100%;
-  min-width: 24px;
-  background: linear-gradient(to top, rgba(245, 158, 11, 0.2), rgba(245, 158, 11, 0.8));
-  border-radius: 6px 6px 0 0;
+  min-width: 20px;
+  background: linear-gradient(to top, color-mix(in srgb, var(--highlight, #f59e0b) 20%, transparent), color-mix(in srgb, var(--highlight, #f59e0b) 80%, transparent));
+  border-radius: 4px 4px 0 0;
   position: relative;
   transition: height 1s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .super-admin-dashboard .bar-fill:hover {
-  background: linear-gradient(to top, rgba(245, 158, 11, 0.4), rgba(245, 158, 11, 1));
+  background: linear-gradient(to top, color-mix(in srgb, var(--highlight, #f59e0b) 40%, transparent), var(--highlight, #f59e0b));
   cursor: help;
 }
 
 .super-admin-dashboard .bar-label {
   font-size: 10px;
-  color: #94a3b8;
+  color: var(--text-secondary, #94a3b8);
   font-weight: 600;
 }
 
+/* ── Mobile Header ── */
 .super-admin-dashboard .sa-mobile-header {
   display: none;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 16px;
-  background: rgba(10, 14, 26, 0.98);
-  border-bottom: 1px solid rgba(251, 191, 36, 0.15);
+  padding: 10px 14px;
+  background: var(--sidebar-bg, rgba(10, 14, 26, 0.98));
+  border-bottom: 1px solid var(--border-glass, rgba(251, 191, 36, 0.15));
   flex-shrink: 0;
 }
 
@@ -431,19 +506,25 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: 34px;
+  height: 34px;
   border: none;
   border-radius: 8px;
-  background: rgba(245, 158, 11, 0.15);
-  color: #f59e0b;
+  background: var(--state-active-bg, rgba(245, 158, 11, 0.15));
+  color: var(--highlight, #f59e0b);
   cursor: pointer;
-  font-size: 20px;
+  font-size: 18px;
 }
 
 .super-admin-dashboard .sa-mobile-header .sa-title {
   font-weight: 600;
-  font-size: 14px;
+  font-size: 13px;
+}
+
+.super-admin-dashboard .sa-mobile-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 5px;
 }
 
 .super-admin-dashboard .sa-overlay {
@@ -463,8 +544,15 @@
     flex-direction: column;
   }
 
+  .super-admin-dashboard .sa-toolbar {
+    display: none;
+  }
+
   .super-admin-dashboard .sa-main {
     margin-left: 0;
+    margin-top: 0;
+    padding: 14px;
+    padding-top: 10px;
   }
 
   .super-admin-dashboard .sa-sidebar-wrap {
@@ -477,30 +565,25 @@
     box-shadow: 4px 0 24px rgba(0, 0, 0, 0.4);
   }
 
-  .super-admin-dashboard .sa-main {
-    padding: 16px;
-    padding-top: 12px;
-  }
-
   .super-admin-dashboard .sa-mobile-header {
     display: flex;
   }
 
   .super-admin-dashboard .sa-main-heading {
-    font-size: 1.25rem;
+    font-size: 1.15rem;
   }
 
   .super-admin-dashboard .sa-cards {
     grid-template-columns: 1fr 1fr;
-    gap: 12px;
+    gap: 10px;
   }
 
   .super-admin-dashboard .sa-card {
-    padding: 16px;
+    padding: 14px;
   }
 
   .super-admin-dashboard .sa-card-value {
-    font-size: 1.1rem;
+    font-size: 1rem;
   }
 
   .super-admin-dashboard.sidebar-open .sa-overlay {
@@ -513,7 +596,7 @@
 /* Responsive: small phones */
 @media (max-width: 480px) {
   .super-admin-dashboard .sa-main {
-    padding: 12px;
+    padding: 10px;
   }
 
   .super-admin-dashboard .sa-cards {
@@ -521,12 +604,12 @@
   }
 
   .super-admin-dashboard .sa-nav-btn {
-    font-size: 12px;
-    padding: 8px 12px;
+    font-size: 11px;
+    padding: 7px 10px;
   }
 
   .super-admin-dashboard .sa-sidebar-wrap {
-    width: 280px;
+    width: 260px;
     max-width: 85vw;
   }
 

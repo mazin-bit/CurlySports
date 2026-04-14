@@ -35,10 +35,13 @@ import { F1Section, useF1Data } from './f1/F1Section';
 import './styles/F1Section.css';
 import { BasketballMiniGames, F1MiniGames } from './minigames/MiniGames';
 import { Mail, Lock, User, AlertCircle, ChevronLeft, ChevronRight, Search, LogOut, Settings, LayoutDashboard, Users, Flame, TrendingUp, ToggleLeft, Menu, Sun, Moon, X, Bell, Palette, ChevronDown, ChevronUp, Zap, Shield, Activity, Database, FileText, Download } from 'lucide-react';
+import { useIsNativeApp } from './hooks/useIsMobile';
+import { MobileLayout } from './mobile/MobileLayout';
+import { MobileLoginScreen } from './mobile/MobileLoginScreen';
 
 // Bootstrap admin emails — used only until the first super admin configures sa_admins in Supabase app_config.
 // Once sa_admins is populated these are effectively redundant but kept as a safety net for initial setup.
-const BOOTSTRAP_SUPER_ADMIN_EMAILS = ['mazcis2011@gmail.com', 'mazin@curlysports.com'];
+const BOOTSTRAP_SUPER_ADMIN_EMAILS = ['mazcis2011@gmail.com', 'mazin@curlysports.com', 'support@tecnots.com'];
 const BOOTSTRAP_ADMIN_EMAIL = 'nasarpk20@gmail.com';
 const isSuperAdminEmail = (email) => BOOTSTRAP_SUPER_ADMIN_EMAILS.includes((email || '').toLowerCase().trim());
 const isAdminEmail = (email) => (email || '').toLowerCase().trim() === BOOTSTRAP_ADMIN_EMAIL;
@@ -2701,7 +2704,7 @@ function App() {
         if (p.colorScheme === 'light' || p.colorScheme === 'dark') return p.colorScheme;
       }
     } catch (_) { }
-    return 'dark';
+    return 'light';
   });
   const [themeMode, setThemeMode] = useState(() => {
     try {
@@ -2715,6 +2718,7 @@ function App() {
     return 'default';
   });
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const [viewAsMember, setViewAsMember] = useState(false);
 
   const SIDEBAR_COLLAPSED_KEY = 'curly_sidebar_collapsed';
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
@@ -3180,17 +3184,11 @@ function App() {
     setPageClubs(1);
   }, [search, playerFilter, manageSearch, uclTab]);
 
-  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
-  useEffect(() => {
-    const handleResize = () => setWindowWidth(window.innerWidth);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  const isMobile = windowWidth <= 768;
+  const isNativeApp = useIsNativeApp();
+  const isMobile = window.innerWidth <= 768;
 
   const getPageSize = (type) => {
-    if (isMobile) {
+    if (isMobile || isNativeApp) {
       if (type === 'players') return 4;
       if (type === 'news') return 3;
       return 2; // matches, clubs
@@ -6672,15 +6670,63 @@ function App() {
   const isProtectedRoute = isDashboardRoute || normalizedPath.startsWith('/dashboard/');
   const isPublicRoute = isHomeRoute || isLoginRoute || isSignupRoute;
 
+  // Native app (Capacitor): never show the public landing page.
+  // Redirect home route straight to dashboard (if logged in) or login (if not).
+  if (isNativeApp && isHomeRoute) {
+    return <Navigate to={isAuthenticated ? '/dashboard' : '/login'} replace />;
+  }
+
   if (isHomeRoute) {
     return <HomePage isAuthenticated={isAuthenticated} homeTheme={homeTheme} setHomeTheme={setHomeTheme} enabledSportKeys={enabledSportKeys} />;
   }
   if (isLoginRoute) {
     if (isAuthenticated) return <Navigate to="/dashboard" replace />;
+    if (isNativeApp) {
+      return (
+        <MobileLoginScreen
+          mode="login"
+          onGoogleLogin={async () => {
+            if (!supabaseConfigured) throw new Error('Sign-in is not configured.');
+            const { error: authError } = await signInWithGoogle();
+            if (authError) throw authError;
+          }}
+          onEmailAuth={async (em, pw) => {
+            const { error: signInError } = await signInWithEmail(em, pw);
+            if (signInError) return { error: signInError.message };
+            return {};
+          }}
+          loading={false}
+        />
+      );
+    }
     return <LoginPage mode="login" isAuthenticated={false} homeTheme={homeTheme} setHomeTheme={setHomeTheme} />;
   }
   if (isSignupRoute) {
     if (isAuthenticated) return <Navigate to="/dashboard" replace />;
+    if (isNativeApp) {
+      return (
+        <MobileLoginScreen
+          mode="signup"
+          onGoogleLogin={async () => {
+            if (!supabaseConfigured) throw new Error('Sign-in is not configured.');
+            const { error: authError } = await signInWithGoogle();
+            if (authError) throw authError;
+          }}
+          onEmailAuth={async (em, pw, name) => {
+            const { data: signUpData, error: signUpError } = await signUpWithEmail(em, pw);
+            if (signUpError) return { error: signUpError.message };
+            if (signUpData?.user && !signUpData?.session) {
+              return { confirmMessage: 'Account created. Check your email for the confirmation link.' };
+            }
+            if (name && signUpData?.user) {
+              await supabase.auth.updateUser({ data: { full_name: name } }).catch(() => {});
+            }
+            return {};
+          }}
+          loading={false}
+        />
+      );
+    }
     return <LoginPage mode="signup" isAuthenticated={false} homeTheme={homeTheme} setHomeTheme={setHomeTheme} />;
   }
   if (isProtectedRoute && !isAuthenticated) {
@@ -6697,7 +6743,7 @@ function App() {
   const saRole = getSaRoleForEmail(user?.email, appConfig.saAdmins);
   const effectiveSuperAdmin = user?.role === 'super_admin' || isSuperAdminEmail(user?.email) || saRole === 'super_admin';
   const effectiveAdmin = user?.role === 'admin' || isAdminEmail(user?.email) || saRole === 'admin';
-  if (effectiveSuperAdmin) {
+  if (effectiveSuperAdmin && !viewAsMember) {
     return (
       <SuperAdminDashboard
         user={{ ...user, role: 'super_admin' }}
@@ -6706,10 +6752,11 @@ function App() {
         setColorScheme={setColorScheme}
         themeMode={themeMode}
         setThemeMode={setThemeMode}
+        onViewPlatform={() => setViewAsMember(true)}
       />
     );
   }
-  if (effectiveAdmin) {
+  if (effectiveAdmin && !viewAsMember) {
     return (
       <AdminDashboard
         user={{ ...user, role: 'admin' }}
@@ -6733,9 +6780,26 @@ function App() {
   }
   /* Signup survey: block main app until user either completes or skips (after first userData load). */
   const mustShowSurvey = user && userDataLoaded && userData?.surveyCompleted !== true && userData?.surveySkipped !== true;
+  const backToAdminBtn = viewAsMember ? (
+    <button
+      type="button"
+      onClick={() => setViewAsMember(false)}
+      style={{
+        position: 'fixed', bottom: 20, right: 20, zIndex: 9999,
+        display: 'flex', alignItems: 'center', gap: 6,
+        padding: '8px 16px', borderRadius: 10,
+        border: 'none', background: 'var(--highlight, #f59e0b)', color: '#0a0e1a',
+        fontWeight: 700, fontSize: 12, cursor: 'pointer',
+        boxShadow: '0 4px 16px rgba(0,0,0,0.25)',
+      }}
+    >
+      <span style={{ fontSize: 16, lineHeight: 1 }}>&larr;</span> Back to Admin
+    </button>
+  ) : null;
+
   if (mustShowSurvey) {
     return (
-      <SurveyInterests
+      <>{backToAdminBtn}<SurveyInterests
         user={user}
         sportsList={enabledSportKeys.map((key) => ({ key, label: SPORTS_CONFIG[key]?.label || key }))}
         getSportData={getSportData}
@@ -6754,14 +6818,81 @@ function App() {
           setUserDataState((prev) => (prev ? { ...prev, surveySkipped: true } : { surveySkipped: true }));
           setTab('dashboard');
         }}
-      />
+      /></>
     );
   }
   /* Main app: sidebar + content. Dashboard is a tab inside the app (no /dashboard route). */
   return (
     <>
+      {backToAdminBtn}
+      <div className={`theme-experience theme-experience--${themeMode}`} aria-hidden="true" />
+      {isNativeApp ? (
+        <MobileLayout
+          currentTab={currentTab}
+          setTab={setTab}
+          selectedSport={selectedSport}
+          setSelectedSport={setSelectedSport}
+          enabledSportKeys={enabledSportKeys}
+          sportLabel={sportConfig.label}
+          leagueNames={leagueNames}
+          leagueLogos={leagueLogos}
+          featureFlags={featureFlags}
+          user={user}
+          onLogout={handleLogout}
+          colorScheme={colorScheme}
+          setColorScheme={setColorScheme}
+          themeMode={themeMode}
+          setThemeMode={setThemeMode}
+          notificationsBell={user?.uid ? <NotificationsBell userId={user.uid} /> : null}
+          renderDashboard={() => (
+            <>
+              <div className="dashboard-bg-overlay" aria-hidden="true" />
+              <Dashboard
+                user={user}
+                userData={userData}
+                favorites={favorites}
+                favoritePlayers={favoritePlayers}
+                news={dashboardNewsForUser}
+                transferNews={transferNewsForUser}
+                matchReports={matchReportsForUser}
+                matches={matches}
+                allClubs={allClubs}
+                allPlayersIndex={allPlayersIndex}
+                onOpenMatch={fetchMatchDetails}
+                selectedSport={selectedSport}
+                surveySkipped={userData?.surveySkipped === true}
+                surveyCompleted={userData?.surveyCompleted === true}
+                onOpenSurvey={() => setShowSurveyModal(true)}
+              />
+            </>
+          )}
+          renderSection={renderSection}
+          renderTopBar={() => (
+            enabledSportKeys.length > 0 && !enabledSportKeys.includes(selectedSport) ? (
+              <div className="sport-unavailable-block" style={{ padding: 48, textAlign: 'center', maxWidth: 480, margin: '40px auto' }}>
+                <span className="material-icons-round" style={{ fontSize: 64, color: 'var(--accent, #f59e0b)', marginBottom: 16 }}>sports</span>
+                <h2 style={{ fontSize: '1.25rem', marginBottom: 12 }}>Sorry, this sport is not currently available.</h2>
+                <p style={{ color: 'var(--text-secondary, #94a3b8)', marginBottom: 24 }}>Coming soon. Please choose another sport from the menu.</p>
+                <button type="button" onClick={() => setSelectedSport(enabledSportKeys[0])} style={{ padding: '12px 24px', borderRadius: 8, border: 'none', background: 'var(--accent, #f59e0b)', color: '#0a0e1a', cursor: 'pointer', fontWeight: 600 }}>
+                  View {SPORTS_CONFIG[enabledSportKeys[0]]?.label || enabledSportKeys[0]} instead
+                </button>
+              </div>
+            ) : (
+              <TopBar
+                title={currentTab === 'live' ? `${sportConfig.label} Live Match Center` : (leagueNames[currentTab] || currentTab.charAt(0).toUpperCase() + currentTab.slice(1))}
+                titleLogo={leagueNames[currentTab] && leagueLogos[currentTab] ? leagueLogos[currentTab] : undefined}
+                search={search}
+                setSearch={setSearch}
+                lastUpdate={lastUpdate}
+                sourceLabel={sportConfig.dataSource}
+                sources={sportConfig.sources}
+                rightSlot={user?.uid ? <NotificationsBell userId={user.uid} /> : null}
+              />
+            )
+          )}
+        />
+      ) : (
       <div className="app-container">
-        <div className={`theme-experience theme-experience--${themeMode}`} aria-hidden="true" />
         <Sidebar
           currentTab={currentTab}
           setTab={setTab}
@@ -6880,8 +7011,10 @@ function App() {
             </>
           )}
         </main>
+      </div>
+      )}
 
-        {celebration && (
+      {celebration && (
           <div className="celebration-overlay active" onClick={() => setCelebration(null)}>
             <div className="team-alert">
               <span className="material-icons-round celebration-icon">workspace_premium</span>
@@ -7729,7 +7862,6 @@ function App() {
             <div className="loader"></div>
           </div>
         )}
-      </div>
 
       {showSurveyModal && user && (
         <SurveyInterests

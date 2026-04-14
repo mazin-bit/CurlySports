@@ -1,20 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const supabaseUrl = 'https://vjruailpomnruncmuhzn.supabase.co';
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqcnVhaWxwb21ucnVuY211aHpuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5NTI3ODQsImV4cCI6MjA4ODUyODc4NH0.zKNKIRrFyMqTfms1vWvDrJHxlLBr6b5dJDh_MUTo7bw';
 
-export const supabaseConfigured = !!(supabaseUrl && supabaseAnonKey);
+export const supabaseConfigured = true;
 
-if (!supabaseConfigured) {
-  console.warn(
-    'Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY environment variables. ' +
-    'Database features will be unavailable until Supabase is configured.'
-  );
-}
-
-// Use a placeholder URL when env vars are missing so createClient doesn't throw.
-// All Supabase calls will fail gracefully at runtime when not configured.
-export const supabase = createClient(
-  supabaseUrl || 'https://placeholder.supabase.co',
-  supabaseAnonKey || 'placeholder-key'
-);
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
