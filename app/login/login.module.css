@@ -1,0 +1,269 @@
+/* Login page — light/cream theme */
+.layout {
+  display: grid;
+  grid-template-columns: 1.05fr 1fr;
+  min-height: 100vh;
+  background: #f6ede0;
+  color: #0c0a1d;
+  font-family: var(--body);
+}
+
+/* ===== LEFT: Stage ===== */
+.stage {
+  background: var(--accent);
+  position: relative;
+  overflow: hidden;
+  border-right: 2px solid #0c0a1d;
+}
+.stage::before {
+  content: "";
+  position: absolute; inset: 0;
+  background-image:
+    radial-gradient(circle at 20% 30%, rgba(124,92,255,0.18), transparent 40%),
+    radial-gradient(circle at 80% 80%, rgba(255,91,61,0.18), transparent 40%);
+  pointer-events: none;
+}
+.stage::after {
+  content: "";
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(rgba(12,10,29,0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(12,10,29,0.06) 1px, transparent 1px);
+  background-size: 32px 32px;
+  pointer-events: none;
+}
+
+.brand {
+  position: absolute; top: 32px; left: 32px; z-index: 5;
+  display: flex; align-items: center; gap: 12px;
+  font-family: var(--display); font-weight: 800; font-size: 22px; letter-spacing: -0.02em;
+  color: #0c0a1d;
+}
+.brandMark {
+  width: 44px; height: 44px; background: #0c0a1d; border-radius: 12px;
+  display: grid; place-items: center; color: var(--accent); font-size: 22px;
+  transform: rotate(-6deg); font-family: var(--display); font-weight: 800;
+}
+.dot { color: var(--orange); }
+
+.mascotStage {
+  position: relative; height: 100%; width: 100%;
+  display: grid; place-items: center;
+}
+.mascotFrame {
+  position: relative; width: 70%; aspect-ratio: 1; max-width: 480px;
+}
+.orbitRing {
+  position: absolute; inset: 0;
+  border: 2px dashed rgba(12,10,29,0.2); border-radius: 50%;
+}
+.r2 { inset: 12%; border: 2px solid rgba(12,10,29,0.12); }
+.mascotDisc {
+  position: absolute; inset: 20%;
+  background: #fffdf7; border: 3px solid #0c0a1d;
+  border-radius: 50%; box-shadow: 10px 10px 0 #0c0a1d;
+  display: grid; place-items: center;
+  overflow: hidden;
+}
+.mascotDisc svg { width: 80%; height: 80%; animation: bob 4s ease-in-out infinite; }
+@keyframes bob { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+
+.orbitItem {
+  position: absolute; width: 64px; height: 64px;
+  border: 2.5px solid #0c0a1d; border-radius: 50%;
+  display: grid; place-items: center;
+  background: #fffdf7; box-shadow: 4px 4px 0 #0c0a1d;
+  font-size: 28px;
+  animation: float 4s ease-in-out infinite;
+}
+.orbit1 { top: 12%; left: 50%; transform: translate(-50%, -50%); }
+.orbit2 { top: 50%; left: 88%; transform: translate(-50%, -50%); animation-delay: 1s; }
+.orbit3 { top: 88%; left: 50%; transform: translate(-50%, -50%); animation-delay: 2s; }
+.orbit4 { top: 50%; left: 12%; transform: translate(-50%, -50%); animation-delay: 1.5s; }
+@keyframes float { 0%,100%{transform:translate(-50%,-50%) rotate(-6deg)} 50%{transform:translate(-50%,-60%) rotate(6deg)} }
+
+.scribble {
+  position: absolute; font-family: var(--display); font-style: italic;
+  font-weight: 700; font-size: 15px; color: #0c0a1d; z-index: 4;
+}
+.sc1 { top: 22%; left: 8%; transform: rotate(-8deg); }
+.sc2 { bottom: 22%; right: 8%; transform: rotate(6deg); text-align: right; }
+
+.statFloat {
+  position: absolute; background: #0c0a1d; color: #fffdf7;
+  padding: 14px 18px; border-radius: 16px; box-shadow: 6px 6px 0 var(--orange);
+  font-family: var(--display); z-index: 4;
+  animation: bob 5s ease-in-out infinite; animation-delay: 1s;
+}
+.sf1 { top: 8%; right: 14%; transform: rotate(4deg); }
+.sf2 { bottom: 12%; left: 12%; transform: rotate(-4deg); animation-delay: 2.5s; }
+.statNum { font-size: 28px; font-weight: 800; color: var(--accent); letter-spacing: -0.02em; line-height: 1; }
+.statLbl { font-family: var(--mono); font-size: 10px; font-weight: 600; opacity: 0.7; margin-top: 4px; }
+
+.ribbon {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  background: #0c0a1d; color: #fffdf7;
+  padding: 14px 32px; display: flex; justify-content: space-between;
+  font-family: var(--mono); font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+}
+.ribbon span { display: flex; align-items: center; gap: 8px; }
+.lime { color: var(--accent); }
+
+/* ===== RIGHT: Form ===== */
+.formSide {
+  padding: 60px 64px; display: flex; flex-direction: column;
+  justify-content: center; max-width: 600px; margin: 0 auto; width: 100%;
+  background: #fffdf7;
+  overflow-y: auto;
+}
+.formTag {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: var(--mono); font-size: 11px; font-weight: 700;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--orange); margin-bottom: 16px;
+}
+.formTag::before { content: ""; width: 24px; height: 2px; background: var(--orange); }
+
+.formTitle {
+  font-family: var(--display); font-weight: 800; font-size: 52px;
+  letter-spacing: -0.03em; line-height: 0.95; margin-bottom: 16px; color: #0c0a1d;
+}
+.formTitle em {
+  font-style: italic; background: var(--accent);
+  padding: 0 12px; display: inline-block; border-radius: 12px;
+  transform: rotate(-1deg); margin: 0 -4px;
+}
+.formSub { font-size: 16px; color: #2a2540; margin-bottom: 32px; max-width: 480px; }
+
+.toggle {
+  display: inline-flex; background: #f6ede0; border: 2px solid #0c0a1d;
+  border-radius: 999px; padding: 4px; margin-bottom: 24px;
+}
+.toggle button {
+  border: none; background: transparent; font-family: var(--body); font-size: 13px; font-weight: 600;
+  padding: 8px 16px; border-radius: 999px; cursor: pointer; color: #2a2540;
+}
+.toggleActive { background: #0c0a1d !important; color: #fffdf7 !important; }
+
+.field { margin-bottom: 16px; }
+.field label {
+  display: block; font-family: var(--mono); font-size: 11px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.06em; color: #2a2540; margin-bottom: 8px;
+}
+.field input {
+  width: 100%; background: #fffdf7; border: 2px solid #0c0a1d; border-radius: 14px;
+  padding: 14px 18px; font-family: var(--body); font-size: 15px; color: #0c0a1d;
+  outline: none; transition: box-shadow 0.15s, transform 0.1s;
+}
+.field input:focus { box-shadow: 4px 4px 0 var(--orange); transform: translate(-2px, -2px); }
+.field input::placeholder { color: rgba(12,10,29,0.3); }
+.fieldRow { display: flex; justify-content: space-between; align-items: center; }
+.forgot { background: none; border: none; padding: 0; font-family: var(--body); font-size: 12px; color: var(--purple); font-weight: 600; cursor: pointer; text-decoration: underline; }
+.forgot:hover { text-decoration: none; }
+.fieldHelper { font-size: 12px; color: #2a2540; margin-top: 6px; }
+.adminHint {
+  margin-top: 10px; padding: 10px 12px;
+  background: rgba(255,91,61,0.08); border: 1px dashed rgba(255,91,61,0.3);
+  border-radius: 10px; color: #2a2540; font-size: 12px;
+}
+.adminHint strong { color: var(--orange); }
+.adminHint code { font-family: var(--mono); background: #f6ede0; padding: 1px 6px; border-radius: 4px; font-size: 12px; }
+
+.checkbox { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; cursor: pointer; }
+.checkbox input[type="checkbox"] { display: none; }
+.checkBox {
+  width: 22px; height: 22px; border: 2px solid #0c0a1d; border-radius: 6px;
+  background: #fffdf7; display: grid; place-items: center; flex-shrink: 0;
+}
+.checkbox input[type="checkbox"]:checked + .checkBox { background: var(--accent); }
+.checkbox input[type="checkbox"]:checked + .checkBox::after { content: "✓"; font-weight: 800; color: #0c0a1d; }
+.checkbox span:last-child { font-size: 13px; color: #2a2540; }
+
+.btnPrimary {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  width: 100%; padding: 16px 24px; border-radius: 999px;
+  font-family: var(--body); font-size: 15px; font-weight: 700;
+  border: 2px solid #0c0a1d; cursor: pointer;
+  background: #0c0a1d; color: var(--accent);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.btnPrimary:hover { transform: translate(-3px, -3px); box-shadow: 6px 6px 0 var(--orange); }
+
+.divider {
+  display: flex; align-items: center; gap: 14px;
+  margin: 24px 0; color: #2a2540;
+  font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+}
+.divider::before, .divider::after { content: ""; flex: 1; height: 1.5px; background: rgba(12,10,29,0.15); }
+
+.socialRow { display: flex; flex-direction: column; gap: 10px; }
+.btnSocial {
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  background: #f6ede0; border: 2px solid #0c0a1d; border-radius: 999px;
+  padding: 13px 24px; font-family: var(--body); font-size: 14px; font-weight: 700;
+  color: #0c0a1d; cursor: pointer; transition: transform 0.15s, box-shadow 0.15s;
+  width: 100%;
+}
+.btnSocial:hover { transform: translate(-2px, -2px); box-shadow: 4px 4px 0 #0c0a1d; }
+
+/* ── Error banner ── */
+.errorBanner {
+  margin-bottom: 16px;
+  padding: 10px 14px;
+  background: #fff0f0;
+  border: 2px solid #e53e3e;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #c53030;
+}
+
+/* ── Email sent box ── */
+.emailSentBox {
+  margin-top: 24px;
+  padding: 20px;
+  background: rgba(200,255,61,0.15);
+  border: 2px solid #0c0a1d;
+  border-radius: 12px;
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+.emailSentIcon {
+  font-size: 28px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.emailSentBox p {
+  font-size: 13px;
+  color: #2a2540;
+  line-height: 1.6;
+  margin: 0;
+}
+.inlineLink {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--purple);
+  font-weight: 700;
+  font-size: 13px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.inlineLink:hover { text-decoration: none; }
+
+
+.below { margin-top: 20px; font-size: 13px; color: #2a2540; }
+.below a { color: var(--purple); font-weight: 700; text-decoration: underline; }
+.below a:hover { text-decoration: none; }
+
+.terms { margin-top: 28px; font-size: 11px; color: rgba(12,10,29,0.5); line-height: 1.5; }
+.terms a { color: var(--purple); text-decoration: underline; }
+
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; }
+  .stage { min-height: 360px; }
+  .formSide { padding: 40px 24px; }
+  .formTitle { font-size: 38px; }
+  .socialRow { grid-template-columns: 1fr 1fr 1fr; }
+}

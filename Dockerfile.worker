@@ -1,0 +1,12 @@
+FROM node:20-alpine
+WORKDIR /app
+
+# Install tsx for TypeScript execution
+RUN npm install -g tsx
+
+COPY package*.json ./
+RUN npm ci
+
+COPY . .
+
+CMD ["tsx", "workers/ingestion.ts"]

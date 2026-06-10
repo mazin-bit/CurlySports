@@ -1,0 +1,209 @@
+/* Dashboard page styles */
+.hero {
+  background: linear-gradient(135deg, #0f1e3a, #0a0e0d);
+  border: 1px solid var(--border-2);
+  border-radius: var(--r-xl);
+  padding: 36px;
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: url("data:image/svg+xml,%3Csvg width='60' height='60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0v60M0 30h60' stroke='%23c8ff3d' stroke-width='0.5' opacity='0.06'/%3E%3C/svg%3E");
+  pointer-events: none;
+}
+.heroContent { position: relative; z-index: 1; }
+.heroTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-2);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  padding: 6px 12px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.heroTitle {
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 28px;
+  margin-bottom: 10px;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+.heroSub { font-size: 15px; color: var(--text-dim); margin-bottom: 28px; }
+.heroStats { display: flex; gap: 36px; flex-wrap: wrap; }
+.heroStat { display: flex; flex-direction: column; gap: 4px; }
+.heroVal {
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 30px;
+  color: var(--accent);
+  letter-spacing: -0.02em;
+}
+.heroLabel {
+  font-size: 12px;
+  color: var(--text-mute);
+  font-family: var(--mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* View all link */
+.viewAll {
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--mono);
+  letter-spacing: 0.04em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: gap 0.15s;
+  white-space: nowrap;
+}
+.viewAll:hover { gap: 10px; }
+
+/* Match grid */
+.matchGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 16px;
+}
+.matchCard {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 22px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.matchCard:hover {
+  border-color: var(--accent-line);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(200,255,61,0.1);
+}
+.liveCard {
+  border-color: rgba(255,93,93,0.2);
+  background: linear-gradient(135deg, rgba(255,93,93,0.05), var(--surface));
+}
+.matchHeader { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+.leagueBadge {
+  font-family: var(--mono); font-size: 10px; font-weight: 700;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--text-mute); background: var(--surface-2);
+  padding: 5px 10px; border-radius: 6px;
+}
+.liveBadge {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--coral); color: #fff;
+  font-family: var(--mono); font-size: 11px; font-weight: 700;
+  padding: 5px 10px; border-radius: 7px; letter-spacing: 0.06em;
+}
+.liveDot {
+  width: 6px; height: 6px; background: #fff; border-radius: 50%;
+  animation: pulse 1.4s infinite;
+}
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+.matchTeams { display: flex; flex-direction: column; gap: 14px; margin-bottom: 18px; }
+.teamRow { display: flex; align-items: center; gap: 12px; }
+.teamName { flex: 1; font-weight: 600; font-size: 15px; }
+.winner { font-weight: 800; }
+.score { font-family: var(--display); font-weight: 800; font-size: 26px; color: var(--text-mute); }
+.winning { color: var(--accent); }
+.matchFooter {
+  display: flex; align-items: center; gap: 10px;
+  padding-top: 14px; border-top: 1px solid var(--border);
+  font-size: 12px; color: var(--text-mute); font-family: var(--mono);
+}
+.matchTime { color: var(--accent); font-weight: 700; }
+
+/* Table */
+.tableWrap {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+}
+.tableHead {
+  background: var(--surface-2);
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.tableTitle { font-family: var(--display); font-weight: 700; font-size: 15px; }
+.tableTabs { display: flex; gap: 6px; }
+.tableTab {
+  padding: 5px 12px; border-radius: 6px;
+  background: transparent; border: 1px solid var(--border);
+  color: var(--text-dim); font-size: 12px; font-weight: 600;
+  cursor: pointer; transition: all 0.15s;
+}
+.tableTab:hover { border-color: var(--border-2); color: var(--text); }
+.active { background: var(--accent) !important; color: #0a0e0d !important; border-color: var(--accent) !important; }
+.tableRow {
+  display: grid;
+  grid-template-columns: 44px 1fr 70px 70px 70px 70px;
+  align-items: center;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.15s;
+  font-family: var(--mono); font-size: 13px;
+}
+.tableRow:last-child { border-bottom: none; }
+.tableRow:hover { background: var(--surface-2); }
+.tablePos { font-family: var(--display); font-weight: 800; font-size: 15px; }
+.tableTeam { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 14px; font-family: var(--body); }
+.tableStat { text-align: center; font-weight: 600; }
+
+/* News */
+.newsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+}
+.newsCard {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+.newsCard:hover { border-color: var(--accent-line); transform: translateY(-3px); }
+.newsImage {
+  width: 100%; aspect-ratio: 16/9;
+  background: var(--surface-2);
+  display: grid; place-items: center;
+  font-size: 52px;
+}
+.newsContent { padding: 18px; }
+.newsTag {
+  display: inline-block;
+  color: #fff;
+  font-family: var(--mono); font-size: 10px; font-weight: 700;
+  letter-spacing: 0.08em; padding: 3px 9px;
+  border-radius: 5px; margin-bottom: 10px; text-transform: uppercase;
+}
+.newsTitle {
+  font-family: var(--display); font-weight: 700; font-size: 16px;
+  line-height: 1.35; margin-bottom: 8px;
+}
+.newsMeta { font-size: 12px; color: var(--text-mute); }
+
+@media (max-width: 768px) {
+  .matchGrid, .newsGrid { grid-template-columns: 1fr; }
+  .heroTitle { font-size: 22px; }
+  .tableRow { grid-template-columns: 36px 1fr 50px 50px; }
+  .tableRow > span:nth-child(3),
+  .tableRow > span:nth-child(4) { display: none; }
+}

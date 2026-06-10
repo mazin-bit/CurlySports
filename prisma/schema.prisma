@@ -1,0 +1,216 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum Sport {
+  FOOTBALL
+  BASKETBALL
+  NFL
+  TENNIS
+  BASEBALL
+  F1
+  CRICKET
+  HOCKEY
+  GOLF
+  BOXING
+}
+
+enum MatchStatus {
+  SCHEDULED
+  LIVE
+  HALF_TIME
+  FINISHED
+  POSTPONED
+  CANCELLED
+}
+
+// ─── Models ───────────────────────────────────────────────────────────────────
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  username  String   @unique
+  name      String?
+  avatar    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  favorites   Favorite[]
+  predictions Prediction[]
+  debateVotes DebateVote[]
+
+  @@map("users")
+}
+
+model League {
+  id        String   @id @default(cuid())
+  espnId    String?  @unique
+  name      String
+  shortName String
+  sport     Sport
+  country   String?
+  logoUrl   String?
+  season    String?
+  createdAt DateTime @default(now())
+
+  teams   Team[]
+  matches Match[]
+
+  @@map("leagues")
+}
+
+model Team {
+  id        String   @id @default(cuid())
+  espnId    String?  @unique
+  name      String
+  shortName String
+  logoUrl   String?
+  city      String?
+  country   String?
+  sport     Sport
+  leagueId  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  league      League?    @relation(fields: [leagueId], references: [id])
+  players     Player[]
+  homeMatches Match[]    @relation("HomeTeam")
+  awayMatches Match[]    @relation("AwayTeam")
+  favorites   Favorite[]
+
+  @@map("teams")
+}
+
+model Player {
+  id          String   @id @default(cuid())
+  name        String
+  position    String?
+  nationality String?
+  age         Int?
+  photoUrl    String?
+  teamId      String?
+  sport       Sport
+  stats       Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  team      Team?      @relation(fields: [teamId], references: [id])
+  favorites Favorite[]
+
+  @@map("players")
+}
+
+model Match {
+  id          String      @id @default(cuid())
+  espnId      String?     @unique
+  homeTeamId  String
+  awayTeamId  String
+  leagueId    String?
+  homeScore   Int?
+  awayScore   Int?
+  status      MatchStatus @default(SCHEDULED)
+  sport       Sport
+  scheduledAt DateTime
+  startedAt   DateTime?
+  finishedAt  DateTime?
+  minute      Int?
+  period      String?
+  venue       String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  homeTeam    Team         @relation("HomeTeam", fields: [homeTeamId], references: [id])
+  awayTeam    Team         @relation("AwayTeam", fields: [awayTeamId], references: [id])
+  league      League?      @relation(fields: [leagueId], references: [id])
+  predictions Prediction[]
+
+  @@map("matches")
+}
+
+model News {
+  id          String   @id @default(cuid())
+  espnId      String?  @unique
+  title       String
+  slug        String   @unique
+  excerpt     String?
+  content     String
+  imageUrl    String?
+  sport       Sport?
+  source      String?
+  publishedAt DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("news")
+}
+
+model Debate {
+  id        String    @id @default(cuid())
+  question  String
+  optionA   String
+  optionB   String
+  sport     Sport?
+  votesA    Int       @default(0)
+  votesB    Int       @default(0)
+  isLive    Boolean   @default(true)
+  expiresAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  votes DebateVote[]
+
+  @@map("debates")
+}
+
+model DebateVote {
+  id        String   @id @default(cuid())
+  debateId  String
+  userId    String
+  option    String   // "A" or "B"
+  createdAt DateTime @default(now())
+
+  debate Debate @relation(fields: [debateId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([debateId, userId])
+  @@map("debate_votes")
+}
+
+model Prediction {
+  id        String   @id @default(cuid())
+  userId    String
+  matchId   String
+  homeScore Int
+  awayScore Int
+  points    Int      @default(0)
+  createdAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  match Match @relation(fields: [matchId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, matchId])
+  @@map("predictions")
+}
+
+model Favorite {
+  id       String  @id @default(cuid())
+  userId   String
+  teamId   String?
+  playerId String?
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  team   Team?   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  player Player? @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, teamId])
+  @@unique([userId, playerId])
+  @@map("favorites")
+}

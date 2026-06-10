@@ -1,0 +1,324 @@
+/* ── Compose trigger ──────────────────────────────────────────────────────────*/
+.composeTrigger {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 18px;
+  background: var(--surface); border: 2px solid var(--ink); border-radius: var(--r-lg);
+  cursor: pointer; box-shadow: var(--shadow-sm);
+  transition: box-shadow 0.15s, transform 0.15s;
+}
+.composeTrigger:hover { box-shadow: var(--shadow-md); transform: translate(-1px,-1px); }
+.composeTriggerAvatar {
+  width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
+  background: var(--surface-2); border: 2px solid var(--border-2);
+  display: grid; place-items: center;
+  font-family: var(--display); font-weight: 800; font-size: 11px; color: var(--text-mute);
+}
+.composeTriggerText { flex: 1; font-size: 14px; color: var(--text-mute); }
+.composeTriggerBtn {
+  display: flex; align-items: center; gap: 5px;
+  padding: 7px 14px; flex-shrink: 0;
+  background: var(--accent); border: 2px solid var(--ink); border-radius: 8px;
+  font-family: var(--mono); font-size: 11px; font-weight: 700; color: var(--ink);
+  cursor: pointer; transition: all 0.15s;
+}
+.composeTriggerBtn:hover { box-shadow: 2px 2px 0 var(--ink); transform: translate(-1px,-1px); }
+
+/* ── Compose modal ────────────────────────────────────────────────────────────*/
+.composeOverlay {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0,0,0,0.72); backdrop-filter: blur(4px);
+  display: flex; align-items: flex-start; justify-content: center;
+  padding: 48px 16px;
+}
+.composeModal {
+  width: 100%; max-width: 540px;
+  background: var(--surface); border: 2px solid var(--ink); border-radius: var(--r-lg);
+  box-shadow: 8px 8px 0 var(--ink);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+.composeHead {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 18px; background: var(--surface-2); border-bottom: 2px solid var(--ink);
+}
+.composeTitle { font-family: var(--display); font-weight: 800; font-size: 15px; color: var(--ink); }
+.composeClose {
+  width: 28px; height: 28px; display: grid; place-items: center;
+  background: var(--surface); border: 2px solid var(--border-2); border-radius: 7px;
+  cursor: pointer; color: var(--text-mute); transition: all 0.15s;
+}
+.composeClose:hover { border-color: var(--coral); color: var(--coral); }
+
+.composeBody { display: flex; flex-direction: column; gap: 10px; padding: 16px 18px; }
+.composeRow { display: flex; align-items: center; gap: 8px; }
+.composeTag {
+  padding: 6px 10px; background: var(--surface-2); border: 2px solid var(--border-2);
+  border-radius: 7px; font-family: var(--mono); font-size: 11px; font-weight: 700;
+  color: var(--ink); cursor: pointer; appearance: none;
+}
+.composeContentInput {
+  width: 100%; padding: 12px 14px; resize: vertical;
+  background: var(--surface-2); border: 2px solid var(--border-2); border-radius: 9px;
+  font-family: var(--body); font-size: 14px; color: var(--ink);
+  outline: none; transition: border-color 0.15s; min-height: 90px;
+}
+.composeContentInput:focus { border-color: var(--accent); }
+.composeContentInput::placeholder { color: var(--text-mute); }
+
+/* Image preview */
+.imagePreviewWrap {
+  position: relative; border-radius: 10px; overflow: hidden;
+  border: 2px solid var(--border-2); max-height: 240px;
+}
+.imagePreview {
+  display: block; width: 100%; max-height: 240px; object-fit: cover;
+}
+.imageRemove {
+  position: absolute; top: 8px; right: 8px;
+  width: 26px; height: 26px; display: grid; place-items: center;
+  background: rgba(0,0,0,0.7); border: none; border-radius: 50%;
+  color: #fff; cursor: pointer;
+}
+.imageRemove:hover { background: rgba(0,0,0,0.9); }
+
+/* Poll section */
+.pollSection { display: flex; flex-direction: column; gap: 8px; padding-top: 4px; border-top: 1.5px solid var(--border-2); }
+.composeOptsLabel {
+  font-family: var(--mono); font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-mute);
+}
+.composeOptRow { display: flex; gap: 8px; align-items: center; }
+.composeOptInput {
+  flex: 1; padding: 9px 12px;
+  background: var(--surface-2); border: 2px solid var(--border-2); border-radius: 8px;
+  font-size: 13px; color: var(--ink); outline: none; transition: border-color 0.15s;
+}
+.composeOptInput:focus { border-color: var(--accent); }
+.composeOptRemove {
+  width: 28px; height: 28px; display: grid; place-items: center; flex-shrink: 0;
+  background: var(--surface-2); border: 2px solid var(--border-2); border-radius: 7px;
+  cursor: pointer; color: var(--text-mute); transition: all 0.15s;
+}
+.composeOptRemove:hover { border-color: var(--coral); color: var(--coral); }
+.composeAddOpt {
+  display: flex; align-items: center; gap: 5px;
+  padding: 7px 12px; width: fit-content;
+  background: none; border: 1.5px dashed var(--border-2); border-radius: 7px;
+  font-family: var(--mono); font-size: 11px; color: var(--text-mute); cursor: pointer;
+  transition: all 0.15s;
+}
+.composeAddOpt:hover { border-color: var(--ink); color: var(--ink); }
+.composeError {
+  display: flex; align-items: center; gap: 6px;
+  padding: 8px 12px; background: rgba(255,80,80,0.1); border: 1.5px solid #ff5050;
+  border-radius: 7px; font-size: 12px; color: #ff5050;
+}
+
+.composeFoot {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 18px; background: var(--surface-2); border-top: 1.5px solid var(--border-2);
+  gap: 8px;
+}
+.composeToolbar { display: flex; gap: 4px; }
+.toolbarBtn {
+  width: 32px; height: 32px; display: grid; place-items: center;
+  background: var(--surface); border: 1.5px solid var(--border-2); border-radius: 8px;
+  color: var(--text-mute); cursor: pointer; transition: all 0.15s;
+}
+.toolbarBtn:hover { border-color: var(--ink); color: var(--ink); }
+.toolbarBtnActive { border-color: var(--accent) !important; color: var(--accent) !important; background: rgba(200,255,61,0.1) !important; }
+.composeChars { font-family: var(--mono); font-size: 11px; color: var(--text-mute); }
+.composeCancelBtn {
+  padding: 8px 14px; background: none; border: 2px solid var(--border-2); border-radius: 8px;
+  font-family: var(--mono); font-size: 11px; font-weight: 700; color: var(--text-mute);
+  cursor: pointer; transition: all 0.15s;
+}
+.composeCancelBtn:hover { border-color: var(--ink); color: var(--ink); }
+.composePostBtn {
+  display: flex; align-items: center; gap: 5px;
+  padding: 8px 16px; background: var(--accent); border: 2px solid var(--ink); border-radius: 8px;
+  font-family: var(--mono); font-size: 11px; font-weight: 700; color: var(--ink);
+  cursor: pointer; transition: all 0.15s;
+}
+.composePostBtn:hover:not(:disabled) { box-shadow: 2px 2px 0 var(--ink); transform: translate(-1px,-1px); }
+.composePostBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ── Feed states ──────────────────────────────────────────────────────────────*/
+.feedLoading {
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
+  padding: 56px 24px; color: var(--text-mute); font-family: var(--mono); font-size: 13px;
+}
+.feedError {
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+  padding: 48px 24px; text-align: center; color: var(--coral);
+  font-family: var(--mono); font-size: 13px;
+}
+.feedEmpty {
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
+  padding: 56px 24px; text-align: center;
+  color: var(--text-mute); font-family: var(--mono); font-size: 13px;
+}
+.feedEmptyBtn {
+  display: flex; align-items: center; gap: 6px;
+  padding: 8px 16px; margin-top: 6px;
+  background: var(--accent); border: 2px solid var(--ink); border-radius: 8px;
+  font-family: var(--mono); font-size: 11px; font-weight: 700; color: var(--ink);
+  cursor: pointer; transition: all 0.15s;
+}
+.feedEmptyBtn:hover { box-shadow: 2px 2px 0 var(--ink); transform: translate(-1px,-1px); }
+
+/* Feed header */
+.feedHeader {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+}
+.filterTabs { display: flex; gap: 6px; }
+.filterTab {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 7px 14px;
+  background: var(--surface-2); border: 1.5px solid var(--border-2); border-radius: 8px;
+  font-family: var(--mono); font-size: 12px; font-weight: 700; color: var(--text-mute);
+  cursor: pointer; transition: all 0.15s;
+}
+.filterTab:hover { border-color: var(--ink); color: var(--ink); }
+.filterTabActive { background: var(--ink); border-color: var(--ink); color: var(--bg); }
+
+/* Feed */
+.feed { display: flex; flex-direction: column; gap: 16px; }
+
+/* Load more */
+.loadMoreBtn {
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 12px; width: 100%;
+  background: var(--surface-2); border: 1.5px solid var(--border-2); border-radius: 10px;
+  font-family: var(--mono); font-size: 12px; font-weight: 700; color: var(--text-mute);
+  cursor: pointer; transition: all 0.15s;
+}
+.loadMoreBtn:hover:not(:disabled) { border-color: var(--ink); color: var(--ink); }
+.loadMoreBtn:disabled { opacity: 0.5; }
+
+/* ── Thread / Post card ───────────────────────────────────────────────────────*/
+.thread {
+  background: var(--surface);
+  border: 2px solid var(--ink);
+  border-radius: var(--r-lg);
+  padding: 18px 20px;
+  box-shadow: var(--shadow-sm);
+  display: flex; flex-direction: column; gap: 12px;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.thread:hover { transform: translate(-2px,-2px); box-shadow: var(--shadow-md); }
+
+.threadHead { display: flex; align-items: center; gap: 10px; }
+.avatar {
+  width: 36px; height: 36px; border-radius: 50%;
+  display: grid; place-items: center;
+  font-family: var(--display); font-weight: 800; font-size: 12px; color: #fff;
+  flex-shrink: 0; border: 2px solid var(--ink);
+}
+.authorInfo { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.authorName { font-family: var(--display); font-weight: 700; font-size: 13px; color: var(--ink); }
+.threadTime {
+  display: inline-flex; align-items: center; gap: 3px;
+  font-family: var(--mono); font-size: 11px; color: var(--text-mute);
+}
+.threadTag {
+  font-family: var(--mono); font-size: 9px; font-weight: 700; letter-spacing: 0.08em;
+  padding: 4px 10px; border-radius: 5px; flex-shrink: 0;
+  background: var(--accent); color: var(--ink);
+}
+
+.threadBody { font-size: 14px; line-height: 1.6; color: var(--ink); margin: 0; white-space: pre-wrap; }
+
+/* Post image */
+.postImage {
+  width: 100%; max-height: 320px; object-fit: cover;
+  border-radius: 10px; border: 1.5px solid var(--border-2);
+}
+
+/* Poll */
+.pollWrap { display: flex; flex-direction: column; gap: 8px; }
+.pollOpt {
+  position: relative; overflow: hidden;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 11px 14px;
+  background: var(--surface-2); border: 1.5px solid var(--border-2); border-radius: 9px;
+  font-size: 13px; font-weight: 600; color: var(--ink);
+  cursor: pointer; text-align: left; transition: border-color 0.15s, transform 0.12s;
+}
+.pollOpt:hover:not(:disabled) { border-color: var(--ink); transform: translate(-1px,-1px); }
+.pollOpt:disabled { cursor: default; }
+.pollFill {
+  position: absolute; left: 0; top: 0; bottom: 0;
+  background: rgba(200,255,61,0.15); border-radius: 8px;
+  transition: width 0.5s ease; pointer-events: none;
+}
+.pollOptVoted { border-color: var(--accent) !important; }
+.pollOptWinner { background: rgba(200,255,61,0.12) !important; }
+.pollLabel { position: relative; z-index: 1; }
+.pollPct { position: relative; z-index: 1; font-family: var(--mono); font-size: 12px; font-weight: 700; color: var(--orange); }
+.pollMeta {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-family: var(--mono); font-size: 11px; color: var(--text-mute);
+}
+
+/* Actions */
+.threadActions {
+  display: flex; gap: 4px; flex-wrap: wrap;
+  padding-top: 10px; border-top: 1.5px solid var(--border-2);
+}
+.actionBtn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 12px;
+  background: var(--surface-2); border: 1.5px solid var(--border-2); border-radius: 8px;
+  font-family: var(--mono); font-size: 11px; font-weight: 700; color: var(--text-mute);
+  cursor: pointer; transition: all 0.15s;
+}
+.actionBtn:hover { border-color: var(--ink); color: var(--ink); }
+.actionBtnActive { border-color: var(--accent) !important; color: var(--accent) !important; background: rgba(200,255,61,0.1) !important; }
+
+/* Comments */
+.commentsWrap {
+  border-top: 1.5px solid var(--border-2);
+  padding-top: 14px; display: flex; flex-direction: column; gap: 12px;
+}
+.commentsLoading { display: flex; justify-content: center; padding: 16px 0; color: var(--text-mute); }
+.noComments { font-family: var(--mono); font-size: 12px; color: var(--text-mute); text-align: center; padding: 8px 0; }
+.commentInput { display: flex; align-items: center; gap: 10px; }
+.commentBox {
+  flex: 1; padding: 9px 14px;
+  background: var(--surface-2); border: 1.5px solid var(--border-2);
+  border-radius: 10px; font-size: 13px; color: var(--ink); outline: none;
+  transition: border-color 0.15s;
+}
+.commentBox:focus { border-color: var(--ink); }
+.commentBox::placeholder { color: var(--text-mute); }
+.sendBtn {
+  display: flex; align-items: center; gap: 4px;
+  padding: 8px 14px;
+  background: var(--ink); color: var(--bg);
+  border: none; border-radius: 9px;
+  font-family: var(--display); font-size: 12px; font-weight: 700;
+  cursor: pointer; transition: opacity 0.15s; white-space: nowrap;
+}
+.sendBtn:hover:not(:disabled) { opacity: 0.85; }
+.sendBtn:disabled { opacity: 0.5; }
+
+.comment { display: flex; gap: 10px; align-items: flex-start; }
+.commentBody { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+.commentMeta { display: flex; align-items: center; gap: 8px; }
+.commentAuthor { font-family: var(--display); font-weight: 700; font-size: 12px; color: var(--ink); }
+.commentTime { font-family: var(--mono); font-size: 10px; color: var(--text-mute); }
+.commentText { font-size: 13px; line-height: 1.5; color: var(--text-dim); margin: 0; }
+.likeBtn {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 9px;
+  background: var(--surface-2); border: 1.5px solid var(--border-2);
+  border-radius: 6px; font-family: var(--mono); font-size: 11px; color: var(--text-mute);
+  cursor: pointer; transition: all 0.12s;
+}
+.likeBtn:hover { border-color: var(--ink); color: var(--ink); }
+.liked { border-color: var(--accent) !important; color: var(--accent) !important; background: rgba(200,255,61,0.1) !important; }
+
+/* Spinner */
+@keyframes spin { to { transform: rotate(360deg); } }
+.spin { animation: spin 0.8s linear infinite; }

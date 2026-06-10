@@ -1,0 +1,294 @@
+"use client";
+
+import { useParams, useSearchParams } from "next/navigation";
+import Link from "next/link";
+import useSWR from "swr";
+import AppShell from "@/components/AppShell";
+import styles from "./player.module.css";
+import {
+  ArrowLeft, Shirt, MapPin, Cake, Ruler, Weight,
+  Trophy, Star, Target, Shield, Activity, Timer,
+  CircleDot, AlertTriangle, Swords, AlertCircle,
+} from "lucide-react";
+import type { PlayerDetail } from "@/app/api/espn/player/route";
+
+const fetcher = (url: string) => fetch(url).then((r) => r.json());
+
+function initials(name: string) {
+  return name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
+}
+
+function formatDOB(dob: string | null): string {
+  if (!dob) return "";
+  const d = new Date(dob);
+  if (isNaN(d.getTime())) return dob;
+  return d.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+}
+
+function calcAge(dob: string | null): number | null {
+  if (!dob) return null;
+  const d = new Date(dob);
+  if (isNaN(d.getTime())) return null;
+  return Math.floor((Date.now() - d.getTime()) / (365.25 * 24 * 60 * 60 * 1000));
+}
+
+// Map stat names to icons + friendly labels
+const STAT_META: Record<string, { icon: React.ReactNode; label: string }> = {
+  goals:           { icon: <Target size={14} />,       label: "Goals" },
+  assists:         { icon: <Star size={14} />,          label: "Assists" },
+  saves:           { icon: <Shield size={14} />,        label: "Saves" },
+  cleanSheets:     { icon: <Shield size={14} />,        label: "Clean Sheets" },
+  appearances:     { icon: <Activity size={14} />,      label: "Apps" },
+  gamesPlayed:     { icon: <Activity size={14} />,      label: "Games" },
+  minutesPlayed:   { icon: <Timer size={14} />,         label: "Minutes" },
+  yellowCards:     { icon: <AlertTriangle size={14} />, label: "Yellow" },
+  redCards:        { icon: <Swords size={14} />,        label: "Red" },
+  shots:           { icon: <CircleDot size={14} />,     label: "Shots" },
+  shotsOnTarget:   { icon: <Target size={14} />,        label: "On Target" },
+  points:          { icon: <Trophy size={14} />,        label: "Points" },
+  rebounds:        { icon: <Activity size={14} />,      label: "Rebounds" },
+  touchdowns:      { icon: <Star size={14} />,          label: "TDs" },
+};
+
+function getStatMeta(stat: { name: string; displayName: string }) {
+  return STAT_META[stat.name] ?? { icon: <Star size={14} />, label: stat.displayName };
+}
+
+// Position-based accent colours
+function posColor(posAbbr: string): string {
+  const p = posAbbr?.toUpperCase();
+  if (["GK", "G"].includes(p)) return "#f59e0b";
+  if (["CB", "LB", "RB", "D", "DEF"].includes(p)) return "#3b82f6";
+  if (["CM", "CAM", "CDM", "M", "MF", "MID"].includes(p)) return "#c8ff3d";
+  if (["LW", "RW", "CF", "ST", "F", "FW", "ATT"].includes(p)) return "#ef4444";
+  return "var(--accent)";
+}
+
+export default function PlayerPage() {
+  const params = useParams();
+  const searchParams = useSearchParams();
+  const athleteId = params.id as string;
+  const league = searchParams.get("league") ?? "eng.1";
+
+  const { data: player, error, isLoading } = useSWR<PlayerDetail>(
+    `/api/espn/player?id=${athleteId}&league=${league}`,
+    fetcher,
+    { refreshInterval: 0 }
+  );
+
+  if (isLoading) {
+    return (
+      <AppShell active="players" title="Player" subtitle="Loading…">
+        <div className="stack-sm">
+          <div className="skeleton-row" style={{ height: 200, borderRadius: 16 }} />
+          <div className="skeleton-row" style={{ height: 120, borderRadius: 12 }} />
+          <div className="skeleton-row" style={{ height: 200, borderRadius: 12 }} />
+        </div>
+      </AppShell>
+    );
+  }
+
+  if (error || !player || (player as { error?: string }).error) {
+    return (
+      <AppShell active="players" title="Player" subtitle="Not found">
+        <div style={{ textAlign: "center", padding: "48px 20px", color: "var(--text-mute)" }}>
+          <AlertCircle size={40} strokeWidth={1.5} style={{ marginBottom: 12, color: "var(--text-mute)" }} />
+          <p>Player data not available.</p>
+          <Link href="/players" className={styles.backBtn} style={{ display: "inline-flex", marginTop: 16 }}>
+            <ArrowLeft size={14} /> Back to Players
+          </Link>
+        </div>
+      </AppShell>
+    );
+  }
+
+  const displayAge = player.age ?? calcAge(player.displayDOB);
+  const accentColor = posColor(player.positionAbbr);
+  const hasStats = player.stats.length > 0;
+  const topStats = player.stats.slice(0, 8);
+
+  return (
+    <AppShell active="players" title={player.name} subtitle={`${player.position} · ${player.teamName}`}>
+      <div className="stack-sm">
+
+        {/* Back */}
+        <Link href="/players" className={styles.backBtn}>
+          <ArrowLeft size={14} /> All Players
+        </Link>
+
+        {/* ── Hero Card ─────────────────────────────────── */}
+        <div
+          className={styles.heroCard}
+          style={{ "--pos-color": accentColor } as React.CSSProperties}
+        >
+          {/* Team color accent bar */}
+          <div
+            className={styles.heroBand}
+            style={{ background: player.teamColor ?? accentColor }}
+          />
+
+          {/* Content row */}
+          <div className={styles.heroBody}>
+            {/* Avatar */}
+            <div className={styles.avatarWrap}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={player.headshot ?? ""}
+                alt={player.name}
+                className={styles.avatarImg}
+                onError={(e) => {
+                  const el = e.target as HTMLImageElement;
+                  el.style.display = "none";
+                  const fb = el.nextSibling as HTMLElement | null;
+                  if (fb) fb.style.display = "flex";
+                }}
+              />
+              <div className={styles.avatarFallback} style={{ display: player.headshot ? "none" : "flex" }}>
+                {initials(player.name)}
+              </div>
+              {player.jersey && (
+                <span className={styles.jerseyBadge} style={{ background: accentColor }}>
+                  #{player.jersey}
+                </span>
+              )}
+            </div>
+
+            {/* Info */}
+            <div className={styles.heroInfo}>
+              <div className={styles.heroName}>{player.name}</div>
+              <div className={styles.heroSubRow}>
+                <span className={styles.posBadge} style={{ background: accentColor, color: "#07090b" }}>
+                  {player.positionAbbr || player.position}
+                </span>
+                {player.teamName && (
+                  <Link href={`/teams?highlight=${player.teamId}`} className={styles.teamLink}>
+                    {player.teamLogo && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={player.teamLogo} alt="" width={16} height={16}
+                        style={{ objectFit: "contain" }} />
+                    )}
+                    {player.teamName}
+                  </Link>
+                )}
+                <span className={styles.leaguePill}>{player.leagueName}</span>
+              </div>
+
+              {/* Quick facts */}
+              <div className={styles.heroFacts}>
+                {player.nationality && (
+                  <span className={styles.fact}>
+                    {player.flagUrl && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={player.flagUrl} alt="" width={14} height={10}
+                        style={{ objectFit: "cover", borderRadius: 1 }} />
+                    )}
+                    {player.nationality}
+                  </span>
+                )}
+                {displayAge && <span className={styles.fact}><Cake size={11} /> {displayAge}y</span>}
+                {player.height && <span className={styles.fact}><Ruler size={11} /> {player.height}</span>}
+                {player.weight && <span className={styles.fact}><Weight size={11} /> {player.weight}</span>}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Season Stats ──────────────────────────────── */}
+        <div className={styles.section}>
+          <div className={styles.sectionHead}>
+            <span className={styles.sectionTitle}>
+              <Activity size={13} style={{ marginRight: 5 }} />
+              Season Stats
+            </span>
+            {player.statsSeason && (
+              <span className={styles.sectionSub}>{player.statsSeason}</span>
+            )}
+          </div>
+
+          {hasStats ? (
+            <div className={styles.statsGrid}>
+              {topStats.map((s) => {
+                const meta = getStatMeta(s);
+                return (
+                  <div key={s.name} className={styles.statCard}>
+                    <span className={styles.statValue}>{s.displayValue || s.value}</span>
+                    <span className={styles.statIcon}>{meta.icon}</span>
+                    <span className={styles.statLabel}>{meta.label || s.displayName}</span>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className={styles.emptyStats}>
+              No stats available for this season.
+            </div>
+          )}
+        </div>
+
+        {/* ── Profile ───────────────────────────────────── */}
+        <div className={styles.section}>
+          <div className={styles.sectionHead}>
+            <span className={styles.sectionTitle}>
+              <Shield size={13} style={{ marginRight: 5 }} />
+              Profile
+            </span>
+          </div>
+          <div className={styles.profileGrid}>
+            {player.position && (
+              <ProfileRow icon={<Shirt size={13} />} label="Position" value={player.position} />
+            )}
+            {player.nationality && (
+              <ProfileRow
+                icon={player.flagUrl
+                  ? <img src={player.flagUrl} alt="" width={14} height={10} style={{ objectFit: "cover", borderRadius: 1 }} />
+                  : <MapPin size={13} />}
+                label="Nationality"
+                value={player.nationality}
+              />
+            )}
+            {player.displayDOB && (
+              <ProfileRow icon={<Cake size={13} />} label="Date of Birth" value={formatDOB(player.displayDOB)} />
+            )}
+            {displayAge && (
+              <ProfileRow icon={<Cake size={13} />} label="Age" value={`${displayAge} years old`} />
+            )}
+            {player.height && (
+              <ProfileRow icon={<Ruler size={13} />} label="Height" value={player.height} />
+            )}
+            {player.weight && (
+              <ProfileRow icon={<Weight size={13} />} label="Weight" value={player.weight} />
+            )}
+            {player.jersey && (
+              <ProfileRow icon={<Shirt size={13} />} label="Jersey" value={`#${player.jersey}`} />
+            )}
+            {player.teamName && (
+              <ProfileRow icon={<Trophy size={13} />} label="Club" value={player.teamName} />
+            )}
+            {player.leagueName && (
+              <ProfileRow icon={<Star size={13} />} label="League" value={player.leagueName} />
+            )}
+          </div>
+        </div>
+
+      </div>
+    </AppShell>
+  );
+}
+
+function ProfileRow({
+  icon, label, value,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className={styles.profileRow}>
+      <span className={styles.profileLabel}>
+        <span className={styles.profileIcon}>{icon}</span>
+        {label}
+      </span>
+      <span className={styles.profileValue}>{value}</span>
+    </div>
+  );
+}

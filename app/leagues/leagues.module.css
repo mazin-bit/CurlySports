@@ -1,0 +1,375 @@
+/* ─────────────────────────────────────────────────────────────
+   Leagues page — card grid, detail panel, standings, bracket
+   ──────────────────────────────────────────────────────────── */
+
+/* ── Season selector ───────────────────────────────────────── */
+
+.seasonWrap { display: flex; align-items: center; gap: 8px; }
+.seasonLabel { font-family: var(--mono); font-size: 11px; color: var(--text-mute); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
+.seasonSelectWrap { position: relative; display: inline-flex; align-items: center; }
+.seasonSelect {
+  appearance: none; -webkit-appearance: none;
+  background: var(--surface-2); border: 2px solid var(--ink);
+  border-radius: 8px; padding: 6px 28px 6px 10px;
+  font-family: var(--mono); font-size: 12px; font-weight: 700; color: var(--ink);
+  cursor: pointer; outline: none; transition: border-color 0.15s;
+}
+.seasonSelect:hover { border-color: var(--accent); }
+.seasonSelect:focus { border-color: var(--accent); }
+.seasonCaret { position: absolute; right: 8px; pointer-events: none; color: var(--text-dim); }
+
+/* ── League card grid ──────────────────────────────────────── */
+
+.leagueGrid {
+  display: flex; flex-direction: column; gap: 20px;
+}
+
+.leagueGroupSection {
+  display: flex; flex-direction: column; gap: 8px;
+}
+
+.leagueGroupTitle {
+  font-family: var(--mono); font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-mute);
+  padding: 0 2px;
+}
+
+.cardsRow {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 8px;
+}
+
+.leagueCard {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 6px; padding: 12px 8px 10px;
+  background: var(--surface); border: 2px solid var(--border-2);
+  border-radius: 12px; cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+  text-align: center; position: relative;
+}
+.leagueCard:hover {
+  border-color: var(--ink);
+  background: var(--surface-2);
+  box-shadow: var(--shadow-sm);
+}
+.leagueCardActive {
+  border-color: var(--accent) !important;
+  background: color-mix(in srgb, var(--accent) 5%, var(--surface)) !important;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 30%, transparent) !important;
+}
+
+.cardIconWrap {
+  width: 42px; height: 42px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.cardFlag {
+  font-size: 22px; line-height: 1;
+}
+.cardName {
+  font-family: var(--display); font-weight: 700; font-size: 11px;
+  color: var(--ink); line-height: 1.2;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  overflow: hidden; width: 100%;
+}
+.cardSub {
+  font-family: var(--mono); font-size: 9px; color: var(--text-mute);
+  text-transform: uppercase; letter-spacing: 0.04em;
+}
+.cardBadge {
+  font-family: var(--mono); font-size: 8px; font-weight: 800;
+  text-transform: uppercase; letter-spacing: 0.06em;
+  padding: 2px 5px; border-radius: 4px;
+}
+
+/* ── Empty prompt ───────────────────────────────────────────── */
+
+.emptyPrompt {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 6px;
+  padding: 48px 20px; text-align: center;
+  color: var(--text-mute); font-family: var(--mono);
+  font-size: 12px; line-height: 1.5;
+}
+.emptyPrompt p { max-width: 280px; }
+
+/* ── Detail panel ───────────────────────────────────────────── */
+
+.detailPanel {
+  background: var(--surface);
+  border: 2px solid var(--ink);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+}
+
+.detailHeader {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 20px;
+  background: var(--surface-2);
+  border-bottom: 2px solid var(--ink);
+}
+.detailHeaderLeft { display: flex; align-items: center; gap: 14px; }
+.detailLogo {
+  width: 48px; height: 48px; object-fit: contain; flex-shrink: 0;
+  border-radius: 8px;
+}
+.detailIconWrap {
+  width: 48px; height: 48px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.detailName {
+  font-family: var(--display); font-weight: 800; font-size: 17px;
+  color: var(--ink); letter-spacing: -0.01em;
+}
+.detailSub {
+  font-family: var(--mono); font-size: 11px; color: var(--text-mute); margin-top: 2px;
+  display: block;
+}
+.detailMeta { display: flex; align-items: center; gap: 8px; }
+.groupBadge {
+  font-family: var(--mono); font-size: 10px; font-weight: 700; text-transform: uppercase;
+  background: var(--accent); color: var(--ink); border-radius: 4px; padding: 2px 6px;
+  letter-spacing: 0.05em;
+}
+.teamCount { font-family: var(--mono); font-size: 11px; color: var(--text-mute); }
+
+.noData {
+  padding: 40px 24px; text-align: center;
+  font-family: var(--mono); font-size: 12px; color: var(--text-mute);
+}
+
+.detailLoading { padding: 16px 0; }
+
+/* ── Competition tabs ───────────────────────────────────────── */
+
+.compTabs {
+  display: flex; gap: 0;
+  border-bottom: 2px solid var(--ink);
+  background: var(--surface-2);
+}
+.compTab {
+  display: flex; align-items: center; gap: 5px;
+  padding: 10px 18px;
+  font-family: var(--mono); font-size: 11px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--text-mute);
+  background: none; border: none; border-bottom: 3px solid transparent;
+  cursor: pointer; transition: all 0.15s;
+  margin-bottom: -2px;
+}
+.compTab:hover { color: var(--ink); }
+.compTabActive { color: var(--ink) !important; border-bottom-color: var(--accent) !important; }
+
+/* ── Single standings table ────────────────────────────────── */
+
+.standingsTable {}
+.tableHeaderRow {
+  display: flex; align-items: center;
+  padding: 8px 18px;
+  background: var(--surface-2);
+  border-bottom: 1.5px solid var(--border-2);
+  font-family: var(--mono); font-size: 10px; font-weight: 700;
+  color: var(--text-mute); text-transform: uppercase; letter-spacing: 0.07em;
+}
+.tableRow {
+  display: flex; align-items: center;
+  padding: 11px 18px; border-bottom: 1.5px solid var(--border-2);
+  transition: background 0.15s;
+}
+.tableRow:last-child { border-bottom: none; }
+.tableRow:hover { background: var(--surface-2); }
+.topZone { border-left: 3px solid var(--accent); }
+
+.colRank { min-width: 28px; font-family: var(--display); font-weight: 800; font-size: 14px; flex-shrink: 0; }
+.colTeam {
+  flex: 1; display: flex; align-items: center; gap: 8px;
+  font-weight: 600; font-size: 13px; color: var(--ink);
+  overflow: hidden; min-width: 0;
+}
+.teamNameCell { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.qualBadge {
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 1px 5px; border-radius: 3px; font-size: 9px; font-weight: 800;
+  background: var(--accent); color: #000; letter-spacing: 0.04em; flex-shrink: 0;
+}
+.colStat {
+  min-width: 38px; text-align: right; flex-shrink: 0;
+  font-family: var(--mono); font-size: 12px; color: var(--text-dim); font-weight: 600;
+}
+.accentCol { color: var(--ink) !important; font-weight: 700 !important; }
+
+.hideMobile { display: none; }
+.hideSm { display: none; }
+@media (min-width: 480px) { .hideMobile { display: block; } }
+@media (min-width: 640px) { .hideSm { display: block; } }
+
+.showMoreBtn {
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  width: 100%; padding: 12px;
+  background: var(--surface-2); border: none; border-top: 1.5px solid var(--border-2);
+  color: var(--text-dim); font-size: 12px; font-weight: 600; font-family: var(--mono);
+  cursor: pointer; transition: all 0.15s;
+}
+.showMoreBtn:hover { background: var(--surface); color: var(--ink); }
+
+/* ── Groups grid ───────────────────────────────────────────── */
+
+.groupsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 0;
+  overflow: hidden;
+}
+.groupCard {
+  border-right: 1.5px solid var(--border-2);
+  border-bottom: 1.5px solid var(--border-2);
+}
+.groupCard:nth-child(even):last-child { border-right: none; }
+.groupTitle {
+  padding: 8px 18px 6px;
+  font-family: var(--display); font-weight: 800; font-size: 12px;
+  text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--text-mute); background: var(--surface-2);
+  border-bottom: 1.5px solid var(--border-2);
+}
+
+/* ── Knockout bracket ──────────────────────────────────────── */
+
+.bracketWrap {
+  padding: 16px; display: flex; flex-direction: column; gap: 12px;
+}
+.bracketSkeleton {
+  display: flex; flex-direction: column; gap: 8px; padding: 16px;
+}
+.bracketEmpty {
+  padding: 40px 24px; text-align: center;
+  font-family: var(--mono); font-size: 12px; color: var(--text-mute);
+}
+
+/* Placeholder banner */
+.phBanner {
+  display: flex; align-items: flex-start; gap: 8px;
+  padding: 10px 14px;
+  background: color-mix(in srgb, var(--accent) 8%, var(--surface-2));
+  border: 1.5px solid color-mix(in srgb, var(--accent) 30%, var(--border-2));
+  border-radius: 8px;
+  font-family: var(--mono); font-size: 11px; color: var(--text-dim);
+  line-height: 1.4;
+}
+
+/* Round filter tabs */
+.roundTabs {
+  display: flex; gap: 6px; flex-wrap: wrap;
+  padding-bottom: 4px;
+  border-bottom: 1.5px solid var(--border-2);
+  margin-bottom: 4px;
+}
+.roundTab {
+  padding: 5px 12px;
+  font-family: var(--mono); font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.06em;
+  background: var(--surface-2); border: 1.5px solid var(--border-2);
+  border-radius: 6px; color: var(--text-dim); cursor: pointer; transition: all 0.15s;
+}
+.roundTab:hover { border-color: var(--ink); color: var(--ink); }
+.roundTabActive {
+  background: var(--ink) !important; border-color: var(--ink) !important;
+  color: var(--bg) !important;
+}
+
+/* Round section */
+.roundSection { display: flex; flex-direction: column; gap: 8px; }
+.roundHeader {
+  display: flex; align-items: center; justify-content: space-between; padding: 4px 0;
+}
+.roundName {
+  font-family: var(--display); font-weight: 800; font-size: 15px;
+  color: var(--ink); letter-spacing: -0.01em;
+}
+.roundCount { font-family: var(--mono); font-size: 10px; color: var(--text-mute); }
+
+/* Match cards grid */
+.roundMatches {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 8px;
+}
+
+/* Knockout match card */
+.knockoutCard {
+  position: relative;
+  background: var(--surface-2); border: 2px solid var(--border-2);
+  border-radius: 10px; overflow: hidden;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.knockoutCard:hover { border-color: var(--ink); box-shadow: var(--shadow-sm); }
+.knockoutCardLive { border-color: var(--accent) !important; box-shadow: 0 0 0 1px var(--accent); }
+.knockoutCardPh { opacity: 0.85; border-style: dashed; }
+
+.liveIndicator {
+  position: absolute; top: 6px; right: 8px;
+  font-family: var(--mono); font-size: 9px; font-weight: 800;
+  letter-spacing: 0.08em; color: var(--bg);
+  background: #e53935; border-radius: 4px; padding: 1px 5px;
+  animation: pulse-live 1.5s infinite;
+}
+@keyframes pulse-live { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+
+.phLabel {
+  position: absolute; top: 6px; right: 8px;
+  font-family: var(--mono); font-size: 8px; font-weight: 800;
+  letter-spacing: 0.08em; color: var(--text-mute);
+  background: var(--border-2); border-radius: 4px; padding: 1px 5px;
+}
+
+.matchDate {
+  padding: 5px 10px 0;
+  font-family: var(--mono); font-size: 9px; color: var(--text-mute);
+  text-transform: uppercase; letter-spacing: 0.05em;
+}
+
+.knockoutTeam {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 9px 10px; border-bottom: 1px solid var(--border-2); gap: 6px;
+}
+.knockoutTeam:last-of-type { border-bottom: none; }
+.knockoutTeamInfo { display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0; }
+.knockoutLogo { width: 20px; height: 20px; object-fit: contain; flex-shrink: 0; }
+.knockoutLogoPh {
+  width: 20px; height: 20px; border-radius: 4px;
+  background: var(--border-2); display: flex; align-items: center; justify-content: center;
+  font-size: 9px; font-weight: 700; color: var(--text-mute); flex-shrink: 0;
+}
+.knockoutTeamName {
+  font-size: 12px; font-weight: 600; color: var(--ink);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.knockoutTeamPh {
+  font-size: 11px !important; font-weight: 500 !important;
+  color: var(--text-dim) !important; font-style: italic;
+  white-space: normal !important; line-height: 1.2;
+}
+.knockoutScore {
+  font-family: var(--display); font-size: 16px; font-weight: 800;
+  color: var(--text-dim); flex-shrink: 0; min-width: 18px; text-align: right;
+}
+
+.knockoutWinner .knockoutTeamName { color: var(--ink); font-weight: 800; }
+.knockoutWinner .knockoutScore { color: var(--ink) !important; }
+.knockoutWinner { background: color-mix(in srgb, var(--accent) 8%, transparent); }
+.knockoutLoser .knockoutTeamName { color: var(--text-mute); font-weight: 500; }
+.knockoutLoser .knockoutScore { color: var(--text-mute) !important; }
+.knockoutScoreWin { color: var(--ink) !important; }
+
+.aggRow {
+  padding: 5px 10px; font-family: var(--mono); font-size: 9px; color: var(--text-mute);
+  text-align: center; border-top: 1px solid var(--border-2);
+  background: var(--surface); text-transform: uppercase; letter-spacing: 0.05em;
+}
+.legBadge {
+  position: absolute; bottom: 6px; right: 8px;
+  font-family: var(--mono); font-size: 8px; font-weight: 700;
+  color: var(--text-mute); text-transform: uppercase; letter-spacing: 0.05em;
+}

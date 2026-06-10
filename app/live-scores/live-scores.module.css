@@ -1,0 +1,147 @@
+/* ── Calendar strip ──────────────────────────────────── */
+.calendar {
+  background: var(--surface);
+  border: 2px solid var(--ink);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+.calHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  border-bottom: 1.5px solid var(--border-2);
+}
+.calMonth {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-dim);
+}
+.calArrow {
+  width: 30px; height: 30px;
+  display: grid; place-items: center;
+  background: var(--surface-2);
+  border: 2px solid var(--ink);
+  border-radius: 8px;
+  font-size: 15px;
+  cursor: pointer;
+  transition: transform 0.12s, box-shadow 0.12s;
+  line-height: 1;
+}
+.calArrow:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0 var(--ink);
+}
+.calDays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+}
+.calDay {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 14px 6px 12px;
+  background: transparent;
+  border: none;
+  border-right: 1px solid var(--border-3);
+  cursor: pointer;
+  transition: background 0.12s;
+  position: relative;
+}
+.calDay:last-child { border-right: none; }
+.calDay:hover:not(.calDaySel) { background: var(--surface-2); }
+.calDayName {
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--text-mute);
+}
+.calDayNum {
+  font-family: var(--display);
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--text);
+  line-height: 1;
+}
+.calDot {
+  width: 5px; height: 5px;
+  background: var(--orange);
+  border-radius: 50%;
+}
+/* Today highlight */
+.calDayToday .calDayName { color: var(--orange); }
+.calDayToday .calDayNum  { color: var(--orange); }
+/* Selected */
+.calDaySel {
+  background: var(--ink) !important;
+}
+.calDaySel .calDayName { color: rgba(255,255,255,0.5); }
+.calDaySel .calDayNum  { color: var(--accent); }
+.calDaySel .calDot     { background: var(--accent); }
+
+/* ─────────────────────────────────────────────────────── */
+.sportRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.liveCounter { display: flex; align-items: center; gap: 16px; }
+.totalCount { font-size: 13px; color: var(--text-mute); font-family: var(--mono); }
+
+.leagueGroup {
+  background: var(--surface);
+  border: 2px solid var(--ink);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+}
+.leagueHead {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 20px;
+  background: var(--ink);
+  border-bottom: 2px solid var(--ink);
+}
+.leagueFlag { font-size: 20px; }
+.leagueName { font-family: var(--display); font-weight: 800; font-size: 15px; flex: 1; color: #fff; }
+.leagueCount { font-family: var(--mono); font-size: 11px; color: rgba(255,255,255,0.5); }
+
+.matchList { display: flex; flex-direction: column; }
+.matchRow {
+  display: grid;
+  grid-template-columns: 90px 1fr 90px 1fr 180px;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 20px;
+  border-bottom: 1.5px solid var(--border-2);
+  transition: background 0.15s;
+  cursor: pointer;
+  color: var(--ink);
+}
+.matchRow:last-child { border-bottom: none; }
+.matchRow:hover { background: var(--surface-2); }
+
+.matchStatus { display: flex; justify-content: center; }
+.teamSide { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.homeTeam { justify-content: flex-end; }
+.teamLabel { font-weight: 600; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink); }
+.bold { font-weight: 800; }
+
+.scoreBox { display: flex; align-items: center; justify-content: center; gap: 8px; }
+.scoreNum { font-family: var(--display); font-weight: 800; font-size: 22px; color: var(--text-mute); min-width: 22px; text-align: center; }
+.accent { color: var(--orange) !important; }
+.scoreSep { font-family: var(--mono); font-size: 14px; color: var(--border-2); }
+
+.venue { font-size: 12px; color: var(--text-mute); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--mono); }
+
+@media (max-width: 768px) {
+  .matchRow { grid-template-columns: 70px 1fr 80px 1fr; }
+  .venue { display: none; }
+}

@@ -1,0 +1,66 @@
+/* Sport Selector — sticky scrollable chip row */
+.wrap {
+  background: var(--surface);
+  border: 2px solid var(--ink);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+
+.strip {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding: 14px 16px;
+  white-space: nowrap;
+}
+.strip::-webkit-scrollbar { display: none; }
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 18px;
+  border-radius: 40px;
+  background: var(--surface-2);
+  border: 2px solid var(--border-2);
+  color: var(--text-dim);
+  font-family: var(--body);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+  flex-shrink: 0;
+  letter-spacing: -0.01em;
+}
+.chip:hover {
+  border-color: var(--ink);
+  color: var(--ink);
+  transform: translateY(-1px);
+}
+.chip.active {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--sport-color, var(--accent));
+  font-weight: 700;
+  box-shadow: 3px 3px 0 var(--sport-color, var(--accent));
+}
+
+.icon {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.label {
+  font-size: 13px;
+}
+
+/* Active sport color indicator bar at bottom */
+.indicator {
+  height: 3px;
+  width: 100%;
+  transition: background 0.3s;
+}

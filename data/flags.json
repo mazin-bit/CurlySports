@@ -1,0 +1,88 @@
+{
+  "maintenanceMode": false,
+  "maintenanceMessage": "We're making some improvements. We'll be right back!",
+  "maintenanceEstimated": "",
+  "siteNoticeEnabled": true,
+  "siteNotice": "The World Cup Has Started Join Us",
+  "sports": {
+    "football": true,
+    "basketball": true,
+    "nfl": false,
+    "tennis": false,
+    "baseball": false,
+    "f1": false,
+    "cricket": true,
+    "hockey": false,
+    "golf": false,
+    "boxing": false,
+    "mma": false
+  },
+  "features": {
+    "liveScores": true,
+    "news": true,
+    "funZone": true,
+    "miniGames": true,
+    "leagues": true,
+    "players": true,
+    "teams": true,
+    "favorites": true
+  },
+  "pageViews": {
+    "/dashboard": 31,
+    "/live-scores": 34,
+    "/leagues": 50,
+    "/fun-zone": 11,
+    "/teams": 14,
+    "/players": 25,
+    "/matches/401859965": 4,
+    "/matches/2465876": 2,
+    "/news": 2,
+    "/videos": 2,
+    "/matches/2478597": 2,
+    "/matches/760415": 2,
+    "/favorites": 3,
+    "/mini-games": 1
+  },
+  "activityLog": [
+    {
+      "action": "Enabled site notice",
+      "at": "2026-06-08T16:44:16.713Z"
+    },
+    {
+      "action": "Disabled site notice",
+      "at": "2026-06-08T16:39:58.634Z"
+    },
+    {
+      "action": "Disabled sport: MMA / UFC",
+      "at": "2026-06-08T16:39:13.883Z"
+    },
+    {
+      "action": "Disabled sport: Boxing",
+      "at": "2026-06-08T16:39:12.753Z"
+    },
+    {
+      "action": "Disabled sport: Golf",
+      "at": "2026-06-08T16:39:11.889Z"
+    },
+    {
+      "action": "Disabled sport: Hockey",
+      "at": "2026-06-08T16:39:11.106Z"
+    },
+    {
+      "action": "Disabled sport: Formula 1",
+      "at": "2026-06-08T16:39:09.068Z"
+    },
+    {
+      "action": "Disabled sport: Baseball",
+      "at": "2026-06-08T16:39:07.899Z"
+    },
+    {
+      "action": "Disabled sport: Tennis",
+      "at": "2026-06-08T16:39:07.082Z"
+    },
+    {
+      "action": "Disabled sport: NFL",
+      "at": "2026-06-08T16:39:06.101Z"
+    }
+  ]
+}
