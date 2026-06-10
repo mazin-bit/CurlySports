@@ -145,3 +145,17 @@
   .matchRow { grid-template-columns: 70px 1fr 80px 1fr; }
   .venue { display: none; }
 }
+
+@media (max-width: 480px) {
+  .calDayNum { font-size: 16px; }
+  .calDay { padding: 10px 4px 8px; }
+  .matchRow {
+    grid-template-columns: 54px 1fr 68px 1fr;
+    padding: 10px 12px;
+    gap: 6px;
+  }
+  .teamLabel { font-size: 12px; }
+  .scoreNum { font-size: 18px; min-width: 18px; }
+  .leagueHead { padding: 10px 14px; }
+  .leagueName { font-size: 13px; }
+}

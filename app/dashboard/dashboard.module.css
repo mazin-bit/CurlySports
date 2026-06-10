@@ -243,3 +243,13 @@
   .matchGrid { grid-template-columns: 1fr; }
   .newsGrid { grid-template-columns: 1fr; }
 }
+
+@media (max-width: 480px) {
+  .heroCard { padding: 14px 16px 18px; }
+  .heroNum { font-size: 30px; min-width: 28px; }
+  .heroVs { font-size: 13px; }
+  .heroScore { gap: 6px; }
+  .heroName { font-size: 12px; }
+  .tableRow { padding: 10px 12px; }
+  .tableStat { min-width: 32px; }
+}

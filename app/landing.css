@@ -665,7 +665,73 @@
 }
 @media (max-width: 700px) {
   .landing-root .l-nav-links { display: none; }
+  .landing-root .l-nav-inner { padding: 12px 16px; gap: 0; }
   .landing-root .l-feat-grid { grid-template-columns: 1fr; }
   .landing-root .l-news-grid { grid-template-columns: 1fr; }
-  .landing-root .l-section { padding: 60px 20px; }
+  .landing-root .l-section { padding: 56px 20px; }
+  .landing-root .l-preview-section { padding: 48px 24px; margin: 0 12px; border-radius: 24px; }
+  .landing-root .l-founder { padding: 48px 24px; margin: 0 12px; border-radius: 24px; }
+  .landing-root .l-debate { padding: 48px 24px; margin: 56px 12px; border-radius: 24px; }
+  .landing-root .l-cta-final { padding: 72px 20px; }
+  .landing-root .l-cta-buttons { flex-direction: column; align-items: center; width: 100%; }
+  .landing-root .l-cta-buttons .l-btn { width: 100%; max-width: 320px; justify-content: center; }
+  .landing-root .l-founder-btns { flex-direction: column; }
+  .landing-root .l-founder-btns .l-btn { justify-content: center; }
+  .landing-root .l-debate-btns { flex-direction: column; }
+  .landing-root .l-debate-btns .l-btn { justify-content: center; }
+  .landing-root .l-preview-section-btns { flex-direction: column; }
+  .landing-root .l-preview-section-btns .l-btn { justify-content: center; }
+  .landing-root .l-foot-grid { grid-template-columns: 1fr 1fr; gap: 32px; }
+  .landing-root .l-foot-brand { grid-column: 1 / -1; }
+  .landing-root footer { padding: 48px 20px 24px; }
+  .landing-root .l-problem { padding: 72px 20px; }
+  .landing-root .l-features { padding: 56px 20px 72px; }
+  .landing-root .l-news { padding: 56px 20px 48px; }
+  .landing-root .l-sponsors-inner { padding: 16px 16px; gap: 12px; }
+  .landing-root .l-sponsors-reach { display: none; }
+  .landing-root .l-live-more { display: none; }
+}
+@media (max-width: 480px) {
+  .landing-root .l-nav-inner { padding: 10px 14px; }
+  .landing-root .l-logo { font-size: 18px; }
+  .landing-root .l-logo-mark { width: 32px; height: 32px; }
+  .landing-root .l-nav-cta gap { gap: 6px; }
+  .landing-root .l-btn { padding: 10px 16px; font-size: 13px; }
+  .landing-root .l-btn-lg { padding: 13px 22px; font-size: 14px; }
+  .landing-root .l-hero { padding-top: 20px; padding-bottom: 48px; }
+  .landing-root .l-hero-grid { gap: 32px; }
+  .landing-root .l-hero-title { font-size: clamp(40px, 11vw, 72px); }
+  .landing-root .l-hero-live-bar { flex-wrap: wrap; max-width: 100%; font-size: 11px; }
+  .landing-root .l-live-items { flex-wrap: wrap; gap: 4px; }
+  .landing-root .l-hero-feats { gap: 8px; }
+  .landing-root .l-hero-feats .l-feat-card { padding: 11px 14px; }
+  .landing-root .l-hero-feats .l-feat-stat { font-size: 24px; }
+  .landing-root .l-hero-actions { gap: 8px; }
+  .landing-root .l-kicker { font-size: clamp(32px, 9vw, 56px); }
+  .landing-root .l-lede { font-size: 16px; }
+  .landing-root .l-section { padding: 48px 14px; }
+  .landing-root .l-preview-section { padding: 32px 16px; margin: 0 6px; border-radius: 18px; }
+  .landing-root .l-founder { padding: 32px 16px; margin: 0 6px; border-radius: 18px; }
+  .landing-root .l-debate { padding: 32px 16px; margin: 40px 6px; border-radius: 18px; }
+  .landing-root .l-founder-meta { grid-template-columns: 1fr 1fr; gap: 12px; }
+  .landing-root .l-cta-final { padding: 52px 14px; }
+  .landing-root .l-cta-final h2 { font-size: clamp(44px, 13vw, 80px); }
+  .landing-root .l-cta-final p { font-size: 16px; margin: 20px auto 28px; }
+  .landing-root .l-cta-star { display: none; }
+  .landing-root .l-preview-chip { display: none; }
+  .landing-root .l-foot-grid { grid-template-columns: 1fr 1fr; gap: 20px; }
+  .landing-root footer { padding: 40px 14px 20px; }
+  .landing-root .l-foot-bottom { flex-direction: column; gap: 8px; align-items: flex-start; font-size: 11px; }
+  .landing-root .l-big-word { font-size: 26vw; }
+  .landing-root .l-problem { padding: 52px 14px; }
+  .landing-root .l-quote-text { font-size: clamp(22px, 7vw, 36px); }
+  .landing-root .l-features { padding: 48px 14px 56px; }
+  .landing-root .l-feat-card { min-height: 220px; padding: 20px; }
+  .landing-root .l-feat-card h3 { font-size: 18px; }
+  .landing-root .l-news { padding: 48px 14px 40px; }
+  .landing-root .l-news-title { font-size: 16px; }
+  .landing-root .l-news-card.feat .l-news-title { font-size: 20px; }
+  .landing-root .l-ticker-item { font-size: 11px; }
+  .landing-root .l-sponsor-slot { min-width: 110px; padding: 8px 12px; }
+  .landing-root .l-sponsor-div { display: none; }
 }

@@ -267,3 +267,27 @@
   .formTitle { font-size: 38px; }
   .socialRow { grid-template-columns: 1fr 1fr 1fr; }
 }
+@media (max-width: 640px) {
+  .stage { min-height: 300px; }
+  .statFloat { display: none; }
+  .scribble { display: none; }
+  .orbitItem { width: 52px; height: 52px; font-size: 22px; }
+  .mascotFrame { width: 65%; }
+  .brand { top: 16px; left: 16px; font-size: 18px; gap: 8px; }
+  .brandMark { width: 36px; height: 36px; font-size: 18px; }
+  .ribbon { padding: 10px 20px; font-size: 10px; gap: 6px; }
+  .formTitle { font-size: 32px; }
+  .formSide { padding: 32px 20px; }
+  .socialRow { grid-template-columns: 1fr; }
+}
+@media (max-width: 400px) {
+  .stage { min-height: 240px; }
+  .orbitItem { width: 42px; height: 42px; font-size: 18px; }
+  .mascotFrame { width: 55%; }
+  .ribbon { display: none; }
+  .formTitle { font-size: 28px; }
+  .formSide { padding: 24px 16px; }
+  .formSub { font-size: 14px; margin-bottom: 24px; }
+  .field input { padding: 12px 14px; font-size: 14px; }
+  .btnPrimary { padding: 14px 20px; font-size: 14px; }
+}
