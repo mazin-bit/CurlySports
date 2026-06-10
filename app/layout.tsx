@@ -3,34 +3,37 @@ import "./globals.css";
 import { SWRProvider } from "@/components/SWRProvider";
 import { SportProvider } from "@/contexts/SportContext";
 
+const SITE_URL = "https://curlysports.com";
+
 export const metadata: Metadata = {
   title: {
     default: "Curly Sports — Live Scores, Teams, Players & News",
     template: "%s · Curly Sports",
   },
   description:
-    "Curly Sports is your ultimate sports hub — live scores, match details, team stats, player profiles, leagues, debates, and breaking news for football, basketball, F1, cricket & more.",
+    "Curly Sports is your ultimate sports hub — live scores, match details, team stats, player profiles, leagues, debates, and breaking sports news for football, basketball, F1, cricket & more.",
   keywords: [
-    "curly sports", "live scores", "football scores", "basketball scores",
-    "sports news", "match results", "player stats", "team stats",
-    "sports app", "F1 live", "cricket scores", "NBA scores", "NFL scores",
+    "curly sports", "curlysports", "live scores", "football scores",
+    "basketball scores", "sports news", "match results", "player stats",
+    "team stats", "sports app", "F1 live", "cricket scores", "NBA scores",
+    "NFL scores", "sports hub", "sports dashboard",
   ],
-  authors: [{ name: "Curly Sports" }],
+  authors: [{ name: "Curly Sports", url: SITE_URL }],
   creator: "Curly Sports",
   publisher: "Curly Sports",
-  metadataBase: new URL("https://curly.sports"),
+  metadataBase: new URL(SITE_URL),
   alternates: { canonical: "/" },
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://curly.sports",
+    url: SITE_URL,
     siteName: "Curly Sports",
     title: "Curly Sports — Live Scores, Teams, Players & News",
     description:
       "Your ultimate sports hub — live scores, match details, team stats, player profiles, leagues, debates, and breaking sports news.",
     images: [
       {
-        url: "/og-image.png",
+        url: "/opengraph-image",
         width: 1200,
         height: 630,
         alt: "Curly Sports — Your Sports Hub",
@@ -44,7 +47,7 @@ export const metadata: Metadata = {
     title: "Curly Sports — Live Scores, Teams, Players & News",
     description:
       "Your ultimate sports hub — live scores, match details, team stats, player profiles, leagues, debates, and breaking sports news.",
-    images: ["/og-image.png"],
+    images: ["/opengraph-image"],
   },
   robots: {
     index: true,
@@ -61,6 +64,9 @@ export const metadata: Metadata = {
     icon: "/icon.png",
     apple: "/apple-icon.png",
   },
+  verification: {
+    google: "",   // paste Google Search Console verification code here
+  },
 };
 
 export const viewport: Viewport = {
@@ -74,9 +80,47 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebSite",
+        "@id": `${SITE_URL}/#website`,
+        url: SITE_URL,
+        name: "Curly Sports",
+        description: "Your ultimate sports hub — live scores, teams, players, leagues, debates & news.",
+        potentialAction: {
+          "@type": "SearchAction",
+          target: { "@type": "EntryPoint", urlTemplate: `${SITE_URL}/players?q={search_term_string}` },
+          "query-input": "required name=search_term_string",
+        },
+      },
+      {
+        "@type": "Organization",
+        "@id": `${SITE_URL}/#organization`,
+        name: "Curly Sports",
+        url: SITE_URL,
+        logo: {
+          "@type": "ImageObject",
+          url: `${SITE_URL}/icon.png`,
+          width: 512,
+          height: 512,
+        },
+        sameAs: [
+          "https://twitter.com/curlysports",
+          "https://instagram.com/curlysports",
+        ],
+      },
+    ],
+  };
+
   return (
     <html lang="en">
       <body>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
         <SWRProvider>
           <SportProvider>{children}</SportProvider>
         </SWRProvider>
