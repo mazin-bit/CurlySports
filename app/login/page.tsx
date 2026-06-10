@@ -84,22 +84,26 @@ export default function LoginPage() {
 
       } else if (mode === "signup") {
         if (!username.trim()) throw new Error("Please pick a username.");
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            emailRedirectTo: `${window.location.origin}/auth/callback`,
-            data: { username: username.trim() },
-          },
+        const res = await fetch("/api/auth/signup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password, username: username.trim() }),
         });
-        if (error) throw error;
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error ?? "Signup failed.");
         setEmailSent(true);
 
       } else if (mode === "forgot") {
-        const { error } = await supabase.auth.resetPasswordForEmail(email, {
-          redirectTo: `${window.location.origin}/auth/callback?next=/reset-password`,
+        const res = await fetch("/api/auth/forgot", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email,
+            redirectTo: `${window.location.origin}/auth/callback?next=/reset-password`,
+          }),
         });
-        if (error) throw error;
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error ?? "Failed to send reset link.");
         setEmailSent(true);
       }
     } catch (err: unknown) {
