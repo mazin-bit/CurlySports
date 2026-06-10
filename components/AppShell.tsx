@@ -1,7 +1,10 @@
+"use client";
+import { useState } from "react";
 import { IconDefs } from "./Icons";
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
 import BottomNav from "./BottomNav";
+import MobileMenu from "./MobileMenu";
 import MaintenanceGuard from "./MaintenanceGuard";
 
 interface AppShellProps {
@@ -12,6 +15,8 @@ interface AppShellProps {
 }
 
 export default function AppShell({ active, title, subtitle, children }: AppShellProps) {
+  const [menuOpen, setMenuOpen] = useState(false);
+
   return (
     <MaintenanceGuard>
       <IconDefs />
@@ -20,9 +25,10 @@ export default function AppShell({ active, title, subtitle, children }: AppShell
         <div className="app-main">
           <Topbar title={title} subtitle={subtitle} />
           <div className="app-content">{children}</div>
-          <BottomNav active={active} />
+          <BottomNav active={active} onMenuOpen={() => setMenuOpen(true)} />
         </div>
       </div>
+      {menuOpen && <MobileMenu active={active} onClose={() => setMenuOpen(false)} />}
     </MaintenanceGuard>
   );
 }
