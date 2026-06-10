@@ -28,11 +28,11 @@
     "favorites": true
   },
   "pageViews": {
-    "/dashboard": 31,
-    "/live-scores": 34,
-    "/leagues": 50,
-    "/fun-zone": 11,
-    "/teams": 14,
+    "/dashboard": 47,
+    "/live-scores": 38,
+    "/leagues": 54,
+    "/fun-zone": 15,
+    "/teams": 22,
     "/players": 25,
     "/matches/401859965": 4,
     "/matches/2465876": 2,
@@ -41,7 +41,8 @@
     "/matches/2478597": 2,
     "/matches/760415": 2,
     "/favorites": 3,
-    "/mini-games": 1
+    "/mini-games": 1,
+    "/teams/csk": 2
   },
   "activityLog": [
     {
