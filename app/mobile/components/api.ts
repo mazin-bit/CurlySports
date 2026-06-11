@@ -111,6 +111,8 @@ export interface RealDebate {
   optionB: string;
   sport: string | null;
   isLive: boolean;
+  votesA: number;
+  votesB: number;
   expiresAt: string | null;
   createdAt: string;
   _count: { votes: number };
