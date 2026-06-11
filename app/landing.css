@@ -40,11 +40,13 @@
 
 /* ===== NAV ===== */
 .landing-root nav.l-nav {
-  position: sticky; top: 0; z-index: 100;
-  background: rgba(246,237,224,0.85);
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  background: rgba(246,237,224,0.92);
   backdrop-filter: blur(16px);
   border-bottom: 1px solid rgba(12,10,29,0.06);
 }
+/* Offset hero content so it doesn't hide behind fixed nav (~73px tall) */
+.landing-root .l-hero { padding-top: 113px; }
 .landing-root .l-nav-inner {
   max-width: 1280px; margin: 0 auto;
   padding: 16px 32px;
@@ -687,7 +689,7 @@
   .landing-root .l-nav-links { display: none; }
   .landing-root .l-nav-inner { padding: 14px 20px; gap: 0; }
   .landing-root .l-hero-preview { display: none; }
-  .landing-root .l-hero { padding-top: 32px; padding-bottom: 56px; }
+  .landing-root .l-hero { padding-top: 105px; padding-bottom: 56px; }
   .landing-root .l-hero-grid { gap: 0; }
   .landing-root .l-section { padding: 72px 24px; }
   .landing-root .l-preview-section { padding: 56px 36px; margin: 0 20px; border-radius: 28px; }
@@ -730,7 +732,7 @@
   /* Hero mobile: stack grid, hide preview card to reduce scroll */
   .landing-root .l-hero-grid { grid-template-columns: 1fr; gap: 0; }
   .landing-root .l-hero-preview { display: none; }
-  .landing-root .l-hero { padding-top: 28px; padding-bottom: 48px; }
+  .landing-root .l-hero { padding-top: 96px; padding-bottom: 48px; }
   .landing-root .l-hero-feats .l-feat-card { padding: 12px 14px; gap: 10px; }
   .landing-root .l-hero-actions { flex-wrap: wrap; gap: 10px; }
   .landing-root .l-hero-actions .l-btn { flex: 1; min-width: 140px; justify-content: center; }
@@ -742,7 +744,7 @@
   .landing-root .l-nav-cta gap { gap: 6px; }
   .landing-root .l-btn { padding: 10px 16px; font-size: 13px; }
   .landing-root .l-btn-lg { padding: 13px 22px; font-size: 14px; }
-  .landing-root .l-hero { padding-top: 20px; padding-bottom: 48px; }
+  .landing-root .l-hero { padding-top: 88px; padding-bottom: 48px; }
   .landing-root .l-hero-grid { gap: 32px; }
   .landing-root .l-hero-title { font-size: clamp(40px, 11vw, 72px); }
   .landing-root .l-hero-live-bar { font-size: 11px; overflow: hidden; max-width: 100%; }
