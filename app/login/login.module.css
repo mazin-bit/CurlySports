@@ -37,13 +37,15 @@
   position: absolute; top: 32px; left: 32px; z-index: 5;
   display: flex; align-items: center; gap: 12px;
   font-family: var(--display); font-weight: 800; font-size: 22px; letter-spacing: -0.02em;
-  color: #0c0a1d;
+  color: #0c0a1d; text-decoration: none;
 }
 .brandMark {
   width: 44px; height: 44px; background: #0c0a1d; border-radius: 12px;
   display: grid; place-items: center; color: var(--accent); font-size: 22px;
   transform: rotate(-6deg); font-family: var(--display); font-weight: 800;
+  transition: transform 0.3s cubic-bezier(.34,1.56,.64,1);
 }
+.brand:hover .brandMark { transform: rotate(6deg) scale(1.1); }
 .dot { color: var(--orange); }
 
 .mascotStage {
@@ -64,6 +66,11 @@
   border-radius: 50%; box-shadow: 10px 10px 0 #0c0a1d;
   display: grid; place-items: center;
   overflow: hidden;
+  transition: box-shadow 0.3s, transform 0.3s;
+}
+.mascotDisc:hover {
+  box-shadow: 14px 14px 0 #0c0a1d, 0 0 48px rgba(200,255,61,0.4);
+  transform: translate(-2px, -2px);
 }
 .mascotDisc svg { width: 80%; height: 80%; animation: bob 4s ease-in-out infinite; }
 @keyframes bob { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
@@ -73,8 +80,13 @@
   border: 2.5px solid #0c0a1d; border-radius: 50%;
   display: grid; place-items: center;
   background: #fffdf7; box-shadow: 4px 4px 0 #0c0a1d;
-  font-size: 28px;
+  font-size: 14px; font-weight: 800; font-family: var(--mono); letter-spacing: 0.04em;
   animation: float 4s ease-in-out infinite;
+  transition: background 0.2s, box-shadow 0.2s, color 0.2s;
+  cursor: default;
+}
+.orbitItem:hover {
+  background: var(--accent); box-shadow: 6px 6px 0 #0c0a1d;
 }
 .orbit1 { top: 12%; left: 50%; transform: translate(-50%, -50%); }
 .orbit2 { top: 50%; left: 88%; transform: translate(-50%, -50%); animation-delay: 1s; }
@@ -94,6 +106,12 @@
   padding: 14px 18px; border-radius: 16px; box-shadow: 6px 6px 0 var(--orange);
   font-family: var(--display); z-index: 4;
   animation: bob 5s ease-in-out infinite; animation-delay: 1s;
+  transition: box-shadow 0.2s, transform 0.2s;
+  cursor: default;
+}
+.statFloat:hover {
+  box-shadow: 10px 10px 0 var(--orange);
+  animation-play-state: paused;
 }
 .sf1 { top: 8%; right: 14%; transform: rotate(4deg); }
 .sf2 { bottom: 12%; left: 12%; transform: rotate(-4deg); animation-delay: 2.5s; }
@@ -142,7 +160,9 @@
 .toggle button {
   border: none; background: transparent; font-family: var(--body); font-size: 13px; font-weight: 600;
   padding: 8px 16px; border-radius: 999px; cursor: pointer; color: #2a2540;
+  transition: background 0.15s, color 0.15s;
 }
+.toggle button:hover:not(.toggleActive) { background: rgba(12,10,29,0.07); }
 .toggleActive { background: #0c0a1d !important; color: #fffdf7 !important; }
 
 .field { margin-bottom: 16px; }
@@ -153,9 +173,10 @@
 .field input {
   width: 100%; background: #fffdf7; border: 2px solid #0c0a1d; border-radius: 14px;
   padding: 14px 18px; font-family: var(--body); font-size: 15px; color: #0c0a1d;
-  outline: none; transition: box-shadow 0.15s, transform 0.1s;
+  outline: none; transition: box-shadow 0.15s, transform 0.1s, border-color 0.15s;
 }
-.field input:focus { box-shadow: 4px 4px 0 var(--orange); transform: translate(-2px, -2px); }
+.field input:hover:not(:focus) { border-color: var(--orange); }
+.field input:focus { box-shadow: 5px 5px 0 var(--orange); transform: translate(-2px, -2px); border-color: var(--orange); }
 .field input::placeholder { color: rgba(12,10,29,0.3); }
 .fieldRow { display: flex; justify-content: space-between; align-items: center; }
 .forgot { background: none; border: none; padding: 0; font-family: var(--body); font-size: 12px; color: var(--purple); font-weight: 600; cursor: pointer; text-decoration: underline; }
@@ -186,8 +207,10 @@
   border: 2px solid #0c0a1d; cursor: pointer;
   background: #0c0a1d; color: var(--accent);
   transition: transform 0.15s, box-shadow 0.15s;
+  box-shadow: 4px 4px 0 rgba(255,91,61,0.3);
 }
-.btnPrimary:hover { transform: translate(-3px, -3px); box-shadow: 6px 6px 0 var(--orange); }
+.btnPrimary:hover { transform: translate(-4px, -4px); box-shadow: 8px 8px 0 var(--orange); }
+.btnPrimary:active { transform: translate(0, 0); box-shadow: 2px 2px 0 var(--orange); }
 
 .divider {
   display: flex; align-items: center; gap: 14px;
@@ -201,10 +224,11 @@
   display: flex; align-items: center; justify-content: center; gap: 10px;
   background: #f6ede0; border: 2px solid #0c0a1d; border-radius: 999px;
   padding: 13px 24px; font-family: var(--body); font-size: 14px; font-weight: 700;
-  color: #0c0a1d; cursor: pointer; transition: transform 0.15s, box-shadow 0.15s;
-  width: 100%;
+  color: #0c0a1d; cursor: pointer; transition: transform 0.15s, box-shadow 0.15s, background 0.15s;
+  width: 100%; box-shadow: 3px 3px 0 rgba(12,10,29,0.15);
 }
-.btnSocial:hover { transform: translate(-2px, -2px); box-shadow: 4px 4px 0 #0c0a1d; }
+.btnSocial:hover { transform: translate(-3px, -3px); box-shadow: 5px 5px 0 #0c0a1d; background: #fffdf7; }
+.btnSocial:active { transform: translate(0,0); box-shadow: 1px 1px 0 #0c0a1d; }
 
 /* ── Error banner ── */
 .errorBanner {
@@ -260,12 +284,31 @@
 .terms { margin-top: 28px; font-size: 11px; color: rgba(12,10,29,0.5); line-height: 1.5; }
 .terms a { color: var(--purple); text-decoration: underline; }
 
+/* Mobile brand header (hidden on desktop) */
+.mobileBrand {
+  display: none;
+  align-items: center; gap: 10px;
+  font-family: var(--display); font-weight: 800; font-size: 20px; letter-spacing: -0.02em;
+  color: #0c0a1d; text-decoration: none; margin-bottom: 28px;
+}
+.mobileBrandMark {
+  width: 40px; height: 40px; background: var(--accent); border-radius: 12px;
+  border: 2.5px solid #0c0a1d; display: grid; place-items: center;
+  transform: rotate(-6deg); overflow: hidden; flex-shrink: 0;
+}
+.mobileBrandMark img { width: 100%; height: 100%; object-fit: contain; display: block; }
+
 @media (max-width: 900px) {
   .layout { grid-template-columns: 1fr; }
-  .stage { min-height: 360px; }
-  .formSide { padding: 40px 24px; }
+  .stage { display: none; }
+  .mobileBrand { display: flex; }
+  .formSide {
+    padding: 40px 28px;
+    border-top: 5px solid var(--accent);
+    background: #fffdf7;
+  }
   .formTitle { font-size: 38px; }
-  .socialRow { grid-template-columns: 1fr 1fr 1fr; }
+  .socialRow { grid-template-columns: 1fr; }
 }
 @media (max-width: 640px) {
   .stage { min-height: 300px; }

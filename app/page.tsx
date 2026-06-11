@@ -140,7 +140,7 @@ export default function LandingPage() {
             <div className="l-hero-live-bar">
               <span className="l-live-badge"><span className="l-live-dot-sm"></span>LIVE NOW</span>
               <span className="l-live-items">
-                Real-time scores across <strong>150+ leagues</strong> — sign in to follow your teams
+                <strong>150+ leagues</strong> · scores updating now
               </span>
               <a href="/login" className="l-live-more">Sign in →</a>
             </div>

@@ -134,6 +134,13 @@ export default function LoginPage() {
       <div className={styles.layout}>
         <Stage />
         <div className={styles.formSide}>
+          <a href="/" className={styles.mobileBrand}>
+            <div className={styles.mobileBrandMark}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/curly-guy.png" alt="Curly" />
+            </div>
+            <span>curly<span className={styles.dot}>.</span>sports</span>
+          </a>
           <div className={styles.formTag}>
             {mode === "signup" ? "almost there" : "check inbox"}
           </div>
@@ -178,6 +185,13 @@ export default function LoginPage() {
       <Stage />
 
       <div className={styles.formSide}>
+        <a href="/" className={styles.mobileBrand}>
+          <div className={styles.mobileBrandMark}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/curly-guy.png" alt="Curly" />
+          </div>
+          <span>curly<span className={styles.dot}>.</span>sports</span>
+        </a>
         <div className={styles.formTag}>
           {mode === "login" ? "welcome back" : mode === "signup" ? "join curly" : "reset password"}
         </div>
