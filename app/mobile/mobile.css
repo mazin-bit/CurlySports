@@ -153,6 +153,7 @@
 @keyframes cs-mnSlideUp { from { transform: translateY(100%); opacity: .4; } to { transform: translateY(0); opacity: 1; } }
 @keyframes cs-mnFadeIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes cs-pushIn { from { transform: translateY(32px); opacity: 0.6; } to { transform: translateY(0); opacity: 1; } }
+@keyframes cs-slideUp { from { transform: translateY(100%); opacity: 0.4; } to { transform: translateY(0); opacity: 1; } }
 
 /* ---- CARD ---- */
 .cs-mobile .cs-card {

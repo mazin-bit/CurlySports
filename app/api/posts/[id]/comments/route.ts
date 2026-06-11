@@ -8,6 +8,7 @@ export async function GET(
 ) {
   const supabase = await createClient();
   const { id } = await params;
+  console.log(`[/api/posts/${id}/comments GET] table=post_comments post_id=${id}`);
 
   const { data: comments, error } = await supabase
     .from("post_comments")
@@ -15,7 +16,8 @@ export async function GET(
     .eq("post_id", id)
     .order("created_at", { ascending: true });
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) { console.error(`[/api/posts/${id}/comments GET] ERROR`, error.message); return NextResponse.json({ error: error.message }, { status: 500 }); }
+  console.log(`[/api/posts/${id}/comments GET] count=${comments?.length ?? 0}`);
 
   const { data: { user } } = await supabase.auth.getUser();
   let likedSet = new Set<string>();
@@ -46,6 +48,7 @@ export async function POST(
   const body = await req.json();
   const content = body.content?.trim();
   if (!content) return NextResponse.json({ error: "Content required" }, { status: 400 });
+  console.log(`[/api/posts/${id}/comments POST] table=post_comments INSERT user_id=${user.id} post_id=${id}`);
 
   const authorName = user.user_metadata?.full_name
     || user.user_metadata?.name
@@ -58,7 +61,8 @@ export async function POST(
     .select()
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) { console.error(`[/api/posts/${id}/comments POST] ERROR`, error.message); return NextResponse.json({ error: error.message }, { status: 500 }); }
+  console.log(`[/api/posts/${id}/comments POST] INSERT OK id=${data.id}`);
   return NextResponse.json({ ...data, liked: false }, { status: 201 });
 }
 

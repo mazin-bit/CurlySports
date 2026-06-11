@@ -1,6 +1,5 @@
 'use client';
 import React from 'react';
-import { DATA } from '../data';
 import type { Match } from '../data';
 import { useLiveScores } from '@/hooks/useLiveScores';
 import { useNews } from '@/hooks/useNews';
@@ -30,7 +29,6 @@ const SPORT_LABELS: Record<string, string> = {
 };
 
 export default function DashboardScreen({ sport, setSport, onOpenMatch, onOpenPlayer, onSearch, onBell, fav, unread }: DashboardProps) {
-  const D = DATA;
   const { groups, isLoading: scoresLoading } = useLiveScores(sport);
   const { articles, isLoading: newsLoading } = useNews(6);
 
@@ -45,7 +43,7 @@ export default function DashboardScreen({ sport, setSport, onOpenMatch, onOpenPl
       <Topbar
         title={`Hey, ${fav?.first ?? 'You'}`}
         subtitle="Matchday · Today"
-        logoSrc={D.mascot}
+        logoSrc="/curly-mark.png"
         onSearch={onSearch}
         onBell={onBell}
         hasNotification={unread > 0}
@@ -72,24 +70,6 @@ export default function DashboardScreen({ sport, setSport, onOpenMatch, onOpenPl
               ))}
             </div>
           )}
-        </Card>
-
-        {/* Top scorer */}
-        <Card tappable onClick={() => onOpenPlayer()} style={{ background: 'var(--ink)', borderColor: 'var(--ink)', cursor: 'pointer' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div>
-              <div style={{ fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--accent)', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' }}>Top scorer · season</div>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginTop: 8 }}>
-                <span style={{ fontFamily: 'var(--display)', fontWeight: 800, fontSize: 44, color: 'var(--accent)', letterSpacing: '-0.03em' }}>{D.topScorer.goals}</span>
-                <span style={{ fontSize: 13, color: 'rgba(255,253,247,0.7)' }}>{D.topScorer.name}<br />goals this season</span>
-              </div>
-              <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-                <Badge tone="accent">↑ 4 vs xG</Badge>
-                <Badge style={{ background: 'rgba(255,253,247,0.1)', color: 'var(--paper)', border: '1px solid rgba(255,253,247,0.2)' }}>View profile →</Badge>
-              </div>
-            </div>
-            <Icon name="trophy" size={40} style={{ color: 'var(--accent)', opacity: 0.5 }} />
-          </div>
         </Card>
 
         <AdSlot size="banner" />
@@ -123,20 +103,12 @@ export default function DashboardScreen({ sport, setSport, onOpenMatch, onOpenPl
                   </div>
                 </div>
               </Card>
-            )) : D.news.slice(0, 3).map(n => (
-              <Card key={n.id} tappable style={{ padding: 0, overflow: 'hidden', display: 'flex', alignItems: 'stretch', gap: 0, cursor: 'pointer' }}>
-                <div style={{ width: 88, flexShrink: 0, background: n.color, borderRight: '2px solid var(--ink)', display: 'grid', placeItems: 'center', color: 'var(--ink)' }}>
-                  <Icon name={n.icon} size={32} />
-                </div>
-                <div style={{ padding: 14, minWidth: 0 }}>
-                  <Badge tone={n.tone === 'hot' ? 'orange' : 'mute'}>{n.tag}</Badge>
-                  <div style={{ fontFamily: 'var(--display)', fontWeight: 700, fontSize: 14, color: 'var(--ink)', lineHeight: 1.25, margin: '8px 0', letterSpacing: '-0.01em' }}>{n.title}</div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--mono)', fontSize: 9.5, color: 'var(--text-mute)' }}>
-                    <span>{n.src}</span><span>{n.meta}</span>
-                  </div>
-                </div>
-              </Card>
-            ))}
+            )) : (
+              <div style={{ padding: '24px 0', textAlign: 'center' }}>
+                <Icon name="news" size={28} style={{ color: 'var(--text-mute)', margin: '0 auto 8px' }} />
+                <div style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text-mute)' }}>No news right now</div>
+              </div>
+            )}
           </div>
         </div>
       </div>

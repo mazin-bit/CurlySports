@@ -1,6 +1,5 @@
 'use client';
 import React, { useState } from 'react';
-import { DATA } from '../data';
 import { useStandings } from '@/hooks/useStandings';
 import Topbar from './ui/Topbar';
 import Card from './ui/Card';
@@ -26,7 +25,6 @@ interface LeaguesProps {
 
 export default function LeaguesScreen({ onSearch, onBell, onOpenPlayer, unread }: LeaguesProps) {
   const [leagueIdx, setLeagueIdx] = useState(0);
-  const D = DATA;
   const selected = LEAGUES[leagueIdx];
 
   const { standings, isLoading } = useStandings(selected.sport, selected.id);
@@ -37,7 +35,7 @@ export default function LeaguesScreen({ onSearch, onBell, onOpenPlayer, unread }
       <Topbar
         title="Leagues"
         subtitle={selected.label}
-        logoSrc={D.mascot}
+        logoSrc="/curly-mark.png"
         onSearch={onSearch}
         onBell={onBell}
         hasNotification={unread > 0}
@@ -63,7 +61,6 @@ export default function LeaguesScreen({ onSearch, onBell, onOpenPlayer, unread }
           )}
 
           {!isLoading && table.length > 0 && table.slice(0, 12).map(entry => {
-            // Approximate form W/D/L from record
             const total = Math.min(entry.wins + entry.draws + entry.losses, 5);
             const formArr: string[] = [];
             let w = Math.min(entry.wins, total), d = Math.min(entry.draws, total - w), l = total - w - d;
@@ -91,22 +88,11 @@ export default function LeaguesScreen({ onSearch, onBell, onOpenPlayer, unread }
             );
           })}
 
-          {!isLoading && table.length === 0 && D.standings.map(([code, name, pos, pts, gd, form]) => (
-            <div key={code} onClick={() => onOpenPlayer()} style={{ display: 'flex', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid var(--border-3)', cursor: 'pointer' }}>
-              <span style={{ width: 20, fontFamily: 'var(--mono)', fontWeight: 700, fontSize: 12, color: Number(pos) <= 4 ? 'var(--orange)' : 'var(--text-mute)' }}>{pos}</span>
-              <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 9, minWidth: 0 }}>
-                <TeamCrest code={code} abbr={name.slice(0, 3).toUpperCase()} />
-                <span style={{ fontWeight: 700, fontSize: 12.5, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</span>
-              </div>
-              <div style={{ width: 78, display: 'flex', gap: 3, justifyContent: 'center' }}>
-                {String(form).split('').map((r, i) => (
-                  <span key={i} style={{ width: 12, height: 12, borderRadius: 3, fontSize: 0, background: r === 'W' ? 'var(--accent)' : r === 'D' ? 'var(--surface-3)' : 'var(--coral)', border: '1px solid var(--ink)' }}>{r}</span>
-                ))}
-              </div>
-              <span style={{ width: 30, textAlign: 'center', fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text-mute)' }}>{gd}</span>
-              <span style={{ width: 28, textAlign: 'right', fontFamily: 'var(--display)', fontWeight: 800, fontSize: 15, color: 'var(--ink)' }}>{pts}</span>
+          {!isLoading && table.length === 0 && (
+            <div style={{ padding: '24px 0', textAlign: 'center', fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text-mute)' }}>
+              No standings data available
             </div>
-          ))}
+          )}
 
           <div style={{ display: 'flex', gap: 14, marginTop: 12, fontFamily: 'var(--mono)', fontSize: 9, color: 'var(--text-mute)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><span style={{ width: 9, height: 9, borderRadius: 2, background: 'var(--accent)', border: '1px solid var(--ink)', display: 'inline-block' }} /> Win</span>

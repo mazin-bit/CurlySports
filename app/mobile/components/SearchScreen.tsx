@@ -1,11 +1,9 @@
 'use client';
 import React, { useState, useEffect, useRef } from 'react';
-import { DATA } from '../data';
 import type { Match } from '../data';
 import useSWR from 'swr';
 import Icon from './ui/Icon';
 import TeamCrest from './ui/TeamCrest';
-import Card from './ui/Card';
 import Chip from './ui/Chip';
 import type { RealTeam } from './api';
 
@@ -22,16 +20,14 @@ interface SearchProps {
   onOpenMatch: (m: Match) => void;
 }
 
-export default function SearchScreen({ onBack, onOpenPlayer, onOpenMatch }: SearchProps) {
+export default function SearchScreen({ onBack, onOpenPlayer }: SearchProps) {
   const [q, setQ] = useState('');
   const [debouncedQ, setDebouncedQ] = useState('');
   const [sport, setSport] = useState('football');
   const ref = useRef<HTMLInputElement>(null);
-  const D = DATA;
 
   useEffect(() => { ref.current?.focus(); }, []);
 
-  // Debounce search query
   useEffect(() => {
     const t = setTimeout(() => setDebouncedQ(q.trim()), 350);
     return () => clearTimeout(t);
@@ -39,7 +35,7 @@ export default function SearchScreen({ onBack, onOpenPlayer, onOpenMatch }: Sear
 
   const ql = debouncedQ.toLowerCase();
 
-  // Fetch real teams for current sport (used when no query)
+  // Fetch real teams for current sport
   const { data: teamsData } = useSWR<{ teams: RealTeam[] }>(
     `/api/espn/teams?sport=${sport}&league=eng.1`,
     fetcher,
@@ -53,16 +49,29 @@ export default function SearchScreen({ onBack, onOpenPlayer, onOpenMatch }: Sear
     { revalidateOnFocus: false }
   );
 
+  // Fetch recent post tags for trending section
+  const { data: postsData } = useSWR<{ posts: { tag: string | null; sport: string }[] }>(
+    '/api/posts?limit=30',
+    fetcher,
+    { revalidateOnFocus: false }
+  );
+
   const teams = teamsData?.teams ?? [];
   const players = playersData?.players ?? [];
 
-  // Filter teams by query client-side when query present
   const filteredTeams = ql.length >= 2
     ? teams.filter(t => t.name.toLowerCase().includes(ql) || t.abbr.toLowerCase().includes(ql))
     : [];
 
   const hasResults = filteredTeams.length > 0 || players.length > 0;
   const isSearching = ql.length >= 2;
+
+  // Derive trending from real post tags + sports
+  const tagSet = new Set<string>();
+  postsData?.posts?.forEach(p => { if (p.tag) tagSet.add(p.tag); });
+  const sportSet = new Set<string>();
+  postsData?.posts?.forEach(p => { if (p.sport) sportSet.add(p.sport.charAt(0).toUpperCase() + p.sport.slice(1)); });
+  const trending = [...tagSet, ...sportSet].slice(0, 8);
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--bg)' }}>
@@ -85,17 +94,17 @@ export default function SearchScreen({ onBack, onOpenPlayer, onOpenMatch }: Sear
       </header>
 
       <div className="cs-scroll" style={{ flex: 1, overflow: 'auto', padding: '16px 14px 96px', display: 'flex', flexDirection: 'column', gap: 18 }}>
-        {/* Empty state: trending + latest match */}
         {!isSearching && (
           <>
-            <div>
-              <div style={{ fontFamily: 'var(--mono)', fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-mute)', marginBottom: 10 }}>Trending now</div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                {D.trending.map(t => <Chip key={t} onClick={() => setQ(t.split(' ')[0])}><Icon name="flame" size={13} style={{ color: 'var(--orange)' }} /> {t}</Chip>)}
+            {trending.length > 0 && (
+              <div>
+                <div style={{ fontFamily: 'var(--mono)', fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-mute)', marginBottom: 10 }}>Trending now</div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                  {trending.map(t => <Chip key={t} onClick={() => setQ(t)}><Icon name="flame" size={13} style={{ color: 'var(--orange)' }} /> {t}</Chip>)}
+                </div>
               </div>
-            </div>
+            )}
 
-            {/* Sport filter chips */}
             <div>
               <div style={{ fontFamily: 'var(--mono)', fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-mute)', marginBottom: 10 }}>Browse by sport</div>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -105,7 +114,6 @@ export default function SearchScreen({ onBack, onOpenPlayer, onOpenMatch }: Sear
               </div>
             </div>
 
-            {/* Top teams in sport */}
             {teams.length > 0 && (
               <div>
                 <div style={{ fontFamily: 'var(--mono)', fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-mute)', marginBottom: 10 }}>Top teams</div>
@@ -123,27 +131,13 @@ export default function SearchScreen({ onBack, onOpenPlayer, onOpenMatch }: Sear
                 </div>
               </div>
             )}
-
-            <div>
-              <div style={{ fontFamily: 'var(--mono)', fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-mute)', marginBottom: 10 }}>Jump back in</div>
-              <Card subtitle="Live · 74'" title="Man United vs Chelsea" action="Open →" tappable onClick={() => onOpenMatch(D.liveFootball[0])} style={{ cursor: 'pointer' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <TeamCrest code="mun" abbr="MUN" />
-                  <span style={{ fontFamily: 'var(--display)', fontWeight: 800, fontSize: 18, color: 'var(--ink)' }}>2 · 1</span>
-                  <TeamCrest code="che" abbr="CHE" />
-                  <span style={{ marginLeft: 'auto', fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--coral)', fontWeight: 700 }}>LIVE</span>
-                </div>
-              </Card>
-            </div>
           </>
         )}
 
-        {/* Loading */}
         {isSearching && playersLoading && (
           <div style={{ padding: '32px 0', textAlign: 'center', fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text-mute)' }}>Searching…</div>
         )}
 
-        {/* No results */}
         {isSearching && !playersLoading && !hasResults && (
           <div style={{ textAlign: 'center', padding: '48px 20px', color: 'var(--text-mute)' }}>
             <Icon name="search" size={32} style={{ margin: '0 auto 12px', color: 'var(--text-mute)' }} />
@@ -152,7 +146,6 @@ export default function SearchScreen({ onBack, onOpenPlayer, onOpenMatch }: Sear
           </div>
         )}
 
-        {/* Team results */}
         {isSearching && filteredTeams.length > 0 && (
           <div>
             <div style={{ fontFamily: 'var(--mono)', fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-mute)', marginBottom: 10 }}>Teams</div>
@@ -171,7 +164,6 @@ export default function SearchScreen({ onBack, onOpenPlayer, onOpenMatch }: Sear
           </div>
         )}
 
-        {/* Player results */}
         {isSearching && players.length > 0 && (
           <div>
             <div style={{ fontFamily: 'var(--mono)', fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-mute)', marginBottom: 10 }}>Players</div>

@@ -1,6 +1,5 @@
 'use client';
 import React, { useState } from 'react';
-import { DATA } from '../data';
 import type { Match } from '../data';
 import { useMatchDetail, mapStatsToRows, mapEventType } from './api';
 import Card from './ui/Card';
@@ -27,40 +26,34 @@ export default function MatchScreen({ match, liveClock, onBack, onOpenPlayer }: 
   const leagueId = match?.leagueId ?? 'eng.1';
   const { detail, isLoading } = useMatchDetail(matchId, leagueId);
 
-  const D = DATA.matchDetail;
-  const useMock = !matchId || (!detail && !isLoading);
-
-  // Teams — prefer real data, fall back to match prop, then mock
+  // Teams — prefer real detail, fall back to match prop
   const homeTeam = detail
     ? { name: detail.homeTeam.name, abbr: detail.homeTeam.shortName, code: detail.homeTeam.shortName.toLowerCase().replace(/[^a-z]/g, '').slice(0, 4), score: detail.homeScore ?? 0, logoUrl: detail.homeTeam.logoUrl }
-    : match ? { ...match.home } : { name: D.home.name, abbr: D.home.abbr, code: D.home.code, score: D.home.score, logoUrl: undefined };
+    : match ? { ...match.home, logoUrl: match.home.logoUrl ?? undefined } : { name: '—', abbr: '—', code: '—', score: 0, logoUrl: undefined };
   const awayTeam = detail
     ? { name: detail.awayTeam.name, abbr: detail.awayTeam.shortName, code: detail.awayTeam.shortName.toLowerCase().replace(/[^a-z]/g, '').slice(0, 4), score: detail.awayScore ?? 0, logoUrl: detail.awayTeam.logoUrl }
-    : match ? { ...match.away } : { name: D.away.name, abbr: D.away.abbr, code: D.away.code, score: D.away.score, logoUrl: undefined };
+    : match ? { ...match.away, logoUrl: match.away.logoUrl ?? undefined } : { name: '—', abbr: '—', code: '—', score: 0, logoUrl: undefined };
 
   const isLive = match?.status === 'live' || detail?.status === 'LIVE' || detail?.status === 'HALF_TIME';
-  const clock = liveClock ?? detail?.minute ?? match?.clock ?? D.clock;
-  const leagueName = detail?.leagueName ?? match?.league ?? D.league;
-  const venue = detail?.venue ?? (useMock ? D.venue : null);
+  const clock = liveClock ?? detail?.minute ?? match?.clock ?? '';
+  const leagueName = detail?.leagueName ?? match?.league ?? '';
+  const venue = detail?.venue ?? null;
 
   // Stats
-  const realStats = detail ? mapStatsToRows(detail.homeStats, detail.awayStats) : [];
-  const statsRows: [string, string, number][] = realStats.length > 0 ? realStats : (useMock ? D.stats : []);
+  const statsRows: [string, string, number][] = detail ? mapStatsToRows(detail.homeStats, detail.awayStats) : [];
 
   // Timeline
-  const realEvents = detail?.events?.filter(e => e.isPrimary).map((e, i) => ({
+  const timelineEvents = (detail?.events?.filter(e => e.isPrimary).map((e, i) => ({
     min: e.clock, type: mapEventType(e.type),
     side: e.teamSide as 'home' | 'away' | null,
     title: e.text, sub: e.teamName ?? '', score: undefined as string | undefined, id: String(e.id ?? i),
-  })) ?? [];
-  const timelineEvents = realEvents.length > 0 ? realEvents : (useMock ? D.timeline.map((e, i) => ({ ...e, id: String(i) })) : []);
+  })) ?? []);
 
   // Lineups
-  const realLineups = detail ? {
+  const lineups = detail ? {
     home: { formation: detail.homeLineup.formation, players: detail.homeLineup.starters.map(p => [p.jersey, p.name] as [string, string]) },
     away: { formation: detail.awayLineup.formation, players: detail.awayLineup.starters.map(p => [p.jersey, p.name] as [string, string]) },
   } : null;
-  const lineups = realLineups ?? (useMock ? D.lineups : null);
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--bg)' }}>
@@ -112,26 +105,6 @@ export default function MatchScreen({ match, liveClock, onBack, onOpenPlayer }: 
         {tab === 'summary' && (
           statsRows.length > 0 ? (
             <>
-              {useMock && (
-                <Card subtitle="Attack momentum" title="Who's on top">
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 3, height: 88 }}>
-                    {D.momentum.map((top, i) => (
-                      <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%' }}>
-                        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', height: '50%' }}>
-                          <div style={{ height: `${top}%`, background: 'var(--accent)', borderRadius: '3px 3px 0 0', border: '1px solid var(--ink)', borderBottom: 'none' }} />
-                        </div>
-                        <div style={{ height: '50%' }}>
-                          <div style={{ height: `${D.momentumB[i]}%`, background: 'var(--purple)', borderRadius: '0 0 3px 3px', border: '1px solid var(--ink)', borderTop: 'none' }} />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 10, fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--text-mute)' }}>
-                    <span style={{ color: 'var(--ink)' }}>■ {homeTeam.abbr}</span>
-                    <span style={{ color: 'var(--purple)' }}>■ {awayTeam.abbr}</span>
-                  </div>
-                </Card>
-              )}
               <Card subtitle="Match stats" title={`${homeTeam.abbr} vs ${awayTeam.abbr}`}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                   {statsRows.map(([label, val, pct], i) => (

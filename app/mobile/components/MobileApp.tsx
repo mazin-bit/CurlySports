@@ -98,7 +98,7 @@ function AppInner() {
   if (top) {
     let ov: React.ReactNode;
     if      (top.type === 'match')         ov = <MatchScreen match={top.data} liveClock={top.data?.focus ? liveClock : null} onBack={pop} onOpenPlayer={openPlayer} />;
-    else if (top.type === 'player')        ov = <PlayerScreen playerId={top.playerId} playerLeagueId={top.playerLeagueId} onBack={pop} onOpenMatch={openMatch} />;
+    else if (top.type === 'player')        ov = <PlayerScreen playerId={top.playerId} playerLeagueId={top.playerLeagueId} onBack={pop} onOpenMatch={() => { pop(); goTab('live'); }} />;
     else if (top.type === 'search')        ov = <SearchScreen onBack={pop} onOpenPlayer={openPlayer} onOpenMatch={openMatch} />;
     else if (top.type === 'notifications') ov = <NotificationsScreen onBack={pop} onMarkAll={() => setUnread(0)} onOpenMatch={openMatch} onOpenPlayer={openPlayer} />;
     return (

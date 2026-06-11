@@ -1,7 +1,5 @@
 'use client';
 import React from 'react';
-import { DATA } from '../data';
-import type { Match } from '../data';
 import { usePlayerDetail } from './api';
 import Card from './ui/Card';
 import Icon from './ui/Icon';
@@ -13,7 +11,7 @@ interface PlayerProps {
   playerId?: string | null;
   playerLeagueId?: string | null;
   onBack: () => void;
-  onOpenMatch: (m: Match) => void;
+  onOpenMatch: () => void;
 }
 
 // Stat keys to show as headline
@@ -26,12 +24,9 @@ const STAT_LABELS: Record<string, string> = {
 
 export default function PlayerScreen({ playerId, playerLeagueId, onBack, onOpenMatch }: PlayerProps) {
   const { player: realPlayer, isLoading } = usePlayerDetail(playerId, playerLeagueId);
-  const p = DATA.player;
 
-  // Radar geometry (always shown — real or mock)
-  const radarData: [string, number][] = realPlayer
-    ? buildRadar(realPlayer.stats)
-    : p.radar;
+  // Radar geometry (only shown when real data available)
+  const radarData: [string, number][] = realPlayer ? buildRadar(realPlayer.stats) : [];
   const R = 62, cx = 90, cy = 86;
   const pts = radarData.map(([, v], i) => {
     const a = (Math.PI * 2 * i) / radarData.length - Math.PI / 2;
@@ -44,12 +39,7 @@ export default function PlayerScreen({ playerId, playerLeagueId, onBack, onOpenM
   }).join(' ');
 
   // Headline stats
-  const headlineStats: [string, string][] = realPlayer
-    ? buildHeadline(realPlayer.stats)
-    : p.headline;
-
-  // Form bars — real stats or mock
-  const formBars: number[] = p.form; // keep mock for visual consistency
+  const headlineStats: [string, string][] = realPlayer ? buildHeadline(realPlayer.stats) : [];
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--bg)' }}>
@@ -77,26 +67,28 @@ export default function PlayerScreen({ playerId, playerLeagueId, onBack, onOpenM
                 </div>
               ) : (
                 <div style={{ width: 72, height: 72, borderRadius: 18, background: 'var(--accent)', border: '2px solid var(--paper)', display: 'grid', placeItems: 'center', fontFamily: 'var(--display)', fontWeight: 800, fontSize: 30, color: 'var(--ink)' }}>
-                  {realPlayer?.jersey || p.num}
+                  {realPlayer?.jersey ?? '?'}
                 </div>
               )}
-              <div style={{ position: 'absolute', bottom: -6, right: -6 }}>
-                <TeamCrest
-                  code={realPlayer?.teamName.toLowerCase().replace(/[^a-z]/g, '').slice(0, 4) ?? p.teamCode}
-                  abbr={(realPlayer?.teamName.slice(0, 4) ?? 'CITY').toUpperCase()}
-                  logoUrl={realPlayer?.teamLogo}
-                />
-              </div>
+              {realPlayer && (
+                <div style={{ position: 'absolute', bottom: -6, right: -6 }}>
+                  <TeamCrest
+                    code={realPlayer.teamName.toLowerCase().replace(/[^a-z]/g, '').slice(0, 4)}
+                    abbr={realPlayer.teamName.slice(0, 4).toUpperCase()}
+                    logoUrl={realPlayer.teamLogo}
+                  />
+                </div>
+              )}
             </div>
             <div style={{ minWidth: 0, flex: 1 }}>
               <div style={{ fontFamily: 'var(--display)', fontWeight: 800, fontSize: 24, color: 'var(--paper)', letterSpacing: '-0.02em', lineHeight: 1.05 }}>
-                {realPlayer ? <>{realPlayer.firstName}<br />{realPlayer.lastName}</> : <>{p.first}<br />{p.last}</>}
+                {realPlayer ? <>{realPlayer.firstName}<br />{realPlayer.lastName}</> : <span style={{ opacity: 0.4 }}>—</span>}
               </div>
               <div style={{ display: 'flex', gap: 6, marginTop: 10, flexWrap: 'wrap' }}>
-                <Badge tone="accent">{realPlayer?.positionAbbr || p.pos}</Badge>
-                <Badge style={{ background: 'rgba(255,253,247,0.1)', color: 'var(--paper)', border: '1px solid rgba(255,253,247,0.2)' }}>{realPlayer?.nationality || p.country}</Badge>
-                {(realPlayer?.age || p.age) && (
-                  <Badge style={{ background: 'rgba(255,253,247,0.1)', color: 'var(--paper)', border: '1px solid rgba(255,253,247,0.2)' }}>{realPlayer?.age ?? p.age} yrs</Badge>
+                {realPlayer?.positionAbbr && <Badge tone="accent">{realPlayer.positionAbbr}</Badge>}
+                {realPlayer?.nationality && <Badge style={{ background: 'rgba(255,253,247,0.1)', color: 'var(--paper)', border: '1px solid rgba(255,253,247,0.2)' }}>{realPlayer.nationality}</Badge>}
+                {realPlayer?.age && (
+                  <Badge style={{ background: 'rgba(255,253,247,0.1)', color: 'var(--paper)', border: '1px solid rgba(255,253,247,0.2)' }}>{realPlayer.age} yrs</Badge>
                 )}
               </div>
             </div>
@@ -140,33 +132,21 @@ export default function PlayerScreen({ playerId, playerLeagueId, onBack, onOpenM
           </Card>
         )}
 
-        {/* Form bars */}
-        <Card subtitle="Last 9 matches" title="Goals per game">
-          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6, height: 70 }}>
-            {formBars.map((g, i) => (
-              <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-                <div style={{ width: '100%', height: `${Math.max(g * 22, 4)}px`, background: g >= 2 ? 'var(--orange)' : g === 0 ? 'var(--surface-3)' : 'var(--accent)', borderRadius: '4px 4px 0 0', border: '1.5px solid var(--ink)' }} />
-                <span style={{ fontFamily: 'var(--mono)', fontSize: 9, color: 'var(--text-mute)' }}>{g}</span>
-              </div>
-            ))}
-          </div>
-        </Card>
-
         {/* Why trending */}
-        <Card style={{ background: 'var(--accent)', borderColor: 'var(--ink)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-            <Icon name="spark" size={18} style={{ color: 'var(--ink)' }} />
-            <div style={{ fontFamily: 'var(--mono)', fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink)' }}>Why they&apos;re trending</div>
-          </div>
-          <div style={{ fontSize: 14, color: 'var(--ink)', lineHeight: 1.5 }}>
-            {realPlayer
-              ? `${realPlayer.name} plays for ${realPlayer.teamName} in the ${realPlayer.leagueName}.`
-              : p.note
-            }
-          </div>
-        </Card>
+        {realPlayer && (
+          <Card style={{ background: 'var(--accent)', borderColor: 'var(--ink)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+              <Icon name="spark" size={18} style={{ color: 'var(--ink)' }} />
+              <div style={{ fontFamily: 'var(--mono)', fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink)' }}>Player info</div>
+            </div>
+            <div style={{ fontSize: 14, color: 'var(--ink)', lineHeight: 1.5 }}>
+              {realPlayer.name} plays for {realPlayer.teamName} in the {realPlayer.leagueName}.
+              {realPlayer.statsSeason && ` Stats from ${realPlayer.statsSeason}.`}
+            </div>
+          </Card>
+        )}
 
-        <Button variant="primary" block size="lg" onClick={() => onOpenMatch(DATA.liveFootball[2])}>See live match →</Button>
+        <Button variant="primary" block size="lg" onClick={() => onOpenMatch()}>See live scores →</Button>
       </div>
     </div>
   );

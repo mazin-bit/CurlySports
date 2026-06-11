@@ -1,6 +1,5 @@
 'use client';
 import React, { useState } from 'react';
-import { DATA } from '../data';
 import type { Match } from '../data';
 import { useLiveScores } from '@/hooks/useLiveScores';
 import { normalizedToMobile } from './api';
@@ -26,7 +25,6 @@ interface LiveScoresProps {
 
 export default function LiveScoresScreen({ onOpenMatch, onSearch, onBell, unread }: LiveScoresProps) {
   const [filter, setFilter] = useState<string>('all');
-  const D = DATA;
 
   // Fetch all sports (no sport filter)
   const { groups, liveCount, isLoading } = useLiveScores(undefined, undefined, 8_000);
@@ -54,7 +52,7 @@ export default function LiveScoresScreen({ onOpenMatch, onSearch, onBell, unread
       <Topbar
         title="Live Scores"
         subtitle={isLoading ? 'Loading…' : `${liveCount} matches live now`}
-        logoSrc={D.mascot}
+        logoSrc="/curly-mark.png"
         onSearch={onSearch}
         onBell={onBell}
         hasNotification={unread > 0}

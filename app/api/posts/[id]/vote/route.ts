@@ -18,6 +18,7 @@ export async function POST(
     return NextResponse.json({ error: "Invalid option" }, { status: 400 });
   }
 
+  console.log(`[/api/posts/${id}/vote] table=post_votes RPC cast_post_vote user_id=${user.id} post_id=${id} option=${optionIndex}`);
   const { error } = await supabase.rpc("cast_post_vote", {
     p_post_id:      id,
     p_user_id:      user.id,
@@ -38,5 +39,6 @@ export async function POST(
     .eq("id", id)
     .single();
 
+  console.log(`[/api/posts/${id}/vote] OK option=${optionIndex}`);
   return NextResponse.json({ poll: post?.poll, voted_option: optionIndex });
 }
