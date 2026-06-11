@@ -15,101 +15,76 @@
     a{color:inherit;text-decoration:none;}
     @media only screen and (max-width:620px){
       .email-wrap{width:100%!important;}
-      .green-panel{padding:32px 16px 20px!important;}
+      .green-panel{padding:28px 20px 20px!important;}
       .content{padding:28px 20px!important;}
       .headline{font-size:34px!important;line-height:1.05!important;}
-      .orbit-mid,.orbit-mid img{width:110px!important;height:110px!important;}
-      .stat-card{display:none!important;visibility:hidden!important;}
-      .scribble{display:none!important;visibility:hidden!important;}
+      .mascot-disc{width:120px!important;height:120px!important;}
+      .mascot-disc img{width:120px!important;height:120px!important;}
     }
   </style>
 </head>
-<body style="background:#f6ede0;margin:0;padding:0;">
+<body style="background:#f0ebe0;margin:0;padding:0;">
 
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f6ede0;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f0ebe0;">
   <tr>
     <td align="center" style="padding:32px 16px 40px;">
 
       <!-- ── Card ── -->
-      <table class="email-wrap" role="presentation" width="580" cellpadding="0" cellspacing="0" border="0" style="max-width:580px;width:100%;">
+      <table class="email-wrap" role="presentation" width="560" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;width:100%;">
 
-        <!-- ══ GREEN PANEL (mirrors login left stage) ══ -->
+        <!-- ══ LIME PANEL ══ -->
         <tr>
-          <td style="border-radius:20px 20px 0 0;border:2.5px solid #0c0a1d;border-bottom:none;overflow:hidden;background:#c8ff3d;background-image:url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2232%22%20height%3D%2232%22%3E%3Cpath%20d%3D%22M0%200h32v1H0zM0%200h1v32H0z%22%20fill%3D%22rgba(12%2C10%2C29%2C0.07)%22%2F%3E%3C%2Fsvg%3E');">
+          <td style="border-radius:20px 20px 0 0;border:2px solid #0c0a1d;border-bottom:none;overflow:hidden;background:#c8ff3d;">
             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
               <tr>
-                <td class="green-panel" style="padding:36px 28px 20px;">
+                <td class="green-panel" style="padding:32px 32px 28px;text-align:center;">
 
-                  <!-- Logo + stat float row -->
-                  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:24px;">
+                  <!-- Logo row -->
+                  <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin-bottom:28px;">
                     <tr>
-                      <!-- Logo mark + wordmark -->
-                      <td valign="middle">
-                        <table role="presentation" cellpadding="0" cellspacing="0" border="0">
-                          <tr>
-                            <td style="width:44px;height:44px;vertical-align:middle;">
-                              <div style="width:44px;height:44px;background:#0c0a1d;border-radius:12px;text-align:center;line-height:44px;font-family:Georgia,serif;font-weight:900;font-size:24px;color:#c8ff3d;display:inline-block;transform:rotate(-6deg);">c</div>
-                            </td>
-                            <td style="padding-left:10px;vertical-align:middle;">
-                              <span style="font-family:Arial,sans-serif;font-weight:900;font-size:21px;color:#0c0a1d;letter-spacing:-0.5px;">curly<span style="color:#ff5b3d;">.</span>sports</span>
-                            </td>
-                          </tr>
-                        </table>
+                      <td style="vertical-align:middle;">
+                        <div style="width:40px;height:40px;background:#0c0a1d;border-radius:10px;text-align:center;line-height:40px;font-family:Georgia,serif;font-weight:900;font-size:22px;color:#c8ff3d;display:inline-block;">c</div>
                       </td>
-                      <!-- Floating stat card — top right -->
-                      <td class="stat-card" align="right" valign="top">
-                        <div style="display:inline-block;background:#0c0a1d;color:#fffdf7;padding:10px 14px;border-radius:14px;box-shadow:5px 5px 0 #ff5b3d;font-family:Arial,sans-serif;">
-                          <div style="font-size:22px;font-weight:900;color:#c8ff3d;letter-spacing:-1px;line-height:1;">34k+</div>
-                          <div style="font-size:9px;font-weight:700;opacity:0.65;margin-top:4px;letter-spacing:0.08em;text-transform:uppercase;">FANS ON BOARD</div>
+                      <td style="padding-left:10px;vertical-align:middle;">
+                        <span style="font-family:Arial,sans-serif;font-weight:900;font-size:20px;color:#0c0a1d;letter-spacing:-0.5px;">curly<span style="color:#ff5b3d;">.</span>sports</span>
+                      </td>
+                    </tr>
+                  </table>
+
+                  <!-- Mascot disc -->
+                  <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin-bottom:20px;">
+                    <tr>
+                      <td align="center">
+                        <div class="mascot-disc" style="width:150px;height:150px;border-radius:50%;background:#0c0a1d;border:3px solid #0c0a1d;box-shadow:6px 6px 0 #0c0a1d;overflow:hidden;display:inline-block;">
+                          <img src="https://curly.sports/curly-guy.png" width="150" height="150" alt="Curly" style="width:150px;height:150px;display:block;object-fit:cover;" />
                         </div>
                       </td>
                     </tr>
                   </table>
 
-                  <!-- Mascot orbit (3×3 table) -->
-                  <table role="presentation" cellpadding="0" cellspacing="6" border="0" align="center">
+                  <!-- Tagline -->
+                  <p style="font-family:Arial,sans-serif;font-size:13px;font-weight:700;color:#0c0a1d;letter-spacing:0.04em;margin:0 0 20px;opacity:0.65;text-transform:uppercase;">Your sports hub</p>
+
+                  <!-- League pills -->
+                  <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center">
                     <tr>
-                      <!-- Scribble top-left -->
-                      <td class="scribble" width="100" valign="bottom" align="right" style="padding-bottom:4px;padding-right:4px;">
-                        <span style="font-family:Georgia,serif;font-style:italic;font-weight:700;font-size:13px;color:#0c0a1d;white-space:nowrap;display:block;">say hi to Curly &rarr;</span>
+                      <td style="padding:0 4px;">
+                        <div style="background:#0c0a1d;color:#c8ff3d;padding:5px 13px;border-radius:999px;font-size:11px;font-weight:800;font-family:Arial,sans-serif;letter-spacing:0.04em;">EPL</div>
                       </td>
-                      <!-- SOC — top -->
-                      <td width="64" align="center" valign="bottom" style="padding-bottom:2px;">
-                        <div style="width:56px;height:56px;border-radius:50%;background:#fffdf7;border:2.5px solid #0c0a1d;box-shadow:3px 3px 0 #0c0a1d;text-align:center;line-height:52px;font-family:Arial,sans-serif;font-weight:900;font-size:12px;color:#0c0a1d;letter-spacing:0.04em;">SOC</div>
+                      <td style="padding:0 4px;">
+                        <div style="background:#0c0a1d;color:#fffdf7;padding:5px 13px;border-radius:999px;font-size:11px;font-weight:800;font-family:Arial,sans-serif;letter-spacing:0.04em;">NBA</div>
                       </td>
-                      <td width="100">&nbsp;</td>
-                    </tr>
-                    <tr>
-                      <!-- NFL — left -->
-                      <td align="right" valign="middle" style="padding-right:2px;">
-                        <div style="width:56px;height:56px;border-radius:50%;background:#fffdf7;border:2.5px solid #0c0a1d;box-shadow:3px 3px 0 #0c0a1d;text-align:center;line-height:52px;font-family:Arial,sans-serif;font-weight:900;font-size:12px;color:#0c0a1d;letter-spacing:0.04em;">NFL</div>
+                      <td style="padding:0 4px;">
+                        <div style="background:#0c0a1d;color:#fffdf7;padding:5px 13px;border-radius:999px;font-size:11px;font-weight:800;font-family:Arial,sans-serif;letter-spacing:0.04em;">NFL</div>
                       </td>
-                      <!-- Mascot disc — centre -->
-                      <td class="orbit-mid" align="center" valign="middle" width="140" height="140">
-                        <div style="width:140px;height:140px;border-radius:50%;background:#fffdf7;border:3px solid #0c0a1d;box-shadow:8px 8px 0 #0c0a1d;overflow:hidden;display:inline-block;">
-                          <img src="https://curlysports.com/curly-guy.png" width="140" height="140" alt="Curly" style="width:140px;height:140px;display:block;" />
-                        </div>
+                      <td style="padding:0 4px;">
+                        <div style="background:#0c0a1d;color:#fffdf7;padding:5px 13px;border-radius:999px;font-size:11px;font-weight:800;font-family:Arial,sans-serif;letter-spacing:0.04em;">F1</div>
                       </td>
-                      <!-- NBA — right -->
-                      <td align="left" valign="middle" style="padding-left:2px;">
-                        <div style="width:56px;height:56px;border-radius:50%;background:#fffdf7;border:2.5px solid #0c0a1d;box-shadow:3px 3px 0 #0c0a1d;text-align:center;line-height:52px;font-family:Arial,sans-serif;font-weight:900;font-size:12px;color:#0c0a1d;letter-spacing:0.04em;">NBA</div>
+                      <td style="padding:0 4px;">
+                        <div style="background:#0c0a1d;color:#fffdf7;padding:5px 13px;border-radius:999px;font-size:11px;font-weight:800;font-family:Arial,sans-serif;letter-spacing:0.04em;">IPL</div>
                       </td>
-                    </tr>
-                    <tr>
-                      <!-- Bottom stat card — bottom-left -->
-                      <td class="stat-card" align="right" valign="top" style="padding-top:4px;padding-right:4px;">
-                        <div style="display:inline-block;background:#0c0a1d;color:#fffdf7;padding:10px 14px;border-radius:14px;box-shadow:5px 5px 0 #ff5b3d;font-family:Arial,sans-serif;">
-                          <div style="font-size:22px;font-weight:900;color:#c8ff3d;letter-spacing:-1px;line-height:1;">2.3k</div>
-                          <div style="font-size:9px;font-weight:700;opacity:0.65;margin-top:4px;letter-spacing:0.08em;text-transform:uppercase;">DEBATES TODAY</div>
-                        </div>
-                      </td>
-                      <!-- TEN — bottom -->
-                      <td align="center" valign="top" style="padding-top:2px;">
-                        <div style="width:56px;height:56px;border-radius:50%;background:#fffdf7;border:2.5px solid #0c0a1d;box-shadow:3px 3px 0 #0c0a1d;text-align:center;line-height:52px;font-family:Arial,sans-serif;font-weight:900;font-size:12px;color:#0c0a1d;letter-spacing:0.04em;">TEN</div>
-                      </td>
-                      <!-- Scribble bottom-right -->
-                      <td class="scribble" valign="top" style="padding-top:6px;padding-left:6px;">
-                        <span style="font-family:Georgia,serif;font-style:italic;font-weight:700;font-size:13px;color:#0c0a1d;white-space:nowrap;display:block;">&larr; he's been waiting</span>
+                      <td style="padding:0 4px;">
+                        <div style="background:rgba(12,10,29,0.15);color:#0c0a1d;padding:5px 13px;border-radius:999px;font-size:11px;font-weight:800;font-family:Arial,sans-serif;letter-spacing:0.04em;">+145</div>
                       </td>
                     </tr>
                   </table>
@@ -117,16 +92,16 @@
                 </td>
               </tr>
 
-              <!-- Dark ribbon — bottom of green panel -->
+              <!-- Dark ribbon -->
               <tr>
-                <td style="background:#0c0a1d;padding:11px 28px;">
+                <td style="background:#0c0a1d;padding:10px 28px;">
                   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
                     <tr>
                       <td style="font-family:'Courier New',monospace;font-size:10px;font-weight:700;color:#fffdf7;letter-spacing:0.08em;text-transform:uppercase;">
-                        &bull;&nbsp;<span style="color:#c8ff3d;">CURLY SPORTS</span>&nbsp;&nbsp;&middot;&nbsp;&nbsp;YOUR SPORTS HUB
+                        &bull;&nbsp;<span style="color:#c8ff3d;">CURLY SPORTS</span>&nbsp;&nbsp;&middot;&nbsp;&nbsp;LIVE SCORES &amp; DEEP STATS
                       </td>
                       <td align="right" style="font-family:'Courier New',monospace;font-size:10px;font-weight:700;color:rgba(255,253,247,0.38);letter-spacing:0.06em;text-transform:uppercase;">
-                        curlysports.com
+                        curly.sports
                       </td>
                     </tr>
                   </table>
@@ -136,11 +111,11 @@
           </td>
         </tr>
 
-        <!-- ══ CREAM CONTENT (mirrors login right form side) ══ -->
+        <!-- ══ CREAM CONTENT ══ -->
         <tr>
-          <td class="content" style="background:#fffdf7;border:2.5px solid #0c0a1d;border-top:none;padding:36px 40px 32px;">
+          <td class="content" style="background:#fffdf7;border:2px solid #0c0a1d;border-top:none;padding:36px 40px 32px;">
 
-            <!-- Kicker — mirrors .formTag (orange line + uppercase mono text) -->
+            <!-- Kicker -->
             <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:14px;">
               <tr>
                 <td style="width:24px;height:2px;background:#ff5b3d;vertical-align:middle;font-size:0;">&nbsp;</td>
@@ -148,18 +123,18 @@
               </tr>
             </table>
 
-            <!-- Headline — mirrors .formTitle with italic lime highlighted word -->
-            <div class="headline" style="font-family:Georgia,'Times New Roman',serif;font-weight:900;font-size:48px;line-height:1.0;letter-spacing:-1.5px;color:#0c0a1d;margin-bottom:14px;">
+            <!-- Headline -->
+            <div class="headline" style="font-family:Georgia,'Times New Roman',serif;font-weight:900;font-size:44px;line-height:1.0;letter-spacing:-1.5px;color:#0c0a1d;margin-bottom:16px;">
               You're almost<br />
               <em style="font-style:italic;background:#c8ff3d;padding:0 10px 3px;border-radius:10px;display:inline;">in the game.</em>
             </div>
 
-            <!-- Sub — mirrors .formSub -->
-            <p style="font-family:Arial,sans-serif;font-size:15px;color:#2a2540;line-height:1.65;margin:0 0 28px;">
-              Click the button below to confirm your email address and unlock your personal sports dashboard — live scores, debates, team stats and more.
+            <!-- Body -->
+            <p style="font-family:Arial,sans-serif;font-size:15px;color:rgba(12,10,29,0.7);line-height:1.65;margin:0 0 28px;">
+              Click the button below to confirm your email and unlock your personal sports dashboard — live scores, real stats, and debates backed by data.
             </p>
 
-            <!-- CTA — mirrors .btnPrimary (dark bg, lime text, pill shape, orange flat shadow) -->
+            <!-- CTA -->
             <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:28px;">
               <tr>
                 <td style="border-radius:999px;">
@@ -170,42 +145,42 @@
               </tr>
             </table>
 
-            <!-- Divider — mirrors .divider -->
-            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:18px;">
+            <!-- Divider -->
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:16px;">
               <tr>
-                <td style="height:1.5px;background:rgba(12,10,29,0.12);font-size:0;">&nbsp;</td>
-                <td style="padding:0 14px;font-family:'Courier New',monospace;font-size:11px;color:#2a2540;letter-spacing:0.08em;text-transform:uppercase;white-space:nowrap;">OR COPY LINK</td>
-                <td style="height:1.5px;background:rgba(12,10,29,0.12);font-size:0;">&nbsp;</td>
+                <td style="height:1px;background:rgba(12,10,29,0.1);font-size:0;">&nbsp;</td>
+                <td style="padding:0 14px;font-family:'Courier New',monospace;font-size:10px;color:rgba(12,10,29,0.4);letter-spacing:0.08em;text-transform:uppercase;white-space:nowrap;">OR COPY LINK</td>
+                <td style="height:1px;background:rgba(12,10,29,0.1);font-size:0;">&nbsp;</td>
               </tr>
             </table>
 
             <!-- URL fallback -->
-            <p style="font-family:Arial,sans-serif;font-size:12px;color:rgba(12,10,29,0.45);line-height:1.7;margin:0 0 18px;word-break:break-all;">
+            <p style="font-family:Arial,sans-serif;font-size:12px;color:rgba(12,10,29,0.4);line-height:1.7;margin:0 0 20px;word-break:break-all;">
               <a href="{{ .ConfirmationURL }}" style="color:#0c0a1d;font-weight:600;text-decoration:underline;word-break:break-all;">{{ .ConfirmationURL }}</a>
             </p>
 
-            <!-- Expiry note — mirrors .terms style -->
-            <p style="font-family:Arial,sans-serif;font-size:11px;color:rgba(12,10,29,0.45);line-height:1.6;margin:0;">
+            <!-- Expiry note -->
+            <p style="font-family:Arial,sans-serif;font-size:11px;color:rgba(12,10,29,0.4);line-height:1.6;margin:0;">
               This link expires in <strong style="color:#0c0a1d;">24 hours</strong>. If you didn't create a Curly Sports account, you can safely ignore this email.
             </p>
 
           </td>
         </tr>
 
-        <!-- ══ DARK FOOTER ══ -->
+        <!-- ══ FOOTER ══ -->
         <tr>
-          <td style="background:#0c0a1d;border:2.5px solid #0c0a1d;border-top:none;border-radius:0 0 20px 20px;padding:18px 32px;">
+          <td style="background:#0c0a1d;border:2px solid #0c0a1d;border-top:none;border-radius:0 0 20px 20px;padding:18px 32px;">
             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
               <tr>
                 <td align="center" style="font-family:Arial,sans-serif;font-size:12px;color:rgba(255,253,247,0.35);line-height:1.7;">
-                  &copy; 2025 Curly Sports &middot;
-                  <a href="https://curlysports.com" style="color:rgba(200,255,61,0.65);text-decoration:none;">curlysports.com</a>
+                  &copy; 2026 Curly Sports &middot;
+                  <a href="https://curly.sports" style="color:rgba(200,255,61,0.65);text-decoration:none;">curly.sports</a>
                   <br />
-                  <a href="https://curlysports.com/privacy" style="color:rgba(255,253,247,0.3);text-decoration:underline;">Privacy</a>
-                  &nbsp;&nbsp;
-                  <a href="https://curlysports.com/terms" style="color:rgba(255,253,247,0.3);text-decoration:underline;">Terms</a>
-                  &nbsp;&nbsp;
-                  <a href="mailto:support@curlysports.com" style="color:rgba(255,253,247,0.3);text-decoration:underline;">Support</a>
+                  <a href="https://curly.sports/privacy" style="color:rgba(255,253,247,0.3);text-decoration:underline;">Privacy</a>
+                  &nbsp;&middot;&nbsp;
+                  <a href="https://curly.sports/terms" style="color:rgba(255,253,247,0.3);text-decoration:underline;">Terms</a>
+                  &nbsp;&middot;&nbsp;
+                  <a href="mailto:support@curly.sports" style="color:rgba(255,253,247,0.3);text-decoration:underline;">Support</a>
                 </td>
               </tr>
             </table>
@@ -213,7 +188,6 @@
         </tr>
 
       </table>
-      <!-- /Card -->
 
     </td>
   </tr>
