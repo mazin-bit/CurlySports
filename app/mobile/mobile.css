@@ -1,0 +1,253 @@
+/* ===========================================================
+ * Curly Sports Mobile — Design System CSS
+ * Scoped under .cs-mobile to avoid conflicts with desktop theme
+ * ========================================================= */
+
+@import url("https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;700;800&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap");
+
+.cs-mobile {
+  /* ---- Paper / background scale (warm cream) ---- */
+  --bg:      #f6ede0;
+  --bg-2:    #fffdf7;
+  --bg-3:    #ede0cd;
+  --paper:   #fffdf7;
+
+  /* ---- Surfaces ---- */
+  --surface:    #fffdf7;
+  --surface-2:  #f6ede0;
+  --surface-3:  #ede0cd;
+  --surface-hi: #e4d2bc;
+
+  /* ---- Ink / borders ---- */
+  --ink:      #0c0a1d;
+  --ink-dim:  #2a2540;
+  --border:   #0c0a1d;
+  --border-2: rgba(12,10,29,0.25);
+  --border-3: rgba(12,10,29,0.12);
+
+  /* ---- Text ---- */
+  --text:      #0c0a1d;
+  --text-dim:  #2a2540;
+  --text-mute: rgba(12,10,29,0.45);
+
+  /* ---- Accent: electric lime ---- */
+  --accent:      #c8ff3d;
+  --accent-glow: rgba(200,255,61,0.5);
+  --accent-dim:  rgba(200,255,61,0.22);
+  --accent-line: rgba(200,255,61,0.6);
+  --accent-bg:   rgba(200,255,61,0.12);
+  --lime:        #c8ff3d;
+
+  /* ---- Secondary pops ---- */
+  --orange:  #ff5b3d;
+  --purple:  #7c5cff;
+  --coral:   #ff4444;
+  --amber:   #ffb74d;
+  --sky:     #38c9ff;
+  --pink:    #ff5d9e;
+  --teal:    #2dd4bf;
+  --skin:    #f4c896;
+
+  /* ---- Typography ---- */
+  --display: "Bricolage Grotesque", system-ui, sans-serif;
+  --body:    "DM Sans", system-ui, sans-serif;
+  --mono:    "JetBrains Mono", monospace;
+
+  /* ---- Weights ---- */
+  --w-regular: 400;
+  --w-medium:  500;
+  --w-semibold:600;
+  --w-bold:    700;
+  --w-black:   800;
+
+  /* ---- Type scale ---- */
+  --fs-display: 32px;
+  --fs-h1:      24px;
+  --fs-h2:      20px;
+  --fs-h3:      16px;
+  --fs-body:    14px;
+  --fs-sm:      13px;
+  --fs-xs:      11px;
+  --fs-mono-lbl:10px;
+  --fs-mono-xs: 9px;
+
+  /* ---- Tracking ---- */
+  --tracking-display: -0.03em;
+  --tracking-tight:   -0.02em;
+  --tracking-mono:    0.08em;
+
+  /* ---- Line heights ---- */
+  --lh-tight:  0.95;
+  --lh-snug:   1.15;
+  --lh-body:   1.5;
+
+  /* ---- Spacing ---- */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 28px;
+  --space-8: 32px;
+
+  /* ---- Radii ---- */
+  --r-sm:  8px;
+  --r-md:  12px;
+  --r-lg:  14px;
+  --r-xl:  18px;
+  --r-2xl: 24px;
+  --r-pill: 999px;
+
+  /* ---- Shadows (flat offset, no blur) ---- */
+  --shadow-sm:  3px 3px 0 var(--ink);
+  --shadow-md:  5px 5px 0 var(--ink);
+  --shadow-lg:  8px 8px 0 var(--ink);
+
+  /* ---- Borders ---- */
+  --bw:        2px;
+  --bw-chrome: 2.5px;
+
+  /* ---- Motion ---- */
+  --ease-pop: cubic-bezier(.34,1.3,.64,1);
+  --t-fast:  0.12s;
+  --t-base:  0.15s;
+  --t-slow:  0.2s;
+
+  /* ---- Layout ---- */
+  --topbar-h:    56px;
+  --bottomnav-h: 64px;
+
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--body);
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  height: 100%;
+  overflow: hidden;
+}
+
+.cs-mobile *, .cs-mobile *::before, .cs-mobile *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+.cs-mobile a { color: inherit; text-decoration: none; }
+.cs-mobile button { font-family: inherit; cursor: pointer; }
+.cs-mobile ::selection { background: var(--accent); color: var(--ink); }
+.cs-mobile img, .cs-mobile svg { display: block; max-width: 100%; }
+.cs-mobile input, .cs-mobile textarea, .cs-mobile select { font-family: inherit; }
+
+/* ---- Keyframes ---- */
+@keyframes cs-pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+@keyframes cs-pulseGlow {
+  0%,100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.55; transform: scale(0.8); }
+}
+@keyframes cs-shimmer {
+  0% { background-position: -600px 0; }
+  100% { background-position: 600px 0; }
+}
+@keyframes cs-mnSlideUp { from { transform: translateY(100%); opacity: .4; } to { transform: translateY(0); opacity: 1; } }
+@keyframes cs-mnFadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes cs-pushIn { from { transform: translateY(32px); opacity: 0.6; } to { transform: translateY(0); opacity: 1; } }
+
+/* ---- CARD ---- */
+.cs-mobile .cs-card {
+  background: var(--surface);
+  border: var(--bw) solid var(--ink);
+  border-radius: var(--r-lg);
+  padding: 16px;
+  box-shadow: var(--shadow-md);
+  transition: transform var(--t-base), box-shadow var(--t-base);
+}
+.cs-mobile .cs-card.is-tappable:active { transform: translate(-2px,-2px); box-shadow: var(--shadow-lg); }
+.cs-mobile .cs-card-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; gap: 12px; }
+.cs-mobile .cs-card-title { font-family: var(--display); font-weight: 800; font-size: 16px; letter-spacing: -0.01em; color: var(--ink); }
+.cs-mobile .cs-card-sub { font-family: var(--mono); font-size: 10px; color: var(--text-mute); text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; white-space: nowrap; margin-bottom: 3px; }
+.cs-mobile .cs-card-action { font-family: var(--mono); font-size: 11px; color: var(--orange); font-weight: 700; letter-spacing: 0.06em; cursor: pointer; }
+
+/* ---- BUTTON ---- */
+.cs-mobile .cs-btn {
+  background: var(--surface);
+  border: var(--bw) solid var(--ink);
+  color: var(--ink);
+  padding: 10px 16px; border-radius: var(--r-sm); font-size: 13px; font-weight: 700;
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--t-base), box-shadow var(--t-base);
+  font-family: var(--body);
+}
+.cs-mobile .cs-btn:active { transform: translate(-2px,-2px); box-shadow: var(--shadow-md); }
+.cs-mobile .cs-btn--primary { background: var(--ink); color: var(--accent); }
+.cs-mobile .cs-btn--primary:active { box-shadow: 6px 6px 0 var(--orange); }
+.cs-mobile .cs-btn--accent { background: var(--accent); color: var(--ink); }
+.cs-mobile .cs-btn--accent:active { box-shadow: 6px 6px 0 var(--ink); }
+.cs-mobile .cs-btn--orange { background: var(--orange); color: var(--paper); }
+.cs-mobile .cs-btn--ghost { background: transparent; border-color: var(--border-2); color: var(--text-dim); box-shadow: none; }
+.cs-mobile .cs-btn--ghost:active { border-color: var(--ink); color: var(--ink); box-shadow: var(--shadow-sm); }
+.cs-mobile .cs-btn--block { width: 100%; }
+.cs-mobile .cs-btn--lg { padding: 14px 22px; font-size: 15px; }
+.cs-mobile .cs-btn--sm { padding: 7px 12px; font-size: 12px; border-radius: var(--r-sm); }
+.cs-mobile .cs-btn:disabled { opacity: 0.4; pointer-events: none; }
+
+/* ---- CHIP ---- */
+.cs-mobile .cs-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--surface);
+  border: var(--bw) solid var(--ink);
+  color: var(--text-dim);
+  padding: 8px 14px; border-radius: var(--r-pill);
+  font-size: 12.5px; font-weight: 600; white-space: nowrap; cursor: pointer;
+  box-shadow: none;
+  transition: transform var(--t-base), box-shadow var(--t-base), background var(--t-base), color var(--t-base);
+}
+.cs-mobile .cs-chip:active { transform: translate(-1px,-1px); box-shadow: var(--shadow-sm); }
+.cs-mobile .cs-chip.is-active { background: var(--accent); color: var(--ink); border-color: var(--ink); box-shadow: var(--shadow-sm); font-weight: 700; }
+.cs-mobile .cs-chip.is-live { color: var(--coral); border-color: var(--coral); }
+.cs-mobile .cs-chip.is-live::before { content:""; width:6px; height:6px; border-radius:50%; background: var(--coral); box-shadow: 0 0 6px var(--coral); animation: cs-pulse 1.4s infinite; }
+
+/* ---- STATUS PILL ---- */
+.cs-mobile .cs-status {
+  font-family: var(--mono); font-size: 10px; font-weight: 700;
+  letter-spacing: 0.06em; padding: 4px 8px; border-radius: 5px;
+  display: inline-flex; align-items: center; gap: 5px;
+  text-transform: uppercase; border: 1.5px solid;
+}
+.cs-mobile .cs-status--live { background: rgba(255,68,68,0.08); color: var(--coral); border-color: var(--coral); }
+.cs-mobile .cs-status--live::before { content:""; width:5px; height:5px; border-radius:50%; background: var(--coral); box-shadow: 0 0 6px var(--coral); animation: cs-pulse 1.4s infinite; }
+.cs-mobile .cs-status--ft { background: var(--surface-3); color: var(--text-mute); border-color: var(--border-2); }
+.cs-mobile .cs-status--up { background: rgba(200,255,61,0.15); color: var(--ink); border-color: var(--ink); }
+
+/* ---- TEAM CREST ---- */
+.cs-mobile .cs-crest { display: grid; place-items: center; font-family: var(--display); font-weight: 800; color: #fff; border-radius: 8px; flex-shrink: 0; border: 2px solid var(--ink); width: 28px; height: 28px; font-size: 10px; }
+.cs-mobile .cs-crest--lg { width: 40px; height: 40px; font-size: 13px; }
+.cs-mobile .c-ars { background: linear-gradient(135deg, #EF0107, #9C824A); }
+.cs-mobile .c-tot { background: linear-gradient(135deg, #fff, #132257); color: #132257; }
+.cs-mobile .c-mun { background: linear-gradient(135deg, #DA291C, #8B0000); color: #FBE122; }
+.cs-mobile .c-bay { background: linear-gradient(135deg, #DC052D, #0066B2); }
+.cs-mobile .c-bar { background: linear-gradient(135deg, #A50044, #004D98); color: #FFED02; }
+.cs-mobile .c-liv { background: linear-gradient(135deg, #C8102E, #8B0000); color: #F6EB61; }
+.cs-mobile .c-che { background: linear-gradient(135deg, #034694, #001E62); color: #DBA111; }
+.cs-mobile .c-lal { background: linear-gradient(135deg, #552583, #FDB927); }
+.cs-mobile .c-bos { background: linear-gradient(135deg, #007A33, #054b22); }
+.cs-mobile .c-rm  { background: linear-gradient(135deg, #fff, #f0f0f0); color: #00529F; }
+.cs-mobile .c-cit { background: linear-gradient(135deg, #6CABDD, #1C2C5B); }
+.cs-mobile .c-psg { background: linear-gradient(135deg, #004170, #D2122E); color: #fff; }
+.cs-mobile .cs-team { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.cs-mobile .cs-team .name { font-weight: 700; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink); }
+
+/* ---- SCROLL ---- */
+.cs-mobile .cs-scroll { scrollbar-width: none; }
+.cs-mobile .cs-scroll::-webkit-scrollbar { display: none; }
+.cs-mobile .cs-scroll > * { flex-shrink: 0; }
+
+/* ---- SKELETON ---- */
+.cs-mobile .cs-skeleton {
+  height: 56px; border-radius: 8px;
+  background: linear-gradient(90deg, var(--surface-2) 25%, var(--surface-3) 50%, var(--surface-2) 75%);
+  background-size: 600px 100%;
+  animation: cs-shimmer 1.4s infinite linear;
+}
