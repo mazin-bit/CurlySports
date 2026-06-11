@@ -362,113 +362,19 @@ export default function LandingPage() {
               <span className="dot r" /><span className="dot y" /><span className="dot g" />
               <span className="url">curly.sports/dashboard</span>
             </div>
-            <div className="l-preview-body">
-              {/* Sidebar */}
-              <div className="l-mockup-card">
-                <div className="l-mockup-card-sub">Personal dashboard</div>
-                <div className="l-mockup-card-title">Welcome back</div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 12 }}>
-                  {[
-                    { icon: "ball-soccer", label: "Football", active: true },
-                    { icon: "ball-basket", label: "Basketball" },
-                    { icon: "ball-nfl", label: "NFL", nfl: true },
-                    { icon: "ball-tennis", label: "Tennis" },
-                    { icon: "ball-base", label: "Baseball" },
-                    { icon: "ball-f1", label: "Formula 1" },
-                  ].map(({ icon, label, active, nfl }) => (
-                    <div key={label} style={{ background: active ? "rgba(200,255,61,0.1)" : undefined, borderLeft: active ? "3px solid #c8ff3d" : undefined, padding: "8px 12px", borderRadius: 6, fontSize: 12, color: active ? "#c8ff3d" : "rgba(255,255,255,0.5)", fontWeight: active ? 600 : undefined, display: "flex", alignItems: "center", gap: 8 }}>
-                      <svg width={nfl ? 18 : 14} height={nfl ? 12 : 14} viewBox={nfl ? "0 0 50 30" : "0 0 40 40"}><use href={`#${icon}`} /></svg>
-                      {label}
-                    </div>
-                  ))}
-                </div>
-                <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", margin: "16px -18px 16px", paddingTop: 16 }} />
-                <div className="l-mockup-card-sub" style={{ margin: "0 0 8px" }}>Following</div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 8, fontSize: 12, color: "rgba(255,255,255,0.7)" }}>
-                  <div>· Manchester United</div><div>· Erling Haaland</div><div>· LA Lakers</div>
-                </div>
-              </div>
-              {/* Center */}
-              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                <div className="l-mockup-card" style={{ background: "linear-gradient(135deg,#1a2322,#141b1a)", position: "relative", overflow: "hidden" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
-                    <span style={{ fontFamily: "var(--mono)", fontSize: 10, color: "#c8ff3d", fontWeight: 700, letterSpacing: "0.06em" }}>● UCL QUARTER FINAL</span>
-                    <span style={{ background: "#ff5b3d", color: "#fffdf7", padding: "3px 8px", borderRadius: 999, fontSize: 9, fontWeight: 700, letterSpacing: "0.05em" }}>LIVE</span>
-                  </div>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                    <div style={{ textAlign: "center" }}>
-                      <div style={{ width: 48, height: 48, margin: "0 auto", background: "linear-gradient(135deg,#DA291C,#FBE122)", borderRadius: 12, display: "grid", placeItems: "center", fontFamily: "var(--display)", fontWeight: 800, fontSize: 16, color: "#fff" }}>MUN</div>
-                      <div style={{ fontSize: 11, marginTop: 6, opacity: 0.7 }}>Man United</div>
-                    </div>
-                    <div style={{ textAlign: "center" }}>
-                      <div style={{ fontFamily: "var(--display)", fontWeight: 800, fontSize: 44, color: "#fffdf7", letterSpacing: "-0.04em" }}><span style={{ color: "#c8ff3d" }}>2</span> <span style={{ opacity: 0.4, fontWeight: 400 }}>·</span> 1</div>
-                      <div style={{ fontFamily: "var(--mono)", fontSize: 10, color: "#c8ff3d", marginTop: -4 }}>67&apos; · 2nd half</div>
-                    </div>
-                    <div style={{ textAlign: "center" }}>
-                      <div style={{ width: 48, height: 48, margin: "0 auto", background: "linear-gradient(135deg,#DC052D,#0066B2)", borderRadius: 12, display: "grid", placeItems: "center", fontFamily: "var(--display)", fontWeight: 800, fontSize: 16, color: "#fff" }}>BAY</div>
-                      <div style={{ fontSize: 11, marginTop: 6, opacity: 0.7 }}>Bayern</div>
-                    </div>
-                  </div>
-                  <div className="l-mockup-bar-row">
-                    {[["Possession", "52%", 52], ["xG", "2.31", 69], ["Shots", "14", 60]].map(([label, val, pct]) => (
-                      <div key={label as string} className="l-mockup-bar">
-                        <span className="label">{label}</span>
-                        <div className="bar"><div className="fill" style={{ width: `${pct}%` }} /></div>
-                        <span className="val">{val}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <div className="l-mockup-card">
-                  <div className="l-mockup-card-sub">Attack momentum</div>
-                  <div className="l-momentum">
-                    {MUN.map((top, i) => (
-                      <div key={i} className="bg">
-                        <div className="top" style={{ height: `${top}%` }} />
-                        <div className="bot" style={{ height: `${BAY[i]}%` }} />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-              {/* Right */}
-              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                <div className="l-mockup-card" style={{ background: "linear-gradient(135deg,rgba(200,255,61,0.15),#1a2322)", borderColor: "rgba(200,255,61,0.2)" }}>
-                  <div className="l-mockup-card-sub">Top scorer · Premier League</div>
-                  <div className="l-mockup-stat-large">
-                    <span className="val">27</span>
-                    <span className="lbl">Erling Haaland · Goals this season</span>
-                  </div>
-                  <div style={{ display: "flex", gap: 8, marginTop: 14, fontFamily: "var(--mono)", fontSize: 10 }}>
-                    <span style={{ background: "rgba(255,255,255,0.06)", padding: "4px 8px", borderRadius: 6 }}>+2 this wk</span>
-                    <span style={{ background: "rgba(255,255,255,0.06)", padding: "4px 8px", borderRadius: 6, color: "#c8ff3d" }}>↑ 3 vs xG</span>
-                  </div>
-                </div>
-                <div className="l-mockup-card">
-                  <div className="l-mockup-card-sub">Live poll</div>
-                  <div className="l-mockup-card-title">Is Bellingham Madrid&apos;s MVP?</div>
-                  <div style={{ marginTop: 12 }}>
-                    {[{ label: "YES", color: "#c8ff3d", pct: 65 }, { label: "NO", color: "#7c5cff", pct: 35 }].map(({ label, color, pct }) => (
-                      <div key={label}>
-                        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, marginBottom: 4 }}>
-                          <span style={{ color, fontWeight: 700 }}>{label}</span>
-                          <span style={{ fontFamily: "var(--mono)", color: "rgba(255,255,255,0.7)" }}>{pct}%</span>
-                        </div>
-                        <div style={{ background: "rgba(255,255,255,0.06)", height: 6, borderRadius: 3, marginBottom: 12 }}>
-                          <div style={{ background: color, height: "100%", width: `${pct}%`, borderRadius: 3 }} />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
+            <div className="l-preview-img-wrap">
+              <Image
+                src="/dashboard-v2.png"
+                alt="Curly Sports Dashboard"
+                width={1440}
+                height={860}
+                className="l-preview-img"
+                priority
+              />
             </div>
-            <div className="l-preview-annotation a1">play-by-play feels alive</div>
-            <div className="l-preview-annotation a2">argue with friends here</div>
           </div>
           <div className="l-preview-section-btns">
             <a href="/dashboard" className="l-btn l-btn-lime l-btn-lg">Open the full dashboard →</a>
-            <a href="/admin" className="l-btn l-btn-ghost l-btn-lg" style={{ borderColor: "var(--paper)", color: "var(--paper)" }}>Peek the admin panel</a>
           </div>
         </div>
       </div>

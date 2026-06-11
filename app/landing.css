@@ -420,7 +420,8 @@
 .landing-root .l-preview-toolbar .dot.y { background: #ffb74d; }
 .landing-root .l-preview-toolbar .dot.g { background: #d1ff3a; }
 .landing-root .l-preview-toolbar .url { margin-left: 24px; font-family: var(--mono); font-size: 11px; color: rgba(255,255,255,0.4); }
-.landing-root .l-preview-body { padding: 28px; display: grid; grid-template-columns: 240px 1fr 280px; gap: 18px; min-height: 540px; }
+.landing-root .l-preview-img-wrap { width: 100%; overflow: hidden; background: #07090b; }
+.landing-root .l-preview-img { width: 100%; height: auto; display: block; border: none; }
 .landing-root .l-mockup-card { background: #1a2322; border: 1px solid rgba(255,255,255,0.06); border-radius: 14px; padding: 18px; }
 .landing-root .l-mockup-card-title { font-family: var(--display); font-weight: 700; font-size: 13px; letter-spacing: -0.01em; margin-bottom: 14px; color: var(--paper); }
 .landing-root .l-mockup-card-sub { font-size: 10px; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; margin-bottom: 8px; }
@@ -666,12 +667,6 @@
   .landing-root .l-feat-grid { grid-template-columns: repeat(2,1fr); }
   .landing-root .l-news-grid { grid-template-columns: 1fr 1fr; }
   .landing-root .l-news-card.feat { grid-row: auto; }
-  /* Platform mockup: keep 3-col layout but scroll horizontally */
-  .landing-root .l-preview-body {
-    grid-template-columns: 220px 320px 260px;
-    overflow-x: auto; scrollbar-width: none; min-height: 460px;
-  }
-  .landing-root .l-preview-body::-webkit-scrollbar { display: none; }
   /* Hero preview: center instead of right-align when stacked */
   .landing-root .l-hero-preview { justify-content: center; }
   /* Hide floating chips at tablet — they look odd when stacked */
