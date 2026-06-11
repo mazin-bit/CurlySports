@@ -366,7 +366,7 @@ export default function LandingPage() {
               {/* Sidebar */}
               <div className="l-mockup-card">
                 <div className="l-mockup-card-sub">Personal dashboard</div>
-                <div className="l-mockup-card-title">Welcome back, Mazin</div>
+                <div className="l-mockup-card-title">Welcome back</div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 12 }}>
                   {[
                     { icon: "ball-soccer", label: "Football", active: true },
@@ -434,14 +434,14 @@ export default function LandingPage() {
               {/* Right */}
               <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                 <div className="l-mockup-card" style={{ background: "linear-gradient(135deg,rgba(200,255,61,0.15),#1a2322)", borderColor: "rgba(200,255,61,0.2)" }}>
-                  <div className="l-mockup-card-sub">Top scorer · Today</div>
+                  <div className="l-mockup-card-sub">Top scorer · Premier League</div>
                   <div className="l-mockup-stat-large">
-                    <span className="val">26</span>
+                    <span className="val">27</span>
                     <span className="lbl">Erling Haaland · Goals this season</span>
                   </div>
                   <div style={{ display: "flex", gap: 8, marginTop: 14, fontFamily: "var(--mono)", fontSize: 10 }}>
-                    <span style={{ background: "rgba(255,255,255,0.06)", padding: "4px 8px", borderRadius: 6 }}>+3 wk</span>
-                    <span style={{ background: "rgba(255,255,255,0.06)", padding: "4px 8px", borderRadius: 6, color: "#c8ff3d" }}>↑ 4 vs xG</span>
+                    <span style={{ background: "rgba(255,255,255,0.06)", padding: "4px 8px", borderRadius: 6 }}>+2 this wk</span>
+                    <span style={{ background: "rgba(255,255,255,0.06)", padding: "4px 8px", borderRadius: 6, color: "#c8ff3d" }}>↑ 3 vs xG</span>
                   </div>
                 </div>
                 <div className="l-mockup-card">

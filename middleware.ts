@@ -31,7 +31,7 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Public paths that never require auth
-  const publicPaths = ["/login", "/auth/callback", "/auth/check-email", "/", "/admin"];
+  const publicPaths = ["/login", "/auth/callback", "/auth/check-email", "/", "/admin", "/mobile"];
   const isPublic = publicPaths.some((p) => pathname === p || pathname.startsWith(p + "?") || pathname.startsWith(p + "/"));
 
   // API routes handle their own auth

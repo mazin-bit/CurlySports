@@ -19,34 +19,28 @@ function Stage() {
 
       <div className={styles.mascotStage}>
         <div className={styles.mascotFrame}>
-          <div className={styles.orbitRing} />
-          <div className={`${styles.orbitRing} ${styles.r2}`} />
           <div className={styles.mascotDisc}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/curly-guy.png" alt="Curly Sports Founder" style={{ width: "80%", height: "80%", objectFit: "contain" }} />
+            <img src="/curly-guy.png" alt="Curly" className={styles.mascotImg} />
           </div>
-          <div className={`${styles.orbitItem} ${styles.orbit1}`}>SOC</div>
-          <div className={`${styles.orbitItem} ${styles.orbit2}`}>NBA</div>
-          <div className={`${styles.orbitItem} ${styles.orbit3}`}>TEN</div>
-          <div className={`${styles.orbitItem} ${styles.orbit4}`}>NFL</div>
         </div>
       </div>
 
-      <div className={`${styles.scribble} ${styles.sc1}`}>say hi to Curly →</div>
-      <div className={`${styles.scribble} ${styles.sc2}`}>← he&#39;s been waiting</div>
+      <div className={`${styles.scribble} ${styles.sc1}`}>your sports hub →</div>
+      <div className={`${styles.scribble} ${styles.sc2}`}>← built for fans</div>
 
       <div className={`${styles.statFloat} ${styles.sf1}`}>
-        <div className={styles.statNum}>34k+</div>
-        <div className={styles.statLbl}>FANS ON BOARD</div>
+        <div className={styles.statNum}>150+</div>
+        <div className={styles.statLbl}>LEAGUES COVERED</div>
       </div>
       <div className={`${styles.statFloat} ${styles.sf2}`}>
-        <div className={styles.statNum}>2.3k</div>
-        <div className={styles.statLbl}>DEBATES TODAY</div>
+        <div className={styles.statNum}>Live</div>
+        <div className={styles.statLbl}>SCORES NOW</div>
       </div>
 
       <div className={styles.ribbon}>
-        <span><span className={styles.lime}>●</span> Live · 14 matches happening right now</span>
-        <span>v1.0 · made on a napkin</span>
+        <span><span className={styles.lime}>●</span> Real-time scores · 150+ leagues</span>
+        <span>v1.0 · made for fans</span>
       </div>
     </div>
   );
@@ -210,7 +204,7 @@ export default function LoginPage() {
           {mode === "login"
             ? "Log in to see your personal dashboard, jump back into open debates, and check on your saved teams."
             : mode === "signup"
-            ? "Free forever. Pick your sports, follow your teams, and join 34k+ fans who actually like sports analytics."
+            ? "Free forever. Pick your sports, follow your teams, and join fans who actually like sports analytics."
             : "Enter your email and we'll send you a link to reset your password."}
         </p>
 

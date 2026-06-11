@@ -53,7 +53,7 @@
   display: grid; place-items: center;
 }
 .mascotFrame {
-  position: relative; width: 70%; aspect-ratio: 1; max-width: 480px;
+  position: relative; width: 62%; aspect-ratio: 1; max-width: 400px;
 }
 .orbitRing {
   position: absolute; inset: 0;
@@ -61,16 +61,21 @@
 }
 .r2 { inset: 12%; border: 2px solid rgba(12,10,29,0.12); }
 .mascotDisc {
-  position: absolute; inset: 20%;
-  background: #fffdf7; border: 3px solid #0c0a1d;
+  position: absolute; inset: 10%;
+  background: var(--accent); border: 3px solid #0c0a1d;
   border-radius: 50%; box-shadow: 10px 10px 0 #0c0a1d;
-  display: grid; place-items: center;
+  display: flex; align-items: flex-end; justify-content: center;
   overflow: hidden;
   transition: box-shadow 0.3s, transform 0.3s;
 }
 .mascotDisc:hover {
   box-shadow: 14px 14px 0 #0c0a1d, 0 0 48px rgba(200,255,61,0.4);
   transform: translate(-2px, -2px);
+}
+.mascotImg {
+  width: 88%; object-fit: contain; object-position: bottom;
+  display: block; animation: bob 4s ease-in-out infinite;
+  transform-origin: bottom center;
 }
 .mascotDisc svg { width: 80%; height: 80%; animation: bob 4s ease-in-out infinite; }
 @keyframes bob { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
