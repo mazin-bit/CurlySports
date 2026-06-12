@@ -9,6 +9,16 @@ import type { RealTeam } from './api';
 
 const fetcher = (url: string) => fetch(url).then(r => r.json());
 
+// Primary league per sport for team browsing
+const SPORT_PRIMARY: Record<string, string> = {
+  football: 'eng.1',
+  basketball: 'nba',
+  nfl: 'nfl',
+  cricket: 'ipl',
+  baseball: 'mlb',
+  hockey: 'nhl',
+};
+
 interface PlayerResult {
   id: string; name: string; jersey: string; position: string;
   headshot: string | null; teamName: string; leagueId: string; leagueName: string;
@@ -35,9 +45,11 @@ export default function SearchScreen({ onBack, onOpenPlayer }: SearchProps) {
 
   const ql = debouncedQ.toLowerCase();
 
+  const browseLeague = SPORT_PRIMARY[sport] ?? 'eng.1';
+
   // Fetch real teams for current sport
   const { data: teamsData } = useSWR<{ teams: RealTeam[] }>(
-    `/api/espn/teams?sport=${sport}&league=eng.1`,
+    `/api/espn/teams?sport=${sport}&league=${browseLeague}`,
     fetcher,
     { revalidateOnFocus: false }
   );
@@ -108,7 +120,7 @@ export default function SearchScreen({ onBack, onOpenPlayer }: SearchProps) {
             <div>
               <div style={{ fontFamily: 'var(--mono)', fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-mute)', marginBottom: 10 }}>Browse by sport</div>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                {['football', 'basketball', 'nfl', 'cricket'].map(s => (
+                {['football', 'basketball', 'nfl', 'cricket', 'baseball', 'hockey'].map(s => (
                   <Chip key={s} active={sport === s} onClick={() => setSport(s)}>{s.charAt(0).toUpperCase() + s.slice(1)}</Chip>
                 ))}
               </div>

@@ -15,8 +15,14 @@ import NotificationsScreen from './NotificationsScreen';
 import OnboardingScreen from './OnboardingScreen';
 import MenuDrawer from './MenuDrawer';
 import LoginScreen from './LoginScreen';
+import NewsScreen from './NewsScreen';
+import TeamsScreen from './TeamsScreen';
+import FavoritesScreen from './FavoritesScreen';
+import VideosScreen from './VideosScreen';
+import MiniGamesScreen from './MiniGamesScreen';
+import PlayersScreen from './PlayersScreen';
 
-type Tab = 'home' | 'live' | 'funzone' | 'leagues' | 'profile';
+type Tab = 'home' | 'live' | 'funzone' | 'leagues' | 'profile' | 'news' | 'teams' | 'favorites' | 'videos' | 'minigames' | 'players';
 type OverlayType = 'match' | 'player' | 'search' | 'notifications';
 interface Overlay { type: OverlayType; data?: Match; playerId?: string; playerLeagueId?: string }
 
@@ -67,10 +73,11 @@ function AppInner() {
 
   const onMenuNav = (key: string) => {
     setMenuOpen(false);
-    if (['home', 'live', 'funzone', 'leagues', 'profile'].includes(key)) { goTab(key as Tab); return; }
+    const tabs: Tab[] = ['home', 'live', 'funzone', 'leagues', 'profile', 'news', 'teams', 'favorites', 'videos', 'minigames', 'players'];
+    if (tabs.includes(key as Tab)) { clearStack(); goTab(key as Tab); return; }
     if (key === 'search') { clearStack(); openSearch(); return; }
     if (key === 'notifications') { clearStack(); openNotifications(); return; }
-    if (key === 'players' || key === 'favorites') { clearStack(); openPlayer(); return; }
+    if (key === 'players') { clearStack(); openPlayer(); return; }
     goTab('home');
   };
 
@@ -109,11 +116,17 @@ function AppInner() {
   }
 
   let screen: React.ReactNode;
-  if      (tab === 'home')    screen = <DashboardScreen sport={sport} setSport={setSport} onOpenMatch={openMatch} onOpenPlayer={openPlayer} fav={fav} {...nav} />;
-  else if (tab === 'live')    screen = <LiveScoresScreen onOpenMatch={openMatch} {...nav} />;
-  else if (tab === 'funzone') screen = <DebatesScreen onOpenPlayer={openPlayer} {...nav} />;
-  else if (tab === 'leagues') screen = <LeaguesScreen onOpenPlayer={openPlayer} {...nav} />;
-  else if (tab === 'profile') screen = <ProfileScreen fav={fav} {...nav} />;
+  if      (tab === 'home')      screen = <DashboardScreen sport={sport} setSport={setSport} onOpenMatch={openMatch} onOpenPlayer={openPlayer} fav={fav} {...nav} />;
+  else if (tab === 'live')      screen = <LiveScoresScreen sport={sport} setSport={setSport} onOpenMatch={openMatch} {...nav} />;
+  else if (tab === 'funzone')   screen = <DebatesScreen sport={sport} onOpenPlayer={openPlayer} {...nav} />;
+  else if (tab === 'leagues')   screen = <LeaguesScreen sport={sport} onOpenPlayer={openPlayer} {...nav} />;
+  else if (tab === 'profile')   screen = <ProfileScreen fav={fav} {...nav} />;
+  else if (tab === 'news')      screen = <NewsScreen sport={sport} setSport={setSport} {...nav} />;
+  else if (tab === 'teams')     screen = <TeamsScreen sport={sport} setSport={setSport} onOpenPlayer={openPlayer} {...nav} />;
+  else if (tab === 'favorites') screen = <FavoritesScreen onOpenPlayer={openPlayer} {...nav} />;
+  else if (tab === 'videos')    screen = <VideosScreen sport={sport} setSport={setSport} {...nav} />;
+  else if (tab === 'minigames') screen = <MiniGamesScreen sport={sport} setSport={setSport} {...nav} />;
+  else if (tab === 'players')   screen = <PlayersScreen sport={sport} setSport={setSport} onOpenPlayer={openPlayer} {...nav} />;
 
   const bottomActive = menuOpen ? 'more' : (['home', 'live', 'funzone', 'leagues'].includes(tab) ? tab : '');
 

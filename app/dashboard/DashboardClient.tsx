@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import AdSlot from "@/components/AdSlot";
 import styles from "./dashboard.module.css";
 import { Zap, Newspaper, Trophy, ArrowRightLeft, CircleDot, ChevronRight, Radio } from "lucide-react";
-import { useLiveScores } from "@/hooks/useLiveScores";
+import { useScoresStream } from "@/hooks/useScoresStream";
 import { useNews } from "@/hooks/useNews";
 import { useStandings } from "@/hooks/useStandings";
 import { useActiveSport } from "@/contexts/SportContext";
@@ -255,8 +255,9 @@ export default function DashboardClient() {
   const todayKey = toDateKey(now);
   const todayLabel = now.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
 
-  const { groups, liveCount, isLoading: scoresLoading, isValidating: scoresValidating } =
-    useLiveScores(activeSport, todayKey, 5_000);
+  const { groups, liveCount, isConnected: scoresConnected } = useScoresStream(activeSport, todayKey);
+  const scoresLoading = !scoresConnected && groups.length === 0;
+  const scoresValidating = !scoresConnected && groups.length > 0;
 
   const { articles, isLoading: newsLoading } = useNews(12, activeSport);
   const { standings, isLoading: standingsLoading } = useStandings(activeSport);

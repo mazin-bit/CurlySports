@@ -1,0 +1,265 @@
+'use client';
+import React, { useState, useEffect, useRef } from 'react';
+import useSWR from 'swr';
+import Topbar from './ui/Topbar';
+import SportSelector from './ui/SportSelector';
+import Chip from './ui/Chip';
+import Icon from './ui/Icon';
+import Badge from './ui/Badge';
+import type { RealTeam } from './api';
+
+const fetcher = (url: string) => fetch(url).then(r => r.json());
+
+interface PlayerResult {
+  id: string; name: string; jersey: string; position: string;
+  headshot: string | null; teamName: string; leagueId: string; leagueName: string;
+}
+
+interface PlayersProps {
+  sport: string;
+  setSport: (s: string) => void;
+  onSearch: () => void;
+  onBell: () => void;
+  onOpenPlayer: (playerId?: string, leagueId?: string) => void;
+  unread: number;
+}
+
+// Primary leagues per sport (mirrors web PlayersClient.tsx)
+const SPORT_LEAGUES: Record<string, { id: string; label: string }[]> = {
+  football: [
+    { id: 'eng.1',  label: 'Premier League' },
+    { id: 'esp.1',  label: 'La Liga' },
+    { id: 'ger.1',  label: 'Bundesliga' },
+    { id: 'ita.1',  label: 'Serie A' },
+    { id: 'fra.1',  label: 'Ligue 1' },
+    { id: 'por.1',  label: 'Primeira Liga' },
+    { id: 'ned.1',  label: 'Eredivisie' },
+    { id: 'eng.2',  label: 'Championship' },
+    { id: 'tur.1',  label: 'Süper Lig' },
+    { id: 'sco.1',  label: 'Scottish Prem' },
+    { id: 'bel.1',  label: 'Pro League' },
+    { id: 'gre.1',  label: 'Super League' },
+    { id: 'usa.1',  label: 'MLS' },
+    { id: 'mex.1',  label: 'Liga MX' },
+    { id: 'bra.1',  label: 'Brasileirão' },
+    { id: 'arg.1',  label: 'Liga Profesional' },
+    { id: 'col.1',  label: 'Liga BetPlay' },
+    { id: 'ksa.1',  label: 'Saudi Pro League' },
+    { id: 'jpn.1',  label: 'J1 League' },
+    { id: 'aus.1',  label: 'A-League' },
+    { id: 'chi.1',  label: 'Primera División' },
+    { id: 'ecu.1',  label: 'Liga Pro' },
+    { id: 'rus.1',  label: 'Premier Liga' },
+  ],
+  basketball: [{ id: 'nba', label: 'NBA' }, { id: 'wnba', label: 'WNBA' }],
+  nfl: [{ id: 'nfl', label: 'NFL' }],
+  baseball: [{ id: 'mlb', label: 'MLB' }],
+  hockey: [{ id: 'nhl', label: 'NHL' }],
+  cricket: [
+    { id: 'ipl',          label: 'IPL' },
+    { id: 'big.bash',     label: 'Big Bash' },
+    { id: 'psl',          label: 'PSL' },
+    { id: 'cplt20',       label: 'CPL' },
+    { id: 'sa.domestic',  label: 'SA20' },
+    { id: 'eng.domestic', label: 'County' },
+  ],
+};
+
+export default function PlayersScreen({ sport, setSport, onSearch, onBell, onOpenPlayer, unread }: PlayersProps) {
+  const [q, setQ] = useState('');
+  const [debouncedQ, setDebouncedQ] = useState('');
+  const [leagueId, setLeagueId] = useState<string | undefined>(undefined);
+  const [page, setPage] = useState(0);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const leagues = SPORT_LEAGUES[sport] ?? [{ id: 'eng.1', label: 'Premier League' }];
+
+  // Reset league & search when sport changes
+  useEffect(() => {
+    setLeagueId(undefined);
+    setQ('');
+    setDebouncedQ('');
+    setPage(0);
+  }, [sport]);
+
+  // Reset pagination when league changes
+  useEffect(() => { setPage(0); }, [leagueId]);
+
+  // Debounce search query
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedQ(q.trim()), 350);
+    return () => clearTimeout(t);
+  }, [q]);
+
+  const isSearching = debouncedQ.length >= 2;
+  const activeLeague = leagueId ?? leagues[0]?.id;
+
+  // Player search results
+  const { data: searchData, isLoading: searchLoading } = useSWR<{ players: PlayerResult[] }>(
+    isSearching ? `/api/espn/player-search?q=${encodeURIComponent(debouncedQ)}&sport=${sport}` : null,
+    fetcher,
+    { revalidateOnFocus: false }
+  );
+
+  // Teams for browsing (when not searching)
+  const { data: teamsData, isLoading: teamsLoading } = useSWR<{ teams: RealTeam[] }>(
+    !isSearching ? `/api/espn/teams?sport=${sport}&league=${activeLeague}` : null,
+    fetcher,
+    { revalidateOnFocus: false, dedupingInterval: 3_600_000 }
+  );
+
+  const players = searchData?.players ?? [];
+  const teams = teamsData?.teams ?? [];
+
+  const PAGE_SIZE = 20;
+  const visiblePlayers = players.slice(0, PAGE_SIZE * (page + 1));
+  const hasMore = players.length > visiblePlayers.length;
+
+  return (
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--bg)' }}>
+      <Topbar
+        title="Players"
+        subtitle={isSearching ? `${players.length} results` : `Browse · ${leagues.find(l => l.id === activeLeague)?.label ?? 'Select league'}`}
+        onSearch={onSearch}
+        onBell={onBell}
+        hasNotification={unread > 0}
+      />
+
+      <div style={{ flexShrink: 0, background: 'var(--bg-2)', borderBottom: '2px solid var(--border-2)' }}>
+        <div style={{ padding: '10px 14px 0' }}>
+          <SportSelector active={sport} onSelect={s => { setSport(s); }} />
+        </div>
+
+        {/* Search input */}
+        <div style={{ padding: '10px 14px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--surface)', border: '2px solid var(--ink)', borderRadius: 12, padding: '0 12px', height: 40, boxShadow: 'var(--shadow-sm)' }}>
+            <Icon name="search" size={17} style={{ color: 'var(--text-mute)', flexShrink: 0 }} />
+            <input
+              ref={inputRef}
+              type="search"
+              value={q}
+              onChange={e => { setQ(e.target.value); setPage(0); }}
+              placeholder="Search players by name…"
+              style={{ flex: 1, border: 'none', background: 'transparent', outline: 'none', fontSize: 14, color: 'var(--ink)', fontFamily: 'var(--body)' }}
+            />
+            {q && (
+              <button onClick={() => { setQ(''); setDebouncedQ(''); }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-mute)', display: 'grid', placeItems: 'center' }}>
+                <Icon name="close" size={15} strokeWidth={2.5} />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* League chips (visible when not searching) */}
+        {!isSearching && (
+          <div style={{ display: 'flex', gap: 8, padding: '0 14px 12px', overflowX: 'auto' }}>
+            {leagues.map(l => (
+              <Chip key={l.id} active={activeLeague === l.id} onClick={() => setLeagueId(l.id)} style={{ flexShrink: 0 }}>
+                {l.label}
+              </Chip>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="cs-scroll" style={{ flex: 1, overflow: 'auto', padding: '14px 14px 96px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+
+        {/* Search results */}
+        {isSearching && searchLoading && (
+          <div style={{ padding: '32px 0', textAlign: 'center', fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text-mute)' }}>Searching…</div>
+        )}
+        {isSearching && !searchLoading && players.length === 0 && (
+          <div style={{ textAlign: 'center', padding: '48px 20px' }}>
+            <Icon name="user" size={32} style={{ margin: '0 auto 12px', color: 'var(--text-mute)' }} />
+            <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--ink)' }}>No players found</div>
+            <div style={{ fontSize: 13, color: 'var(--text-mute)', marginTop: 4 }}>Try a different name or sport.</div>
+          </div>
+        )}
+        {isSearching && visiblePlayers.map(p => (
+          <PlayerRow key={p.id} player={p} onOpen={() => onOpenPlayer(p.id, p.leagueId)} />
+        ))}
+        {isSearching && hasMore && (
+          <button onClick={() => setPage(prev => prev + 1)} style={{ width: '100%', padding: '12px 0', background: 'var(--surface)', border: '2px solid var(--ink)', borderRadius: 12, fontFamily: 'var(--mono)', fontWeight: 700, fontSize: 12, color: 'var(--ink)', cursor: 'pointer', letterSpacing: '0.05em' }}>
+            LOAD MORE ({players.length - visiblePlayers.length} remaining)
+          </button>
+        )}
+
+        {/* Browse by team */}
+        {!isSearching && (
+          <>
+            {teamsLoading ? (
+              <div style={{ padding: '32px 0', textAlign: 'center', fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text-mute)' }}>Loading teams…</div>
+            ) : teams.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '48px 20px' }}>
+                <Icon name="user" size={32} style={{ margin: '0 auto 12px', color: 'var(--text-mute)' }} />
+                <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--ink)' }}>No teams found</div>
+                <div style={{ fontSize: 13, color: 'var(--text-mute)', marginTop: 4 }}>Try a different league.</div>
+              </div>
+            ) : (
+              <>
+                <div style={{ fontFamily: 'var(--mono)', fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-mute)', marginBottom: 4 }}>
+                  Browse by team · tap to search squad
+                </div>
+                {teams.map(t => (
+                  <TeamBrowseRow
+                    key={t.id}
+                    team={t}
+                    onSearch={() => { setQ(t.name); }}
+                  />
+                ))}
+              </>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function PlayerRow({ player, onOpen }: { player: PlayerResult; onOpen: () => void }) {
+  return (
+    <button onClick={onOpen} style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', padding: '12px 14px', background: 'var(--surface)', border: '2px solid var(--ink)', borderRadius: 12, boxShadow: 'var(--shadow-sm)', cursor: 'pointer', textAlign: 'left' }}>
+      <div style={{ width: 40, height: 40, borderRadius: 10, overflow: 'hidden', border: '2px solid var(--ink)', flexShrink: 0, background: 'var(--surface-3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        {player.headshot ? (
+          /* eslint-disable-next-line @next/next/no-img-element */
+          <img src={player.headshot} alt="" width={40} height={40} style={{ objectFit: 'cover', display: 'block' }} onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
+        ) : (
+          <Icon name="user" size={18} style={{ color: 'var(--text-mute)' }} />
+        )}
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontWeight: 700, fontSize: 13.5, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{player.name}</div>
+        <div style={{ fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--text-mute)', marginTop: 2 }}>
+          {[player.position, player.teamName, player.leagueName].filter(Boolean).join(' · ')}
+        </div>
+      </div>
+      {player.jersey && (
+        <Badge tone="mute">#{player.jersey}</Badge>
+      )}
+      <Icon name="arrow-right" size={16} style={{ color: 'var(--text-mute)', flexShrink: 0 }} />
+    </button>
+  );
+}
+
+function TeamBrowseRow({ team, onSearch }: { team: RealTeam; onSearch: () => void }) {
+  return (
+    <button onClick={onSearch} style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', padding: '11px 14px', background: 'var(--surface)', border: '2px solid var(--ink)', borderRadius: 12, boxShadow: 'var(--shadow-sm)', cursor: 'pointer', textAlign: 'left' }}>
+      <div style={{ width: 36, height: 36, borderRadius: 9, overflow: 'hidden', border: '2px solid var(--ink)', flexShrink: 0, background: 'var(--surface-3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        {team.logo ? (
+          /* eslint-disable-next-line @next/next/no-img-element */
+          <img src={team.logo} alt="" width={36} height={36} style={{ objectFit: 'contain', padding: 3 }} onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
+        ) : (
+          <span style={{ fontFamily: 'var(--mono)', fontWeight: 800, fontSize: 9, color: 'var(--text-dim)' }}>{team.abbr}</span>
+        )}
+      </div>
+      {team.color && <div style={{ width: 3, height: 32, borderRadius: 2, background: team.color, flexShrink: 0 }} />}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontWeight: 700, fontSize: 13.5, color: 'var(--ink)' }}>{team.name}</div>
+        <div style={{ fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--text-mute)', marginTop: 2 }}>{team.leagueName}</div>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--orange)', fontWeight: 700 }}>
+        Search squad <Icon name="search" size={12} />
+      </div>
+    </button>
+  );
+}

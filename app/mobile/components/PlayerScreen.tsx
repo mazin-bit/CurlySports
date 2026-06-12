@@ -1,11 +1,14 @@
 'use client';
-import React from 'react';
+import React, { useState } from 'react';
+import useSWR from 'swr';
 import { usePlayerDetail } from './api';
 import Card from './ui/Card';
 import Icon from './ui/Icon';
 import TeamCrest from './ui/TeamCrest';
 import Badge from './ui/Badge';
 import Button from './ui/Button';
+
+const favFetcher = (url: string) => fetch(url).then(r => r.json());
 
 interface PlayerProps {
   playerId?: string | null;
@@ -24,6 +27,21 @@ const STAT_LABELS: Record<string, string> = {
 
 export default function PlayerScreen({ playerId, playerLeagueId, onBack, onOpenMatch }: PlayerProps) {
   const { player: realPlayer, isLoading } = usePlayerDetail(playerId, playerLeagueId);
+  const { data: favData, mutate: mutFav } = useSWR<{ favorites: { type: string; espn_id: string }[] }>('/api/user-favorites', favFetcher);
+  const [saving, setSaving] = useState(false);
+  const isSaved = favData?.favorites?.some(f => f.type === 'player' && f.espn_id === playerId) ?? false;
+
+  const toggleFav = async () => {
+    if (!playerId || saving) return;
+    setSaving(true);
+    if (isSaved) {
+      await fetch('/api/user-favorites', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'player', espn_id: playerId }) });
+    } else if (realPlayer) {
+      await fetch('/api/user-favorites', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'player', espn_id: playerId, data: { name: realPlayer.name, position: realPlayer.position ?? '', teamName: realPlayer.teamName, headshot: realPlayer.headshot ?? null, leagueId: playerLeagueId ?? realPlayer.leagueId ?? '', leagueName: realPlayer.leagueName ?? '', sport: realPlayer.sport ?? '' } }) });
+    }
+    await mutFav();
+    setSaving(false);
+  };
 
   // Radar geometry (only shown when real data available)
   const radarData: [string, number][] = realPlayer ? buildRadar(realPlayer.stats) : [];
@@ -48,7 +66,7 @@ export default function PlayerScreen({ playerId, playerLeagueId, onBack, onOpenM
           <Icon name="arrow-right" size={18} />
         </button>
         <div style={{ fontFamily: 'var(--display)', fontWeight: 800, fontSize: 18, color: 'var(--ink)' }}>Player</div>
-        <button style={{ marginLeft: 'auto', width: 38, height: 38, background: 'var(--surface)', border: '2px solid var(--ink)', borderRadius: 11, display: 'grid', placeItems: 'center', color: 'var(--ink)', cursor: 'pointer' }}><Icon name="heart" size={17} /></button>
+        <button onClick={toggleFav} disabled={saving} style={{ marginLeft: 'auto', width: 38, height: 38, background: isSaved ? 'var(--coral)' : 'var(--surface)', border: `2px solid ${isSaved ? 'var(--coral)' : 'var(--ink)'}`, borderRadius: 11, display: 'grid', placeItems: 'center', color: isSaved ? '#fff' : 'var(--ink)', cursor: saving ? 'default' : 'pointer', opacity: saving ? 0.6 : 1 }}><Icon name="heart" size={17} style={{ fill: isSaved ? 'currentColor' : 'none' }} /></button>
       </header>
 
       <div className="cs-scroll" style={{ flex: 1, overflow: 'auto', padding: '14px 14px 96px', display: 'flex', flexDirection: 'column', gap: 16 }}>

@@ -20,6 +20,7 @@ interface Post {
   liked: boolean;
   voted_option: number | null;
   poll: { options: string[]; votes: number[] } | null;
+  image_url: string | null;
   created_at: string;
   user_id: string;
 }
@@ -34,6 +35,7 @@ interface Comment {
 }
 
 interface DebatesProps {
+  sport: string;
   onSearch: () => void;
   onBell: () => void;
   onOpenPlayer: (playerId?: string, leagueId?: string) => void;
@@ -41,14 +43,7 @@ interface DebatesProps {
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
-const fetcher = (url: string) => {
-  console.log(`[mobile] GET ${url}`);
-  return fetch(url).then(async r => {
-    const data = await r.json();
-    console.log(`[mobile] ${url} → status=${r.status} posts=${data?.posts?.length ?? data?.comments?.length ?? JSON.stringify(data).slice(0, 80)}`);
-    return data;
-  });
-};
+const fetcher = (url: string) => fetch(url).then(r => r.json());
 
 function timeAgo(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
@@ -194,20 +189,52 @@ function CommentsSheet({ postId, onClose }: { postId: string; onClose: () => voi
 }
 
 // ─── Main Component ───────────────────────────────────────────────────────────
-export default function DebatesScreen({ onSearch, onBell, unread }: DebatesProps) {
+export default function DebatesScreen({ sport, onSearch, onBell, unread }: DebatesProps) {
   const { user, profile } = useAuth();
   const [composerText, setComposerText] = useState('');
   const [posting, setPosting] = useState(false);
   const [postError, setPostError] = useState<string | null>(null);
   const [openComments, setOpenComments] = useState<string | null>(null);
+  const [sort, setSort] = useState<'hot' | 'new'>('hot');
+  const [allPosts, setAllPosts] = useState<Post[]>([]);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [feedLoading, setFeedLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
 
-  // No sport filter — show debates from all sports so mobile sees the same data as web
-  const { data: feedData, mutate: mutateFeed, isLoading: feedLoading } = useSWR<{ posts: Post[] }>(
-    '/api/posts?limit=20',
-    fetcher,
-    { refreshInterval: 30_000 }
-  );
-  const posts = feedData?.posts ?? [];
+  const loadPosts = React.useCallback(async (replace = true) => {
+    if (replace) setFeedLoading(true);
+    try {
+      const res = await fetch(`/api/posts?sport=${sport}&limit=20`);
+      if (res.ok) {
+        const data = await res.json() as { posts: Post[]; nextCursor?: string };
+        setAllPosts(prev => replace ? (data.posts ?? []) : [...prev, ...(data.posts ?? [])]);
+        setNextCursor(data.nextCursor ?? null);
+      }
+    } finally {
+      setFeedLoading(false);
+    }
+  }, [sport]);
+
+  React.useEffect(() => { loadPosts(true); }, [loadPosts]);
+
+  const loadMore = async () => {
+    if (!nextCursor || loadingMore) return;
+    setLoadingMore(true);
+    try {
+      const res = await fetch(`/api/posts?sport=${sport}&cursor=${encodeURIComponent(nextCursor)}&limit=20`);
+      if (res.ok) {
+        const data = await res.json() as { posts: Post[]; nextCursor?: string };
+        setAllPosts(prev => [...prev, ...(data.posts ?? [])]);
+        setNextCursor(data.nextCursor ?? null);
+      }
+    } finally {
+      setLoadingMore(false);
+    }
+  };
+
+  const posts: Post[] = sort === 'hot'
+    ? [...allPosts].sort((a, b) => (b.likes_count + b.comments_count) - (a.likes_count + a.comments_count))
+    : [...allPosts].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
   const { debates: realDebates, mutate: mutateDebates } = useDebatesList();
   const liveDebate = realDebates.find(d => d.isLive) ?? realDebates[0] ?? null;
@@ -246,55 +273,46 @@ export default function DebatesScreen({ onSearch, onBell, unread }: DebatesProps
 
   const toggleLike = async (postId: string, currentlyLiked: boolean) => {
     if (!user) return;
-    console.log(`[mobile] POST /api/posts/${postId}/like user_id=${user.id} currently_liked=${currentlyLiked}`);
-    mutateFeed(prev => {
-      if (!prev) return prev;
-      return {
-        ...prev,
-        posts: prev.posts.map(p =>
-          p.id === postId
-            ? { ...p, liked: !currentlyLiked, likes_count: p.likes_count + (currentlyLiked ? -1 : 1) }
-            : p
-        ),
-      };
-    }, false);
+    setAllPosts(prev => prev.map(p =>
+      p.id === postId ? { ...p, liked: !currentlyLiked, likes_count: p.likes_count + (currentlyLiked ? -1 : 1) } : p
+    ));
     await fetch(`/api/posts/${postId}/like`, { method: 'POST' });
-    mutateFeed();
   };
 
   const votePoll = async (postId: string, optionIndex: number) => {
     if (!user) return;
-    console.log(`[mobile] POST /api/posts/${postId}/vote user_id=${user.id} option=${optionIndex} table=post_votes`);
     const res = await fetch(`/api/posts/${postId}/vote`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ optionIndex }),
     });
-    if (res.ok) mutateFeed();
+    if (res.ok) {
+      const data = await res.json() as { poll: Post['poll']; voted_option: number };
+      setAllPosts(prev => prev.map(p =>
+        p.id === postId ? { ...p, poll: data.poll, voted_option: data.voted_option } : p
+      ));
+    }
   };
 
   const submitPost = async () => {
     const text = composerText.trim();
     if (!text || !user) return;
-    console.log(`[mobile] POST /api/posts INSERT user_id=${user.id} table=posts sport=football tag=DEBATE`);
     setPosting(true);
     setPostError(null);
     try {
       const res = await fetch('/api/posts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: text, sport: 'football', tag: 'DEBATE' }),
+        body: JSON.stringify({ content: text, sport, tag: 'DEBATE' }),
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({})) as { error?: string };
-        console.error(`[mobile] POST /api/posts FAILED`, err.error);
         setPostError(err.error || 'Failed to post. Try again.');
         return;
       }
-      const newPost = await res.json().catch(() => null);
-      console.log(`[mobile] POST /api/posts OK id=${newPost?.id} author=${newPost?.author_name}`);
+      const newPost = await res.json() as Post;
       setComposerText('');
-      mutateFeed();
+      setAllPosts(prev => [newPost, ...prev]);
     } finally {
       setPosting(false);
     }
@@ -337,12 +355,22 @@ export default function DebatesScreen({ onSearch, onBell, unread }: DebatesProps
           </Card>
         )}
 
+        {/* ── Sort toggle (matches web Hot/New) ── */}
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button onClick={() => setSort('hot')} style={{ flex: 1, padding: '8px 0', borderRadius: 10, border: '2px solid var(--ink)', fontFamily: 'var(--mono)', fontWeight: 700, fontSize: 11, cursor: 'pointer', background: sort === 'hot' ? 'var(--ink)' : 'var(--surface)', color: sort === 'hot' ? 'var(--accent)' : 'var(--ink)' }}>
+            🔥 Hot
+          </button>
+          <button onClick={() => setSort('new')} style={{ flex: 1, padding: '8px 0', borderRadius: 10, border: '2px solid var(--ink)', fontFamily: 'var(--mono)', fontWeight: 700, fontSize: 11, cursor: 'pointer', background: sort === 'new' ? 'var(--ink)' : 'var(--surface)', color: sort === 'new' ? 'var(--accent)' : 'var(--ink)' }}>
+            ⚡ New
+          </button>
+        </div>
+
         {/* ── Posts feed ── */}
-        {feedLoading && posts.length === 0 && (
+        {feedLoading && allPosts.length === 0 && (
           <div style={{ textAlign: 'center', padding: 32, fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--text-mute)' }}>Loading takes…</div>
         )}
 
-        {!feedLoading && posts.length === 0 && (
+        {!feedLoading && allPosts.length === 0 && (
           <Card>
             <div style={{ textAlign: 'center', padding: 24 }}>
               <div style={{ fontFamily: 'var(--display)', fontWeight: 800, fontSize: 18, color: 'var(--ink)', marginBottom: 8 }}>No takes yet</div>
@@ -360,6 +388,16 @@ export default function DebatesScreen({ onSearch, onBell, unread }: DebatesProps
             onComment={() => setOpenComments(post.id)}
           />
         ))}
+
+        {nextCursor && (
+          <button
+            onClick={loadMore}
+            disabled={loadingMore}
+            style={{ width: '100%', padding: '12px 0', background: 'var(--surface)', border: '2px solid var(--ink)', borderRadius: 12, fontFamily: 'var(--mono)', fontWeight: 700, fontSize: 12, color: 'var(--ink)', cursor: loadingMore ? 'not-allowed' : 'pointer', letterSpacing: '0.05em' }}
+          >
+            {loadingMore ? '…' : 'LOAD MORE'}
+          </button>
+        )}
       </div>
 
       {/* ── Composer ── */}
@@ -419,6 +457,12 @@ function PostCard({ post, onLike, onVote, onComment }: { post: Post; onLike: () 
       </div>
 
       <div style={{ fontSize: 14, color: 'var(--text-dim)', lineHeight: 1.5, marginBottom: 12 }}>{post.content}</div>
+
+      {/* Image attachment */}
+      {post.image_url && (
+        /* eslint-disable-next-line @next/next/no-img-element */
+        <img src={post.image_url} alt="" style={{ width: '100%', borderRadius: 10, border: '2px solid var(--ink)', marginBottom: 12, display: 'block', maxHeight: 300, objectFit: 'cover' }} onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
+      )}
 
       {/* Poll */}
       {post.poll && (

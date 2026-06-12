@@ -1,7 +1,8 @@
 'use client';
 import React, { useState } from 'react';
 import type { Match } from '../data';
-import { useMatchDetail, mapStatsToRows, mapEventType } from './api';
+import { mapStatsToRows, mapEventType } from './api';
+import { useMatchStream } from '@/hooks/useMatchStream';
 import Card from './ui/Card';
 import Icon from './ui/Icon';
 import StatBar from './ui/StatBar';
@@ -21,38 +22,59 @@ interface MatchScreenProps {
 export default function MatchScreen({ match, liveClock, onBack, onOpenPlayer }: MatchScreenProps) {
   const [tab, setTab] = useState<string>('summary');
 
-  // Fetch real match detail whenever we have a valid ESPN ID
-  const matchId = match?.id ? String(match.id) : null;
+  // SSE real-time match stream — same source as web MatchClient
+  const matchId = match?.id ? String(match.id) : '';
+  const sport = match?.sport ?? 'football';
   const leagueId = match?.leagueId ?? 'eng.1';
-  const { detail, isLoading } = useMatchDetail(matchId, leagueId);
+  const { data, isLoading } = useMatchStream(matchId, sport, leagueId);
 
-  // Teams — prefer real detail, fall back to match prop
-  const homeTeam = detail
-    ? { name: detail.homeTeam.name, abbr: detail.homeTeam.shortName, code: detail.homeTeam.shortName.toLowerCase().replace(/[^a-z]/g, '').slice(0, 4), score: detail.homeScore ?? 0, logoUrl: detail.homeTeam.logoUrl }
-    : match ? { ...match.home, logoUrl: match.home.logoUrl ?? undefined } : { name: '—', abbr: '—', code: '—', score: 0, logoUrl: undefined };
-  const awayTeam = detail
-    ? { name: detail.awayTeam.name, abbr: detail.awayTeam.shortName, code: detail.awayTeam.shortName.toLowerCase().replace(/[^a-z]/g, '').slice(0, 4), score: detail.awayScore ?? 0, logoUrl: detail.awayTeam.logoUrl }
-    : match ? { ...match.away, logoUrl: match.away.logoUrl ?? undefined } : { name: '—', abbr: '—', code: '—', score: 0, logoUrl: undefined };
+  // Teams — prefer SSE data for scores/logo, match prop for abbr/code
+  const homeTeam = {
+    name: data?.homeTeam.name ?? match?.home.name ?? '—',
+    abbr: match?.home.abbr ?? (data?.homeTeam.name?.slice(0, 3).toUpperCase() ?? '—'),
+    code: match?.home.code ?? (data?.homeTeam.name?.toLowerCase().replace(/[^a-z]/g, '').slice(0, 4) ?? '—'),
+    score: data?.homeTeam.score != null ? (parseInt(data.homeTeam.score) || 0) : (match?.home.score ?? 0),
+    logoUrl: (data?.homeTeam.logo ?? match?.home.logoUrl) ?? undefined,
+  };
+  const awayTeam = {
+    name: data?.awayTeam.name ?? match?.away.name ?? '—',
+    abbr: match?.away.abbr ?? (data?.awayTeam.name?.slice(0, 3).toUpperCase() ?? '—'),
+    code: match?.away.code ?? (data?.awayTeam.name?.toLowerCase().replace(/[^a-z]/g, '').slice(0, 4) ?? '—'),
+    score: data?.awayTeam.score != null ? (parseInt(data.awayTeam.score) || 0) : (match?.away.score ?? 0),
+    logoUrl: (data?.awayTeam.logo ?? match?.away.logoUrl) ?? undefined,
+  };
 
-  const isLive = match?.status === 'live' || detail?.status === 'LIVE' || detail?.status === 'HALF_TIME';
-  const clock = liveClock ?? detail?.minute ?? match?.clock ?? '';
-  const leagueName = detail?.leagueName ?? match?.league ?? '';
-  const venue = detail?.venue ?? null;
+  const statusVal = data?.status?.toUpperCase() ?? '';
+  const isLive = match?.status === 'live' || statusVal === 'IN_PROGRESS' || statusVal === 'LIVE' || statusVal === 'HALF_TIME' || statusVal === 'STATUS_IN_PROGRESS';
+  const clock = liveClock ?? data?.clock ?? match?.clock ?? '';
+  const leagueName = match?.league ?? '';
+  const venue = data?.venue ?? null;
 
-  // Stats
-  const statsRows: [string, string, number][] = detail ? mapStatsToRows(detail.homeStats, detail.awayStats) : [];
+  // Stats — convert SSE TeamStats[] to Record<string,string> for mapStatsToRows
+  const homeStats: Record<string, string> = {};
+  const awayStats: Record<string, string> = {};
+  if (data?.stats?.[0]) for (const s of data.stats[0].stats) { if (s.name && s.value != null) homeStats[s.name] = s.value; }
+  if (data?.stats?.[1]) for (const s of data.stats[1].stats) { if (s.name && s.value != null) awayStats[s.name] = s.value; }
+  const statsRows: [string, string, number][] = mapStatsToRows(homeStats, awayStats);
 
-  // Timeline
-  const timelineEvents = (detail?.events?.filter(e => e.isPrimary).map((e, i) => ({
-    min: e.clock, type: mapEventType(e.type),
-    side: e.teamSide as 'home' | 'away' | null,
-    title: e.text, sub: e.teamName ?? '', score: undefined as string | undefined, id: String(e.id ?? i),
-  })) ?? []);
+  // Timeline — convert SSE KeyEvent[] to timeline format
+  const timelineEvents = (data?.keyEvents ?? []).map((e, i) => {
+    let type: 'goal' | 'yellow' | 'sub' | 'chance' | 'half' = 'chance';
+    if (e.isYellowCard) type = 'yellow';
+    else if (e.isSubstitution) type = 'sub';
+    else if (e.type) type = mapEventType(e.type);
+    const side: 'home' | 'away' | null =
+      e.teamId === data?.homeTeam.id ? 'home' :
+      e.teamId === data?.awayTeam.id ? 'away' : null;
+    return { min: e.clock ?? '', type, side, title: e.text ?? e.playerName ?? '', sub: e.playerName ?? '', score: undefined as string | undefined, id: e.id ?? String(i) };
+  });
 
-  // Lineups
-  const lineups = detail ? {
-    home: { formation: detail.homeLineup.formation, players: detail.homeLineup.starters.map(p => [p.jersey, p.name] as [string, string]) },
-    away: { formation: detail.awayLineup.formation, players: detail.awayLineup.starters.map(p => [p.jersey, p.name] as [string, string]) },
+  // Lineups — use rosters from SSE (home = rosters[0], away = rosters[1])
+  const homeRoster = data?.rosters.find(r => r.teamId === data?.homeTeam.id) ?? data?.rosters[0];
+  const awayRoster = data?.rosters.find(r => r.teamId === data?.awayTeam.id) ?? data?.rosters[1];
+  const lineups = homeRoster && awayRoster ? {
+    home: { formation: homeRoster.formation ?? '', players: homeRoster.players.filter(p => p.starter).map(p => [p.jerseyPosition ?? '', p.name ?? ''] as [string, string]) },
+    away: { formation: awayRoster.formation ?? '', players: awayRoster.players.filter(p => p.starter).map(p => [p.jerseyPosition ?? '', p.name ?? ''] as [string, string]) },
   } : null;
 
   return (
@@ -82,7 +104,7 @@ export default function MatchScreen({ match, liveClock, onBack, onOpenPlayer }: 
                 {awayTeam.score}
               </div>
               <div style={{ fontFamily: 'var(--mono)', fontSize: 10, color: isLive ? 'var(--accent)' : 'rgba(255,253,247,0.6)', marginTop: 6 }}>
-                {isLive ? `${clock} · ${detail?.status === 'HALF_TIME' ? '1st half' : '2nd half'}` : (match?.status === 'ft' ? 'Full time' : (clock || 'Upcoming'))}
+                {isLive ? `${clock} · ${statusVal === 'HALF_TIME' ? '1st half' : '2nd half'}` : (match?.status === 'ft' ? 'Full time' : (clock || 'Upcoming'))}
               </div>
               {isLoading && <div style={{ fontFamily: 'var(--mono)', fontSize: 9, color: 'rgba(255,253,247,0.35)', marginTop: 4 }}>Updating…</div>}
             </div>

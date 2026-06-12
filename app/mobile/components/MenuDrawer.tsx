@@ -4,9 +4,25 @@ import Icon from './ui/Icon';
 import Badge from './ui/Badge';
 
 const SECTIONS: [string, [string, string, string, string?][]][] = [
-  ['App', [['home', 'Home', 'home'], ['live', 'Live Scores', 'live'], ['leagues', 'Leagues', 'trophy'], ['players', 'Players', 'user'], ['search', 'Search', 'search']]],
-  ['Community', [['funzone', 'Debates', 'spark', 'HOT'], ['notifications', 'Notifications', 'bell', '3']]],
-  ['You', [['profile', 'Profile & settings', 'cog'], ['favorites', 'Favourites', 'heart']]],
+  ['App', [
+    ['home', 'Home', 'home'],
+    ['live', 'Live Scores', 'live'],
+    ['leagues', 'Leagues', 'trophy'],
+    ['teams', 'Teams', 'user'],
+    ['players', 'Players', 'user'],
+    ['news', 'News', 'news'],
+    ['search', 'Search', 'search'],
+  ]],
+  ['Entertainment', [
+    ['funzone', 'Debates', 'spark', 'HOT'],
+    ['videos', 'Videos', 'live'],
+    ['minigames', 'Mini Games', 'bolt'],
+  ]],
+  ['You', [
+    ['profile', 'Profile & settings', 'cog'],
+    ['favorites', 'Favourites', 'heart'],
+    ['notifications', 'Notifications', 'bell'],
+  ]],
 ];
 
 interface MenuDrawerProps {
