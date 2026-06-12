@@ -18,12 +18,12 @@ export default function MatchRow({ home, away, league, status = 'live', clock, o
     <div onClick={onClick} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 4px', cursor: onClick ? 'pointer' : 'default' }}>
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8, minWidth: 0 }}>
         <div className="cs-team">
-          <TeamCrest code={home.code} abbr={home.abbr} />
+          <TeamCrest code={home.code} abbr={home.abbr} logoUrl={home.logoUrl} />
           <span className="name">{home.name}</span>
           <span style={{ marginLeft: 'auto', fontFamily: 'var(--display)', fontWeight: 800, fontSize: 18, color: 'var(--ink)' }}>{home.score}</span>
         </div>
         <div className="cs-team">
-          <TeamCrest code={away.code} abbr={away.abbr} />
+          <TeamCrest code={away.code} abbr={away.abbr} logoUrl={away.logoUrl} />
           <span className="name">{away.name}</span>
           <span style={{ marginLeft: 'auto', fontFamily: 'var(--display)', fontWeight: 800, fontSize: 18, color: 'var(--ink)' }}>{away.score}</span>
         </div>

@@ -15,8 +15,8 @@ export default function TeamCrest({ code, abbr, size = 'md', logoUrl, className 
   const hasClass = code && KNOWN_CODES.has(code.toLowerCase());
   const dim = size === 'lg' ? 40 : 28;
 
-  // If we have a real logo URL and no matching CSS class, use an image
-  if (logoUrl && !hasClass) {
+  // Always prefer a real logo URL when available
+  if (logoUrl) {
     return (
       <div
         className={['cs-crest', size === 'lg' && 'cs-crest--lg', className].filter(Boolean).join(' ')}

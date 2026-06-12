@@ -18,42 +18,47 @@ export async function POST(
     return NextResponse.json({ error: "option must be 'A' or 'B'" }, { status: 400 });
   }
 
-  // Ensure Prisma User record exists (upsert by email)
-  let dbUser = await prisma.user.findFirst({ where: { email: user.email! } });
-  if (!dbUser) {
-    const base = user.user_metadata?.username || user.email!.split("@")[0];
-    const username = `${base}_${Date.now().toString(36)}`;
-    try {
-      dbUser = await prisma.user.create({ data: { email: user.email!, username } });
-    } catch {
-      dbUser = await prisma.user.findFirst({ where: { email: user.email! } });
+  try {
+    // Ensure Prisma User record exists (upsert by email)
+    let dbUser = await prisma.user.findFirst({ where: { email: user.email! } });
+    if (!dbUser) {
+      const base = user.user_metadata?.username || user.email!.split("@")[0];
+      const username = `${base}_${Date.now().toString(36)}`;
+      try {
+        dbUser = await prisma.user.create({ data: { email: user.email!, username } });
+      } catch {
+        dbUser = await prisma.user.findFirst({ where: { email: user.email! } });
+      }
     }
-  }
-  if (!dbUser) return NextResponse.json({ error: "User record not found" }, { status: 500 });
+    if (!dbUser) return NextResponse.json({ error: "User record not found" }, { status: 500 });
 
-  // Check if already voted
-  const existing = await prisma.debateVote.findUnique({
-    where: { debateId_userId: { debateId: id, userId: dbUser.id } },
-  });
-
-  if (existing) {
-    const debate = await prisma.debate.findUnique({ where: { id } });
-    return NextResponse.json({
-      votesA: debate?.votesA ?? 0,
-      votesB: debate?.votesB ?? 0,
-      userVote: existing.option,
-      alreadyVoted: true,
+    // Check if already voted
+    const existing = await prisma.debateVote.findUnique({
+      where: { debateId_userId: { debateId: id, userId: dbUser.id } },
     });
+
+    if (existing) {
+      const debate = await prisma.debate.findUnique({ where: { id } });
+      return NextResponse.json({
+        votesA: debate?.votesA ?? 0,
+        votesB: debate?.votesB ?? 0,
+        userVote: existing.option,
+        alreadyVoted: true,
+      });
+    }
+
+    // Record vote + increment counter atomically
+    const [, debate] = await prisma.$transaction([
+      prisma.debateVote.create({ data: { debateId: id, userId: dbUser.id, option } }),
+      prisma.debate.update({
+        where: { id },
+        data: option === "A" ? { votesA: { increment: 1 } } : { votesB: { increment: 1 } },
+      }),
+    ]);
+
+    return NextResponse.json({ votesA: debate.votesA, votesB: debate.votesB, userVote: option });
+  } catch (err) {
+    console.error("[/api/debates vote] DB error:", err);
+    return NextResponse.json({ error: "Database not available" }, { status: 503 });
   }
-
-  // Record vote + increment counter atomically
-  const [, debate] = await prisma.$transaction([
-    prisma.debateVote.create({ data: { debateId: id, userId: dbUser.id, option } }),
-    prisma.debate.update({
-      where: { id },
-      data: option === "A" ? { votesA: { increment: 1 } } : { votesB: { increment: 1 } },
-    }),
-  ]);
-
-  return NextResponse.json({ votesA: debate.votesA, votesB: debate.votesB, userVote: option });
 }

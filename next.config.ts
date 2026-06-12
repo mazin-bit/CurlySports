@@ -33,7 +33,7 @@ const nextConfig: NextConfig = {
   experimental: {
     // Required for proper SSE response streaming in App Router
     serverActions: {
-      allowedOrigins: ["localhost:3001"],
+      allowedOrigins: ["localhost:3001", "curly.sports", "www.curly.sports"],
     },
   },
 };
