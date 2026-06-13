@@ -60,12 +60,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     mountedRef.current = true;
 
     const init = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!mountedRef.current) return;
-      const u = session?.user ?? null;
-      setUser(u);
-      if (u) await fetchProfile(u);
-      setIsLoading(false);
+      try {
+        const timeout = new Promise<null>(resolve => setTimeout(() => resolve(null), 4000));
+        const sessionReq = supabase.auth.getSession().then(r => r.data.session);
+        const session = await Promise.race([sessionReq, timeout]);
+        if (!mountedRef.current) return;
+        const u = session?.user ?? null;
+        setUser(u);
+        if (u) await fetchProfile(u);
+      } catch {
+        // network error — treat as logged out
+      } finally {
+        if (mountedRef.current) setIsLoading(false);
+      }
     };
 
     init();

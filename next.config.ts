@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
 import path from "path";
 
+const sharedPath = path.join(__dirname, "../shared");
+
 const nextConfig: NextConfig = {
   // Required for Docker standalone deployment
   output: "standalone",
@@ -30,9 +32,16 @@ const nextConfig: NextConfig = {
     minimumCacheTTL: 3600,
   },
 
-  // Resolve @curly/shared from the monorepo shared package
+  // Resolve @curly/shared → ../shared (Turbopack, default in Next.js 16)
+  turbopack: {
+    resolveAlias: {
+      "@curly/shared": sharedPath,
+    },
+  },
+
+  // Webpack fallback (used when running with --webpack flag)
   webpack(config) {
-    config.resolve.alias["@curly/shared"] = path.join(__dirname, "../shared");
+    config.resolve.alias["@curly/shared"] = sharedPath;
     return config;
   },
 
