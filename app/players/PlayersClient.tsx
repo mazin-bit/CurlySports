@@ -6,53 +6,10 @@ import Link from "next/link";
 import styles from "./players.module.css";
 import { PersonStanding, Search, Globe } from "lucide-react";
 import { useActiveSport } from "@/contexts/SportContext";
+import { FOOTBALL_LEAGUES, OTHER_LEAGUES } from "@curly/shared";
 
 const ESPN = "https://site.api.espn.com/apis/site/v2/sports";
 const PAGE_SIZE = 80;
-
-const FOOTBALL_LEAGUES = [
-  { id: "eng.1",  name: "Premier League",   path: "soccer/eng.1"  },
-  { id: "esp.1",  name: "La Liga",          path: "soccer/esp.1"  },
-  { id: "ger.1",  name: "Bundesliga",       path: "soccer/ger.1"  },
-  { id: "ita.1",  name: "Serie A",          path: "soccer/ita.1"  },
-  { id: "fra.1",  name: "Ligue 1",          path: "soccer/fra.1"  },
-  { id: "por.1",  name: "Primeira Liga",    path: "soccer/por.1"  },
-  { id: "ned.1",  name: "Eredivisie",       path: "soccer/ned.1"  },
-  { id: "eng.2",  name: "Championship",     path: "soccer/eng.2"  },
-  { id: "tur.1",  name: "Süper Lig",        path: "soccer/tur.1"  },
-  { id: "sco.1",  name: "Scottish Prem",    path: "soccer/sco.1"  },
-  { id: "bel.1",  name: "Pro League",       path: "soccer/bel.1"  },
-  { id: "gre.1",  name: "Super League",     path: "soccer/gre.1"  },
-  { id: "usa.1",  name: "MLS",              path: "soccer/usa.1"  },
-  { id: "mex.1",  name: "Liga MX",          path: "soccer/mex.1"  },
-  { id: "bra.1",  name: "Brasileirão",      path: "soccer/bra.1"  },
-  { id: "arg.1",  name: "Liga Profesional", path: "soccer/arg.1"  },
-  { id: "col.1",  name: "Liga BetPlay",     path: "soccer/col.1"  },
-  { id: "ksa.1",  name: "Saudi Pro League", path: "soccer/ksa.1"  },
-  { id: "jpn.1",  name: "J1 League",        path: "soccer/jpn.1"  },
-  { id: "aus.1",  name: "A-League",         path: "soccer/aus.1"  },
-  { id: "chi.1",  name: "Primera División", path: "soccer/chi.1"  },
-  { id: "ecu.1",  name: "Liga Pro",         path: "soccer/ecu.1"  },
-  { id: "rus.1",  name: "Premier Liga",     path: "soccer/rus.1"  },
-];
-
-const OTHER_LEAGUES: Record<string, { id: string; name: string; path: string }[]> = {
-  basketball: [
-    { id: "nba",  name: "NBA",  path: "basketball/nba"  },
-    { id: "wnba", name: "WNBA", path: "basketball/wnba" },
-  ],
-  nfl:      [{ id: "nfl",     name: "NFL",     path: "football/nfl"       }],
-  hockey:   [{ id: "nhl",     name: "NHL",     path: "hockey/nhl"         }],
-  baseball: [{ id: "mlb",     name: "MLB",     path: "baseball/mlb"       }],
-  cricket: [
-    { id: "ipl",          name: "IPL",               path: "cricket/ipl"          },
-    { id: "big.bash",     name: "Big Bash",           path: "cricket/big.bash"     },
-    { id: "psl",          name: "PSL",                path: "cricket/psl"          },
-    { id: "cplt20",       name: "CPL",                path: "cricket/cplt20"       },
-    { id: "sa.domestic",  name: "SA20",               path: "cricket/sa.domestic"  },
-    { id: "eng.domestic", name: "County",             path: "cricket/eng.domestic" },
-  ],
-};
 
 interface Player {
   id: string; name: string; jersey: string; position: string;

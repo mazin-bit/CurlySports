@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import path from "path";
 
 const nextConfig: NextConfig = {
   // Required for Docker standalone deployment
@@ -27,6 +28,12 @@ const nextConfig: NextConfig = {
     formats: ["image/avif", "image/webp"],
     qualities: [75, 90, 100],
     minimumCacheTTL: 3600,
+  },
+
+  // Resolve @curly/shared from the monorepo shared package
+  webpack(config) {
+    config.resolve.alias["@curly/shared"] = path.join(__dirname, "../shared");
+    return config;
   },
 
   // Enable experimental features for SSE streaming
