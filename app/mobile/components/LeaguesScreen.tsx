@@ -130,13 +130,13 @@ export default function LeaguesScreen({ sport, onSearch, onBell, onOpenPlayer, u
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px', borderBottom: '1px solid var(--border-3)' }}>
                         <TeamCrest code={m.home.shortName?.toLowerCase().replace(/[^a-z]/g, '').slice(0, 4) ?? 'home'} abbr={m.home.shortName?.slice(0, 3).toUpperCase() ?? 'HOM'} logoUrl={m.home.logo} />
                         <span style={{ flex: 1, fontWeight: m.home.winner ? 700 : 500, fontSize: 13, color: m.home.winner ? 'var(--ink)' : 'var(--text-dim)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.home.name}</span>
-                        {m.home.score !== null && <span style={{ fontFamily: 'var(--display)', fontWeight: 800, fontSize: 16, color: m.home.winner ? 'var(--accent)' : 'var(--ink)', minWidth: 20, textAlign: 'center' }}>{m.home.score}</span>}
+                        {m.home.score !== null && <span style={{ fontFamily: 'var(--display)', fontWeight: 800, fontSize: 16, color: m.home.winner ? 'var(--orange)' : 'var(--ink)', minWidth: 20, textAlign: 'center' }}>{m.home.score}</span>}
                       </div>
                       {/* Away team row */}
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px' }}>
                         <TeamCrest code={m.away.shortName?.toLowerCase().replace(/[^a-z]/g, '').slice(0, 4) ?? 'away'} abbr={m.away.shortName?.slice(0, 3).toUpperCase() ?? 'AWY'} logoUrl={m.away.logo} />
                         <span style={{ flex: 1, fontWeight: m.away.winner ? 700 : 500, fontSize: 13, color: m.away.winner ? 'var(--ink)' : 'var(--text-dim)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.away.name}</span>
-                        {m.away.score !== null && <span style={{ fontFamily: 'var(--display)', fontWeight: 800, fontSize: 16, color: m.away.winner ? 'var(--accent)' : 'var(--ink)', minWidth: 20, textAlign: 'center' }}>{m.away.score}</span>}
+                        {m.away.score !== null && <span style={{ fontFamily: 'var(--display)', fontWeight: 800, fontSize: 16, color: m.away.winner ? 'var(--orange)' : 'var(--ink)', minWidth: 20, textAlign: 'center' }}>{m.away.score}</span>}
                       </div>
                       {/* Match meta */}
                       {(m.statusDisplay || m.leg) && (

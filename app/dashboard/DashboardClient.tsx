@@ -173,12 +173,12 @@ function StandingsTable({ entries, leagueName, max = 8 }: { entries: StandingEnt
           {isFootball && <span className={styles.hideXs}>D</span>}
           <span className={styles.hideXs}>L</span>
           {isFootball && <span className={styles.hideSm}>GD</span>}
-          <span style={{ color: "var(--accent)", fontWeight: 700 }}>Pts</span>
+          <span style={{ color: "var(--orange)", fontWeight: 700 }}>Pts</span>
         </div>
       </div>
       {rows.map((row, idx) => (
         <div key={row.teamId || idx} className={styles.tableRow}>
-          <span className={styles.tablePos} style={{ color: idx < 4 ? "var(--accent)" : "var(--text-mute)" }}>
+          <span className={styles.tablePos} style={{ color: idx < 4 ? "var(--orange)" : "var(--text-mute)" }}>
             {row.rank || idx + 1}
           </span>
           <div className={styles.tableTeam}>
@@ -195,7 +195,7 @@ function StandingsTable({ entries, leagueName, max = 8 }: { entries: StandingEnt
           {isFootball && <span className={`${styles.tableStat} ${styles.hideXs}`}>{row.draws}</span>}
           <span className={`${styles.tableStat} ${styles.hideXs}`}>{row.losses}</span>
           {isFootball && (
-            <span className={`${styles.tableStat} ${styles.hideSm}`} style={{ color: row.goalDiff > 0 ? "var(--accent)" : row.goalDiff < 0 ? "var(--coral)" : undefined }}>
+            <span className={`${styles.tableStat} ${styles.hideSm}`} style={{ color: row.goalDiff > 0 ? "var(--teal)" : row.goalDiff < 0 ? "var(--coral)" : undefined }}>
               {row.goalDiff > 0 ? `+${row.goalDiff}` : row.goalDiff}
             </span>
           )}

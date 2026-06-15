@@ -28,18 +28,6 @@ export default function Topbar({ title, subtitle }: TopbarProps) {
         {subtitle && <span className="sub">{subtitle}</span>}
       </div>
 
-      <div className="tb-search">
-        <span className="s-icon">
-          <Ico id="i-search" />
-        </span>
-        <input
-          type="text"
-          placeholder="Search players, teams, matches…"
-          aria-label="Search"
-        />
-        <span className="kbd">⌘ K</span>
-      </div>
-
       <div className="tb-sponsor" title="Advertise with us">
         <span className="tb-sponsor__label">Ad</span>
         <span className="tb-sponsor__icon">◈</span>

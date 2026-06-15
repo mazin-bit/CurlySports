@@ -44,11 +44,11 @@ function MiniStandingsTable({ entries, leagueName }: { entries: StandingEntry[];
         {isFootball && <span style={{ width: 22, textAlign: 'center' }}>D</span>}
         <span style={{ width: 22, textAlign: 'center' }}>L</span>
         {isFootball && <span style={{ width: 28, textAlign: 'center' }}>GD</span>}
-        <span style={{ width: 28, textAlign: 'right', color: 'var(--accent)', fontWeight: 700 }}>Pts</span>
+        <span style={{ width: 28, textAlign: 'right', color: 'var(--orange)', fontWeight: 700 }}>Pts</span>
       </div>
       {rows.map((row, idx) => (
         <div key={row.teamId || idx} style={{ display: 'flex', alignItems: 'center', padding: '8px 0', borderBottom: idx < rows.length - 1 ? '1px solid var(--border-3)' : 'none' }}>
-          <span style={{ width: 20, fontFamily: 'var(--mono)', fontWeight: 700, fontSize: 11, color: idx < 4 ? 'var(--accent)' : 'var(--text-mute)' }}>{row.rank || idx + 1}</span>
+          <span style={{ width: 20, fontFamily: 'var(--mono)', fontWeight: 700, fontSize: 11, color: idx < 4 ? 'var(--orange)' : 'var(--text-mute)' }}>{row.rank || idx + 1}</span>
           <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
             {row.teamLogo ? (
               /* eslint-disable-next-line @next/next/no-img-element */
@@ -62,7 +62,7 @@ function MiniStandingsTable({ entries, leagueName }: { entries: StandingEntry[];
           <span style={{ width: 22, textAlign: 'center', fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text-dim)' }}>{row.wins}</span>
           {isFootball && <span style={{ width: 22, textAlign: 'center', fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text-dim)' }}>{row.draws}</span>}
           <span style={{ width: 22, textAlign: 'center', fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text-dim)' }}>{row.losses}</span>
-          {isFootball && <span style={{ width: 28, textAlign: 'center', fontFamily: 'var(--mono)', fontSize: 10, color: row.goalDiff > 0 ? 'var(--accent)' : row.goalDiff < 0 ? 'var(--coral)' : 'var(--text-mute)' }}>{row.goalDiff > 0 ? '+' : ''}{row.goalDiff}</span>}
+          {isFootball && <span style={{ width: 28, textAlign: 'center', fontFamily: 'var(--mono)', fontSize: 10, color: row.goalDiff > 0 ? 'var(--teal)' : row.goalDiff < 0 ? 'var(--coral)' : 'var(--text-mute)' }}>{row.goalDiff > 0 ? '+' : ''}{row.goalDiff}</span>}
           <span style={{ width: 28, textAlign: 'right', fontFamily: 'var(--display)', fontWeight: 800, fontSize: 14, color: 'var(--ink)' }}>{row.points}</span>
         </div>
       ))}

@@ -126,7 +126,7 @@
   color: var(--text-mute); cursor: pointer; transition: all 0.15s;
 }
 .toolbarBtn:hover { border-color: var(--ink); color: var(--ink); }
-.toolbarBtnActive { border-color: var(--accent) !important; color: var(--accent) !important; background: rgba(200,255,61,0.1) !important; }
+.toolbarBtnActive { border-color: var(--orange) !important; color: var(--orange) !important; background: rgba(255,91,61,0.08) !important; }
 .composeChars { font-family: var(--mono); font-size: 11px; color: var(--text-mute); }
 .composeCancelBtn {
   padding: 8px 14px; background: none; border: 2px solid var(--border-2); border-radius: 8px;
@@ -274,7 +274,7 @@
   cursor: pointer; transition: all 0.15s;
 }
 .actionBtn:hover { border-color: var(--ink); color: var(--ink); }
-.actionBtnActive { border-color: var(--accent) !important; color: var(--accent) !important; background: rgba(200,255,61,0.1) !important; }
+.actionBtnActive { border-color: var(--orange) !important; color: var(--orange) !important; background: rgba(255,91,61,0.08) !important; }
 
 /* Comments */
 .commentsWrap {
@@ -317,7 +317,7 @@
   cursor: pointer; transition: all 0.12s;
 }
 .likeBtn:hover { border-color: var(--ink); color: var(--ink); }
-.liked { border-color: var(--accent) !important; color: var(--accent) !important; background: rgba(200,255,61,0.1) !important; }
+.liked { border-color: var(--orange) !important; color: var(--orange) !important; background: rgba(255,91,61,0.08) !important; }
 
 /* Spinner */
 @keyframes spin { to { transform: rotate(360deg); } }

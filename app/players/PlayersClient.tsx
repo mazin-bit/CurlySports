@@ -298,7 +298,7 @@ export default function PlayersPage() {
         {/* Search — global when football */}
         <div className={styles.searchRow}>
           {isGlobalSearch
-            ? <Globe size={15} style={{ color: "var(--accent)", flexShrink: 0, marginRight: 10 }} />
+            ? <Globe size={15} style={{ color: "var(--orange)", flexShrink: 0, marginRight: 10 }} />
             : <Search size={15} style={{ color: "var(--text-mute)", flexShrink: 0, marginRight: 10 }} />
           }
           <input

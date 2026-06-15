@@ -220,7 +220,7 @@ function QuizGame({ sport, onComplete }: { sport: string; onComplete: (score: nu
     const pct = Math.round((score / (questions.length * 10)) * 100);
     return (
       <div className={styles.quizDone}>
-        <div className={styles.quizEmoji}><Trophy size={36} strokeWidth={1.5} style={{ color: "var(--accent)" }} /></div>
+        <div className={styles.quizEmoji}><Trophy size={36} strokeWidth={1.5} style={{ color: "var(--orange)" }} /></div>
         <h3 className={styles.quizDoneTitle}>Quiz Complete!</h3>
         <p className={styles.quizDoneScore}>{score} pts</p>
         <p className={styles.quizDoneSub}>
@@ -334,7 +334,7 @@ function PlayerGuessGame({ sport, onComplete }: { sport: string; onComplete: (sc
     const maxPossible = players.length * 40;
     return (
       <div className={styles.quizDone}>
-        <div className={styles.quizEmoji}><Search size={36} strokeWidth={1.5} style={{ color: "var(--accent)" }} /></div>
+        <div className={styles.quizEmoji}><Search size={36} strokeWidth={1.5} style={{ color: "var(--orange)" }} /></div>
         <h3 className={styles.quizDoneTitle}>All Players Guessed!</h3>
         <p className={styles.quizDoneScore}>{totalScore} / {maxPossible} pts</p>
         <p className={styles.quizDoneSub}>
@@ -448,7 +448,7 @@ function PredictorGame({ sport }: { sport: string }) {
         </button>
       ) : (
         <div className={styles.predSubmitted}>
-          <CheckCircle size={20} strokeWidth={2} style={{ color: "var(--accent)" }} />
+          <CheckCircle size={20} strokeWidth={2} style={{ color: "var(--teal)" }} />
           <span>Predictions locked in! Check back after the matches.</span>
         </div>
       )}

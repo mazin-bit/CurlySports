@@ -121,7 +121,7 @@ export default function LiveScoresScreen({ sport, setSport, onOpenMatch, onSearc
                   style={{
                     flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
                     padding: '6px 2px', borderRadius: 10,
-                    border: `1.5px solid ${isSel ? 'var(--ink)' : isTod ? 'var(--accent)' : 'transparent'}`,
+                    border: `1.5px solid ${isSel ? 'var(--ink)' : isTod ? 'var(--orange)' : 'transparent'}`,
                     background: isSel ? 'var(--ink)' : 'transparent',
                     cursor: 'pointer', transition: 'background 0.15s',
                   }}
@@ -132,7 +132,7 @@ export default function LiveScoresScreen({ sport, setSport, onOpenMatch, onSearc
                   <span style={{ fontFamily: 'var(--display)', fontWeight: 800, fontSize: 15, color: isSel ? 'var(--accent)' : isTod ? 'var(--ink)' : 'var(--text-dim)' }}>
                     {d.getDate()}
                   </span>
-                  {isTod && <span style={{ width: 4, height: 4, borderRadius: '50%', background: isSel ? 'var(--accent)' : 'var(--accent)', display: 'block' }} />}
+                  {isTod && <span style={{ width: 4, height: 4, borderRadius: '50%', background: isSel ? 'var(--accent)' : 'var(--orange)', display: 'block' }} />}
                 </button>
               );
             })}

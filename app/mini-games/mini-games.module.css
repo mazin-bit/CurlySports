@@ -155,7 +155,7 @@
 }
 .quizDoneScore {
   font-family: var(--display); font-weight: 800; font-size: 36px;
-  color: var(--accent); margin-bottom: 8px;
+  color: var(--orange); margin-bottom: 8px;
 }
 .quizDoneSub { font-size: 14px; color: var(--text-dim); }
 
@@ -209,8 +209,8 @@
 .predSubmitted {
   display: flex; align-items: center; gap: 10px;
   padding: 16px 20px;
-  background: rgba(200, 255, 61, 0.1);
-  border: 2px solid var(--accent);
+  background: rgba(45, 212, 191, 0.1);
+  border: 2px solid var(--teal);
   border-radius: 12px;
   font-size: 14px; font-weight: 600; color: var(--ink);
 }

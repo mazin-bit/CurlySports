@@ -190,10 +190,10 @@ function TableHeader({ isFootball, hasCricketNRR }: { isFootball: boolean; hasCr
 
 function TableRow({ row, idx, isFootball, hasCricketNRR }: { row: StandingEntry; idx: number; isFootball: boolean; hasCricketNRR: boolean }) {
   const nrr = row.netRunRate;
-  const nrrColor = nrr != null && nrr > 0 ? "var(--accent)" : nrr != null && nrr < 0 ? "var(--coral)" : undefined;
+  const nrrColor = nrr != null && nrr > 0 ? "var(--teal)" : nrr != null && nrr < 0 ? "var(--coral)" : undefined;
   return (
     <div className={`${styles.tableRow}${idx < 4 ? " " + styles.topZone : ""}`}>
-      <span className={styles.colRank} style={{ color: idx < 4 ? "var(--accent)" : "var(--text-mute)" }}>
+      <span className={styles.colRank} style={{ color: idx < 4 ? "var(--orange)" : "var(--text-mute)" }}>
         {row.rank || idx + 1}
       </span>
       <div className={styles.colTeam}>
@@ -216,7 +216,7 @@ function TableRow({ row, idx, isFootball, hasCricketNRR }: { row: StandingEntry;
       {isFootball && (
         <span
           className={`${styles.colStat} ${styles.hideSm}`}
-          style={{ color: row.goalDiff > 0 ? "var(--accent)" : row.goalDiff < 0 ? "var(--coral)" : undefined }}
+          style={{ color: row.goalDiff > 0 ? "var(--teal)" : row.goalDiff < 0 ? "var(--coral)" : undefined }}
         >
           {row.goalDiff > 0 ? `+${row.goalDiff}` : row.goalDiff}
         </span>

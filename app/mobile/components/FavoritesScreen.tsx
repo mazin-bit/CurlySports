@@ -163,7 +163,7 @@ function AddModal({ type, existingIds, onClose, onAdded }: { type: 'team' | 'pla
                   {adding === id ? (
                     <span style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text-mute)' }}>Adding…</span>
                   ) : isAdded ? (
-                    <span style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--accent)' }}>✓</span>
+                    <span style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--teal)' }}>✓</span>
                   ) : (
                     <div style={{ width: 28, height: 28, borderRadius: 7, background: 'var(--ink)', color: 'var(--accent)', display: 'grid', placeItems: 'center' }}>
                       <Icon name="plus" size={14} />

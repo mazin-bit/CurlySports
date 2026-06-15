@@ -92,7 +92,7 @@
   font-family: var(--mono);
   font-size: 10px;
   font-weight: 700;
-  color: var(--accent);
+  color: var(--orange);
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
@@ -118,7 +118,7 @@
   text-decoration: none;
   transition: color 0.15s;
 }
-.ytOpenLink:hover { color: var(--accent); }
+.ytOpenLink:hover { color: var(--orange); }
 
 /* ── Playlist (right) ── */
 .playlist {
@@ -234,7 +234,7 @@
   font-family: var(--mono);
   font-size: 9px;
   font-weight: 700;
-  color: var(--accent);
+  color: var(--orange);
   letter-spacing: 0.05em;
   text-transform: uppercase;
   white-space: nowrap;

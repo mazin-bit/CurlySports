@@ -62,7 +62,7 @@
   font-size: 30px;
   font-weight: 800;
   font-family: var(--display);
-  color: var(--pos-color, var(--accent));
+  color: var(--pos-color, var(--orange));
   letter-spacing: -1px;
 }
 
@@ -126,7 +126,7 @@
   text-decoration: none;
   transition: color 0.15s;
 }
-.teamLink:hover { color: var(--accent); }
+.teamLink:hover { color: var(--orange); }
 
 .leaguePill {
   font-size: 10px;
@@ -223,7 +223,7 @@
 }
 
 .statIcon {
-  color: var(--accent);
+  color: var(--orange);
   display: flex;
   align-items: center;
   margin-top: 2px;

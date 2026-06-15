@@ -168,7 +168,7 @@ export default function LiveScoresClient() {
           {activeSportConfig.icon}{" "}
           {isLoading ? "Loading…" : isToday ? `${liveCount} live now` : `${totalMatches} matches`}
         </span>
-        <span style={{ fontSize: 11, color: isConnected ? "var(--accent)" : "var(--text-mute)", fontFamily: "var(--mono)" }}>
+        <span style={{ fontSize: 11, color: isConnected ? "var(--teal)" : "var(--text-mute)", fontFamily: "var(--mono)" }}>
           {isConnected ? "● live" : "○ connecting…"}
         </span>
         {!isLoading && <span className={styles.totalCount}>{totalMatches} total</span>}

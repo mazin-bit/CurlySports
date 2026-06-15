@@ -151,7 +151,7 @@ export function IconDefs() {
 
 export function Ico({ id, className }: { id: string; className?: string }) {
   return (
-    <svg className={className} aria-hidden="true">
+    <svg className={className} width="100%" height="100%" aria-hidden="true">
       <use href={`#${id}`} />
     </svg>
   );
