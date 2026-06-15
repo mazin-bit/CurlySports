@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 import path from "path";
 
-const sharedPath = path.join(__dirname, "../shared");
+const sharedPath = path.join(__dirname, "shared");
 
 const nextConfig: NextConfig = {
   // Required for Docker standalone deployment
@@ -32,12 +32,8 @@ const nextConfig: NextConfig = {
     minimumCacheTTL: 3600,
   },
 
-  // Resolve @curly/shared → ../shared (Turbopack, default in Next.js 16)
-  turbopack: {
-    resolveAlias: {
-      "@curly/shared": sharedPath,
-    },
-  },
+  // @curly/shared is resolved via tsconfig.json paths (Turbopack reads these natively)
+  turbopack: {},
 
   // Webpack fallback (used when running with --webpack flag)
   webpack(config) {

@@ -20,8 +20,8 @@
     ],
     "paths": {
       "@/*": ["./*"],
-      "@curly/shared": ["../shared/index.ts"],
-      "@curly/shared/*": ["../shared/*"]
+      "@curly/shared": ["./shared/index.ts"],
+      "@curly/shared/*": ["./shared/*"]
     }
   },
   "include": [
