@@ -130,6 +130,19 @@ export async function GET(req: NextRequest) {
     return true;
   });
 
+  // Proxy images from domains that block cross-origin loads (e.g. Guardian CDN)
+  const PROXY_HOSTS = ['i.guim.co.uk', 'media.guim.co.uk', 'assets.guim.co.uk'];
+  for (const a of deduped) {
+    if (a.imageUrl) {
+      try {
+        const { hostname } = new URL(a.imageUrl);
+        if (PROXY_HOSTS.includes(hostname)) {
+          a.imageUrl = `/api/proxy-image?url=${encodeURIComponent(a.imageUrl)}`;
+        }
+      } catch { /* malformed URL — leave as-is */ }
+    }
+  }
+
   // Articles with images first, then sort by date within each group
   deduped.sort((a, b) => {
     const aImg = a.imageUrl ? 1 : 0;
