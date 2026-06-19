@@ -11,6 +11,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
+  viewportFit: 'cover', // enables safe-area-inset env() for notched devices
 };
 
 export default function MobileLayout({ children }: { children: React.ReactNode }) {

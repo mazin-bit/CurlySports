@@ -21,6 +21,8 @@ import FavoritesScreen from './FavoritesScreen';
 import VideosScreen from './VideosScreen';
 import MiniGamesScreen from './MiniGamesScreen';
 import PlayersScreen from './PlayersScreen';
+import { useNativeInit } from '@/hooks/useNative';
+import { hapticImpact } from '@/lib/native';
 
 type Tab = 'home' | 'live' | 'funzone' | 'leagues' | 'profile' | 'news' | 'teams' | 'favorites' | 'videos' | 'minigames' | 'players';
 type OverlayType = 'match' | 'player' | 'search' | 'notifications';
@@ -47,6 +49,12 @@ function AppInner() {
   const [unread, setUnread] = useState(0);
   const [liveMin, setLiveMin] = useState(74);
 
+  // Native shell: status bar, splash, Android back button
+  useNativeInit(() => {
+    if (stack.length > 0) { setStack(s => s.slice(0, -1)); return; }
+    if (menuOpen) { setMenuOpen(false); return; }
+  });
+
   useEffect(() => {
     if (!user) return;
     const id = setInterval(() => setLiveMin(m => m >= 90 ? 74 : m + 1), 3500);
@@ -67,6 +75,7 @@ function AppInner() {
   const nav   = { onSearch: openSearch, onBell: openNotifications, unread };
 
   const onBottom = (key: string) => {
+    hapticImpact('light');
     if (key === 'more') { setMenuOpen(true); return; }
     goTab(key as Tab);
   };
