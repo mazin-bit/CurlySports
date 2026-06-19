@@ -9,6 +9,7 @@ import Chip from './ui/Chip';
 import MatchRow from './ui/MatchRow';
 import SportSelector from './ui/SportSelector';
 import Icon from './ui/Icon';
+import { SkeletonScoreCard, SkeletonList } from './ui/Skeletons';
 
 const FILTERS: [string, string][] = [['all', 'All'], ['live', '● Live'], ['up', 'Upcoming'], ['ft', 'Finished']];
 const DAY_ABBR = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
@@ -147,7 +148,9 @@ export default function LiveScoresScreen({ sport, setSport, onOpenMatch, onSearc
         </div>
 
         {isLoading && (
-          <div style={{ padding: '40px 0', textAlign: 'center', fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text-mute)' }}>Loading scores…</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <SkeletonList count={5}>{i => <SkeletonScoreCard style={{ '--i': i } as React.CSSProperties} />}</SkeletonList>
+          </div>
         )}
 
         {!isLoading && Object.keys(byLeague).length === 0 && (
@@ -159,8 +162,9 @@ export default function LiveScoresScreen({ sport, setSport, onOpenMatch, onSearc
           </div>
         )}
 
-        {!isLoading && Object.entries(byLeague).map(([leagueKey, { shortLabel, matches }]) => (
-          <Card key={leagueKey} subtitle={shortLabel} title={shortLabel}>
+        {!isLoading && Object.entries(byLeague).map(([leagueKey, { label, shortLabel, matches }], idx) => (
+          <div key={leagueKey} className="cs-stagger" style={{ '--i': Math.min(idx, 6) } as React.CSSProperties}>
+          <Card subtitle={shortLabel} title={label}>
             <div style={{ borderTop: '1px solid var(--border-3)' }}>
               {matches.map(m => (
                 <div key={m.id} style={{ borderBottom: '1px solid var(--border-3)' }}>
@@ -169,6 +173,7 @@ export default function LiveScoresScreen({ sport, setSport, onOpenMatch, onSearc
               ))}
             </div>
           </Card>
+          </div>
         ))}
       </div>
     </div>

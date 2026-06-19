@@ -6,6 +6,7 @@ import SportSelector from './ui/SportSelector';
 import Chip from './ui/Chip';
 import Icon from './ui/Icon';
 import Badge from './ui/Badge';
+import { SkeletonRow, SkeletonList } from './ui/Skeletons';
 import type { RealTeam } from './api';
 
 const fetcher = (url: string) => fetch(url).then(r => r.json());
@@ -166,7 +167,9 @@ export default function PlayersScreen({ sport, setSport, onSearch, onBell, onOpe
 
         {/* Search results */}
         {isSearching && searchLoading && (
-          <div style={{ padding: '32px 0', textAlign: 'center', fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text-mute)' }}>Searching…</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <SkeletonList count={4}>{i => <SkeletonRow style={{ '--i': i } as React.CSSProperties} />}</SkeletonList>
+          </div>
         )}
         {isSearching && !searchLoading && players.length === 0 && (
           <div style={{ textAlign: 'center', padding: '48px 20px' }}>
@@ -188,7 +191,9 @@ export default function PlayersScreen({ sport, setSport, onSearch, onBell, onOpe
         {!isSearching && (
           <>
             {teamsLoading ? (
-              <div style={{ padding: '32px 0', textAlign: 'center', fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text-mute)' }}>Loading teams…</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <SkeletonList count={6}>{i => <SkeletonRow style={{ '--i': i } as React.CSSProperties} />}</SkeletonList>
+              </div>
             ) : teams.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '48px 20px' }}>
                 <Icon name="user" size={32} style={{ margin: '0 auto 12px', color: 'var(--text-mute)' }} />

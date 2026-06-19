@@ -35,7 +35,8 @@ export function useAuth() {
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const supabase = createClient();
+  const supabaseRef = useRef((() => { try { return createClient(); } catch { return null; } })());
+  const supabase = supabaseRef.current;
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -58,6 +59,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     mountedRef.current = true;
+
+    // If Supabase client failed to create, skip auth entirely
+    if (!supabase) {
+      setIsLoading(false);
+      return;
+    }
 
     const init = async () => {
       try {
@@ -96,8 +103,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const login = async (email: string, password: string) => {
+    const sb = supabase;
+    if (!sb) { setAuthError('Auth service unavailable'); throw new Error('Auth service unavailable'); }
     setAuthError(null);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error } = await sb.auth.signInWithPassword({ email, password });
     if (error) {
       const msg = error.message.includes('Invalid login') ? 'Incorrect email or password.' : error.message;
       setAuthError(msg);
@@ -106,6 +115,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signup = async (email: string, password: string, username: string) => {
+    const sb = supabase;
+    if (!sb) { setAuthError('Auth service unavailable'); throw new Error('Auth service unavailable'); }
     setAuthError(null);
     const res = await fetch('/api/auth/signup', {
       method: 'POST',
@@ -119,7 +130,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       throw new Error(msg);
     }
     // Sign in immediately after account creation
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error } = await sb.auth.signInWithPassword({ email, password });
     if (error) {
       const msg = error.message;
       setAuthError(msg);
@@ -129,17 +140,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async () => {
     await fetch('/api/user/logout', { method: 'POST' }).catch(() => {});
-    await supabase.auth.signOut();
+    await supabase?.auth.signOut();
     setUser(null);
     setProfile(null);
   };
 
   const setFavTeam = async (team: { code: string; name: string }) => {
-    // Optimistic update
     setProfile(p => p ? { ...p, favTeam: team } : p);
-    await supabase.auth.updateUser({ data: { favTeam: team } });
-    // Re-fetch user to get confirmed metadata
-    const { data: { user: u } } = await supabase.auth.getUser();
+    const sb = supabase;
+    if (!sb) return;
+    await sb.auth.updateUser({ data: { favTeam: team } });
+    const { data: { user: u } } = await sb.auth.getUser();
     if (u && mountedRef.current) setUser(u);
   };
 

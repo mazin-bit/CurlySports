@@ -121,7 +121,7 @@ export async function GET(req: NextRequest) {
   try {
     // ESPN v3 athlete endpoint (rich data incl. statsSummary)
     const v3Url = `${ESPN_V3}/${paths.v3}/athletes/${athleteId}`;
-    const res = await fetch(v3Url, { next: { revalidate: 300 } });
+    const res = await fetch(v3Url, { next: { revalidate: 300 }, signal: AbortSignal.timeout(8000) });
 
     if (!res.ok) {
       return NextResponse.json({ error: "Player not found" }, { status: 404 });
@@ -154,7 +154,7 @@ export async function GET(req: NextRequest) {
     if (statsArr.length === 0) {
       try {
         const v2StatsUrl = `${ESPN_V2}/${paths.v2}/athletes/${athleteId}/stats`;
-        const statsRes = await fetch(v2StatsUrl, { next: { revalidate: 300 } });
+        const statsRes = await fetch(v2StatsUrl, { next: { revalidate: 300 }, signal: AbortSignal.timeout(8000) });
         if (statsRes.ok) {
           const statsData = await statsRes.json();
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -212,7 +212,9 @@ export async function GET(req: NextRequest) {
       statsSeason: statsSummary.displayName ?? "",
     };
 
-    return NextResponse.json(player);
+    return NextResponse.json(player, {
+      headers: { "Cache-Control": "public, max-age=300" },
+    });
   } catch (e) {
     console.error("Player fetch error:", e);
     return NextResponse.json({ error: "Failed to fetch player" }, { status: 500 });

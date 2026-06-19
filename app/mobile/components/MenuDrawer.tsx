@@ -29,9 +29,10 @@ interface MenuDrawerProps {
   active?: string;
   onClose: () => void;
   onNavigate: (key: string) => void;
+  user?: { username?: string; email?: string } | null;
 }
 
-export default function MenuDrawer({ active, onClose, onNavigate }: MenuDrawerProps) {
+export default function MenuDrawer({ active, onClose, onNavigate, user }: MenuDrawerProps) {
   return (
     <>
       <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(12,10,29,0.55)', backdropFilter: 'blur(4px)', zIndex: 100, animation: 'cs-mnFadeIn 0.2s ease' }} />
@@ -64,9 +65,9 @@ export default function MenuDrawer({ active, onClose, onNavigate }: MenuDrawerPr
         </div>
         <div style={{ flexShrink: 0, borderTop: '2px solid var(--border-2)', padding: '12px 14px 18px', background: 'var(--bg-2)' }}>
           <button onClick={() => onNavigate('profile')} style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '10px 12px', background: 'var(--surface)', border: '2px solid var(--ink)', borderRadius: 12, boxShadow: 'var(--shadow-sm)', cursor: 'pointer', textAlign: 'left' }}>
-            <div style={{ width: 36, height: 36, borderRadius: 10, background: 'var(--ink)', color: 'var(--accent)', display: 'grid', placeItems: 'center', fontFamily: 'var(--display)', fontWeight: 800, fontSize: 12, border: '2px solid var(--ink)', flexShrink: 0 }}>MZ</div>
+            <div style={{ width: 36, height: 36, borderRadius: 10, background: 'var(--ink)', color: 'var(--accent)', display: 'grid', placeItems: 'center', fontFamily: 'var(--display)', fontWeight: 800, fontSize: 12, border: '2px solid var(--ink)', flexShrink: 0 }}>{(user?.username ?? user?.email ?? 'U').slice(0, 2).toUpperCase()}</div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--ink)' }}>Mazin</div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--ink)' }}>{user?.username ?? user?.email?.split('@')[0] ?? 'User'}</div>
               <div style={{ fontSize: 11, color: 'var(--text-mute)' }}>View profile & settings</div>
             </div>
             <Icon name="arrow-right" size={16} style={{ color: 'var(--text-mute)' }} />

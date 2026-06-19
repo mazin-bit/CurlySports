@@ -152,8 +152,30 @@
 }
 @keyframes cs-mnSlideUp { from { transform: translateY(100%); opacity: .4; } to { transform: translateY(0); opacity: 1; } }
 @keyframes cs-mnFadeIn { from { opacity: 0; } to { opacity: 1; } }
-@keyframes cs-pushIn { from { transform: translateY(32px); opacity: 0.6; } to { transform: translateY(0); opacity: 1; } }
+@keyframes cs-pushIn {
+  from { transform: translateX(60px) scale(0.96); opacity: 0; }
+  to   { transform: translateX(0) scale(1); opacity: 1; }
+}
 @keyframes cs-slideUp { from { transform: translateY(100%); opacity: 0.4; } to { transform: translateY(0); opacity: 1; } }
+@keyframes cs-composerExpand {
+  0%   { opacity: 0; transform: scale(0.85) translateY(8px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+@keyframes cs-composerCollapse {
+  0%   { opacity: 0; transform: scale(0.4) rotate(-15deg); }
+  70%  { transform: scale(1.08) rotate(3deg); }
+  100% { opacity: 1; transform: scale(1) rotate(0deg); }
+}
+@keyframes cs-fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes cs-staggerIn {
+  from { opacity: 0; transform: translateY(14px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes cs-tabEnter {
+  0%   { opacity: 0; transform: translateY(16px) scale(0.96); }
+  60%  { opacity: 1; }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
 
 /* ---- CARD ---- */
 .cs-mobile .cs-card {
@@ -180,6 +202,7 @@
   box-shadow: var(--shadow-sm);
   transition: transform var(--t-base), box-shadow var(--t-base);
   font-family: var(--body);
+  min-height: 44px;
 }
 .cs-mobile .cs-btn:active { transform: translate(-2px,-2px); box-shadow: var(--shadow-md); }
 .cs-mobile .cs-btn--primary { background: var(--ink); color: var(--accent); }
@@ -247,11 +270,25 @@
 
 /* ---- SKELETON ---- */
 .cs-mobile .cs-skeleton {
-  height: 56px; border-radius: 8px;
+  border-radius: 8px;
   background: linear-gradient(90deg, var(--surface-2) 25%, var(--surface-3) 50%, var(--surface-2) 75%);
   background-size: 600px 100%;
   animation: cs-shimmer 1.4s infinite linear;
 }
+.cs-mobile .cs-skeleton-text { height: 12px; border-radius: 6px; }
+.cs-mobile .cs-skeleton-text.lg { height: 16px; }
+.cs-mobile .cs-skeleton-text.sm { height: 9px; }
+.cs-mobile .cs-skeleton-circle { border-radius: 50%; }
+
+/* ---- TAB ENTER ANIMATION ---- */
+.cs-mobile .cs-tab-enter { animation: cs-tabEnter 0.34s var(--ease-pop) both; }
+
+/* ---- STAGGERED LIST ITEMS ---- */
+.cs-mobile .cs-stagger { animation: cs-staggerIn 0.3s var(--ease-pop) both; animation-delay: calc(var(--i, 0) * 45ms); }
+
+/* ---- TAP FEEDBACK ---- */
+.cs-mobile .cs-tap { transition: transform var(--t-fast) ease; -webkit-tap-highlight-color: transparent; }
+.cs-mobile .cs-tap:active { transform: scale(0.96); }
 
 /* ---- NATIVE SAFE AREAS (iOS notch/Dynamic Island, Android cutouts) ---- */
 .cs-mobile {
@@ -263,4 +300,25 @@
   padding-bottom: var(--safe-bottom);
   padding-left: var(--safe-left);
   padding-right: var(--safe-right);
+}
+
+/* ── Responsive: small phones ──────────────────────────────── */
+@media (max-width: 374px) {
+  .cs-mobile {
+    --fs-display: 26px;
+    --fs-h1: 20px;
+    --fs-h2: 17px;
+  }
+  .cs-mobile .cs-card { padding: 12px; }
+}
+
+/* ── Reduced motion ────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .cs-mobile,
+  .cs-mobile * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .cs-mobile .cs-skeleton { animation: none; }
 }

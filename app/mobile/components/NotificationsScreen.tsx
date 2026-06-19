@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import useSWR from 'swr';
 import type { Match } from '../data';
 import Icon from './ui/Icon';
+import { SkeletonRow, SkeletonList } from './ui/Skeletons';
 
 interface MobileNotif {
   id: string;
@@ -57,7 +58,9 @@ export default function NotificationsScreen({ onBack, onMarkAll }: Notifications
 
       <div className="cs-scroll" style={{ flex: 1, overflow: 'auto', padding: '14px 14px 96px', display: 'flex', flexDirection: 'column', gap: 8 }}>
         {isLoading && (
-          <div style={{ textAlign: 'center', padding: 40, fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--text-mute)' }}>Loading…</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <SkeletonList count={5}>{i => <SkeletonRow style={{ '--i': i } as React.CSSProperties} />}</SkeletonList>
+          </div>
         )}
 
         {!isLoading && notifications.length === 0 && (
@@ -73,11 +76,12 @@ export default function NotificationsScreen({ onBack, onMarkAll }: Notifications
           return (
             <React.Fragment key={key}>
               <div style={{ fontFamily: 'var(--mono)', fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-mute)', padding: '8px 2px 4px' }}>{label}</div>
-              {group.map(n => (
+              {group.map((n, i) => (
                 <button
                   key={n.id}
+                  className="cs-stagger cs-tap"
                   onClick={() => setReadIds(prev => new Set([...prev, n.id]))}
-                  style={{ display: 'flex', gap: 12, alignItems: 'flex-start', textAlign: 'left', padding: 14, borderRadius: 12, cursor: 'pointer', background: n.unread ? 'var(--surface)' : 'var(--surface-2)', border: '2px solid var(--ink)', boxShadow: n.unread ? 'var(--shadow-sm)' : 'none', position: 'relative', width: '100%' }}
+                  style={{ '--i': i, display: 'flex', gap: 12, alignItems: 'flex-start', textAlign: 'left', padding: 14, borderRadius: 12, cursor: 'pointer', background: n.unread ? 'var(--surface)' : 'var(--surface-2)', border: '2px solid var(--ink)', boxShadow: n.unread ? 'var(--shadow-sm)' : 'none', position: 'relative', width: '100%' } as React.CSSProperties}
                 >
                   <span style={{ width: 38, height: 38, flexShrink: 0, borderRadius: 11, background: n.color, border: '2px solid var(--ink)', display: 'grid', placeItems: 'center', color: 'var(--ink)' }}>
                     <Icon name={n.icon} size={18} />

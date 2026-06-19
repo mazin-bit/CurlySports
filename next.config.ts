@@ -24,8 +24,6 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "e0.365dm.com" },
       { protocol: "https", hostname: "e1.365dm.com" },
       { protocol: "https", hostname: "e2.365dm.com" },
-      // General fallback (any https image source)
-      { protocol: "https", hostname: "**" },
     ],
     formats: ["image/avif", "image/webp"],
     qualities: [75, 90, 100],
@@ -41,11 +39,36 @@ const nextConfig: NextConfig = {
     return config;
   },
 
+  async headers() {
+    return [
+      {
+        source: "/(.*)",
+        headers: [
+          { key: "X-Frame-Options", value: "DENY" },
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+        ],
+      },
+    ];
+  },
+
   // Enable experimental features for SSE streaming
   experimental: {
     // Required for proper SSE response streaming in App Router
     serverActions: {
-      allowedOrigins: ["localhost:3001", "curly.sports", "www.curly.sports"],
+      allowedOrigins: [
+        "localhost:3001",
+        "localhost:3000",
+        "curlysports.com",
+        "www.curlysports.com",
+        // Allow any local network IP (192.168.x.x, 10.x.x.x, 172.x.x.x)
+        ...(process.env.NEXT_PUBLIC_APP_URL
+          ? [process.env.NEXT_PUBLIC_APP_URL.replace(/^https?:\/\//, "")]
+          : []),
+      ],
+      // Allow all origins in development for IP-based mobile testing
+      ...(process.env.NODE_ENV === "development" ? { allowedForwardedHosts: ["*"] } : {}),
     },
   },
 };

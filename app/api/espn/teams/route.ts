@@ -107,7 +107,7 @@ async function fetchTeamsForPath(
 ): Promise<EspnTeamEntry[]> {
   try {
     const url = `${ESPN}/${path}/teams?limit=100`;
-    const res = await fetch(url, { next: { revalidate: 3600 } });
+    const res = await fetch(url, { next: { revalidate: 3600 }, signal: AbortSignal.timeout(8000) });
     if (!res.ok) return [];
     const data = await res.json();
     const rawTeams: RawTeam[] = data.sports?.[0]?.leagues?.[0]?.teams ?? [];
@@ -170,5 +170,7 @@ export async function GET(req: NextRequest) {
     if (r.status === "fulfilled") allTeams.push(...r.value);
   }
 
-  return NextResponse.json({ teams: allTeams, updatedAt: new Date().toISOString() });
+  return NextResponse.json({ teams: allTeams, updatedAt: new Date().toISOString() }, {
+    headers: { "Cache-Control": "public, max-age=300" },
+  });
 }

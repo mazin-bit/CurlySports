@@ -112,7 +112,7 @@ export default function OnboardingScreen({ onDone }: OnboardingProps) {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/curly-mark.png" alt="" style={{ width: '82%', height: '82%', objectFit: 'contain', transform: 'rotate(6deg)' }} />
           </div>
-          <div style={{ fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--orange)' }}>curly.sports</div>
+          <div style={{ fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--orange)' }}>curlysports.com</div>
           <h1 style={{ fontFamily: 'var(--display)', fontWeight: 800, fontSize: 38, lineHeight: 1.02, letterSpacing: '-0.03em', color: 'var(--ink)', margin: '8px 0 0' }}>
             Hey, {firstName}.<br />Welcome in.
           </h1>

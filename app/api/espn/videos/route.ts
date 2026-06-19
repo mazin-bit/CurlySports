@@ -93,7 +93,7 @@ async function fetchChannelVideos(
 ): Promise<VideoHighlight[]> {
   try {
     const rssUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`;
-    const res = await fetch(rssUrl, { next: { revalidate: 300 } }); // 5 min cache
+    const res = await fetch(rssUrl, { next: { revalidate: 300 }, signal: AbortSignal.timeout(8000) }); // 5 min cache
     if (!res.ok) return [];
     const xml = await res.text();
 
@@ -187,5 +187,7 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({
     videos: [...pinned, ...rest].slice(0, 20),
     updatedAt: new Date().toISOString(),
+  }, {
+    headers: { "Cache-Control": "public, max-age=120" },
   });
 }

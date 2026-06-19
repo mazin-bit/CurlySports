@@ -71,13 +71,17 @@ export default function MaintenanceGuard({ children }: { children: React.ReactNo
     }
   }, [pathname]);
 
-  // Fetch flags
+  // Fetch flags once on mount, then refetch every 60s
   useEffect(() => {
-    fetch("/api/admin/flags")
-      .then((r) => r.json())
-      .then((f) => setFlags(f))
-      .catch(() => {});
-  }, [pathname]);
+    const load = () =>
+      fetch("/api/admin/flags")
+        .then((r) => r.json())
+        .then((f) => setFlags(f))
+        .catch(() => {});
+    load();
+    const id = setInterval(load, 60_000);
+    return () => clearInterval(id);
+  }, []);
 
   // Admin path is always accessible
   if (pathname.startsWith("/admin")) return <>{children}</>;

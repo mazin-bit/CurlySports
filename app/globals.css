@@ -327,8 +327,8 @@ input, textarea, select { font-family: inherit; }
 }
 
 /* ========== MAIN CONTENT ========== */
-.app-main { min-width: 0; }
-.app-content { padding: 26px 28px 100px; }
+.app-main { min-width: 0; overflow: hidden; }
+.app-content { padding: 26px 28px 100px; will-change: transform, opacity; }
 .stack { display: flex; flex-direction: column; gap: 28px; }
 .stack-sm { display: flex; flex-direction: column; gap: 16px; }
 
@@ -1001,3 +1001,12 @@ input, textarea, select { font-family: inherit; }
   background-size: 600px 100%;
   animation: shimmer 1.4s infinite linear;
 }
+.skeleton-text { height: 14px; border-radius: 6px; background: linear-gradient(90deg, var(--surface-2) 25%, var(--surface-3) 50%, var(--surface-2) 75%); background-size: 600px 100%; animation: shimmer 1.4s infinite linear; }
+.skeleton-circle { border-radius: 50%; background: linear-gradient(90deg, var(--surface-2) 25%, var(--surface-3) 50%, var(--surface-2) 75%); background-size: 600px 100%; animation: shimmer 1.4s infinite linear; }
+
+/* ── Page transitions ─────────────────────────────────── */
+@keyframes fadeSlideIn {
+  0%   { opacity: 0; transform: translateY(18px) scale(0.97); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+.page-enter { animation: fadeSlideIn 0.35s cubic-bezier(.34,1.56,.64,1) both; }

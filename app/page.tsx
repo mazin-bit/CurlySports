@@ -360,7 +360,7 @@ export default function LandingPage() {
           <div className="l-preview-mockup">
             <div className="l-preview-toolbar">
               <span className="dot r" /><span className="dot y" /><span className="dot g" />
-              <span className="url">curly.sports/dashboard</span>
+              <span className="url">curlysports.com/dashboard</span>
             </div>
             <div className="l-preview-img-wrap">
               <Image
@@ -416,7 +416,7 @@ export default function LandingPage() {
             <div className="l-sponsor-div" />
             <div className="l-sponsor-slot"><span className="l-sponsor-icon">◈</span><span className="l-sponsor-name">Sponsor</span></div>
             <div className="l-sponsor-div" />
-            <div className="l-sponsor-slot l-sponsor-cta"><a href="mailto:ads@curly.sports">Get featured →</a></div>
+            <div className="l-sponsor-slot l-sponsor-cta"><a href="mailto:ads@curlysports.com">Get featured →</a></div>
           </div>
           <span className="l-sponsors-reach">Reach a passionate sports audience · Contact us to get featured</span>
         </div>

@@ -15,7 +15,7 @@ const ESPN = process.env.ESPN_BASE_URL ?? "https://site.api.espn.com/apis/site/v
 export async function fetchScoreboard(path: string, date?: string): Promise<EspnEvent[]> {
   if (date) {
     // Fetch exact date — user selected this specific day
-    const res = await fetch(`${ESPN}/${path}/scoreboard?dates=${date}`, { cache: "no-store" });
+    const res = await fetch(`${ESPN}/${path}/scoreboard?dates=${date}`, { cache: "no-store", signal: AbortSignal.timeout(8000) });
     if (!res.ok) return [];
     const data: EspnScoreboardResponse = await res.json();
     return data.events ?? [];
@@ -23,7 +23,7 @@ export async function fetchScoreboard(path: string, date?: string): Promise<Espn
 
   // No date = ESPN's current gameweek/round
   const url = `${ESPN}/${path}/scoreboard`;
-  const res = await fetch(url, { next: { revalidate: 30, tags: ["espn-scores"] } });
+  const res = await fetch(url, { next: { revalidate: 30, tags: ["espn-scores"] }, signal: AbortSignal.timeout(8000) });
   if (!res.ok) return [];
   const data: EspnScoreboardResponse = await res.json();
   return data.events ?? [];
@@ -79,8 +79,8 @@ export function normalizeEvent(
       logoUrl: away?.team?.logos?.[0]?.href ?? away?.team?.logo,
     },
     league: { id: leagueId, name: leagueName, shortName: leagueShortName },
-    homeScore: home?.score != null ? parseInt(home.score) : null,
-    awayScore: away?.score != null ? parseInt(away.score) : null,
+    homeScore: (status === "LIVE" || status === "HALF_TIME" || status === "FINISHED") && home?.score != null ? parseInt(home.score) : null,
+    awayScore: (status === "LIVE" || status === "HALF_TIME" || status === "FINISHED") && away?.score != null ? parseInt(away.score) : null,
     status,
     statusDisplay: event.status.type.shortDetail,
     minute:
@@ -100,7 +100,7 @@ export async function fetchEspnNews(
   path: string
 ): Promise<NormalizedNews[]> {
   const url = `${ESPN}/${path}/news`;
-  const res = await fetch(url, { next: { revalidate: 300 } });
+  const res = await fetch(url, { next: { revalidate: 300 }, signal: AbortSignal.timeout(8000) });
   if (!res.ok) return [];
   const data: EspnNewsResponse = await res.json();
   return (data.articles ?? []).map((a) => normalizeArticle(a, sport));
@@ -159,6 +159,7 @@ export async function fetchTavilyNews(query: string): Promise<NormalizedNews[]> 
         max_results: 10,
       }),
       next: { revalidate: 300 },
+      signal: AbortSignal.timeout(8000),
     });
 
     if (!res.ok) return [];
@@ -256,6 +257,7 @@ export async function fetchRssNews(feedUrl: string, sport: SportSlug | null): Pr
     const res = await fetch(feedUrl, {
       headers: { "User-Agent": "CurlySports/1.0 RSS Reader" },
       next: { revalidate: 300 },
+      signal: AbortSignal.timeout(8000),
     });
     if (!res.ok) return [];
     const xml = await res.text();

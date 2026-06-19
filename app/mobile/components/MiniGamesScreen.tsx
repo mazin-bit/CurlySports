@@ -6,6 +6,7 @@ import Card from './ui/Card';
 import Chip from './ui/Chip';
 import Icon from './ui/Icon';
 import SportSelector from './ui/SportSelector';
+import { SkeletonTableRow, SkeletonList } from './ui/Skeletons';
 
 // ─── Quiz data ────────────────────────────────────────────────────────────────
 const QUIZ_DATA: Record<string, { q: string; options: string[]; answer: number }[]> = {
@@ -198,7 +199,7 @@ function QuizGame({ sport, onComplete }: { sport: string; onComplete: (score: nu
     const pct = Math.round((score / (questions.length * 10)) * 100);
     return (
       <Card style={{ background: 'var(--accent)', borderColor: 'var(--ink)', textAlign: 'center', padding: 24 }}>
-        <div style={{ fontSize: 36, marginBottom: 8 }}>🏆</div>
+        <div style={{ fontSize: 36, marginBottom: 8 }}><Icon name="trophy" size={28} /></div>
         <div style={{ fontFamily: 'var(--display)', fontWeight: 800, fontSize: 22, color: 'var(--ink)', marginBottom: 4 }}>Quiz Complete!</div>
         <div style={{ fontFamily: 'var(--display)', fontWeight: 800, fontSize: 36, color: 'var(--ink)', marginBottom: 4 }}>{score} pts</div>
         <div style={{ fontSize: 13, color: 'var(--ink)', opacity: 0.7, marginBottom: 16 }}>
@@ -293,7 +294,7 @@ function PlayerGuessGame({ sport, onComplete }: { sport: string; onComplete: (sc
   if (done) {
     return (
       <Card style={{ background: 'var(--ink)', borderColor: 'var(--ink)', textAlign: 'center', padding: 24 }}>
-        <div style={{ fontSize: 36, marginBottom: 8 }}>🔍</div>
+        <div style={{ fontSize: 36, marginBottom: 8 }}><Icon name="search" size={28} /></div>
         <div style={{ fontFamily: 'var(--display)', fontWeight: 800, fontSize: 22, color: 'var(--paper)', marginBottom: 4 }}>All Players!</div>
         <div style={{ fontFamily: 'var(--display)', fontWeight: 800, fontSize: 36, color: 'var(--accent)', marginBottom: 12 }}>{totalScore} pts</div>
         <button onClick={restart} style={{ background: 'var(--accent)', color: 'var(--ink)', border: '2px solid var(--accent)', borderRadius: 10, padding: '10px 24px', fontFamily: 'var(--mono)', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>Play again</button>
@@ -444,7 +445,7 @@ export default function MiniGamesScreen({ sport, setSport, onSearch, onBell, unr
             <Chip active={lbGame === 'quiz'} onClick={() => setLbGame('quiz')}>Trivia</Chip>
             <Chip active={lbGame === 'player_guess'} onClick={() => setLbGame('player_guess')}>Guess</Chip>
           </div>
-          {lbLoading && <div style={{ textAlign: 'center', padding: '16px 0', fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text-mute)' }}>Loading…</div>}
+          {lbLoading && <SkeletonList count={5}>{i => <SkeletonTableRow style={{ '--i': i } as React.CSSProperties} />}</SkeletonList>}
           {!lbLoading && leaderboard.length === 0 && (
             <div style={{ textAlign: 'center', padding: '20px 0' }}>
               <div style={{ fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--text-mute)' }}>No scores yet. Play to claim top spot!</div>

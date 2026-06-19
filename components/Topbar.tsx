@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { Ico } from "./Icons";
 
@@ -9,6 +10,7 @@ interface TopbarProps {
 }
 
 export default function Topbar({ title, subtitle }: TopbarProps) {
+  const router = useRouter();
   const [initials, setInitials] = useState("…");
 
   useEffect(() => {
@@ -35,7 +37,7 @@ export default function Topbar({ title, subtitle }: TopbarProps) {
       </div>
 
       <div className="tb-right">
-        <button className="tb-icon-btn" title="Live">
+        <button className="tb-icon-btn" title="Live" onClick={() => router.push("/live-scores")}>
           <Ico id="i-live" />
         </button>
         <button className="tb-icon-btn" title="Notifications">

@@ -5,7 +5,7 @@ export interface TeamRef {
   code: string;
   abbr: string;
   name: string;
-  score: number;
+  score: number | null;
   logoUrl?: string | null;
 }
 
@@ -18,6 +18,7 @@ export interface Match {
   sport?: string;
   status: 'live' | 'ft' | 'up';
   clock: string;
+  scheduledAt?: string | null;
   focus?: boolean;
 }
 

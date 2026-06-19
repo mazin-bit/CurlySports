@@ -64,7 +64,7 @@ function buildResetEmail(resetUrl: string): string {
               <span style="font-family:Georgia,serif;font-size:28px;font-weight:900;color:#07090b;line-height:56px">C</span>
             </td></tr>
           </table>
-          <div style="margin-top:14px;font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#c8ff3d">curly.sports</div>
+          <div style="margin-top:14px;font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#c8ff3d">curlysports.com</div>
           <div style="margin-top:4px;font-size:10px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#555">password reset</div>
         </td></tr>
 
@@ -118,7 +118,7 @@ function buildResetEmail(resetUrl: string): string {
         <!-- Footer -->
         <tr><td style="background:#07090b;border-radius:0 0 16px 16px;padding:20px 40px;text-align:center;border:2px solid #07090b">
           <p style="margin:0;font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#444">
-            CURLY.SPORTS &nbsp;·&nbsp; MADE IN A BEDROOM
+            CURLYSPORTS.COM &nbsp;·&nbsp; MADE IN A BEDROOM
           </p>
           <p style="margin:6px 0 0;font-size:10px;color:#333">
             You're receiving this because a password reset was requested for your account.

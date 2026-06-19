@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { timingSafeEqual } from "crypto";
 
 export async function POST(req: NextRequest) {
   const { password } = await req.json();
@@ -8,7 +9,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, error: "Admin password not configured" }, { status: 500 });
   }
 
-  if (password === adminPassword) {
+  const a = Buffer.from(password ?? "");
+  const b = Buffer.from(adminPassword);
+  const match = a.length === b.length && timingSafeEqual(a, b);
+
+  if (match) {
     return NextResponse.json({ ok: true });
   }
 

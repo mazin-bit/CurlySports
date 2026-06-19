@@ -256,7 +256,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#07090b",
   },
   loading: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: "#07090b",
     alignItems: "center",
     justifyContent: "center",

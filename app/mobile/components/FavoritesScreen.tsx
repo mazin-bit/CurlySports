@@ -7,6 +7,7 @@ import Chip from './ui/Chip';
 import TeamCrest from './ui/TeamCrest';
 import Icon from './ui/Icon';
 import Badge from './ui/Badge';
+import { SkeletonRow, SkeletonList } from './ui/Skeletons';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface FavRow {
@@ -152,7 +153,7 @@ function AddModal({ type, existingIds, onClose, onAdded }: { type: 'team' | 'pla
                   <img src={logoSrc} alt="" style={{ width: 34, height: 34, borderRadius: 8, objectFit: 'cover', border: '1.5px solid var(--border-2)' }} onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
                 ) : (
                   <div style={{ width: 34, height: 34, borderRadius: 8, background: 'var(--surface-3)', border: '1.5px solid var(--border-2)', display: 'grid', placeItems: 'center', fontFamily: 'var(--display)', fontWeight: 800, fontSize: 12, color: 'var(--text-mute)' }}>
-                    {(item.name as string).slice(0, 2).toUpperCase()}
+                    {((item.name as string) ?? 'NA').slice(0, 2).toUpperCase()}
                   </div>
                 )}
                 <div style={{ flex: 1, minWidth: 0 }}>
@@ -226,7 +227,9 @@ export default function FavoritesScreen({ onSearch, onBell, onOpenPlayer, unread
         </div>
 
         {isLoading && (
-          <div style={{ padding: '40px 0', textAlign: 'center', fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text-mute)' }}>Loading favourites…</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <SkeletonList count={4}>{i => <SkeletonRow style={{ '--i': i } as React.CSSProperties} />}</SkeletonList>
+          </div>
         )}
 
         {/* ── Teams ── */}
@@ -308,7 +311,7 @@ export default function FavoritesScreen({ onSearch, onBell, onOpenPlayer, unread
                       <img src={player.headshot} alt="" style={{ width: 42, height: 42, borderRadius: 10, objectFit: 'cover', border: '2px solid var(--border-2)', flexShrink: 0 }} onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
                     ) : (
                       <div style={{ width: 42, height: 42, borderRadius: 10, background: 'var(--surface-3)', border: '2px solid var(--border-2)', display: 'grid', placeItems: 'center', fontFamily: 'var(--display)', fontWeight: 800, fontSize: 14, color: 'var(--text-mute)', flexShrink: 0 }}>
-                        {player.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+                        {(player.name ?? 'NA').split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
                       </div>
                     )}
                     <div style={{ flex: 1, minWidth: 0 }}>

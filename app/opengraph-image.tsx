@@ -59,7 +59,7 @@ export default function OGImage() {
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="https://curly.sports/curly-guy.png"
+              src="https://curlysports.com/curly-guy.png"
               width={72}
               height={72}
               alt="Curly"

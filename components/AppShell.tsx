@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 import { IconDefs } from "./Icons";
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
@@ -16,6 +17,7 @@ interface AppShellProps {
 
 export default function AppShell({ active, title, subtitle, children }: AppShellProps) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const pathname = usePathname();
 
   return (
     <MaintenanceGuard>
@@ -24,7 +26,7 @@ export default function AppShell({ active, title, subtitle, children }: AppShell
         <Sidebar active={active} />
         <div className="app-main">
           <Topbar title={title} subtitle={subtitle} />
-          <div className="app-content">{children}</div>
+          <div key={pathname} className="app-content page-enter">{children}</div>
           <BottomNav active={active} onMenuOpen={() => setMenuOpen(true)} />
         </div>
       </div>

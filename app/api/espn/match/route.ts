@@ -86,7 +86,7 @@ export async function GET(req: NextRequest) {
 
   try {
     const url = `${ESPN}/${leaguePath}/summary?event=${eventId}`;
-    const res = await fetch(url, { next: { revalidate: 15 } });
+    const res = await fetch(url, { next: { revalidate: 15 }, signal: AbortSignal.timeout(8000) });
     if (!res.ok) return NextResponse.json({ error: "ESPN error" }, { status: 502 });
 
     const data = await res.json();
@@ -258,7 +258,9 @@ export async function GET(req: NextRequest) {
       updatedAt: new Date().toISOString(),
     };
 
-    return NextResponse.json(detail);
+    return NextResponse.json(detail, {
+      headers: { "Cache-Control": "public, max-age=10" },
+    });
   } catch (e) {
     console.error("Match fetch error:", e);
     return NextResponse.json({ error: "Failed to fetch match" }, { status: 500 });

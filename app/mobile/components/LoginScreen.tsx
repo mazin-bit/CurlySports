@@ -100,7 +100,7 @@ export default function LoginScreen() {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/curly-mark.png" alt="" style={{ width: '80%', height: '80%', objectFit: 'contain', transform: 'rotate(6deg)' }} />
           </div>
-          <div style={{ fontFamily: 'var(--mono)', fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--orange)' }}>curly.sports</div>
+          <div style={{ fontFamily: 'var(--mono)', fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--orange)' }}>curlysports.com</div>
           <h1 style={{ fontFamily: 'var(--display)', fontWeight: 800, fontSize: 28, letterSpacing: '-0.03em', color: 'var(--ink)', margin: '6px 0 8px', lineHeight: 1.1 }}>
             Check your inbox.
           </h1>
@@ -138,7 +138,7 @@ export default function LoginScreen() {
 
         <div style={{ flex: 1, minHeight: 32 }} />
         <div style={{ textAlign: 'center', fontFamily: 'var(--mono)', fontSize: 9.5, color: 'var(--text-mute)', letterSpacing: '0.06em', paddingBottom: 32 }}>
-          CURLY.SPORTS · MADE IN A BEDROOM
+          CURLYSPORTS.COM · MADE IN A BEDROOM
         </div>
       </div>
     );
@@ -153,7 +153,7 @@ export default function LoginScreen() {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/curly-mark.png" alt="" style={{ width: '80%', height: '80%', objectFit: 'contain', transform: 'rotate(6deg)' }} />
           </div>
-          <div style={{ fontFamily: 'var(--mono)', fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--orange)' }}>curly.sports</div>
+          <div style={{ fontFamily: 'var(--mono)', fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--orange)' }}>curlysports.com</div>
           <h1 style={{ fontFamily: 'var(--display)', fontWeight: 800, fontSize: 28, letterSpacing: '-0.03em', color: 'var(--ink)', margin: '6px 0 8px', lineHeight: 1.1 }}>
             Reset your password.
           </h1>
@@ -203,7 +203,7 @@ export default function LoginScreen() {
 
         <div style={{ flex: 1, minHeight: 32 }} />
         <div style={{ textAlign: 'center', fontFamily: 'var(--mono)', fontSize: 9.5, color: 'var(--text-mute)', letterSpacing: '0.06em', paddingBottom: 32 }}>
-          CURLY.SPORTS · MADE IN A BEDROOM
+          CURLYSPORTS.COM · MADE IN A BEDROOM
         </div>
       </div>
     );
@@ -218,7 +218,7 @@ export default function LoginScreen() {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/curly-mark.png" alt="" style={{ width: '80%', height: '80%', objectFit: 'contain', transform: 'rotate(6deg)' }} />
         </div>
-        <div style={{ fontFamily: 'var(--mono)', fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--orange)' }}>curly.sports</div>
+        <div style={{ fontFamily: 'var(--mono)', fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--orange)' }}>curlysports.com</div>
         <h1 style={{ fontFamily: 'var(--display)', fontWeight: 800, fontSize: 30, letterSpacing: '-0.03em', color: 'var(--ink)', margin: '6px 0 6px', lineHeight: 1.1 }}>
           {mode === 'login' ? 'Welcome back.' : 'Join the debate.'}
         </h1>
@@ -333,7 +333,7 @@ export default function LoginScreen() {
 
       <div style={{ flex: 1, minHeight: 32 }} />
       <div style={{ textAlign: 'center', fontFamily: 'var(--mono)', fontSize: 9.5, color: 'var(--text-mute)', letterSpacing: '0.06em', paddingBottom: 32 }}>
-        CURLY.SPORTS · MADE IN A BEDROOM
+        CURLYSPORTS.COM · MADE IN A BEDROOM
       </div>
     </div>
   );

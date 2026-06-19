@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import useSWR from 'swr';
 import { useDebatesList } from './api';
 import { useAuth } from './AuthContext';
@@ -7,6 +7,7 @@ import Topbar from './ui/Topbar';
 import Card from './ui/Card';
 import Badge from './ui/Badge';
 import Icon from './ui/Icon';
+import { SkeletonCard, SkeletonRow, SkeletonList } from './ui/Skeletons';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 interface Post {
@@ -127,7 +128,7 @@ function CommentsSheet({ postId, onClose }: { postId: string; onClose: () => voi
         {/* Comments list */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
           {isLoading && (
-            <div style={{ textAlign: 'center', padding: '24px 0', fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text-mute)' }}>Loading…</div>
+            <SkeletonList count={3}>{i => <SkeletonRow style={{ '--i': i } as React.CSSProperties} />}</SkeletonList>
           )}
           {!isLoading && comments.length === 0 && (
             <div style={{ textAlign: 'center', padding: '24px 0', fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text-mute)' }}>No comments yet. Be first.</div>
@@ -200,6 +201,40 @@ export default function DebatesScreen({ sport, onSearch, onBell, unread }: Debat
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [feedLoading, setFeedLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+
+  // ── Collapsible composer ──
+  const [composerOpen, setComposerOpen] = useState(true);
+  const [bubbleVisible, setBubbleVisible] = useState(true);
+  const collapseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const resetCollapseTimer = useCallback(() => {
+    if (collapseTimer.current) clearTimeout(collapseTimer.current);
+    collapseTimer.current = setTimeout(() => {
+      if (!composerText.trim()) setComposerOpen(false);
+    }, 4000);
+  }, [composerText]);
+
+  // Start collapse timer on mount
+  useEffect(() => {
+    resetCollapseTimer();
+    return () => { if (collapseTimer.current) clearTimeout(collapseTimer.current); };
+  }, [resetCollapseTimer]);
+
+  const expandComposer = () => {
+    setComposerOpen(true);
+    if (collapseTimer.current) clearTimeout(collapseTimer.current);
+    // Focus input after animation
+    setTimeout(() => inputRef.current?.focus(), 350);
+  };
+
+  const onComposerBlur = () => {
+    if (!composerText.trim()) resetCollapseTimer();
+  };
+
+  const onComposerFocus = () => {
+    if (collapseTimer.current) clearTimeout(collapseTimer.current);
+  };
 
   const loadPosts = React.useCallback(async (replace = true) => {
     if (replace) setFeedLoading(true);
@@ -358,16 +393,18 @@ export default function DebatesScreen({ sport, onSearch, onBell, unread }: Debat
         {/* ── Sort toggle (matches web Hot/New) ── */}
         <div style={{ display: 'flex', gap: 8 }}>
           <button onClick={() => setSort('hot')} style={{ flex: 1, padding: '8px 0', borderRadius: 10, border: '2px solid var(--ink)', fontFamily: 'var(--mono)', fontWeight: 700, fontSize: 11, cursor: 'pointer', background: sort === 'hot' ? 'var(--ink)' : 'var(--surface)', color: sort === 'hot' ? 'var(--accent)' : 'var(--ink)' }}>
-            🔥 Hot
+            <Icon name="flame" size={12} /> Hot
           </button>
           <button onClick={() => setSort('new')} style={{ flex: 1, padding: '8px 0', borderRadius: 10, border: '2px solid var(--ink)', fontFamily: 'var(--mono)', fontWeight: 700, fontSize: 11, cursor: 'pointer', background: sort === 'new' ? 'var(--ink)' : 'var(--surface)', color: sort === 'new' ? 'var(--accent)' : 'var(--ink)' }}>
-            ⚡ New
+            <Icon name="bolt" size={12} /> New
           </button>
         </div>
 
         {/* ── Posts feed ── */}
         {feedLoading && allPosts.length === 0 && (
-          <div style={{ textAlign: 'center', padding: 32, fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--text-mute)' }}>Loading takes…</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <SkeletonList count={3}>{i => <SkeletonCard style={{ '--i': i } as React.CSSProperties} />}</SkeletonList>
+          </div>
         )}
 
         {!feedLoading && allPosts.length === 0 && (
@@ -400,30 +437,115 @@ export default function DebatesScreen({ sport, onSearch, onBell, unread }: Debat
         )}
       </div>
 
-      {/* ── Composer ── */}
-      <div style={{ position: 'absolute', left: 0, right: 0, bottom: 78, padding: '0 14px', pointerEvents: 'none' }}>
-        <div style={{ pointerEvents: 'auto', display: 'flex', alignItems: 'center', gap: 8, background: 'var(--surface)', border: '2px solid var(--ink)', borderRadius: 999, padding: 6, boxShadow: 'var(--shadow-md)' }}>
-          <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'var(--lime)', border: '2px solid var(--ink)', overflow: 'hidden', flexShrink: 0, display: 'grid', placeItems: 'center', fontFamily: 'var(--display)', fontWeight: 800, fontSize: 14, color: 'var(--ink)' }}>
-            {profile?.avatar
-              ? <img src={profile.avatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              : avatarChar}
-          </div>
-          <input
-            value={composerText}
-            onChange={e => { setComposerText(e.target.value); setPostError(null); }}
-            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitPost(); } }}
-            placeholder="Drop your take…"
-            style={{ flex: 1, border: 'none', background: 'transparent', outline: 'none', fontSize: 13, color: 'var(--ink)', fontFamily: 'var(--body)' }}
-          />
-          <button
-            onClick={submitPost}
-            disabled={posting || !composerText.trim()}
-            style={{ background: posting || !composerText.trim() ? 'var(--surface-3)' : 'var(--orange)', color: 'var(--paper)', border: '2px solid var(--ink)', borderRadius: 999, padding: '7px 16px', fontWeight: 700, fontSize: 13, cursor: posting || !composerText.trim() ? 'not-allowed' : 'pointer' }}
+      {/* ── Composer (collapsible) ── */}
+      <div style={{ position: 'absolute', left: 0, right: 0, bottom: 14, padding: '0 14px', pointerEvents: 'none', display: 'flex', justifyContent: composerOpen ? 'stretch' : 'flex-end' }}>
+        {composerOpen ? (
+          <div
+            style={{
+              pointerEvents: 'auto', display: 'flex', alignItems: 'center', gap: 8,
+              background: 'var(--surface)', border: '2px solid var(--ink)', borderRadius: 999,
+              padding: 6, boxShadow: 'var(--shadow-md)', width: '100%',
+              animation: 'cs-composerExpand 0.32s cubic-bezier(.22,1,.36,1) both',
+            }}
           >
-            {posting ? '…' : 'Post'}
-          </button>
-        </div>
-        {postError && (
+            <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'var(--lime)', border: '2px solid var(--ink)', overflow: 'hidden', flexShrink: 0, display: 'grid', placeItems: 'center', fontFamily: 'var(--display)', fontWeight: 800, fontSize: 14, color: 'var(--ink)' }}>
+              {profile?.avatar
+                ? <img src={profile.avatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                : avatarChar}
+            </div>
+            <input
+              ref={inputRef}
+              value={composerText}
+              onChange={e => { setComposerText(e.target.value); setPostError(null); }}
+              onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitPost(); } }}
+              onFocus={onComposerFocus}
+              onBlur={onComposerBlur}
+              placeholder="Drop your take…"
+              style={{ flex: 1, border: 'none', background: 'transparent', outline: 'none', fontSize: 13, color: 'var(--ink)', fontFamily: 'var(--body)' }}
+            />
+            <button
+              onClick={submitPost}
+              disabled={posting || !composerText.trim()}
+              style={{ background: posting || !composerText.trim() ? 'var(--surface-3)' : 'var(--orange)', color: 'var(--paper)', border: '2px solid var(--ink)', borderRadius: 999, padding: '7px 16px', fontWeight: 700, fontSize: 13, cursor: posting || !composerText.trim() ? 'not-allowed' : 'pointer' }}
+            >
+              {posting ? '…' : 'Post'}
+            </button>
+          </div>
+        ) : (
+          <div style={{ pointerEvents: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8, animation: 'cs-composerCollapse 0.35s cubic-bezier(.22,1,.36,1) both' }}>
+            {/* Speech bubble — above the circle */}
+            {bubbleVisible && (
+              <div
+                onClick={expandComposer}
+                style={{
+                  position: 'relative', background: 'var(--ink)', color: 'var(--paper)',
+                  borderRadius: 14, padding: '9px 14px', cursor: 'pointer',
+                  fontFamily: 'var(--body)', fontSize: 12.5, fontWeight: 600, lineHeight: 1.3,
+                  boxShadow: '3px 3px 0 rgba(0,0,0,0.15)',
+                  animation: 'cs-fadeIn 0.3s cubic-bezier(.22,1,.36,1) 0.2s both',
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                <Icon name="pen" size={13} />
+                Drop your take
+                {/* Tail arrow pointing down */}
+                <span style={{
+                  position: 'absolute', bottom: -7, right: 18,
+                  width: 0, height: 0,
+                  borderLeft: '6px solid transparent',
+                  borderRight: '6px solid transparent',
+                  borderTop: '8px solid var(--ink)',
+                }} />
+                {/* Dismiss X */}
+                <span
+                  onClick={e => { e.stopPropagation(); setBubbleVisible(false); }}
+                  style={{
+                    position: 'absolute', top: -6, left: -6,
+                    width: 18, height: 18, borderRadius: '50%',
+                    background: 'var(--surface)', border: '1.5px solid var(--ink)',
+                    display: 'grid', placeItems: 'center',
+                    fontSize: 10, fontWeight: 800, color: 'var(--text-mute)',
+                    cursor: 'pointer', lineHeight: 1,
+                  }}
+                >
+                  <Icon name="close" size={10} />
+                </span>
+              </div>
+            )}
+            {/* FAB circle */}
+            <button
+              onClick={expandComposer}
+              className="cs-tap"
+              style={{
+                position: 'relative', flexShrink: 0,
+                width: 52, height: 52, borderRadius: '50%',
+                background: 'var(--lime)', border: '2.5px solid var(--ink)',
+                boxShadow: '4px 4px 0 var(--ink)',
+                display: 'grid', placeItems: 'center', cursor: 'pointer',
+                fontFamily: 'var(--display)', fontWeight: 800, fontSize: 18, color: 'var(--ink)',
+              }}
+            >
+              <div style={{ width: '100%', height: '100%', borderRadius: '50%', overflow: 'hidden', display: 'grid', placeItems: 'center' }}>
+                {profile?.avatar
+                  ? <img src={profile.avatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  : avatarChar}
+              </div>
+              <span style={{
+                position: 'absolute', bottom: -4, right: -4,
+                width: 20, height: 20, borderRadius: '50%',
+                background: 'var(--orange)', border: '2px solid var(--ink)',
+                display: 'grid', placeItems: 'center',
+                fontSize: 13, fontWeight: 800, color: 'var(--paper)', lineHeight: 1,
+                animation: 'cs-pulseGlow 1.8s infinite',
+                zIndex: 1,
+              }}>
+                +
+              </span>
+            </button>
+          </div>
+        )}
+        {postError && composerOpen && (
           <div style={{ marginTop: 6, fontFamily: 'var(--mono)', fontSize: 10.5, color: 'var(--coral)', textAlign: 'center' }}>{postError}</div>
         )}
       </div>

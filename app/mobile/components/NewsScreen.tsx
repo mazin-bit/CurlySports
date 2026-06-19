@@ -7,6 +7,7 @@ import Badge from './ui/Badge';
 import Chip from './ui/Chip';
 import Icon from './ui/Icon';
 import SportSelector from './ui/SportSelector';
+import { SkeletonNewsCard, SkeletonList } from './ui/Skeletons';
 
 const SPORT_LABELS: Record<string, string> = {
   football: 'Football', basketball: 'Basketball', nfl: 'NFL',
@@ -90,7 +91,9 @@ export default function NewsScreen({ sport, setSport, onSearch, onBell, unread }
         </div>
 
         {isLoading && (
-          <div style={{ padding: '40px 0', textAlign: 'center', fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text-mute)' }}>Loading news…</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <SkeletonList count={5}>{i => <SkeletonNewsCard style={{ '--i': i } as React.CSSProperties} />}</SkeletonList>
+          </div>
         )}
 
         {!isLoading && articles.length === 0 && (
@@ -100,9 +103,9 @@ export default function NewsScreen({ sport, setSport, onSearch, onBell, unread }
           </div>
         )}
 
-        {!isLoading && articles.map(article => (
+        {!isLoading && articles.map((article, idx) => (
+          <div key={article.id} className="cs-stagger" style={{ '--i': Math.min(idx, 8) } as React.CSSProperties}>
           <Card
-            key={article.id}
             tappable
             style={{ padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column', cursor: 'pointer' }}
             onClick={() => article.url && openArticle(article.url)}
@@ -141,6 +144,7 @@ export default function NewsScreen({ sport, setSport, onSearch, onBell, unread }
               </div>
             </div>
           </Card>
+          </div>
         ))}
       </div>
     </div>

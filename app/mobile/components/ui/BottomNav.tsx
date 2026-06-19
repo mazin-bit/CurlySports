@@ -24,9 +24,12 @@ export default function BottomNav({ active = 'home', onSelect }: BottomNavProps)
           <button
             key={item.key}
             onClick={() => onSelect?.(item.key)}
-            style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, background: 'none', border: 'none', padding: 4, cursor: 'pointer', color: isActive ? 'var(--orange)' : 'var(--text-mute)', fontFamily: 'var(--mono)', fontSize: 9.5, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', transition: 'color 0.15s' }}
+            className="cs-tap"
+            style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, background: 'none', border: 'none', padding: 4, cursor: 'pointer', color: isActive ? 'var(--orange)' : 'var(--text-mute)', fontFamily: 'var(--mono)', fontSize: 9.5, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', transition: 'color 0.15s, transform 0.12s ease', WebkitTapHighlightColor: 'transparent' }}
           >
-            <Icon name={item.icon} size={22} />
+            <div style={{ transition: 'transform 0.15s var(--ease-pop)', transform: isActive ? 'scale(1.15)' : 'scale(1)' }}>
+              <Icon name={item.icon} size={22} />
+            </div>
             <span>{item.label}</span>
           </button>
         );

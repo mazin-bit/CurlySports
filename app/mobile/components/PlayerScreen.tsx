@@ -7,6 +7,7 @@ import Icon from './ui/Icon';
 import TeamCrest from './ui/TeamCrest';
 import Badge from './ui/Badge';
 import Button from './ui/Button';
+import { SkeletonPlayerProfile } from './ui/Skeletons';
 
 const favFetcher = (url: string) => fetch(url).then(r => r.json());
 
@@ -70,9 +71,7 @@ export default function PlayerScreen({ playerId, playerLeagueId, onBack, onOpenM
       </header>
 
       <div className="cs-scroll" style={{ flex: 1, overflow: 'auto', padding: '14px 14px 96px', display: 'flex', flexDirection: 'column', gap: 16 }}>
-        {isLoading && (
-          <div style={{ padding: '40px 0', textAlign: 'center', fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text-mute)' }}>Loading player…</div>
-        )}
+        {isLoading && <SkeletonPlayerProfile />}
 
         {/* Hero card */}
         <Card style={{ background: 'var(--ink)', borderColor: 'var(--ink)' }}>

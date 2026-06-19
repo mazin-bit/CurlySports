@@ -285,8 +285,8 @@ async function fetchCricketGroups(leagueFilter?: string): Promise<LeagueGroup[]>
   const results = await Promise.allSettled(
     leagues.map(async league => {
       const [pastRes, nextRes] = await Promise.allSettled([
-        fetch(`${TSDB}/eventspastleague.php?id=${league.tsdbId}`, { next: { revalidate: 120 } }),
-        fetch(`${TSDB}/eventsnextleague.php?id=${league.tsdbId}`, { next: { revalidate: 120 } }),
+        fetch(`${TSDB}/eventspastleague.php?id=${league.tsdbId}`, { next: { revalidate: 120 }, signal: AbortSignal.timeout(8000) }),
+        fetch(`${TSDB}/eventsnextleague.php?id=${league.tsdbId}`, { next: { revalidate: 120 }, signal: AbortSignal.timeout(8000) }),
       ]);
 
       const matches: NormalizedMatch[] = [];

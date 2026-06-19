@@ -191,7 +191,7 @@ async function tryFetch(cfg: { path: string; leagueName: string }, leagueId: str
   const url = season
     ? `${ESPN_V2}/${cfg.path}/standings?season=${season}`
     : `${ESPN_V2}/${cfg.path}/standings`;
-  const res = await fetch(url, { next: { revalidate: 60 } });
+  const res = await fetch(url, { next: { revalidate: 60 }, signal: AbortSignal.timeout(8000) });
   if (!res.ok) return null;
 
   const data = await res.json();
@@ -293,7 +293,7 @@ async function fetchIplCompetitionId(): Promise<{ id: string; year: string }> {
   try {
     const res = await fetch(
       `${IPL_S3_BASE}/mc/competition.js?callback=oncomptetion&_=${Date.now()}`,
-      { cache: "no-store" }
+      { cache: "no-store", signal: AbortSignal.timeout(8000) }
     );
     if (!res.ok) return { id: "284", year: "2026" };
     const text = await res.text();
@@ -326,7 +326,7 @@ async function fetchIPLStandings(season?: string): Promise<LeagueStandings | nul
       ({ id: competitionId, year } = await fetchIplCompetitionId());
     }
     const url = `${IPL_S3_BASE}/feeds/stats/${competitionId}-groupstandings.js?ongroupstandings=_jqjsp&_${Date.now()}=`;
-    const res = await fetch(url, { cache: "no-store" });
+    const res = await fetch(url, { cache: "no-store", signal: AbortSignal.timeout(8000) });
     if (!res.ok) return null;
     const text = await res.text();
     // Callback is "ongroupstandings" (the query param name, not "_jqjsp")
@@ -391,7 +391,7 @@ async function fetchCricketStandingsFromTsdb(leagueId: string): Promise<LeagueSt
       try {
         const searchRes = await fetch(
           `${TSDB_BASE}/search_all_teams.php?l=${encodeURIComponent(cfg.searchName)}`,
-          { next: { revalidate: 3600 } }
+          { next: { revalidate: 3600 }, signal: AbortSignal.timeout(8000) }
         );
         if (searchRes.ok) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -406,8 +406,8 @@ async function fetchCricketStandingsFromTsdb(leagueId: string): Promise<LeagueSt
     }
 
     const [pastRes, nextRes] = await Promise.allSettled([
-      fetch(`${TSDB_BASE}/eventspastleague.php?id=${cfg.tsdbId}`, { next: { revalidate: 300 } }),
-      fetch(`${TSDB_BASE}/eventsnextleague.php?id=${cfg.tsdbId}`, { next: { revalidate: 300 } }),
+      fetch(`${TSDB_BASE}/eventspastleague.php?id=${cfg.tsdbId}`, { next: { revalidate: 300 }, signal: AbortSignal.timeout(8000) }),
+      fetch(`${TSDB_BASE}/eventsnextleague.php?id=${cfg.tsdbId}`, { next: { revalidate: 300 }, signal: AbortSignal.timeout(8000) }),
     ]);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const events: any[] = [];
@@ -667,7 +667,7 @@ async function fetchFromCricinfoHtml(leagueId: string, season?: string): Promise
 
   try {
     const url = `https://www.espncricinfo.com/series/${pick.slug}-${pick.seriesId}/points-table-standings`;
-    const res = await fetch(url, { headers: CRICINFO_PAGE_HEADERS, next: { revalidate: 3600 } });
+    const res = await fetch(url, { headers: CRICINFO_PAGE_HEADERS, next: { revalidate: 3600 }, signal: AbortSignal.timeout(8000) });
     if (!res.ok) return null;
     const html = await res.text();
     const result = parseEspnCricinfoTable(html, leagueId, cfg.leagueName, pick.season);

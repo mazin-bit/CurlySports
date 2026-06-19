@@ -76,6 +76,7 @@ export async function fetchF1Sessions(year?: number): Promise<F1Session[]> {
     const res = await fetch(`${OPENF1}/sessions?year=${y}`, {
       headers: { "Accept": "application/json" },
       next: { revalidate: 300 },
+      signal: AbortSignal.timeout(8000),
     });
     if (!res.ok) return [];
     return await res.json();
@@ -89,6 +90,7 @@ export async function fetchF1LatestSession(): Promise<F1Session | null> {
     const res = await fetch(`${OPENF1}/sessions?session_key=latest`, {
       headers: { "Accept": "application/json" },
       next: { revalidate: 60 },
+      signal: AbortSignal.timeout(8000),
     });
     if (!res.ok) return null;
     const data = await res.json();
@@ -103,6 +105,7 @@ export async function fetchF1Drivers(sessionKey: number | "latest"): Promise<F1D
     const res = await fetch(`${OPENF1}/drivers?session_key=${sessionKey}`, {
       headers: { "Accept": "application/json" },
       next: { revalidate: 60 },
+      signal: AbortSignal.timeout(8000),
     });
     if (!res.ok) return [];
     return await res.json();
@@ -116,6 +119,7 @@ export async function fetchF1Positions(sessionKey: number | "latest"): Promise<F
     const res = await fetch(`${OPENF1}/position?session_key=${sessionKey}`, {
       headers: { "Accept": "application/json" },
       next: { revalidate: 10 },
+      signal: AbortSignal.timeout(8000),
     });
     if (!res.ok) return [];
     return await res.json();
@@ -129,6 +133,7 @@ export async function fetchF1Intervals(sessionKey: number | "latest"): Promise<F
     const res = await fetch(`${OPENF1}/intervals?session_key=${sessionKey}`, {
       headers: { "Accept": "application/json" },
       next: { revalidate: 10 },
+      signal: AbortSignal.timeout(8000),
     });
     if (!res.ok) return [];
     return await res.json();
@@ -143,6 +148,7 @@ export async function fetchF1LatestLaps(sessionKey: number | "latest"): Promise<
     const res = await fetch(`${OPENF1}/laps?session_key=${sessionKey}`, {
       headers: { "Accept": "application/json" },
       next: { revalidate: 10 },
+      signal: AbortSignal.timeout(8000),
     });
     if (!res.ok) return {};
     const laps: F1LapData[] = await res.json();
@@ -204,6 +210,7 @@ export async function fetchNbaScoreboard(): Promise<NbaScoreboard[]> {
     const res = await fetch(`${NBA_CDN}/static/json/liveData/scoreboard/todaysScoreboard_00.json`, {
       headers: { "Accept": "application/json" },
       cache: "no-store",
+      signal: AbortSignal.timeout(8000),
     });
     if (!res.ok) return [];
     const data = await res.json();
@@ -218,6 +225,7 @@ export async function fetchNbaBoxscore(gameId: string) {
     const res = await fetch(`${NBA_CDN}/static/json/liveData/boxscore/boxscore_${gameId}.json`, {
       headers: { "Accept": "application/json" },
       cache: "no-store",
+      signal: AbortSignal.timeout(8000),
     });
     if (!res.ok) return null;
     return await res.json();
@@ -231,6 +239,7 @@ export async function fetchNbaPlaybyPlay(gameId: string) {
     const res = await fetch(`${NBA_CDN}/static/json/liveData/playbyplay/playbyplay_${gameId}.json`, {
       headers: { "Accept": "application/json" },
       cache: "no-store",
+      signal: AbortSignal.timeout(8000),
     });
     if (!res.ok) return null;
     const data = await res.json();
@@ -288,6 +297,7 @@ export async function fetchNbaPlayerStatsSeason(season = "2024-25"): Promise<Nba
     const res = await fetch(`${NBA_STATS}/leaguedashplayerstats?${params}`, {
       headers: NBA_HEADERS,
       next: { revalidate: 3600 },
+      signal: AbortSignal.timeout(8000),
     });
     if (!res.ok) return [];
     const data = await res.json();
@@ -333,6 +343,7 @@ export async function fetchCricketMatches(leagueId = "icc.worldcup") {
     const ESPN_BASE = "https://site.api.espn.com/apis/site/v2/sports";
     const res = await fetch(`${ESPN_BASE}/cricket/${leagueId}/scoreboard`, {
       next: { revalidate: 30 },
+      signal: AbortSignal.timeout(8000),
     });
     if (!res.ok) return [];
     const data = await res.json();

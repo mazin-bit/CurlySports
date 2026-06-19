@@ -138,7 +138,7 @@ export default function ProfileScreen({ fav, onSearch, onBell, unread }: Profile
           <Icon name="logout" size={15} /> {loggingOut ? 'Signing out…' : 'Log out'}
         </button>
 
-        <div style={{ textAlign: 'center', fontFamily: 'var(--mono)', fontSize: 9.5, color: 'var(--text-mute)', letterSpacing: '0.06em' }}>CURLY.SPORTS · v2.4 · MADE IN A BEDROOM</div>
+        <div style={{ textAlign: 'center', fontFamily: 'var(--mono)', fontSize: 9.5, color: 'var(--text-mute)', letterSpacing: '0.06em' }}>CURLYSPORTS.COM · v2.4 · MADE IN A BEDROOM</div>
       </div>
     </div>
   );

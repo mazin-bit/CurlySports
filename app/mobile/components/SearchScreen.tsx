@@ -4,6 +4,7 @@ import type { Match } from '../data';
 import useSWR from 'swr';
 import Icon from './ui/Icon';
 import TeamCrest from './ui/TeamCrest';
+import { SkeletonRow, SkeletonList } from './ui/Skeletons';
 import Chip from './ui/Chip';
 import type { RealTeam } from './api';
 
@@ -147,7 +148,9 @@ export default function SearchScreen({ onBack, onOpenPlayer }: SearchProps) {
         )}
 
         {isSearching && playersLoading && (
-          <div style={{ padding: '32px 0', textAlign: 'center', fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text-mute)' }}>Searching…</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <SkeletonList count={4}>{i => <SkeletonRow style={{ '--i': i } as React.CSSProperties} />}</SkeletonList>
+          </div>
         )}
 
         {isSearching && !playersLoading && !hasResults && (

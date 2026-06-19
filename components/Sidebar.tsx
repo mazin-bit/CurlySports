@@ -104,8 +104,8 @@ function SportDropdown({ enabledSports }: { enabledSports: Set<string> }) {
           display: "inline-flex", alignItems: "center", justifyContent: "center",
           minWidth: 32, height: 20, padding: "0 5px",
           fontSize: 9, fontWeight: 900, fontFamily: "var(--mono)",
-          background: activeSportConfig.color + "22", color: activeSportConfig.color,
-          borderRadius: 3, border: `1px solid ${activeSportConfig.color}44`,
+          background: activeSportConfig.color, color: "#000",
+          borderRadius: 3,
           letterSpacing: "0.05em", flexShrink: 0,
         }}>{activeSportConfig.icon}</span>
         <span style={{ flex: 1, fontFamily: "var(--display)", fontWeight: 700, fontSize: 14, color: "var(--ink)", textAlign: "left" }}>
@@ -139,8 +139,8 @@ function SportDropdown({ enabledSports }: { enabledSports: Set<string> }) {
                 display: "inline-flex", alignItems: "center", justifyContent: "center",
                 minWidth: 28, height: 18, padding: "0 4px",
                 fontSize: 8, fontWeight: 900, fontFamily: "var(--mono)",
-                background: s.color + "22", color: s.color,
-                borderRadius: 3, border: `1px solid ${s.color}44`,
+                background: s.color, color: "#000",
+                borderRadius: 3,
                 letterSpacing: "0.05em", flexShrink: 0,
               }}>{s.icon}</span>
               {s.label}

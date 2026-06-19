@@ -7,6 +7,7 @@ import Chip from './ui/Chip';
 import TeamCrest from './ui/TeamCrest';
 import Icon from './ui/Icon';
 import SportSelector from './ui/SportSelector';
+import { SkeletonRow, SkeletonList } from './ui/Skeletons';
 
 const LEAGUES_BY_SPORT: Record<string, { id: string; label: string }[]> = {
   football: [
@@ -133,7 +134,9 @@ export default function TeamsScreen({ sport, setSport, onSearch, onBell, onOpenP
         </div>
 
         {isLoading && (
-          <div style={{ padding: '40px 0', textAlign: 'center', fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text-mute)' }}>Loading teams…</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <SkeletonList count={6}>{i => <SkeletonRow style={{ '--i': i } as React.CSSProperties} />}</SkeletonList>
+          </div>
         )}
 
         {!isLoading && filtered.length === 0 && (

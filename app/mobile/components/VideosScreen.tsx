@@ -6,6 +6,7 @@ import Card from './ui/Card';
 import Badge from './ui/Badge';
 import Icon from './ui/Icon';
 import SportSelector from './ui/SportSelector';
+import { SkeletonCard, SkeletonList } from './ui/Skeletons';
 
 interface VideoHighlight {
   id: string;
@@ -67,7 +68,9 @@ export default function VideosScreen({ sport, setSport, onSearch, onBell, unread
         <SportSelector active={sport} onSelect={setSport} />
 
         {isLoading && (
-          <div style={{ padding: '40px 0', textAlign: 'center', fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text-mute)' }}>Loading videos…</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <SkeletonList count={4}>{i => <SkeletonCard style={{ '--i': i } as React.CSSProperties} />}</SkeletonList>
+          </div>
         )}
 
         {!isLoading && videos.length === 0 && (

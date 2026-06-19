@@ -10,7 +10,7 @@ import StatusPill from './ui/StatusPill';
 import TeamCrest from './ui/TeamCrest';
 import Button from './ui/Button';
 
-const TABS: [string, string][] = [['summary', 'Summary'], ['timeline', 'Timeline'], ['lineups', 'Lineups']];
+const TABS: [string, string][] = [['summary', 'Summary'], ['timeline', 'Timeline']];
 
 interface MatchScreenProps {
   match?: Match;
@@ -69,13 +69,6 @@ export default function MatchScreen({ match, liveClock, onBack, onOpenPlayer }: 
     return { min: e.clock ?? '', type, side, title: e.text ?? e.playerName ?? '', sub: e.playerName ?? '', score: undefined as string | undefined, id: e.id ?? String(i) };
   });
 
-  // Lineups — use rosters from SSE (home = rosters[0], away = rosters[1])
-  const homeRoster = data?.rosters.find(r => r.teamId === data?.homeTeam.id) ?? data?.rosters[0];
-  const awayRoster = data?.rosters.find(r => r.teamId === data?.awayTeam.id) ?? data?.rosters[1];
-  const lineups = homeRoster && awayRoster ? {
-    home: { formation: homeRoster.formation ?? '', players: homeRoster.players.filter(p => p.starter).map(p => [p.jerseyPosition ?? '', p.name ?? ''] as [string, string]) },
-    away: { formation: awayRoster.formation ?? '', players: awayRoster.players.filter(p => p.starter).map(p => [p.jerseyPosition ?? '', p.name ?? ''] as [string, string]) },
-  } : null;
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--bg)' }}>
@@ -171,42 +164,6 @@ export default function MatchScreen({ match, liveClock, onBack, onOpenPlayer }: 
           ) : (
             <Card subtitle="Key events" title="Timeline">
               <div style={{ fontSize: 13, color: 'var(--text-dim)', lineHeight: 1.5 }}>Timeline for {homeTeam.name} vs {awayTeam.name} will appear here.</div>
-            </Card>
-          )
-        )}
-
-        {/* Lineups */}
-        {tab === 'lineups' && (
-          lineups ? (
-            <Card subtitle="Starting XI" title="Lineups">
-              <div style={{ display: 'flex', gap: 14 }}>
-                {(['home', 'away'] as const).map((side, si) => (
-                  <React.Fragment key={side}>
-                    {si === 1 && <div style={{ width: 1, background: 'var(--border-3)' }} />}
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, flexDirection: side === 'away' ? 'row-reverse' : 'row' }}>
-                        <TeamCrest code={side === 'home' ? homeTeam.code : awayTeam.code} abbr={side === 'home' ? homeTeam.abbr : awayTeam.abbr} logoUrl={side === 'home' ? homeTeam.logoUrl : awayTeam.logoUrl} />
-                        <div style={{ textAlign: side === 'away' ? 'right' : 'left' }}>
-                          <div style={{ fontWeight: 700, fontSize: 12.5, color: 'var(--ink)' }}>{side === 'home' ? homeTeam.abbr : awayTeam.abbr}</div>
-                          <div style={{ fontFamily: 'var(--mono)', fontSize: 9.5, color: 'var(--text-mute)' }}>{lineups[side].formation}</div>
-                        </div>
-                      </div>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
-                        {lineups[side].players.map(([num, name]) => (
-                          <div key={num} style={{ display: 'flex', alignItems: 'center', gap: 8, flexDirection: side === 'away' ? 'row-reverse' : 'row' }}>
-                            <span style={{ width: 22, height: 22, flexShrink: 0, borderRadius: 6, background: 'var(--surface-3)', border: '1.5px solid var(--border-2)', display: 'grid', placeItems: 'center', fontFamily: 'var(--mono)', fontSize: 9.5, fontWeight: 700, color: 'var(--text-dim)' }}>{num}</span>
-                            <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </React.Fragment>
-                ))}
-              </div>
-            </Card>
-          ) : (
-            <Card subtitle="Starting XI" title="Lineups">
-              <div style={{ fontSize: 13, color: 'var(--text-dim)', lineHeight: 1.5 }}>Lineups will appear here when available.</div>
             </Card>
           )
         )}

@@ -14,6 +14,7 @@ import MatchRow from './ui/MatchRow';
 import SportSelector from './ui/SportSelector';
 import AdSlot from './ui/AdSlot';
 import Icon from './ui/Icon';
+import { SkeletonScoreCard, SkeletonNewsCard, SkeletonTableRow, SkeletonList } from './ui/Skeletons';
 
 interface DashboardProps {
   sport: string;
@@ -134,7 +135,9 @@ export default function DashboardScreen({ sport, setSport, onOpenMatch, onOpenPl
           action={leagueLabel || undefined}
         >
           {scoresLoading ? (
-            <div style={{ padding: '20px 0', textAlign: 'center', fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text-mute)' }}>Connecting…</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: '8px 0' }}>
+              <SkeletonList count={3}>{i => <SkeletonScoreCard style={{ '--i': i } as React.CSSProperties} />}</SkeletonList>
+            </div>
           ) : display.length === 0 ? (
             <div style={{ padding: '16px 0', textAlign: 'center', fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text-mute)' }}>No matches today</div>
           ) : (
@@ -171,7 +174,7 @@ export default function DashboardScreen({ sport, setSport, onOpenMatch, onOpenPl
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {newsLoading ? (
-              <div style={{ padding: '20px 0', textAlign: 'center', fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text-mute)' }}>Loading news…</div>
+              <SkeletonList count={3}>{i => <SkeletonNewsCard style={{ '--i': i } as React.CSSProperties} />}</SkeletonList>
             ) : articles.length > 0 ? articles.map(n => (
               <Card key={n.id} tappable style={{ padding: 0, overflow: 'hidden', display: 'flex', alignItems: 'stretch', gap: 0, cursor: 'pointer' }}>
                 {n.imageUrl ? (
@@ -209,7 +212,7 @@ export default function DashboardScreen({ sport, setSport, onOpenMatch, onOpenPl
               <span style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--orange)', fontWeight: 700 }}>{standings[0]?.season ?? ''}</span>
             </div>
             {standingsLoading ? (
-              <div style={{ padding: '20px 0', textAlign: 'center', fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text-mute)' }}>Loading…</div>
+              <SkeletonList count={5}>{i => <SkeletonTableRow style={{ '--i': i } as React.CSSProperties} />}</SkeletonList>
             ) : standings.slice(0, 2).map(league => (
               <MiniStandingsTable key={league.leagueId} entries={league.entries} leagueName={league.leagueName} />
             ))}

@@ -64,9 +64,6 @@ export const metadata: Metadata = {
     icon: "/icon.png",
     apple: "/apple-icon.png",
   },
-  verification: {
-    google: "",   // paste Google Search Console verification code here
-  },
 };
 
 export const viewport: Viewport = {

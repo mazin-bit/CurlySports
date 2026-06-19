@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { AuthProvider, useAuth } from './AuthContext';
 import type { Match } from '../data';
 import BottomNav from './ui/BottomNav';
@@ -39,6 +39,24 @@ function LoadingSplash() {
   );
 }
 
+class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean }> {
+  state = { hasError: false };
+  static getDerivedStateFromError() { return { hasError: true }; }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'var(--bg)', gap: 16, padding: 32, textAlign: 'center' }}>
+          <div style={{ width: 48, height: 48, background: 'var(--coral)', borderRadius: 14, border: '2px solid var(--ink)', display: 'grid', placeItems: 'center', color: 'var(--paper)', fontWeight: 800, fontSize: 22 }}>!</div>
+          <div style={{ fontFamily: 'var(--display)', fontWeight: 800, fontSize: 18, color: 'var(--ink)' }}>Something went wrong</div>
+          <div style={{ fontFamily: 'var(--body)', fontSize: 13, color: 'var(--text-dim)', maxWidth: 280 }}>Try refreshing the page. If the problem persists, contact support.</div>
+          <button onClick={() => this.setState({ hasError: false })} style={{ marginTop: 8, padding: '10px 24px', background: 'var(--ink)', color: 'var(--accent)', border: '2px solid var(--ink)', borderRadius: 999, fontWeight: 700, fontSize: 13, cursor: 'pointer', boxShadow: '3px 3px 0 var(--accent)' }}>Try again</button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 function AppInner() {
   const { user, profile, isLoading, isNewUser, setFavTeam } = useAuth();
   const [tab, setTab] = useState<Tab>('home');
@@ -46,14 +64,6 @@ function AppInner() {
   const [stack, setStack] = useState<Overlay[]>([]);
   const [menuOpen, setMenuOpen] = useState(false);
   const [unread, setUnread] = useState(0);
-  const [liveMin, setLiveMin] = useState(74);
-
-  useEffect(() => {
-    if (!user) return;
-    const id = setInterval(() => setLiveMin(m => m >= 90 ? 74 : m + 1), 3500);
-    return () => clearInterval(id);
-  }, [user]);
-  const liveClock = `${liveMin}'`;
 
   const push = (o: Overlay) => setStack(s => [...s, o]);
   const pop  = () => setStack(s => s.slice(0, -1));
@@ -106,13 +116,13 @@ function AppInner() {
   const top = stack[stack.length - 1];
   if (top) {
     let ov: React.ReactNode;
-    if      (top.type === 'match')         ov = <MatchScreen match={top.data} liveClock={top.data?.focus ? liveClock : null} onBack={pop} onOpenPlayer={openPlayer} />;
+    if      (top.type === 'match')         ov = <MatchScreen match={top.data} liveClock={null} onBack={pop} onOpenPlayer={openPlayer} />;
     else if (top.type === 'player')        ov = <PlayerScreen playerId={top.playerId} playerLeagueId={top.playerLeagueId} onBack={pop} onOpenMatch={() => { pop(); goTab('live'); }} />;
     else if (top.type === 'search')        ov = <SearchScreen onBack={pop} onOpenPlayer={openPlayer} onOpenMatch={openMatch} />;
     else if (top.type === 'notifications') ov = <NotificationsScreen onBack={pop} onMarkAll={() => setUnread(0)} onOpenMatch={openMatch} onOpenPlayer={openPlayer} />;
     return (
       <div style={{ position: 'relative', height: '100%', background: 'var(--bg-2)' }}>
-        <div style={{ height: '100%', animation: 'cs-pushIn 0.26s var(--ease-pop)' }}>{ov}</div>
+        <div style={{ height: '100%', animation: 'cs-pushIn 0.32s var(--ease-pop) both' }}>{ov}</div>
       </div>
     );
   }
@@ -134,17 +144,19 @@ function AppInner() {
 
   return (
     <div style={{ position: 'relative', height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--bg-2)' }}>
-      <div style={{ flex: 1, minHeight: 0 }}>{screen}</div>
+      <div key={tab} className="cs-tab-enter" style={{ flex: 1, minHeight: 0 }}>{screen}</div>
       <BottomNav active={bottomActive} onSelect={onBottom} />
-      {menuOpen && <MenuDrawer active={tab} onClose={() => setMenuOpen(false)} onNavigate={onMenuNav} />}
+      {menuOpen && <MenuDrawer active={tab} onClose={() => setMenuOpen(false)} onNavigate={onMenuNav} user={{ username: profile?.username, email: user?.email }} />}
     </div>
   );
 }
 
 export default function MobileApp() {
   return (
-    <AuthProvider>
-      <AppInner />
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <AppInner />
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }

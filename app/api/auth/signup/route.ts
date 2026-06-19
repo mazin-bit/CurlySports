@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
       <tr><td style="background:#0c0a1d;padding:10px 28px;">
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
           <td style="font-family:'Courier New',monospace;font-size:10px;font-weight:700;color:#fffdf7;letter-spacing:0.08em;text-transform:uppercase;">&bull;&nbsp;<span style="color:#c8ff3d;">CURLY SPORTS</span>&nbsp;&middot;&nbsp;LIVE SCORES &amp; DEEP STATS</td>
-          <td align="right" style="font-family:'Courier New',monospace;font-size:10px;color:rgba(255,253,247,0.38);text-transform:uppercase;letter-spacing:0.06em;">curly.sports</td>
+          <td align="right" style="font-family:'Courier New',monospace;font-size:10px;color:rgba(255,253,247,0.38);text-transform:uppercase;letter-spacing:0.06em;">curlysports.com</td>
         </tr></table>
       </td></tr>
 
@@ -78,14 +78,14 @@ export async function POST(req: NextRequest) {
         <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:28px;"><tr><td style="border-radius:999px;">
           <a href="${appUrl}/dashboard" style="display:inline-block;background:#0c0a1d;color:#c8ff3d;font-family:Arial,sans-serif;font-size:15px;font-weight:800;padding:15px 40px;border-radius:999px;border:2px solid #0c0a1d;box-shadow:5px 5px 0 #ff5b3d;text-decoration:none;white-space:nowrap;">Go to my dashboard &rarr;</a>
         </td></tr></table>
-        <p style="font-family:Arial,sans-serif;font-size:11px;color:rgba(12,10,29,0.4);line-height:1.6;margin:0;">You received this because you signed up at <a href="${appUrl}" style="color:#0c0a1d;font-weight:600;">curly.sports</a>.</p>
+        <p style="font-family:Arial,sans-serif;font-size:11px;color:rgba(12,10,29,0.4);line-height:1.6;margin:0;">You received this because you signed up at <a href="${appUrl}" style="color:#0c0a1d;font-weight:600;">curlysports.com</a>.</p>
       </td></tr>
 
       <!-- Footer -->
       <tr><td style="background:#0c0a1d;border:2px solid #0c0a1d;border-top:none;border-radius:0 0 20px 20px;padding:18px 32px;">
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td align="center" style="font-family:Arial,sans-serif;font-size:12px;color:rgba(255,253,247,0.35);line-height:1.7;">
-          &copy; 2026 Curly Sports &middot; <a href="${appUrl}" style="color:rgba(200,255,61,0.65);">curly.sports</a><br/>
-          <a href="${appUrl}/privacy" style="color:rgba(255,253,247,0.3);text-decoration:underline;">Privacy</a>&nbsp;&middot;&nbsp;<a href="${appUrl}/terms" style="color:rgba(255,253,247,0.3);text-decoration:underline;">Terms</a>&nbsp;&middot;&nbsp;<a href="mailto:support@curly.sports" style="color:rgba(255,253,247,0.3);text-decoration:underline;">Support</a>
+          &copy; 2026 Curly Sports &middot; <a href="${appUrl}" style="color:rgba(200,255,61,0.65);">curlysports.com</a><br/>
+          <a href="${appUrl}/privacy" style="color:rgba(255,253,247,0.3);text-decoration:underline;">Privacy</a>&nbsp;&middot;&nbsp;<a href="${appUrl}/terms" style="color:rgba(255,253,247,0.3);text-decoration:underline;">Terms</a>&nbsp;&middot;&nbsp;<a href="mailto:support@curlysports.com" style="color:rgba(255,253,247,0.3);text-decoration:underline;">Support</a>
         </td></tr></table>
       </td></tr>
 

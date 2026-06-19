@@ -1,36 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
-import fs from "fs";
-import path from "path";
 import { DEFAULT_FLAGS, AdminFlags } from "@/lib/featureFlags";
 
-const FLAGS_PATH = path.join(process.cwd(), "data", "flags.json");
-
-function readFlags(): AdminFlags {
-  try {
-    if (!fs.existsSync(FLAGS_PATH)) {
-      writeFlags(DEFAULT_FLAGS);
-      return DEFAULT_FLAGS;
-    }
-    return JSON.parse(fs.readFileSync(FLAGS_PATH, "utf-8"));
-  } catch {
-    return DEFAULT_FLAGS;
-  }
-}
-
-function writeFlags(flags: AdminFlags) {
-  fs.mkdirSync(path.dirname(FLAGS_PATH), { recursive: true });
-  fs.writeFileSync(FLAGS_PATH, JSON.stringify(flags, null, 2));
-}
+// In-memory flags store — persists across requests within the same server process.
+// For multi-instance deployments, swap this for Redis or database storage.
+let flags: AdminFlags = { ...DEFAULT_FLAGS };
 
 function isAdmin(req: NextRequest): boolean {
   const token = req.headers.get("x-admin-token");
   return !!process.env.ADMIN_PASSWORD && token === process.env.ADMIN_PASSWORD;
 }
 
-// Public read — used by AppShell for maintenance/feature checks
+// Public read
 export async function GET() {
-  const flags = readFlags();
-  // Strip page views + activity log from public read to reduce payload
   const { pageViews: _pv, activityLog: _al, ...publicFlags } = flags;
   return NextResponse.json(publicFlags, {
     headers: { "Cache-Control": "no-store" },
@@ -42,7 +23,7 @@ export async function POST(req: NextRequest) {
   if (!isAdmin(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  return NextResponse.json(readFlags());
+  return NextResponse.json(flags);
 }
 
 // Admin-only update
@@ -52,24 +33,20 @@ export async function PATCH(req: NextRequest) {
   }
 
   const updates = await req.json();
-  const current = readFlags();
-
-  // Log the action
-  const log = current.activityLog ?? [];
+  const log = flags.activityLog ?? [];
   if (updates._action) {
     log.unshift({ action: updates._action, at: new Date().toISOString() });
     if (log.length > 50) log.length = 50;
     delete updates._action;
   }
 
-  const updated: AdminFlags = {
-    ...current,
+  flags = {
+    ...flags,
     ...updates,
-    sports: updates.sports ? { ...current.sports, ...updates.sports } : current.sports,
-    features: updates.features ? { ...current.features, ...updates.features } : current.features,
+    sports: updates.sports ? { ...flags.sports, ...updates.sports } : flags.sports,
+    features: updates.features ? { ...flags.features, ...updates.features } : flags.features,
     activityLog: log,
   };
 
-  writeFlags(updated);
-  return NextResponse.json(updated);
+  return NextResponse.json(flags);
 }

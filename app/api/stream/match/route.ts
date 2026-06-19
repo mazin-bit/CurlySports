@@ -430,32 +430,33 @@ export async function GET(req: NextRequest) {
       };
 
       let pollMs = isLive(initial) ? 3_000 : 10_000;
+      let pollTimer: ReturnType<typeof setTimeout> | null = null;
 
-      const interval = setInterval(async () => {
-        if (closed) { clearInterval(interval); return; }
+      const { cacheDel } = await import("@/lib/redis");
+
+      const poll = async () => {
+        if (closed) return;
         try {
-          const { cacheDel } = await import("@/lib/redis");
           await cacheDel(`match:${matchId}`);
           const fresh = await fetchMatchDetail(matchId, sport, league);
-          if (!fresh) return;
+          if (!fresh || closed) return;
           send("update", fresh);
-          const nextPoll = isLive(fresh) ? 3_000 : 10_000;
-          if (nextPoll !== pollMs) {
-            pollMs = nextPoll;
-            clearInterval(interval);
-          }
+          pollMs = isLive(fresh) ? 3_000 : 10_000;
           const freshStatus = (fresh as { status?: string }).status ?? "";
           if (freshStatus.includes("FINAL") || freshStatus.includes("STATUS_FULL_TIME")) {
-            clearInterval(interval);
+            return; // Match ended, stop polling
           }
         } catch {
-          send("heartbeat", { ts: Date.now() });
+          if (!closed) send("heartbeat", { ts: Date.now() });
         }
-      }, pollMs);
+        if (!closed) pollTimer = setTimeout(poll, pollMs);
+      };
+
+      pollTimer = setTimeout(poll, pollMs);
 
       req.signal.addEventListener("abort", () => {
         closed = true;
-        clearInterval(interval);
+        if (pollTimer) clearTimeout(pollTimer);
         try { controller.close(); } catch {}
       });
     },

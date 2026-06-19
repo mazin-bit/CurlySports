@@ -8,6 +8,7 @@ import Card from './ui/Card';
 import Chip from './ui/Chip';
 import TeamCrest from './ui/TeamCrest';
 import Icon from './ui/Icon';
+import { SkeletonTableRow, SkeletonList } from './ui/Skeletons';
 
 const LEAGUES: { id: string; label: string; sport: string; group?: string }[] = [
   // Football — Top Leagues
@@ -118,7 +119,7 @@ export default function LeaguesScreen({ sport, onSearch, onBell, onOpenPlayer, u
         {activeTab === 'bracket' && hasBracket && (
           bracketLoading ? (
             <Card subtitle="Knockout" title={selected.label}>
-              <div style={{ padding: '24px 0', textAlign: 'center', fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text-mute)' }}>Loading bracket…</div>
+              <SkeletonList count={4}>{i => <SkeletonTableRow style={{ '--i': i } as React.CSSProperties} />}</SkeletonList>
             </Card>
           ) : (
             rounds.map((round: BracketRound) => (
@@ -167,7 +168,7 @@ export default function LeaguesScreen({ sport, onSearch, onBell, onOpenPlayer, u
           </div>
 
           {isLoading && (
-            <div style={{ padding: '24px 0', textAlign: 'center', fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text-mute)' }}>Loading standings…</div>
+            <SkeletonList count={8}>{i => <SkeletonTableRow style={{ '--i': i } as React.CSSProperties} />}</SkeletonList>
           )}
 
           {!isLoading && table.length > 0 && table.map(entry => {
@@ -181,7 +182,7 @@ export default function LeaguesScreen({ sport, onSearch, onBell, onOpenPlayer, u
               else formArr.push('D');
             }
             return (
-              <div key={entry.teamId} onClick={() => onOpenPlayer()} style={{ display: 'flex', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid var(--border-3)', cursor: 'pointer' }}>
+              <div key={entry.teamId} style={{ display: 'flex', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid var(--border-3)' }}>
                 <span style={{ width: 20, fontFamily: 'var(--mono)', fontWeight: 700, fontSize: 12, color: entry.rank <= 4 ? 'var(--orange)' : 'var(--text-mute)' }}>{entry.rank}</span>
                 <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 9, minWidth: 0 }}>
                   <TeamCrest code={entry.teamAbbr.toLowerCase().replace(/[^a-z]/g, '').slice(0, 4)} abbr={entry.teamAbbr.slice(0, 3).toUpperCase()} logoUrl={entry.teamLogo} />

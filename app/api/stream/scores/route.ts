@@ -420,11 +420,12 @@ export async function GET(req: NextRequest) {
           g.matches.map(m => `${m.id}:${m.homeScore}:${m.awayScore}:${m.status}:${m.minute}`)
         ));
 
+        const { cacheDel } = await import("@/lib/redis");
+
         const interval = setInterval(async () => {
           if (closed) { clearInterval(interval); return; }
           try {
             // Bust cache for fresh data
-            const { cacheDel } = await import("@/lib/redis");
             await cacheDel(`scores:${sport}:${date ?? "now"}`);
             const groups = await fetchGroupsForSport(sport, date);
             const hash = JSON.stringify(groups.map(g =>
