@@ -40,6 +40,9 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# capacitor native platforms (generated — rebuild with `npx cap add ios/android`)
-/ios/
-/android/
+# expo native app
+/native/node_modules/
+/native/.expo/
+/native/ios/
+/native/android/
+/native/dist/

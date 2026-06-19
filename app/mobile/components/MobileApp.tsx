@@ -21,7 +21,6 @@ import FavoritesScreen from './FavoritesScreen';
 import VideosScreen from './VideosScreen';
 import MiniGamesScreen from './MiniGamesScreen';
 import PlayersScreen from './PlayersScreen';
-import { useNativeInit } from '@/hooks/useNative';
 import { hapticImpact } from '@/lib/native';
 
 type Tab = 'home' | 'live' | 'funzone' | 'leagues' | 'profile' | 'news' | 'teams' | 'favorites' | 'videos' | 'minigames' | 'players';
@@ -48,12 +47,6 @@ function AppInner() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [unread, setUnread] = useState(0);
   const [liveMin, setLiveMin] = useState(74);
-
-  // Native shell: status bar, splash, Android back button
-  useNativeInit(() => {
-    if (stack.length > 0) { setStack(s => s.slice(0, -1)); return; }
-    if (menuOpen) { setMenuOpen(false); return; }
-  });
 
   useEffect(() => {
     if (!user) return;
