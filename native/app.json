@@ -10,14 +10,16 @@
     "backgroundColor": "#07090b",
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.curlysports.app",
+      "bundleIdentifier": "com.curlysports.mobile",
       "backgroundColor": "#07090b",
       "infoPlist": {
-        "UIBackgroundModes": ["remote-notification"]
+        "UIBackgroundModes": [
+          "remote-notification"
+        ]
       }
     },
     "android": {
-      "package": "com.curlysports.app",
+      "package": "com.curlysports.mobile",
       "adaptiveIcon": {
         "backgroundColor": "#07090b",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -48,7 +50,7 @@
       [
         "expo-notifications",
         {
-          "icon": "./assets/notification-icon.png",
+          "icon": "./assets/android-icon-monochrome.png",
           "color": "#c8ff3d"
         }
       ]
