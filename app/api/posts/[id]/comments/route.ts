@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
+import { parseBody, createCommentSchema, commentLikeSchema } from "@/lib/validation";
+import { rateLimiters } from "@/lib/rate-limit";
+import { logger } from "@/lib/logger";
 
 // GET /api/posts/[id]/comments
 export async function GET(
@@ -8,7 +11,6 @@ export async function GET(
 ) {
   const supabase = await createClient();
   const { id } = await params;
-  console.log(`[/api/posts/${id}/comments GET] table=post_comments post_id=${id}`);
 
   const { data: comments, error } = await supabase
     .from("post_comments")
@@ -16,8 +18,10 @@ export async function GET(
     .eq("post_id", id)
     .order("created_at", { ascending: true });
 
-  if (error) { console.error(`[/api/posts/${id}/comments GET] ERROR`, error.message); return NextResponse.json({ error: error.message }, { status: 500 }); }
-  console.log(`[/api/posts/${id}/comments GET] count=${comments?.length ?? 0}`);
+  if (error) {
+    logger.error("comments fetch failed", { postId: id, code: error.code });
+    return NextResponse.json({ error: "Failed to load comments" }, { status: 500 });
+  }
 
   const { data: { user } } = await supabase.auth.getUser();
   let likedSet = new Set<string>();
@@ -44,11 +48,15 @@ export async function POST(
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+  // Rate limit: 30 comments per hour per user
+  const limited = await rateLimiters.createComment(req, user.id);
+  if (limited) return limited;
+
   const { id } = await params;
-  const body = await req.json();
-  const content = body.content?.trim();
-  if (!content) return NextResponse.json({ error: "Content required" }, { status: 400 });
-  console.log(`[/api/posts/${id}/comments POST] table=post_comments INSERT user_id=${user.id} post_id=${id}`);
+  const body = await req.json().catch(() => ({}));
+  const parsed = parseBody(createCommentSchema, body);
+  if (!parsed.success) return parsed.response;
+  const { content } = parsed.data;
 
   const authorName = user.user_metadata?.full_name
     || user.user_metadata?.name
@@ -61,14 +69,16 @@ export async function POST(
     .select()
     .single();
 
-  if (error) { console.error(`[/api/posts/${id}/comments POST] ERROR`, error.message); return NextResponse.json({ error: error.message }, { status: 500 }); }
-  console.log(`[/api/posts/${id}/comments POST] INSERT OK id=${data.id}`);
+  if (error) {
+    logger.error("comment create failed", { postId: id, code: error.code });
+    return NextResponse.json({ error: "Failed to create comment" }, { status: 500 });
+  }
+
+  logger.info("comment created", { postId: id, commentId: data.id });
   return NextResponse.json({ ...data, liked: false }, { status: 201 });
 }
 
-// POST /api/posts/[id]/comments/[commentId]/like handled separately via like endpoint
-// For comment likes we expose it as: POST /api/posts/[id]/comments with action=like&commentId=...
-// Or we can create a separate route. Let's add it here as a PATCH:
+// PATCH — toggle comment like
 export async function PATCH(
   req: NextRequest,
   _ctx: { params: Promise<{ id: string }> }
@@ -77,16 +87,20 @@ export async function PATCH(
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const body = await req.json();
-  const commentId = body.commentId;
-  if (!commentId) return NextResponse.json({ error: "commentId required" }, { status: 400 });
+  const body = await req.json().catch(() => ({}));
+  const parsed = parseBody(commentLikeSchema, body);
+  if (!parsed.success) return parsed.response;
+  const { commentId } = parsed.data;
 
   const { data, error } = await supabase.rpc("toggle_comment_like", {
     p_comment_id: commentId,
     p_user_id: user.id,
   });
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) {
+    logger.error("comment like failed", { commentId, code: error.code });
+    return NextResponse.json({ error: "Failed to toggle like" }, { status: 500 });
+  }
 
   const { data: comment } = await supabase
     .from("post_comments")

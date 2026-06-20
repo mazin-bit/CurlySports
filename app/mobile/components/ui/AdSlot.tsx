@@ -9,6 +9,9 @@ interface AdSlotProps {
 }
 
 export default function AdSlot({ size = 'banner', label = 'Advertisement' }: AdSlotProps) {
+  // Hidden until real ad integration is configured
+  if (!process.env.NEXT_PUBLIC_ADS_ENABLED) return null;
+
   const compact = size === 'compact';
   const strip = size === 'strip';
   return (
@@ -17,8 +20,7 @@ export default function AdSlot({ size = 'banner', label = 'Advertisement' }: AdS
         <span style={{ position: 'absolute', top: compact ? 5 : 8, left: compact ? 7 : 10, fontFamily: 'var(--mono)', fontSize: compact ? 8 : 9, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-mute)', background: 'var(--surface)', border: '1.5px solid var(--border-2)', padding: '3px 7px', borderRadius: 4 }}>{label}</span>
         <div style={{ display: 'flex', flexDirection: strip || compact ? 'row' : 'column', alignItems: 'center', gap: compact ? 8 : 6, padding: compact ? '10px 14px' : '24px 20px', textAlign: 'center' }}>
           <span style={{ fontSize: compact ? 14 : 22, opacity: 0.35, color: 'var(--ink)', lineHeight: 1 }}>◈</span>
-          <span style={{ fontFamily: 'var(--display)', fontWeight: 700, fontSize: compact ? 11 : 14, color: 'var(--text-mute)' }}>Your ad here</span>
-          {!compact && <span style={{ fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--text-mute)', opacity: 0.7, letterSpacing: '0.04em' }}>Premium sports audience · 2.1M+ fans</span>}
+          <span style={{ fontFamily: 'var(--display)', fontWeight: 700, fontSize: compact ? 11 : 14, color: 'var(--text-mute)' }}>Ad</span>
         </div>
       </div>
     </div>

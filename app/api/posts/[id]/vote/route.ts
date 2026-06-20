@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
+import { parseBody, voteSchema } from "@/lib/validation";
+import { logger } from "@/lib/logger";
 
 // POST /api/posts/[id]/vote  body: { optionIndex: number }
 export async function POST(
@@ -11,14 +13,11 @@ export async function POST(
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;
-  const body = await req.json();
-  const optionIndex = Number(body.optionIndex);
+  const body = await req.json().catch(() => ({}));
+  const parsed = parseBody(voteSchema, body);
+  if (!parsed.success) return parsed.response;
+  const { optionIndex } = parsed.data;
 
-  if (!Number.isInteger(optionIndex) || optionIndex < 0) {
-    return NextResponse.json({ error: "Invalid option" }, { status: 400 });
-  }
-
-  console.log(`[/api/posts/${id}/vote] table=post_votes RPC cast_post_vote user_id=${user.id} post_id=${id} option=${optionIndex}`);
   const { error } = await supabase.rpc("cast_post_vote", {
     p_post_id:      id,
     p_user_id:      user.id,
@@ -29,16 +28,15 @@ export async function POST(
     if (error.message.includes("already_voted")) {
       return NextResponse.json({ error: "Already voted" }, { status: 409 });
     }
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    logger.error("post vote failed", { postId: id, code: error.code });
+    return NextResponse.json({ error: "Failed to cast vote" }, { status: 500 });
   }
 
-  // Return updated poll
   const { data: post } = await supabase
     .from("posts")
     .select("poll")
     .eq("id", id)
     .single();
 
-  console.log(`[/api/posts/${id}/vote] OK option=${optionIndex}`);
   return NextResponse.json({ poll: post?.poll, voted_option: optionIndex });
 }

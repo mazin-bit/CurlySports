@@ -28,7 +28,7 @@
 import { Queue, Worker, QueueEvents, type Job } from "bullmq";
 import IORedis from "ioredis";
 
-const REDIS_HOST = process.env.REDIS_HOST ?? "localhost";
+const REDIS_HOST = process.env.REDIS_HOST;
 const REDIS_PORT = parseInt(process.env.REDIS_PORT ?? "6379");
 const REDIS_PASSWORD = process.env.REDIS_PASSWORD ?? undefined;
 
@@ -41,6 +41,9 @@ function createRedisConnection(): IORedis {
       maxRetriesPerRequest: null, // Required by BullMQ
       enableReadyCheck: false,
     });
+  }
+  if (!REDIS_HOST) {
+    throw new Error("REDIS_URL or REDIS_HOST must be set for BullMQ queue system");
   }
   return new IORedis({
     host: REDIS_HOST,

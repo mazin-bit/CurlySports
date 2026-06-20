@@ -215,8 +215,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(player, {
       headers: { "Cache-Control": "public, max-age=300" },
     });
-  } catch (e) {
-    console.error("Player fetch error:", e);
+  } catch {
     return NextResponse.json({ error: "Failed to fetch player" }, { status: 500 });
   }
 }

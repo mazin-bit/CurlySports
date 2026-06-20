@@ -261,8 +261,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(detail, {
       headers: { "Cache-Control": "public, max-age=10" },
     });
-  } catch (e) {
-    console.error("Match fetch error:", e);
+  } catch {
     return NextResponse.json({ error: "Failed to fetch match" }, { status: 500 });
   }
 }

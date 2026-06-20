@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { DEFAULT_FLAGS, AdminFlags } from "@/lib/featureFlags";
+import { logger } from "@/lib/logger";
 
 // In-memory flags store — persists across requests within the same server process.
 // For multi-instance deployments, swap this for Redis or database storage.
@@ -7,7 +8,13 @@ let flags: AdminFlags = { ...DEFAULT_FLAGS };
 
 function isAdmin(req: NextRequest): boolean {
   const token = req.headers.get("x-admin-token");
-  return !!process.env.ADMIN_PASSWORD && token === process.env.ADMIN_PASSWORD;
+  if (!token || !process.env.ADMIN_PASSWORD) return false;
+  // Use constant-time comparison for admin token check
+  const a = Buffer.from(token);
+  const b = Buffer.from(process.env.ADMIN_PASSWORD);
+  if (a.length !== b.length) return false;
+  const { timingSafeEqual } = require("crypto");
+  return timingSafeEqual(a, b);
 }
 
 // Public read
@@ -48,5 +55,6 @@ export async function PATCH(req: NextRequest) {
     activityLog: log,
   };
 
+  logger.info("admin flags updated");
   return NextResponse.json(flags);
 }

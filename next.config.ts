@@ -7,8 +7,20 @@ const nextConfig: NextConfig = {
   // Required for Docker standalone deployment
   output: "standalone",
 
+  // Allow local network IPs to access dev resources (HMR, etc.) — dev only
+  ...(process.env.NODE_ENV === "development" ? { allowedDevOrigins: ["192.168.110.0"] } : {}),
+
   // Allow external image CDNs
   images: {
+    localPatterns: [
+      {
+        pathname: "/**",
+      },
+      {
+        pathname: "/api/proxy-image",
+        search: "",
+      },
+    ],
     remotePatterns: [
       { protocol: "https", hostname: "a.espncdn.com" },
       { protocol: "https", hostname: "a2.espncdn.com" },
@@ -48,6 +60,18 @@ const nextConfig: NextConfig = {
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
           { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+          {
+            key: "Content-Security-Policy",
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+              "style-src 'self' 'unsafe-inline'",
+              "img-src 'self' data: blob: https://a.espncdn.com https://a2.espncdn.com https://a3.espncdn.com https://cdn.nba.com https://media.api-sports.io https://upload.wikimedia.org https://ichef.bbci.co.uk https://media.guim.co.uk https://e0.365dm.com https://e1.365dm.com https://e2.365dm.com",
+              "font-src 'self'",
+              "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://site.api.espn.com https://api.openf1.org https://www.thesportsdb.com",
+              "frame-ancestors 'none'",
+            ].join("; "),
+          },
         ],
       },
     ];
@@ -58,17 +82,13 @@ const nextConfig: NextConfig = {
     // Required for proper SSE response streaming in App Router
     serverActions: {
       allowedOrigins: [
-        "localhost:3001",
-        "localhost:3000",
         "curlysports.com",
         "www.curlysports.com",
-        // Allow any local network IP (192.168.x.x, 10.x.x.x, 172.x.x.x)
+        ...(process.env.NODE_ENV === "development" ? ["localhost:3001", "localhost:3000", "192.168.110.0:3001"] : []),
         ...(process.env.NEXT_PUBLIC_APP_URL
           ? [process.env.NEXT_PUBLIC_APP_URL.replace(/^https?:\/\//, "")]
           : []),
       ],
-      // Allow all origins in development for IP-based mobile testing
-      ...(process.env.NODE_ENV === "development" ? { allowedForwardedHosts: ["*"] } : {}),
     },
   },
 };

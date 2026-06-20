@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { parseBody, favoriteSchema } from "@/lib/validation";
+import { logger } from "@/lib/logger";
 
 // GET /api/favorites — returns the authenticated user's favorites only
 export async function GET() {
@@ -26,21 +28,24 @@ export async function POST(request: NextRequest) {
   if (auth instanceof NextResponse) return auth;
   const { user } = auth;
 
-  const { teamId, playerId } = await request.json();
+  const body = await request.json().catch(() => ({}));
+  const parsed = parseBody(favoriteSchema, body);
+  if (!parsed.success) return parsed.response;
+  const { teamId, playerId } = parsed.data;
 
-  if (!teamId && !playerId) {
-    return NextResponse.json({ error: "teamId or playerId required" }, { status: 400 });
+  try {
+    const favorite = await prisma.favorite.create({
+      data: {
+        userId: user.id,
+        teamId: teamId ?? null,
+        playerId: playerId ?? null,
+      },
+    });
+    return NextResponse.json(favorite, { status: 201 });
+  } catch (err) {
+    logger.error("favorite create failed", { error: String(err) });
+    return NextResponse.json({ error: "Failed to add favorite" }, { status: 500 });
   }
-
-  const favorite = await prisma.favorite.create({
-    data: {
-      userId: user.id,
-      teamId: teamId ?? null,
-      playerId: playerId ?? null,
-    },
-  });
-
-  return NextResponse.json(favorite, { status: 201 });
 }
 
 // DELETE /api/favorites — remove a favorite belonging to the authenticated user
@@ -49,7 +54,8 @@ export async function DELETE(request: NextRequest) {
   if (auth instanceof NextResponse) return auth;
   const { user } = auth;
 
-  const { teamId, playerId } = await request.json();
+  const body = await request.json().catch(() => ({}));
+  const { teamId, playerId } = body;
 
   await prisma.favorite.deleteMany({
     where: {

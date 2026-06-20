@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { parseBody, debateVoteSchema } from "@/lib/validation";
+import { logger } from "@/lib/logger";
 
 // POST /api/debates/[id]/vote  —  body: { option: "A" | "B" }
 export async function POST(
@@ -12,11 +14,10 @@ export async function POST(
   const { user } = auth;
 
   const { id } = await params;
-  const body = await req.json().catch(() => ({})) as { option?: string };
-  const option = body.option;
-  if (option !== "A" && option !== "B") {
-    return NextResponse.json({ error: "option must be 'A' or 'B'" }, { status: 400 });
-  }
+  const body = await req.json().catch(() => ({}));
+  const parsed = parseBody(debateVoteSchema, body);
+  if (!parsed.success) return parsed.response;
+  const { option } = parsed.data;
 
   try {
     // Ensure Prisma User record exists (upsert by email)
@@ -58,7 +59,7 @@ export async function POST(
 
     return NextResponse.json({ votesA: debate.votesA, votesB: debate.votesB, userVote: option });
   } catch (err) {
-    console.error("[/api/debates vote] DB error:", err);
-    return NextResponse.json({ error: "Database not available" }, { status: 503 });
+    logger.error("debate vote failed", { debateId: id, error: String(err) });
+    return NextResponse.json({ error: "Failed to cast vote" }, { status: 503 });
   }
 }

@@ -1,18 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
+import { parseBody, createPostSchema } from "@/lib/validation";
+import { rateLimiters } from "@/lib/rate-limit";
+import { logger } from "@/lib/logger";
 
 // GET /api/posts?sport=football&cursor=<iso-date>&limit=20
-// sport=all (or omitted) returns posts from all sports
 export async function GET(req: NextRequest) {
   const supabase = await createClient();
   const { searchParams } = new URL(req.url);
-  const sport  = searchParams.get("sport");   // null = all sports
+  const sport  = searchParams.get("sport");
   const cursor = searchParams.get("cursor");
   const limit  = Math.min(parseInt(searchParams.get("limit") ?? "20"), 50);
 
-  // Get current user (optional — not required to read)
   const { data: { user } } = await supabase.auth.getUser();
-  console.log(`[/api/posts GET] table=posts sport=${sport ?? "all"} user_id=${user?.id ?? "anon"} limit=${limit}`);
 
   let query = supabase
     .from("posts")
@@ -20,7 +20,6 @@ export async function GET(req: NextRequest) {
     .order("created_at", { ascending: false })
     .limit(limit);
 
-  // Only filter by sport when explicitly requested (not "all" and not null)
   if (sport && sport !== "all") {
     query = query.eq("sport", sport);
   }
@@ -31,13 +30,11 @@ export async function GET(req: NextRequest) {
 
   const { data: posts, error } = await query;
   if (error) {
-    console.error("[/api/posts GET] ERROR table=posts", error.code, error.message);
+    logger.error("posts fetch failed", { code: error.code });
     return NextResponse.json({ posts: [], nextCursor: null, setup_needed: true });
   }
-  console.log(`[/api/posts GET] result count=${posts?.length ?? 0}`);
   if (!posts?.length) return NextResponse.json({ posts: [], nextCursor: null });
 
-  // Fetch user's likes and votes in parallel (only if logged in)
   let likedSet = new Set<string>();
   let votedMap = new Map<string, number>();
 
@@ -70,20 +67,21 @@ export async function POST(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const body = await req.json();
-  const { content, sport, tag, image_url, poll } = body;
+  // Rate limit: 10 posts per hour per user
+  const limited = await rateLimiters.createPost(req, user.id);
+  if (limited) return limited;
 
-  if (!content?.trim()) {
-    return NextResponse.json({ error: "Content is required" }, { status: 400 });
-  }
+  const body = await req.json().catch(() => ({}));
+  const parsed = parseBody(createPostSchema, body);
+  if (!parsed.success) return parsed.response;
+  const { content, sport, tag, image_url, poll } = parsed.data;
 
-  console.log(`[/api/posts POST] table=posts INSERT user_id=${user.id} sport=${sport ?? "football"} tag=${tag ?? "DEBATE"}`);
   const authorName = user.user_metadata?.full_name
     || user.user_metadata?.name
     || user.email?.split("@")[0]
     || "Anonymous";
 
-  const pollData = poll?.options?.length >= 2
+  const pollData = poll?.options?.length
     ? { options: poll.options, votes: poll.options.map(() => 0) }
     : null;
 
@@ -92,16 +90,20 @@ export async function POST(req: NextRequest) {
     .insert({
       user_id:     user.id,
       author_name: authorName,
-      content:     content.trim(),
-      sport:       sport ?? "football",
-      tag:         tag ?? "DEBATE",
+      content,
+      sport,
+      tag,
       image_url:   image_url ?? null,
       poll:        pollData,
     })
     .select()
     .single();
 
-  if (error) { console.error("[/api/posts POST] ERROR", error.message); return NextResponse.json({ error: error.message }, { status: 500 }); }
-  console.log(`[/api/posts POST] INSERT OK id=${data.id} author=${data.author_name}`);
+  if (error) {
+    logger.error("post create failed", { code: error.code });
+    return NextResponse.json({ error: "Failed to create post" }, { status: 500 });
+  }
+
+  logger.info("post created", { postId: data.id });
   return NextResponse.json({ ...data, liked: false, voted_option: null }, { status: 201 });
 }

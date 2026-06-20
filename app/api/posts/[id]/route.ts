@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
+import { logger } from "@/lib/logger";
 
 // DELETE /api/posts/[id] — delete own post
 export async function DELETE(
@@ -11,7 +12,6 @@ export async function DELETE(
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;
-  console.log(`[/api/posts/${id} DELETE] user_id=${user.id} post_id=${id}`);
 
   // Only allow deleting own posts
   const { error } = await supabase
@@ -21,10 +21,10 @@ export async function DELETE(
     .eq("user_id", user.id);
 
   if (error) {
-    console.error(`[/api/posts/${id} DELETE] ERROR`, error.message);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    logger.error("post delete failed", { postId: id, code: error.code });
+    return NextResponse.json({ error: "Failed to delete post" }, { status: 500 });
   }
 
-  console.log(`[/api/posts/${id} DELETE] OK`);
+  logger.info("post deleted", { postId: id });
   return NextResponse.json({ deleted: true });
 }
