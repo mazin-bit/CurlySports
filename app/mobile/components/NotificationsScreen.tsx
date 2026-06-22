@@ -49,14 +49,14 @@ export default function NotificationsScreen({ onBack, onMarkAll }: Notifications
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--bg)' }}>
       <header style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', background: 'var(--bg-2)', borderBottom: '2.5px solid var(--ink)', flexShrink: 0 }}>
-        <button onClick={onBack} aria-label="Back" style={{ width: 38, height: 38, background: 'var(--surface)', border: '2px solid var(--ink)', borderRadius: 11, display: 'grid', placeItems: 'center', color: 'var(--ink)', transform: 'scaleX(-1)', cursor: 'pointer' }}>
-          <Icon name="arrow-right" size={18} />
+        <button onClick={onBack} aria-label="Back" style={{ width: 38, height: 38, background: 'var(--surface)', border: '2px solid var(--ink)', borderRadius: 11, display: 'grid', placeItems: 'center', color: 'var(--ink)', cursor: 'pointer' }}>
+          <Icon name="chevron-left" size={18} />
         </button>
         <div style={{ fontFamily: 'var(--display)', fontWeight: 800, fontSize: 18, color: 'var(--ink)' }}>Notifications</div>
         <button onClick={handleMarkAll} style={{ marginLeft: 'auto', background: 'none', border: 'none', fontFamily: 'var(--mono)', fontSize: 10.5, fontWeight: 700, letterSpacing: '0.04em', color: 'var(--orange)', cursor: 'pointer' }}>MARK ALL READ</button>
       </header>
 
-      <div className="cs-scroll" style={{ flex: 1, overflow: 'auto', padding: '14px 14px 96px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div className="cs-scroll" style={{ flex: 1, overflow: 'auto', padding: '14px 14px 24px', display: 'flex', flexDirection: 'column', gap: 8 }}>
         {isLoading && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             <SkeletonList count={5}>{i => <SkeletonRow style={{ '--i': i } as React.CSSProperties} />}</SkeletonList>

@@ -71,7 +71,7 @@ export default function NewsScreen({ sport, setSport, onSearch, onBell, unread }
       <Topbar
         title="News"
         subtitle="Latest headlines"
-        logoSrc="/curly-mark.png"
+        logoSrc="/curly-guy.png"
         onSearch={onSearch}
         onBell={onBell}
         hasNotification={unread > 0}

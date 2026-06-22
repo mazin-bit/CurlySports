@@ -73,8 +73,8 @@ export default function MatchScreen({ match, liveClock, onBack, onOpenPlayer }: 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--bg)' }}>
       <header style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', background: 'var(--bg-2)', borderBottom: '2.5px solid var(--ink)', flexShrink: 0 }}>
-        <button onClick={onBack} aria-label="Back" style={{ width: 38, height: 38, background: 'var(--surface)', border: '2px solid var(--ink)', borderRadius: 11, display: 'grid', placeItems: 'center', color: 'var(--ink)', transform: 'scaleX(-1)', cursor: 'pointer' }}>
-          <Icon name="arrow-right" size={18} />
+        <button onClick={onBack} aria-label="Back" style={{ width: 38, height: 38, background: 'var(--surface)', border: '2px solid var(--ink)', borderRadius: 11, display: 'grid', placeItems: 'center', color: 'var(--ink)', cursor: 'pointer' }}>
+          <Icon name="chevron-left" size={18} />
         </button>
         <div style={{ fontFamily: 'var(--display)', fontWeight: 800, fontSize: 18, color: 'var(--ink)', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{leagueName}</div>
         <StatusPill status={isLive ? 'live' : (match?.status ?? 'up')} style={{ marginLeft: 'auto', flexShrink: 0 }}>
@@ -82,7 +82,7 @@ export default function MatchScreen({ match, liveClock, onBack, onOpenPlayer }: 
         </StatusPill>
       </header>
 
-      <div className="cs-scroll" style={{ flex: 1, overflow: 'auto', padding: '14px 14px 96px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <div className="cs-scroll" style={{ flex: 1, overflow: 'auto', padding: '14px 14px 24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
         {/* Score card */}
         <Card style={{ background: 'var(--ink)', borderColor: 'var(--ink)' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>

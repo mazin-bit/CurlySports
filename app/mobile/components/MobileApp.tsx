@@ -32,7 +32,7 @@ function LoadingSplash() {
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'var(--bg)', gap: 16 }}>
       <div style={{ width: 64, height: 64, background: 'var(--lime)', borderRadius: 18, border: '2.5px solid var(--ink)', boxShadow: '5px 5px 0 var(--ink)', transform: 'rotate(-6deg)', display: 'grid', placeItems: 'center', overflow: 'hidden' }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/curly-mark.png" alt="" style={{ width: '80%', height: '80%', objectFit: 'contain', transform: 'rotate(6deg)' }} />
+        <img src="/curly-guy.png" alt="" style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }} />
       </div>
       <div style={{ fontFamily: 'var(--mono)', fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-mute)' }}>Loading…</div>
     </div>
@@ -121,8 +121,9 @@ function AppInner() {
     else if (top.type === 'search')        ov = <SearchScreen onBack={pop} onOpenPlayer={openPlayer} onOpenMatch={openMatch} />;
     else if (top.type === 'notifications') ov = <NotificationsScreen onBack={pop} onMarkAll={() => setUnread(0)} onOpenMatch={openMatch} onOpenPlayer={openPlayer} />;
     return (
-      <div style={{ position: 'relative', height: '100%', background: 'var(--bg-2)' }}>
-        <div style={{ height: '100%', animation: 'cs-pushIn 0.32s var(--ease-pop) both' }}>{ov}</div>
+      <div style={{ position: 'relative', height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--bg-2)' }}>
+        <div style={{ flex: 1, minHeight: 0, animation: 'cs-pushIn 0.32s var(--ease-pop) both' }}>{ov}</div>
+        <BottomNav active="" onSelect={onBottom} />
       </div>
     );
   }

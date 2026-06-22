@@ -430,7 +430,7 @@ export default function MiniGamesScreen({ sport, setSport, onSearch, onBell, unr
       <Topbar
         title="Mini Games"
         subtitle="Play · Compete · Win"
-        logoSrc="/curly-mark.png"
+        logoSrc="/curly-guy.png"
         onSearch={onSearch}
         onBell={onBell}
         hasNotification={unread > 0}

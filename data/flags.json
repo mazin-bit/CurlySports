@@ -28,21 +28,26 @@
     "favorites": true
   },
   "pageViews": {
-    "/dashboard": 79,
-    "/live-scores": 42,
-    "/leagues": 63,
-    "/fun-zone": 24,
-    "/teams": 32,
-    "/players": 25,
+    "/dashboard": 110,
+    "/live-scores": 63,
+    "/leagues": 71,
+    "/fun-zone": 33,
+    "/teams": 50,
+    "/players": 33,
     "/matches/401859965": 4,
     "/matches/2465876": 2,
-    "/news": 4,
+    "/news": 7,
     "/videos": 2,
     "/matches/2478597": 2,
     "/matches/760415": 2,
-    "/favorites": 3,
-    "/mini-games": 1,
-    "/teams/csk": 2
+    "/favorites": 5,
+    "/mini-games": 3,
+    "/teams/csk": 2,
+    "/matches/760441": 2,
+    "/teams/83": 4,
+    "/players/223452": 2,
+    "/matches/760431": 2,
+    "/players/362150": 2
   },
   "activityLog": [
     {

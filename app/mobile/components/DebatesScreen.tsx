@@ -360,7 +360,7 @@ export default function DebatesScreen({ sport, onSearch, onBell, unread }: Debat
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--bg)', position: 'relative' }}>
-      <Topbar title="Debates" subtitle="Bring receipts" logoSrc="/curly-mark.png" onSearch={onSearch} onBell={onBell} hasNotification={unread > 0} />
+      <Topbar title="Debates" subtitle="Bring receipts" logoSrc="/curly-guy.png" onSearch={onSearch} onBell={onBell} hasNotification={unread > 0} />
 
       <div className="cs-scroll" style={{ flex: 1, overflow: 'auto', padding: '14px 14px 120px', display: 'flex', flexDirection: 'column', gap: 14 }}>
 

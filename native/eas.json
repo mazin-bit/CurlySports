@@ -1,0 +1,33 @@
+{
+  "cli": {
+    "version": ">= 20.3.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "env": {
+        "WEB_APP_URL": "http://192.168.110.0:3001/mobile"
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "WEB_APP_URL": "http://192.168.110.0:3001/mobile"
+      }
+    },
+    "production": {
+      "autoIncrement": true,
+      "env": {
+        "WEB_APP_URL": "https://curlysports.com/mobile"
+      }
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}

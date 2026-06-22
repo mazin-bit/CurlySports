@@ -70,7 +70,7 @@ export default function ProfileScreen({ fav, onSearch, onBell, unread }: Profile
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--bg)' }}>
-      <Topbar title="You" subtitle="Profile & settings" logoSrc="/curly-mark.png" onSearch={onSearch} onBell={onBell} hasNotification={unread > 0} />
+      <Topbar title="You" subtitle="Profile & settings" logoSrc="/curly-guy.png" onSearch={onSearch} onBell={onBell} hasNotification={unread > 0} />
       <div className="cs-scroll" style={{ flex: 1, overflow: 'auto', padding: '14px 14px 96px', display: 'flex', flexDirection: 'column', gap: 16 }}>
 
         {/* Identity */}
@@ -79,7 +79,7 @@ export default function ProfileScreen({ fav, onSearch, onBell, unread }: Profile
             <div style={{ width: 60, height: 60, borderRadius: 16, background: 'var(--lime)', border: '2px solid var(--paper)', display: 'grid', placeItems: 'center', overflow: 'hidden', transform: 'rotate(-6deg)', flexShrink: 0 }}>
               {profile?.avatar
                 ? <img src={profile.avatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', transform: 'rotate(6deg)' }} />
-                : <img src="/curly-mark.png" alt="" style={{ width: '84%', height: '84%', objectFit: 'contain', transform: 'rotate(6deg)' }} />}
+                : <img src="/curly-guy.png" alt="" style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }} />}
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontFamily: 'var(--display)', fontWeight: 800, fontSize: 22, color: 'var(--paper)', letterSpacing: '-0.02em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>

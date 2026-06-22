@@ -209,7 +209,7 @@ export default function FavoritesScreen({ onSearch, onBell, onOpenPlayer, unread
       <Topbar
         title="Favourites"
         subtitle="Your saved teams & players"
-        logoSrc="/curly-mark.png"
+        logoSrc="/curly-guy.png"
         onSearch={onSearch}
         onBell={onBell}
         hasNotification={unread > 0}

@@ -15,7 +15,7 @@ export default function Topbar({ title, subtitle, logoSrc, onSearch, onBell, has
   return (
     <header style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', background: 'var(--bg-2)', borderBottom: '2.5px solid var(--ink)', flexShrink: 0 }}>
       <div style={{ width: 36, height: 36, background: 'var(--lime)', borderRadius: 11, display: 'grid', placeItems: 'center', transform: 'rotate(-6deg)', boxShadow: '3px 3px 0 var(--ink)', border: '2px solid var(--ink)', overflow: 'hidden', flexShrink: 0 }}>
-        {logoSrc && <img src={logoSrc} alt="" style={{ width: '84%', height: '84%', objectFit: 'contain', transform: 'rotate(6deg)' }} />}
+        {logoSrc && <img src={logoSrc} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }} />}
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
         {subtitle && <div style={{ fontFamily: 'var(--mono)', fontSize: 9.5, color: 'var(--text-mute)', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 1 }}>{subtitle}</div>}

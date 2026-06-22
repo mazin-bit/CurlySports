@@ -80,7 +80,7 @@ export default function LeaguesScreen({ sport, onSearch, onBell, onOpenPlayer, u
       <Topbar
         title="Leagues"
         subtitle={selected.label}
-        logoSrc="/curly-mark.png"
+        logoSrc="/curly-guy.png"
         onSearch={onSearch}
         onBell={onBell}
         hasNotification={unread > 0}

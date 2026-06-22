@@ -58,7 +58,7 @@ export default function VideosScreen({ sport, setSport, onSearch, onBell, unread
       <Topbar
         title="Videos"
         subtitle="Highlights & clips"
-        logoSrc="/curly-mark.png"
+        logoSrc="/curly-guy.png"
         onSearch={onSearch}
         onBell={onBell}
         hasNotification={unread > 0}

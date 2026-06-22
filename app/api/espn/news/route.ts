@@ -130,6 +130,13 @@ export async function GET(req: NextRequest) {
     return true;
   });
 
+  // Strip emoji characters from text fields (rule: no emojis in UI)
+  const emojiRe = /[\p{Emoji_Presentation}\p{Extended_Pictographic}\u200d\ufe0f]/gu;
+  for (const a of deduped) {
+    a.title = a.title.replace(emojiRe, '').replace(/\s{2,}/g, ' ').trim();
+    if (a.excerpt) a.excerpt = a.excerpt.replace(emojiRe, '').replace(/\s{2,}/g, ' ').trim();
+  }
+
   // Proxy images from domains that block cross-origin loads (e.g. Guardian CDN)
   const PROXY_HOSTS = ['i.guim.co.uk', 'media.guim.co.uk', 'assets.guim.co.uk'];
   for (const a of deduped) {

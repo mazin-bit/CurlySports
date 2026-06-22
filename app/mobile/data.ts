@@ -66,10 +66,10 @@ export interface Notification {
 }
 
 // Static mascot asset path (not data)
-export const MASCOT_SRC = '/curly-mark.png';
+export const MASCOT_SRC = '/curly-guy.png';
 
 // DATA is kept as a minimal object for components that still reference DATA.mascot
-// while being migrated. Components should use MASCOT_SRC or '/curly-mark.png' directly.
+// while being migrated. Components should use MASCOT_SRC or '/curly-guy.png' directly.
 export const DATA = {
-  mascot: '/curly-mark.png',
+  mascot: '/curly-guy.png',
 } as const;

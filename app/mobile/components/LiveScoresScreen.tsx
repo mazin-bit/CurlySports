@@ -82,7 +82,7 @@ export default function LiveScoresScreen({ sport, setSport, onOpenMatch, onSearc
       <Topbar
         title="Live Scores"
         subtitle={isLoading ? 'Connecting…' : liveCount > 0 && isToday ? `● ${liveCount} live now` : dateLabel}
-        logoSrc="/curly-mark.png"
+        logoSrc="/curly-guy.png"
         onSearch={onSearch}
         onBell={onBell}
         hasNotification={unread > 0}

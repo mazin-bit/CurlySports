@@ -120,7 +120,7 @@ export default function DashboardScreen({ sport, setSport, onOpenMatch, onOpenPl
       <Topbar
         title={`Hey, ${fav?.first ?? 'You'}`}
         subtitle="Matchday · Today"
-        logoSrc="/curly-mark.png"
+        logoSrc="/curly-guy.png"
         onSearch={onSearch}
         onBell={onBell}
         hasNotification={unread > 0}

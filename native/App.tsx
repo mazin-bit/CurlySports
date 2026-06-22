@@ -33,11 +33,11 @@ Notifications.setNotificationHandler({
   }),
 });
 
-const DEV_URL =
-  Constants.expoConfig?.extra?.devUrl ?? "http://localhost:3001/mobile";
-const PROD_URL =
+// URL is set at build time via eas.json env vars → app.config.ts → extra.webAppUrl
+//   preview build  → http://192.168.110.0:3001/mobile  (your local dev server)
+//   production build → https://curlysports.com/mobile   (live deployed site)
+const BASE_URL =
   Constants.expoConfig?.extra?.webAppUrl ?? "https://curlysports.com/mobile";
-const BASE_URL = __DEV__ ? DEV_URL : PROD_URL;
 
 // ─── JS injected into the WebView to set up the native bridge ───────────────
 const BRIDGE_JS = `
@@ -69,6 +69,7 @@ export default function App() {
   const webViewRef = useRef<WebView>(null);
   const [isReady, setIsReady] = useState(false);
   const [canGoBack, setCanGoBack] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   // ── Splash screen ─────────────────────────────────────────
   const onWebViewLoad = useCallback(async () => {
@@ -202,13 +203,41 @@ export default function App() {
         translucent={false}
       />
 
+      {loadError ? (
+        <View style={styles.loading}>
+          <Text style={{ color: "#ff6b6b", fontSize: 16, fontWeight: "700", marginBottom: 8 }}>
+            Connection Error
+          </Text>
+          <Text style={{ color: "#aaa", fontSize: 13, textAlign: "center", marginBottom: 4, paddingHorizontal: 32 }}>
+            Could not connect to server
+          </Text>
+          <Text style={{ color: "#666", fontSize: 11, textAlign: "center", marginBottom: 20, paddingHorizontal: 32 }}>
+            {BASE_URL}{"\n"}{loadError}
+          </Text>
+          <Text
+            style={{ color: "#c8ff3d", fontSize: 14, fontWeight: "700" }}
+            onPress={() => { setLoadError(null); webViewRef.current?.reload(); }}
+          >
+            TAP TO RETRY
+          </Text>
+        </View>
+      ) : null}
       <WebView
         ref={webViewRef}
         source={{ uri: BASE_URL }}
-        style={styles.webview}
+        style={[styles.webview, loadError ? { display: "none" } : undefined]}
         injectedJavaScript={BRIDGE_JS}
         onMessage={onMessage}
-        onLoad={onWebViewLoad}
+        onLoad={() => { setLoadError(null); onWebViewLoad(); }}
+        onError={(e) => {
+          const { description, code, url } = e.nativeEvent;
+          setLoadError(`${description || "Unknown error"} (code: ${code || "?"})`);
+        }}
+        onHttpError={(e) => {
+          if (e.nativeEvent.statusCode >= 500) {
+            setLoadError(`Server error: ${e.nativeEvent.statusCode}`);
+          }
+        }}
         onNavigationStateChange={(nav) => setCanGoBack(nav.canGoBack)}
         // Performance
         javaScriptEnabled

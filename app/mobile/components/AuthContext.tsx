@@ -66,19 +66,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
+    // Track whether init already resolved so onAuthStateChange doesn't
+    // duplicate work during the initial load.
+    let initResolved = false;
+
     const init = async () => {
       try {
-        const timeout = new Promise<null>(resolve => setTimeout(() => resolve(null), 4000));
+        const timeout = new Promise<null>(resolve => setTimeout(() => resolve(null), 2000));
         const sessionReq = supabase.auth.getSession().then(r => r.data.session);
         const session = await Promise.race([sessionReq, timeout]);
         if (!mountedRef.current) return;
         const u = session?.user ?? null;
         setUser(u);
-        if (u) await fetchProfile(u);
+        // Stop showing the loading screen immediately — fetch profile in background
+        setIsLoading(false);
+        initResolved = true;
+        if (u) fetchProfile(u); // fire-and-forget
       } catch {
         // network error — treat as logged out
-      } finally {
         if (mountedRef.current) setIsLoading(false);
+        initResolved = true;
       }
     };
 
@@ -86,6 +93,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (!mountedRef.current) return;
+      // Skip the INITIAL_SESSION event if init() already handled it
+      if (!initResolved && _event === 'INITIAL_SESSION') return;
       const u = session?.user ?? null;
       setUser(u);
       if (u) {
@@ -156,7 +165,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const clearAuthError = () => setAuthError(null);
 
-  const isNewUser = !!user && !profile?.favTeam;
+  const isNewUser = !!user && !user.user_metadata?.favTeam && !profile?.favTeam;
 
   return (
     <AuthContext.Provider value={{

@@ -110,7 +110,7 @@ export default function OnboardingScreen({ onDone }: OnboardingProps) {
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 24px', gap: 4 }}>
           <div style={{ width: 92, height: 92, background: 'var(--lime)', borderRadius: 22, border: '2.5px solid var(--ink)', boxShadow: '6px 6px 0 var(--ink)', transform: 'rotate(-6deg)', display: 'grid', placeItems: 'center', overflow: 'hidden', marginBottom: 28 }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/curly-mark.png" alt="" style={{ width: '82%', height: '82%', objectFit: 'contain', transform: 'rotate(6deg)' }} />
+            <img src="/curly-guy.png" alt="" style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }} />
           </div>
           <div style={{ fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--orange)' }}>curlysports.com</div>
           <h1 style={{ fontFamily: 'var(--display)', fontWeight: 800, fontSize: 38, lineHeight: 1.02, letterSpacing: '-0.03em', color: 'var(--ink)', margin: '8px 0 0' }}>

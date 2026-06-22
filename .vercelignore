@@ -1,0 +1,4 @@
+native/
+*.apk
+*.keystore
+curly-sports-android/

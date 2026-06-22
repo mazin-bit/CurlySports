@@ -99,7 +99,7 @@ export default function TeamsScreen({ sport, setSport, onSearch, onBell, onOpenP
       <Topbar
         title="Teams"
         subtitle="Browse squads"
-        logoSrc="/curly-mark.png"
+        logoSrc="/curly-guy.png"
         onSearch={onSearch}
         onBell={onBell}
         hasNotification={unread > 0}
