@@ -339,7 +339,7 @@ export default function LoginPage() {
         <p className={styles.terms}>
           By continuing you agree to our slightly-too-long{" "}
           <a href="/terms">Terms</a> and our actually-readable{" "}
-          <a href="/privacy">Privacy Policy</a>. Curly never sells your data — he&#39;s 17, he doesn&apos;t even know how.
+          <a href="/privacy">Privacy Policy</a>. Curly never sells your data — he&#39;s 14, he doesn&apos;t even know how.
         </p>
       </div>
     </div>
