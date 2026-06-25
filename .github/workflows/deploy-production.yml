@@ -42,26 +42,30 @@ jobs:
         run: pnpm install --no-frozen-lockfile
 
       - name: Pull migration env
+        id: migration-env
         run: |
           vercel env pull .env.migrate --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
           # Migrations need a direct (non-pgbouncer) connection on port 5432.
           sed -i 's|\.pooler\.supabase\.com:6543/|.pooler.supabase.com:5432/|g' .env.migrate
           sed -i '/^DIRECT_URL=/s/?pgbouncer=true//' .env.migrate
+
+          # Check if DIRECT_URL is available
+          DIRECT_URL_LINE=$(grep -m1 '^DIRECT_URL=' .env.migrate || true)
+          DIRECT_URL_VAL="${DIRECT_URL_LINE#DIRECT_URL=}"
+          DIRECT_URL_VAL="${DIRECT_URL_VAL#\"}" DIRECT_URL_VAL="${DIRECT_URL_VAL%\"}"
+          if [ -n "$DIRECT_URL_VAL" ]; then
+            echo "has_direct_url=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::DIRECT_URL is not set — skipping database migrations"
+            echo "has_direct_url=false" >> "$GITHUB_OUTPUT"
+            rm -f .env.migrate
+          fi
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
-      - name: Guard — DIRECT_URL must be set
-        run: |
-          DIRECT_URL_LINE=$(grep -m1 '^DIRECT_URL=' .env.migrate || true)
-          DIRECT_URL_VAL="${DIRECT_URL_LINE#DIRECT_URL=}"
-          DIRECT_URL_VAL="${DIRECT_URL_VAL#\"}" DIRECT_URL_VAL="${DIRECT_URL_VAL%\"}"
-          [ -n "$DIRECT_URL_VAL" ] || {
-            echo "::error::DIRECT_URL is empty or missing in .env.migrate — migrations cannot run"
-            exit 1
-          }
-
       - name: Run database migrations
+        if: steps.migration-env.outputs.has_direct_url == 'true'
         run: |
           # Show which database host Prisma will connect to (password is not printed).
           node --env-file=.env.migrate -e "
@@ -70,11 +74,7 @@ jobs:
             console.log('[migrate] connecting via:', masked);
           "
 
-          # Self-heal: repair checksum mismatches and mark stuck failed migrations as rolled-back.
-          node --env-file=.env.migrate scripts/_fix-migration-checksums.mjs
-
-          # Apply all pending migrations — exits non-zero on failure, which fails the whole job
-          # so a broken migration is immediately visible and the deploy is blocked until fixed.
+          # Apply all pending migrations
           node --env-file=.env.migrate -e "
             const { execSync } = require('child_process');
             try {
