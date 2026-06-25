@@ -22,6 +22,9 @@
     },
     "production": {
       "autoIncrement": true,
+      "android": {
+        "buildType": "apk"
+      },
       "env": {
         "WEB_APP_URL": "https://curlysports.com/mobile"
       }

@@ -84,7 +84,12 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
         localStorage.setItem("curly-admin-token", pw);
         onLogin();
       } else {
-        setErr("Incorrect password. Try again.");
+        const data = await res.json().catch(() => ({}));
+        if (res.status === 500) {
+          setErr("Admin not configured on server. Set ADMIN_PASSWORD env var.");
+        } else {
+          setErr(data.error || "Incorrect password. Try again.");
+        }
       }
     } catch {
       setErr("Connection error.");

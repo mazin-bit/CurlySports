@@ -36,6 +36,8 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "e0.365dm.com" },
       { protocol: "https", hostname: "e1.365dm.com" },
       { protocol: "https", hostname: "e2.365dm.com" },
+      // Supabase storage (post images, avatars)
+      { protocol: "https", hostname: "*.supabase.co" },
     ],
     formats: ["image/avif", "image/webp"],
     qualities: [75, 90, 100],
@@ -66,7 +68,7 @@ const nextConfig: NextConfig = {
               "default-src 'self'",
               "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
               "style-src 'self' 'unsafe-inline'",
-              "img-src 'self' data: blob: https://a.espncdn.com https://a2.espncdn.com https://a3.espncdn.com https://cdn.nba.com https://media.api-sports.io https://upload.wikimedia.org https://ichef.bbci.co.uk https://media.guim.co.uk https://e0.365dm.com https://e1.365dm.com https://e2.365dm.com",
+              "img-src 'self' data: blob: https://*.supabase.co https://a.espncdn.com https://a2.espncdn.com https://a3.espncdn.com https://cdn.nba.com https://media.api-sports.io https://upload.wikimedia.org https://ichef.bbci.co.uk https://media.guim.co.uk https://e0.365dm.com https://e1.365dm.com https://e2.365dm.com",
               "font-src 'self'",
               "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://site.api.espn.com https://api.openf1.org https://www.thesportsdb.com",
               "frame-ancestors 'none'",

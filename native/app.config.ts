@@ -16,11 +16,11 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     icon: "./assets/icon.png",
     userInterfaceStyle: "dark",
     scheme: "curlysports",
-    backgroundColor: "#07090b",
+    backgroundColor: "#c8ff3d",
     ios: {
       supportsTablet: false,
       bundleIdentifier: "com.curlysports.app",
-      backgroundColor: "#07090b",
+      backgroundColor: "#c8ff3d",
       infoPlist: {
         UIBackgroundModes: ["remote-notification"],
       },
@@ -30,7 +30,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       // Allow HTTP (cleartext) traffic for local dev server access
       usesCleartextTraffic: true,
       adaptiveIcon: {
-        backgroundColor: "#07090b",
+        backgroundColor: "#c8ff3d",
         foregroundImage: "./assets/android-icon-foreground.png",
         backgroundImage: "./assets/android-icon-background.png",
         monochromeImage: "./assets/android-icon-monochrome.png",
@@ -46,7 +46,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       [
         "expo-splash-screen",
         {
-          backgroundColor: "#07090b",
+          backgroundColor: "#c8ff3d",
           image: "./assets/splash-icon.png",
           imageWidth: 200,
         },
