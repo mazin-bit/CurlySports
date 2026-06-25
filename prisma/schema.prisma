@@ -38,10 +38,14 @@ model User {
   id        String   @id @default(cuid())
   email     String   @unique
   username  String   @unique
-  name      String?
-  avatar    String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  name          String?
+  avatar        String?
+  passwordHash  String?
+  googleId      String?  @unique
+  emailVerified Boolean  @default(false)
+  favTeam       Json?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   favorites   Favorite[]
   predictions Prediction[]

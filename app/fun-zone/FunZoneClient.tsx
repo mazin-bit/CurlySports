@@ -9,7 +9,6 @@ import {
   ChevronUp, AlertCircle, Send, Loader2,
 } from "lucide-react";
 import { useActiveSport } from "@/contexts/SportContext";
-import { createClient } from "@/utils/supabase/client";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -104,17 +103,14 @@ function ComposeModal({
     try {
       let imageUrl: string | null = null;
 
-      // Upload image to Supabase storage if provided
+      // Upload image via API route
       if (imageFile) {
-        const supabase = createClient();
-        const ext = imageFile.name.split(".").pop();
-        const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from("post-images")
-          .upload(path, imageFile, { upsert: false });
-        if (!uploadError && uploadData) {
-          const { data: urlData } = supabase.storage.from("post-images").getPublicUrl(uploadData.path);
-          imageUrl = urlData.publicUrl;
+        const formData = new FormData();
+        formData.append("file", imageFile);
+        const uploadRes = await fetch("/api/upload", { method: "POST", body: formData });
+        if (uploadRes.ok) {
+          const { url } = await uploadRes.json();
+          imageUrl = url;
         }
         // If upload fails, continue without image
       }

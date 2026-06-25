@@ -1,7 +1,5 @@
 'use client';
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
-import { createClient } from '@/utils/supabase/client';
-import type { User } from '@supabase/supabase-js';
 
 export interface UserProfile {
   id: string;
@@ -13,7 +11,7 @@ export interface UserProfile {
 }
 
 interface AuthContextValue {
-  user: User | null;
+  user: UserProfile | null;
   profile: UserProfile | null;
   isLoading: boolean;
   /** Logged-in but hasn't chosen a favourite team yet */
@@ -35,97 +33,76 @@ export function useAuth() {
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const supabaseRef = useRef((() => { try { return createClient(); } catch { return null; } })());
-  const supabase = supabaseRef.current;
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<UserProfile | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [authError, setAuthError] = useState<string | null>(null);
   const mountedRef = useRef(true);
 
-  const fetchProfile = useCallback(async (u: User) => {
+  const fetchProfile = useCallback(async () => {
     try {
       const res = await fetch('/api/user/profile');
-      if (!mountedRef.current) return;
+      if (!mountedRef.current) return null;
       if (res.ok) {
         const data = await res.json();
-        const favTeam = u.user_metadata?.favTeam ?? null;
-        setProfile({ ...data, favTeam });
+        const p: UserProfile = {
+          id: data.id,
+          email: data.email,
+          username: data.username,
+          name: data.name,
+          avatar: data.avatar,
+          favTeam: data.favTeam ?? null,
+        };
+        setUser(p);
+        setProfile(p);
+        return p;
       }
+      return null;
     } catch {
-      // best-effort — don't crash if profile fetch fails
+      return null;
     }
   }, []);
 
   useEffect(() => {
     mountedRef.current = true;
 
-    // If Supabase client failed to create, skip auth entirely
-    if (!supabase) {
-      setIsLoading(false);
-      return;
-    }
-
-    // Track whether init already resolved so onAuthStateChange doesn't
-    // duplicate work during the initial load.
-    let initResolved = false;
-
     const init = async () => {
       try {
         const timeout = new Promise<null>(resolve => setTimeout(() => resolve(null), 2000));
-        const sessionReq = supabase.auth.getSession().then(r => r.data.session);
-        const session = await Promise.race([sessionReq, timeout]);
-        if (!mountedRef.current) return;
-        const u = session?.user ?? null;
-        setUser(u);
-        // Stop showing the loading screen immediately — fetch profile in background
-        setIsLoading(false);
-        initResolved = true;
-        if (u) fetchProfile(u); // fire-and-forget
+        const profileReq = fetchProfile();
+        await Promise.race([profileReq, timeout]);
       } catch {
         // network error — treat as logged out
-        if (mountedRef.current) setIsLoading(false);
-        initResolved = true;
       }
+      if (mountedRef.current) setIsLoading(false);
     };
 
     init();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (!mountedRef.current) return;
-      // Skip the INITIAL_SESSION event if init() already handled it
-      if (!initResolved && _event === 'INITIAL_SESSION') return;
-      const u = session?.user ?? null;
-      setUser(u);
-      if (u) {
-        await fetchProfile(u);
-      } else {
-        setProfile(null);
-      }
-    });
-
     return () => {
       mountedRef.current = false;
-      subscription.unsubscribe();
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const login = async (email: string, password: string) => {
-    const sb = supabase;
-    if (!sb) { setAuthError('Auth service unavailable'); throw new Error('Auth service unavailable'); }
     setAuthError(null);
-    const { error } = await sb.auth.signInWithPassword({ email, password });
-    if (error) {
-      const msg = error.message.includes('Invalid login') ? 'Incorrect email or password.' : error.message;
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({})) as { error?: string };
+      const msg = data.error || 'Incorrect email or password.';
       setAuthError(msg);
       throw new Error(msg);
     }
+    // Fetch profile after successful login
+    await fetchProfile();
   };
 
   const signup = async (email: string, password: string, username: string) => {
-    const sb = supabase;
-    if (!sb) { setAuthError('Auth service unavailable'); throw new Error('Auth service unavailable'); }
     setAuthError(null);
     const res = await fetch('/api/auth/signup', {
       method: 'POST',
@@ -138,34 +115,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setAuthError(msg);
       throw new Error(msg);
     }
-    // Sign in immediately after account creation
-    const { error } = await sb.auth.signInWithPassword({ email, password });
-    if (error) {
-      const msg = error.message;
-      setAuthError(msg);
-      throw new Error(msg);
-    }
+    // Signup now logs in automatically (JWT cookies set by response)
+    await fetchProfile();
   };
 
   const logout = async () => {
     await fetch('/api/user/logout', { method: 'POST' }).catch(() => {});
-    await supabase?.auth.signOut();
     setUser(null);
     setProfile(null);
   };
 
   const setFavTeam = async (team: { code: string; name: string }) => {
     setProfile(p => p ? { ...p, favTeam: team } : p);
-    const sb = supabase;
-    if (!sb) return;
-    await sb.auth.updateUser({ data: { favTeam: team } });
-    const { data: { user: u } } = await sb.auth.getUser();
-    if (u && mountedRef.current) setUser(u);
+    setUser(u => u ? { ...u, favTeam: team } : u);
+    // TODO: persist favTeam to user profile via API if needed
   };
 
   const clearAuthError = () => setAuthError(null);
 
-  const isNewUser = !!user && !user.user_metadata?.favTeam && !profile?.favTeam;
+  const isNewUser = !!user && !profile?.favTeam;
 
   return (
     <AuthContext.Provider value={{

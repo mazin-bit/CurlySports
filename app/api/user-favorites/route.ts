@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireAuth } from "@/lib/auth";
 import { createClient } from "@/utils/supabase/server";
 
 // GET /api/user-favorites — list authenticated user's favorites
 export async function GET() {
+  const auth = await requireAuth();
+  if (auth instanceof NextResponse) return auth;
+  const { user } = auth;
   const supabase = await createClient();
-  const { data: { user }, error: authErr } = await supabase.auth.getUser();
-  if (authErr || !user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { data, error } = await supabase
     .from("user_favorites")
@@ -19,9 +21,10 @@ export async function GET() {
 
 // POST /api/user-favorites — add a favorite
 export async function POST(req: NextRequest) {
+  const auth = await requireAuth();
+  if (auth instanceof NextResponse) return auth;
+  const { user } = auth;
   const supabase = await createClient();
-  const { data: { user }, error: authErr } = await supabase.auth.getUser();
-  if (authErr || !user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { type, espn_id, data: itemData } = await req.json() as {
     type: "team" | "player";
@@ -43,9 +46,10 @@ export async function POST(req: NextRequest) {
 
 // DELETE /api/user-favorites — remove a favorite
 export async function DELETE(req: NextRequest) {
+  const auth = await requireAuth();
+  if (auth instanceof NextResponse) return auth;
+  const { user } = auth;
   const supabase = await createClient();
-  const { data: { user }, error: authErr } = await supabase.auth.getUser();
-  if (authErr || !user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { type, espn_id } = await req.json() as { type: string; espn_id: string };
 

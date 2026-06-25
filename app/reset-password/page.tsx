@@ -2,7 +2,6 @@
 export const dynamic = "force-dynamic";
 import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { createClient } from "@/utils/supabase/client";
 import styles from "../login/login.module.css";
 
 function Stage() {
@@ -39,8 +38,8 @@ function ResetPasswordForm() {
 
   const router = useRouter();
   const searchParams = useSearchParams();
+  const token = searchParams.get("token");
   const isMobile = searchParams.get("mobile") === "1";
-  const supabase = createClient();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -48,11 +47,20 @@ function ResetPasswordForm() {
       setError("Passwords don't match.");
       return;
     }
+    if (!token) {
+      setError("Invalid reset link. Please request a new one.");
+      return;
+    }
     setError(null);
     setLoading(true);
     try {
-      const { error } = await supabase.auth.updateUser({ password });
-      if (error) throw error;
+      const res = await fetch("/api/auth/reset-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token, password }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Something went wrong.");
       setDone(true);
       setTimeout(() => router.push(isMobile ? "/mobile" : "/dashboard"), 2200);
     } catch (err: unknown) {

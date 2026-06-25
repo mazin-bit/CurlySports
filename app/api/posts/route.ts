@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
+import { requireAuth, optionalAuth } from "@/lib/auth";
 import { parseBody, createPostSchema } from "@/lib/validation";
 import { rateLimiters } from "@/lib/rate-limit";
 import { logger } from "@/lib/logger";
@@ -7,12 +8,11 @@ import { logger } from "@/lib/logger";
 // GET /api/posts?sport=football&cursor=<iso-date>&limit=20
 export async function GET(req: NextRequest) {
   const supabase = await createClient();
+  const user = await optionalAuth();
   const { searchParams } = new URL(req.url);
   const sport  = searchParams.get("sport");
   const cursor = searchParams.get("cursor");
   const limit  = Math.min(parseInt(searchParams.get("limit") ?? "20"), 50);
-
-  const { data: { user } } = await supabase.auth.getUser();
 
   let query = supabase
     .from("posts")
@@ -63,9 +63,11 @@ export async function GET(req: NextRequest) {
 
 // POST /api/posts
 export async function POST(req: NextRequest) {
+  const auth = await requireAuth();
+  if (auth instanceof NextResponse) return auth;
+  const { user } = auth;
+
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   // Rate limit: 10 posts per hour per user
   const limited = await rateLimiters.createPost(req, user.id);
@@ -76,10 +78,7 @@ export async function POST(req: NextRequest) {
   if (!parsed.success) return parsed.response;
   const { content, sport, tag, image_url, poll } = parsed.data;
 
-  const authorName = user.user_metadata?.full_name
-    || user.user_metadata?.name
-    || user.email?.split("@")[0]
-    || "Anonymous";
+  const authorName = user.name || user.username || "Anonymous";
 
   const pollData = poll?.options?.length
     ? { options: poll.options, votes: poll.options.map(() => 0) }

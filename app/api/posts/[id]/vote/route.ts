@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
+import { requireAuth } from "@/lib/auth";
 import { parseBody, voteSchema } from "@/lib/validation";
 import { logger } from "@/lib/logger";
 
@@ -8,10 +9,11 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const auth = await requireAuth();
+  if (auth instanceof NextResponse) return auth;
+  const { user } = auth;
 
+  const supabase = await createClient();
   const { id } = await params;
   const body = await req.json().catch(() => ({}));
   const parsed = parseBody(voteSchema, body);

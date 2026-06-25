@@ -27,8 +27,6 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     },
     android: {
       package: "com.curlysports.app",
-      // Allow HTTP (cleartext) traffic for local dev server access
-      usesCleartextTraffic: true,
       adaptiveIcon: {
         backgroundColor: "#c8ff3d",
         foregroundImage: "./assets/android-icon-foreground.png",

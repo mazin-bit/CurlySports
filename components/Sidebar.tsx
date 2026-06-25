@@ -3,7 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/utils/supabase/client";
+
 import { Ico } from "./Icons";
 import AdSlot from "./AdSlot";
 import { useActiveSport, SPORT_CONFIGS } from "@/contexts/SportContext";
@@ -167,13 +167,15 @@ export default function Sidebar({ active }: { active: string }) {
   const [flagsLoaded, setFlagsLoaded] = useState(false);
 
   useEffect(() => {
-    const supabase = createClient();
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) {
-        const name = user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split("@")[0] || "User";
-        setProfile({ name, email: user.email ?? "", initials: getInitials(name) });
-      }
-    });
+    fetch("/api/user/profile")
+      .then((r) => r.ok ? r.json() : null)
+      .then((profile) => {
+        if (profile) {
+          const name = profile.name || profile.username || "User";
+          setProfile({ name, email: profile.email ?? "", initials: getInitials(name) });
+        }
+      })
+      .catch(() => {});
   }, []);
 
   // Load feature flags to filter nav
@@ -195,8 +197,7 @@ export default function Sidebar({ active }: { active: string }) {
   }, []);
 
   const handleLogout = async () => {
-    const supabase = createClient();
-    await supabase.auth.signOut();
+    await fetch("/api/user/logout", { method: "POST" });
     router.push("/login");
   };
 

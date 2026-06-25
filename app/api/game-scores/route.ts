@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireAuth } from "@/lib/auth";
 import { createClient } from "@/utils/supabase/server";
 
 // GET /api/game-scores?game_type=quiz&week=1 — weekly leaderboard (top 10)
@@ -29,9 +30,10 @@ export async function GET(req: NextRequest) {
 
 // POST /api/game-scores — submit a game score
 export async function POST(req: NextRequest) {
+  const auth = await requireAuth();
+  if (auth instanceof NextResponse) return auth;
+  const { user } = auth;
   const supabase = await createClient();
-  const { data: { user }, error: authErr } = await supabase.auth.getUser();
-  if (authErr || !user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { game_type, sport, score } = await req.json() as {
     game_type: "quiz" | "player_guess";
@@ -43,10 +45,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "game_type, sport and score required" }, { status: 400 });
   }
 
-  const username = user.user_metadata?.full_name
-    ?? user.user_metadata?.name
-    ?? user.email?.split("@")[0]
-    ?? "Player";
+  const username = user.name || user.username || "Player";
 
   const { data, error } = await supabase
     .from("game_scores")

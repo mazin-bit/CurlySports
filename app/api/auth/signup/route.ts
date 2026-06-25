@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabaseAdmin } from "@/utils/supabase/admin";
+import bcrypt from "bcryptjs";
+import prisma from "@/lib/prisma";
+import { signAccessToken, signRefreshToken, setAuthCookies } from "@/lib/jwt";
 import { sendEmail } from "@/lib/email";
 import { parseBody, signupSchema } from "@/lib/validation";
 import { rateLimiters } from "@/lib/rate-limit";
 import { logger } from "@/lib/logger";
 
 export async function POST(req: NextRequest) {
-  // Rate limit: 5 signup attempts per minute per IP
   const limited = await rateLimiters.auth(req);
   if (limited) return limited;
 
@@ -15,18 +16,33 @@ export async function POST(req: NextRequest) {
   if (!parsed.success) return parsed.response;
   const { email, password, username } = parsed.data;
 
-  // email_confirm: false — user must verify their email before logging in
-  const { data, error } = await supabaseAdmin.auth.admin.createUser({
-    email,
-    password,
-    email_confirm: false,
-    user_metadata: { username },
+  // Check if email or username already taken
+  const existing = await prisma.user.findFirst({
+    where: { OR: [{ email: email.toLowerCase().trim() }, { username }] },
+  });
+  if (existing) {
+    const msg =
+      existing.email === email.toLowerCase().trim()
+        ? "Email already in use."
+        : "Username already taken.";
+    return NextResponse.json({ error: msg }, { status: 409 });
+  }
+
+  const passwordHash = await bcrypt.hash(password, 12);
+
+  const user = await prisma.user.create({
+    data: {
+      email: email.toLowerCase().trim(),
+      username,
+      passwordHash,
+      emailVerified: true,
+    },
   });
 
-  if (error) {
-    logger.warn("signup failed", { email });
-    return NextResponse.json({ error: error.message }, { status: 400 });
-  }
+  const [accessToken, refreshToken] = await Promise.all([
+    signAccessToken(user),
+    signRefreshToken(user.id),
+  ]);
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://curlysports.com";
 
@@ -50,16 +66,6 @@ export async function POST(req: NextRequest) {
           <img src="${appUrl}/curly-guy.png" width="150" height="150" alt="Curly" style="width:150px;height:150px;display:block;object-fit:cover;"/>
         </div>
         <p style="font-family:Arial,sans-serif;font-size:12px;font-weight:700;color:#0c0a1d;letter-spacing:0.06em;margin:0 0 20px;opacity:0.6;text-transform:uppercase;">Your sports hub</p>
-        <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center">
-          <tr>
-            <td style="padding:0 4px;"><div style="background:#0c0a1d;color:#c8ff3d;padding:5px 13px;border-radius:999px;font-size:11px;font-weight:800;font-family:Arial,sans-serif;letter-spacing:0.04em;">EPL</div></td>
-            <td style="padding:0 4px;"><div style="background:#0c0a1d;color:#fffdf7;padding:5px 13px;border-radius:999px;font-size:11px;font-weight:800;font-family:Arial,sans-serif;letter-spacing:0.04em;">NBA</div></td>
-            <td style="padding:0 4px;"><div style="background:#0c0a1d;color:#fffdf7;padding:5px 13px;border-radius:999px;font-size:11px;font-weight:800;font-family:Arial,sans-serif;letter-spacing:0.04em;">NFL</div></td>
-            <td style="padding:0 4px;"><div style="background:#0c0a1d;color:#fffdf7;padding:5px 13px;border-radius:999px;font-size:11px;font-weight:800;font-family:Arial,sans-serif;letter-spacing:0.04em;">F1</div></td>
-            <td style="padding:0 4px;"><div style="background:#0c0a1d;color:#fffdf7;padding:5px 13px;border-radius:999px;font-size:11px;font-weight:800;font-family:Arial,sans-serif;letter-spacing:0.04em;">IPL</div></td>
-            <td style="padding:0 4px;"><div style="background:rgba(12,10,29,0.15);color:#0c0a1d;padding:5px 13px;border-radius:999px;font-size:11px;font-weight:800;font-family:Arial,sans-serif;letter-spacing:0.04em;">+145</div></td>
-          </tr>
-        </table>
       </td></tr>
       <tr><td style="background:#0c0a1d;padding:10px 28px;">
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
@@ -68,10 +74,6 @@ export async function POST(req: NextRequest) {
         </tr></table>
       </td></tr>
       <tr><td style="background:#fffdf7;border:2px solid #0c0a1d;border-top:none;padding:36px 40px 32px;">
-        <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:14px;"><tr>
-          <td style="width:24px;height:2px;background:#ff5b3d;vertical-align:middle;font-size:0;">&nbsp;</td>
-          <td style="padding-left:10px;font-family:'Courier New',monospace;font-size:11px;font-weight:700;color:#ff5b3d;letter-spacing:0.1em;text-transform:uppercase;white-space:nowrap;">WELCOME ABOARD</td>
-        </tr></table>
         <div style="font-family:Georgia,'Times New Roman',serif;font-weight:900;font-size:44px;line-height:1.0;letter-spacing:-1.5px;color:#0c0a1d;margin-bottom:16px;">You're <em style="font-style:italic;background:#c8ff3d;padding:0 10px 3px;border-radius:10px;display:inline;">in the game.</em></div>
         <p style="font-family:Arial,sans-serif;font-size:15px;color:rgba(12,10,29,0.7);line-height:1.65;margin:0 0 28px;">Your Curly Sports account is ready. Live scores, real stats, and debates backed by data — it's all waiting for you.</p>
         <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:28px;"><tr><td style="border-radius:999px;">
@@ -89,8 +91,15 @@ export async function POST(req: NextRequest) {
   </td></tr>
 </table>
 </body></html>`,
-  }).catch((err) => logger.error("welcome email failed", { email, error: String(err) }));
+  }).catch((err) =>
+    logger.error("welcome email failed", { email, error: String(err) })
+  );
 
   logger.info("user signup", { email });
-  return NextResponse.json({ user: data.user });
+
+  const response = NextResponse.json(
+    { user: { id: user.id, email: user.email, username: user.username } },
+    { status: 201 }
+  );
+  return setAuthCookies(response, accessToken, refreshToken);
 }

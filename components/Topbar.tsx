@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/utils/supabase/client";
+
 import { Ico } from "./Icons";
 
 interface TopbarProps {
@@ -14,13 +14,15 @@ export default function Topbar({ title, subtitle }: TopbarProps) {
   const [initials, setInitials] = useState("…");
 
   useEffect(() => {
-    const supabase = createClient();
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) {
-        const name = user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split("@")[0] || "User";
-        setInitials(name.split(" ").map((w: string) => w[0]).join("").toUpperCase().slice(0, 2));
-      }
-    });
+    fetch("/api/user/profile")
+      .then((r) => r.ok ? r.json() : null)
+      .then((profile) => {
+        if (profile) {
+          const name = profile.name || profile.username || "User";
+          setInitials(name.split(" ").map((w: string) => w[0]).join("").toUpperCase().slice(0, 2));
+        }
+      })
+      .catch(() => {});
   }, []);
 
   return (

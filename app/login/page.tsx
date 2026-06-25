@@ -2,11 +2,12 @@
 export const dynamic = "force-dynamic";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/utils/supabase/client";
 import styles from "./login.module.css";
 import { Mail } from "lucide-react";
 
 type Mode = "login" | "signup" | "forgot";
+
+const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ?? "";
 
 /* ── Shared mascot left-panel ──────────────────────────────── */
 function Stage() {
@@ -56,7 +57,6 @@ export default function LoginPage() {
   const [emailSent, setEmailSent] = useState(false);
 
   const router = useRouter();
-  const supabase = createClient();
 
   function switchMode(m: Mode) {
     setMode(m);
@@ -71,8 +71,13 @@ export default function LoginPage() {
 
     try {
       if (mode === "login") {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
+        const res = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
+        });
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error ?? "Login failed.");
         router.push("/dashboard");
         router.refresh();
 
@@ -85,16 +90,14 @@ export default function LoginPage() {
         });
         const json = await res.json();
         if (!res.ok) throw new Error(json.error ?? "Signup failed.");
-        setEmailSent(true);
+        router.push("/dashboard");
+        router.refresh();
 
       } else if (mode === "forgot") {
         const res = await fetch("/api/auth/forgot", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            email,
-            redirectTo: `${window.location.origin}/auth/callback?next=/reset-password`,
-          }),
+          body: JSON.stringify({ email }),
         });
         const json = await res.json();
         if (!res.ok) throw new Error(json.error ?? "Failed to send reset link.");
@@ -107,19 +110,22 @@ export default function LoginPage() {
     }
   }
 
-  async function handleGoogle() {
-    setLoading(true);
-    setError(null);
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      },
-    });
-    if (error) {
-      setError(error.message);
-      setLoading(false);
+  function handleGoogle() {
+    if (!GOOGLE_CLIENT_ID) {
+      setError("Google login is not configured.");
+      return;
     }
+    const redirectUri = `${window.location.origin}/auth/callback`;
+    const params = new URLSearchParams({
+      client_id: GOOGLE_CLIENT_ID,
+      redirect_uri: redirectUri,
+      response_type: "code",
+      scope: "openid email profile",
+      access_type: "offline",
+      prompt: "select_account",
+      state: "/dashboard",
+    });
+    window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
   }
 
   /* ── "Check your email" screen ─────────────────────────────── */
@@ -135,20 +141,12 @@ export default function LoginPage() {
             </div>
             <span>curly<span className={styles.dot}>.</span>sports</span>
           </a>
-          <div className={styles.formTag}>
-            {mode === "signup" ? "almost there" : "check inbox"}
-          </div>
+          <div className={styles.formTag}>check inbox</div>
           <h1 className={styles.formTitle}>
-            {mode === "signup" ? (
-              <>Check<br />your <em>email.</em></>
-            ) : (
-              <>Reset<br />link <em>sent.</em></>
-            )}
+            <>Reset<br />link <em>sent.</em></>
           </h1>
           <p className={styles.formSub}>
-            {mode === "signup"
-              ? `We sent a verification link to ${email}. Click it to activate your account.`
-              : `We sent a password reset link to ${email}. Check your inbox (and spam).`}
+            {`We sent a password reset link to ${email}. Check your inbox (and spam).`}
           </p>
           <div className={styles.emailSentBox}>
             <div className={styles.emailSentIcon}><Mail size={24} strokeWidth={1.5} /></div>

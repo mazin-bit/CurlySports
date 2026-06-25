@@ -14,10 +14,10 @@ export async function GET() {
     update: {},
     create: {
       id: user.id,
-      email: user.email!,
-      username: user.user_metadata?.username ?? user.email!.split("@")[0],
-      name: user.user_metadata?.full_name ?? null,
-      avatar: user.user_metadata?.avatar_url ?? null,
+      email: user.email,
+      username: user.username,
+      name: user.name,
+      avatar: user.avatar,
     },
   });
 
