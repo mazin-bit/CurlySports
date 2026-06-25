@@ -1,66 +1,44 @@
 import { NextRequest, NextResponse } from "next/server";
-import bcrypt from "bcryptjs";
 import prisma from "@/lib/prisma";
 import { signVerifyToken } from "@/lib/jwt";
 import { sendEmail } from "@/lib/email";
-import { parseBody, signupSchema } from "@/lib/validation";
 import { rateLimiters } from "@/lib/rate-limit";
-import { logger } from "@/lib/logger";
 
 export async function POST(req: NextRequest) {
   const limited = await rateLimiters.auth(req);
   if (limited) return limited;
 
   const body = await req.json().catch(() => ({}));
-  const parsed = parseBody(signupSchema, body);
-  if (!parsed.success) return parsed.response;
-  const { email, password, username } = parsed.data;
+  const { email } = body as { email?: string };
 
-  // Check if email or username already taken
-  const existing = await prisma.user.findFirst({
-    where: { OR: [{ email: email.toLowerCase().trim() }, { username }] },
-  });
-  if (existing) {
-    const msg =
-      existing.email === email.toLowerCase().trim()
-        ? "Email already in use."
-        : "Username already taken.";
-    return NextResponse.json({ error: msg }, { status: 409 });
+  if (!email) {
+    return NextResponse.json({ error: "Email is required." }, { status: 400 });
   }
 
-  const passwordHash = await bcrypt.hash(password, 12);
-
-  const user = await prisma.user.create({
-    data: {
-      email: email.toLowerCase().trim(),
-      username,
-      passwordHash,
-      emailVerified: false,
-    },
+  const user = await prisma.user.findUnique({
+    where: { email: email.toLowerCase().trim() },
   });
 
-  // Send verification email
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://curlysports.com";
-  const verifyTokenStr = await signVerifyToken(user.email);
-  const verifyUrl = `${appUrl}/verify-email?token=${encodeURIComponent(verifyTokenStr)}`;
+  if (!user) {
+    // Don't reveal whether email exists
+    return NextResponse.json({ success: true });
+  }
 
-  sendEmail({
-    to: email,
+  if (user.emailVerified) {
+    return NextResponse.json({ error: "Email is already verified." }, { status: 400 });
+  }
+
+  const verifyToken = await signVerifyToken(user.email);
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? req.nextUrl.origin.replace("://0.0.0.0", "://localhost");
+  const verifyUrl = `${appUrl}/verify-email?token=${encodeURIComponent(verifyToken)}`;
+
+  await sendEmail({
+    to: user.email,
     subject: "Verify your email - Curly Sports",
     html: buildVerifyEmail(verifyUrl, appUrl),
-  }).catch((err) =>
-    logger.error("verification email failed", { email, error: String(err) })
-  );
+  }).catch(() => {});
 
-  logger.info("user signup", { email });
-
-  return NextResponse.json(
-    {
-      user: { id: user.id, email: user.email, username: user.username },
-      needsVerification: true,
-    },
-    { status: 201 }
-  );
+  return NextResponse.json({ success: true });
 }
 
 function buildVerifyEmail(verifyUrl: string, appUrl: string): string {
@@ -94,7 +72,13 @@ function buildVerifyEmail(verifyUrl: string, appUrl: string): string {
         <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:28px;"><tr><td style="border-radius:999px;">
           <a href="${verifyUrl}" style="display:inline-block;background:#0c0a1d;color:#c8ff3d;font-family:Arial,sans-serif;font-size:15px;font-weight:800;padding:15px 40px;border-radius:999px;border:2px solid #0c0a1d;box-shadow:5px 5px 0 #ff5b3d;text-decoration:none;white-space:nowrap;">Verify my email &rarr;</a>
         </td></tr></table>
-        <p style="font-family:Arial,sans-serif;font-size:13px;color:rgba(12,10,29,0.5);line-height:1.5;margin:0 0 20px;">This link expires in <strong>24 hours</strong>. If you didn't create an account, you can safely ignore this email.</p>
+        <table cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-bottom:24px">
+          <tr><td style="background:#f4ede0;border-radius:10px;border:1.5px solid #e0d8cc;padding:14px 18px">
+            <td style="font-size:13px;color:#2a2540;line-height:1.5">
+              This link expires in <strong>24 hours</strong>. If you didn't create an account, you can safely ignore this email.
+            </td>
+          </td></tr>
+        </table>
         <hr style="border:none;border-top:1.5px solid #ede5d8;margin:0 0 20px">
         <p style="margin:0;font-size:12px;color:#999;line-height:1.6">
           Button not working? Paste this link into your browser:<br>

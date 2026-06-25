@@ -28,6 +28,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid email or password." }, { status: 401 });
   }
 
+  if (!user.emailVerified) {
+    return NextResponse.json(
+      { error: "Please verify your email before logging in.", needsVerification: true, email: user.email },
+      { status: 403 }
+    );
+  }
+
   const [accessToken, refreshToken] = await Promise.all([
     signAccessToken(user),
     signRefreshToken(user.id),

@@ -18,7 +18,7 @@ export interface AuthPayload extends JWTPayload {
   username: string;
   name?: string | null;
   avatar?: string | null;
-  purpose: "access" | "refresh" | "reset";
+  purpose: "access" | "refresh" | "reset" | "verify";
 }
 
 export async function signAccessToken(user: {
@@ -57,6 +57,15 @@ export async function signResetToken(email: string) {
     .setSubject(email)
     .setIssuedAt()
     .setExpirationTime("1h")
+    .sign(JWT_SECRET);
+}
+
+export async function signVerifyToken(email: string) {
+  return new SignJWT({ email, purpose: "verify" })
+    .setProtectedHeader({ alg: "HS256" })
+    .setSubject(email)
+    .setIssuedAt()
+    .setExpirationTime("24h")
     .sign(JWT_SECRET);
 }
 

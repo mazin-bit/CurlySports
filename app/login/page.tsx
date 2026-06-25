@@ -55,6 +55,9 @@ export default function LoginPage() {
   const [error, setError]       = useState<string | null>(null);
   const [loading, setLoading]   = useState(false);
   const [emailSent, setEmailSent] = useState(false);
+  const [needsVerification, setNeedsVerification] = useState(false);
+  const [verificationEmail, setVerificationEmail] = useState("");
+  const [resending, setResending] = useState(false);
 
   const router = useRouter();
 
@@ -77,7 +80,14 @@ export default function LoginPage() {
           body: JSON.stringify({ email, password }),
         });
         const json = await res.json();
-        if (!res.ok) throw new Error(json.error ?? "Login failed.");
+        if (!res.ok) {
+          if (json.needsVerification) {
+            setVerificationEmail(json.email || email);
+            setNeedsVerification(true);
+            return;
+          }
+          throw new Error(json.error ?? "Login failed.");
+        }
         router.push("/dashboard");
         router.refresh();
 
@@ -90,6 +100,11 @@ export default function LoginPage() {
         });
         const json = await res.json();
         if (!res.ok) throw new Error(json.error ?? "Signup failed.");
+        if (json.needsVerification) {
+          setVerificationEmail(email);
+          setNeedsVerification(true);
+          return;
+        }
         router.push("/dashboard");
         router.refresh();
 
@@ -115,7 +130,8 @@ export default function LoginPage() {
       setError("Google login is not configured.");
       return;
     }
-    const redirectUri = `${window.location.origin}/auth/callback`;
+    const origin = window.location.origin.replace("://0.0.0.0", "://localhost");
+    const redirectUri = `${origin}/auth/callback`;
     const params = new URLSearchParams({
       client_id: GOOGLE_CLIENT_ID,
       redirect_uri: redirectUri,
@@ -126,6 +142,69 @@ export default function LoginPage() {
       state: "/dashboard",
     });
     window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
+  }
+
+  async function resendVerification() {
+    setResending(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/auth/resend-verification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: verificationEmail }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Failed to resend.");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to resend.");
+    } finally {
+      setResending(false);
+    }
+  }
+
+  /* ── "Verify your email" screen ────────────────────────────── */
+  if (needsVerification) {
+    return (
+      <div className={styles.layout}>
+        <Stage />
+        <div className={styles.formSide}>
+          <a href="/" className={styles.mobileBrand}>
+            <div className={styles.mobileBrandMark}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/curly-guy.png" alt="Curly" />
+            </div>
+            <span>curly<span className={styles.dot}>.</span>sports</span>
+          </a>
+          <div className={styles.formTag}>verify email</div>
+          <h1 className={styles.formTitle}>
+            Check your<br /><em>inbox.</em>
+          </h1>
+          <p className={styles.formSub}>
+            {`We sent a verification link to ${verificationEmail}. Click the link in the email to activate your account.`}
+          </p>
+          <div className={styles.emailSentBox}>
+            <div className={styles.emailSentIcon}><Mail size={24} strokeWidth={1.5} /></div>
+            <p>Didn&apos;t get it? Check your spam folder, or{" "}
+              <button
+                className={styles.inlineLink}
+                onClick={resendVerification}
+                disabled={resending}
+              >
+                {resending ? "sending..." : "resend verification email"}
+              </button>.
+            </p>
+          </div>
+          {error && <div className={styles.errorBanner}>{error}</div>}
+          <button
+            className={styles.btnPrimary}
+            style={{ marginTop: "2rem" }}
+            onClick={() => { setNeedsVerification(false); setError(null); switchMode("login"); }}
+          >
+            Back to login
+          </button>
+        </div>
+      </div>
+    );
   }
 
   /* ── "Check your email" screen ─────────────────────────────── */

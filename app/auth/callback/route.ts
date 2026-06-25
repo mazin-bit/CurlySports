@@ -3,7 +3,9 @@ import prisma from "@/lib/prisma";
 import { signAccessToken, signRefreshToken, setAuthCookies } from "@/lib/jwt";
 
 export async function GET(request: NextRequest) {
-  const { searchParams, origin } = new URL(request.url);
+  const reqUrl = new URL(request.url);
+  const searchParams = reqUrl.searchParams;
+  const origin = reqUrl.origin.replace("://0.0.0.0", "://localhost");
   const code = searchParams.get("code");
   const state = searchParams.get("state") ?? "/dashboard";
   const safeNext =

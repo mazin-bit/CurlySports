@@ -9,7 +9,7 @@ export async function middleware(request: NextRequest) {
   // Public paths that never require auth
   const publicPaths = [
     "/login", "/auth/callback", "/auth/check-email",
-    "/reset-password", "/", "/mobile", "/privacy", "/terms",
+    "/reset-password", "/verify-email", "/", "/mobile", "/privacy", "/terms",
   ];
   const isPublic = publicPaths.some(
     (p) => pathname === p || pathname.startsWith(p + "?") || pathname.startsWith(p + "/")
