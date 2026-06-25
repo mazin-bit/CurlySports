@@ -1,0 +1,110 @@
+name: Deploy Production to Vercel
+
+on:
+  workflow_dispatch:
+    inputs:
+      app-version:
+        description: "App version (example: v1.0.0)"
+        default: "v1.0.0"
+        required: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Install Vercel CLI
+        run: npm install -g vercel@latest
+
+      - name: Pull Vercel environment
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Pull migration env
+        run: |
+          vercel env pull .env.migrate --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+          # Migrations need a direct (non-pgbouncer) connection on port 5432.
+          sed -i 's|\.pooler\.supabase\.com:6543/|.pooler.supabase.com:5432/|g' .env.migrate
+          sed -i '/^DIRECT_URL=/s/?pgbouncer=true//' .env.migrate
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      - name: Guard — DIRECT_URL must be set
+        run: |
+          DIRECT_URL_LINE=$(grep -m1 '^DIRECT_URL=' .env.migrate || true)
+          DIRECT_URL_VAL="${DIRECT_URL_LINE#DIRECT_URL=}"
+          DIRECT_URL_VAL="${DIRECT_URL_VAL#\"}" DIRECT_URL_VAL="${DIRECT_URL_VAL%\"}"
+          [ -n "$DIRECT_URL_VAL" ] || {
+            echo "::error::DIRECT_URL is empty or missing in .env.migrate — migrations cannot run"
+            exit 1
+          }
+
+      - name: Run database migrations
+        run: |
+          # Show which database host Prisma will connect to (password is not printed).
+          node --env-file=.env.migrate -e "
+            const u = process.env.DIRECT_URL || process.env.DATABASE_URL || '';
+            const masked = u.replace(/:([^:@]+)@/, ':***@');
+            console.log('[migrate] connecting via:', masked);
+          "
+
+          # Self-heal: repair checksum mismatches and mark stuck failed migrations as rolled-back.
+          node --env-file=.env.migrate scripts/_fix-migration-checksums.mjs
+
+          # Apply all pending migrations — exits non-zero on failure, which fails the whole job
+          # so a broken migration is immediately visible and the deploy is blocked until fixed.
+          node --env-file=.env.migrate -e "
+            const { execSync } = require('child_process');
+            try {
+              execSync('npx prisma migrate deploy', { stdio: 'inherit' });
+            } catch (e) {
+              console.error('::error::Database migration failed — deploy aborted. Fix the migration and redeploy.');
+              process.exit(1);
+            }
+          "
+
+          rm -f .env.migrate
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      - name: Build project
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          NEXT_PUBLIC_VERSION: ${{ inputs.app-version }}
+
+      - name: Deploy to Vercel
+        id: deploy
+        run: |
+          URL=$(vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }})
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      - name: Summary
+        run: |
+          echo "### Deployed \`${{ github.ref_name }}\` @ \`${{ inputs.app-version }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**URL:** ${{ steps.deploy.outputs.url }}" >> $GITHUB_STEP_SUMMARY
