@@ -882,6 +882,190 @@
 
 .loginBack a:hover { color: var(--a-ink-dim); }
 
+/* ── Users tab ──────────────────────────────────── */
+.usersSearch {
+  position: relative;
+  margin-bottom: 20px;
+}
+
+.usersSearchIcon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--a-ink-mute);
+  pointer-events: none;
+}
+
+.usersSearchInput {
+  width: 100%;
+  background: var(--a-surface);
+  border: 1px solid var(--a-border-2);
+  border-radius: 8px;
+  padding: 10px 14px 10px 36px;
+  color: var(--a-ink);
+  font-family: var(--a-mono);
+  font-size: 13px;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.15s;
+}
+
+.usersSearchInput:focus { border-color: rgba(200, 255, 61, 0.4); }
+
+.usersTable {
+  background: var(--a-surface);
+  border: 1px solid var(--a-border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.usersHeader {
+  display: flex;
+  align-items: center;
+  padding: 10px 18px;
+  border-bottom: 1px solid var(--a-border);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--a-ink-mute);
+  gap: 12px;
+}
+
+.usersRow {
+  display: flex;
+  align-items: center;
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--a-border);
+  font-size: 12.5px;
+  gap: 12px;
+  transition: background 0.1s;
+}
+
+.usersRow:last-child { border-bottom: none; }
+.usersRow:hover { background: var(--a-surface-2); }
+
+.userName {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.userAvatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 1px solid var(--a-border);
+}
+
+.userAvatarFallback {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--a-surface-2);
+  border: 1px solid var(--a-border);
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--a-ink-dim);
+  flex-shrink: 0;
+}
+
+.userPrimary {
+  font-weight: 700;
+  color: var(--a-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.userEmail {
+  font-size: 11px;
+  color: var(--a-ink-mute);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.userAuthBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  background: var(--a-surface-2);
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--a-ink-dim);
+  margin-bottom: 3px;
+}
+
+.userVerified {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10px;
+  color: var(--a-green);
+}
+
+.userUnverified {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10px;
+  color: var(--a-red);
+}
+
+.userStat {
+  font-size: 11px;
+  color: var(--a-ink-mute);
+  line-height: 1.6;
+}
+
+.userDate {
+  font-size: 11px;
+  color: var(--a-ink-dim);
+}
+
+.userDeleteBtn {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--a-ink-mute);
+  cursor: pointer;
+  transition: all 0.12s;
+}
+
+.userDeleteBtn:hover {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.25);
+  color: var(--a-red);
+}
+
+.userDeleteBtn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+.usersPagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.usersPageInfo {
+  font-size: 12px;
+  color: var(--a-ink-dim);
+}
+
 /* ── Loading splash ─────────────────────────────── */
 .splashLoad {
   min-height: 100vh;

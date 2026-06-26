@@ -44,12 +44,17 @@ model User {
   googleId      String?  @unique
   emailVerified Boolean  @default(false)
   favTeam       Json?
+  otpHash       String?
+  otpExpiresAt  DateTime?
+  otpAttempts   Int      @default(0)
+  otpSentAt     DateTime?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  favorites   Favorite[]
-  predictions Prediction[]
-  debateVotes DebateVote[]
+  favorites     Favorite[]
+  userFavorites UserFavorite[]
+  predictions   Prediction[]
+  debateVotes   DebateVote[]
 
   @@map("users")
 }
@@ -202,6 +207,20 @@ model Prediction {
 
   @@unique([userId, matchId])
   @@map("predictions")
+}
+
+model UserFavorite {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String   // "team" or "player"
+  espnId    String
+  data      Json     @default("{}")
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, type, espnId])
+  @@map("user_favorites_v2")
 }
 
 model Favorite {

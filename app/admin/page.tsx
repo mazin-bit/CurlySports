@@ -6,7 +6,7 @@ import {
   LogOut, Eye, EyeOff, Shield, Save, RefreshCw,
   Activity, Zap, Globe, CheckCircle2, XCircle,
   ChevronRight, AlertTriangle, BarChart2, Clock,
-  Wifi, WifiOff,
+  Wifi, WifiOff, Users, Search, Trash2, Mail,
 } from "lucide-react";
 import styles from "./admin.module.css";
 import { DEFAULT_FLAGS, AdminFlags } from "@/lib/featureFlags";
@@ -472,9 +472,156 @@ function NoticeTab({ flags, onSave }: { flags: AdminFlags; onSave: (u: Partial<A
   );
 }
 
+/* ── Users tab ─────────────────────────────────── */
+interface AdminUser {
+  id: string;
+  email: string;
+  username: string;
+  name: string | null;
+  avatar: string | null;
+  emailVerified: boolean;
+  favTeam: { code: string; name: string } | null;
+  authMethod: "email" | "google";
+  createdAt: string;
+  _count: { favorites: number; predictions: number; debateVotes: number };
+}
+
+function UsersTab({ adminToken }: { adminToken: string }) {
+  const [users, setUsers] = useState<AdminUser[]>([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [pages, setPages] = useState(1);
+  const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [deleting, setDeleting] = useState<string | null>(null);
+
+  const load = useCallback(async (p: number, q: string) => {
+    setLoading(true);
+    const params = new URLSearchParams({ page: String(p), limit: "15" });
+    if (q) params.set("search", q);
+    const res = await fetch(`/api/admin/users?${params}`, {
+      headers: { "x-admin-token": adminToken },
+    });
+    if (res.ok) {
+      const data = await res.json();
+      setUsers(data.users);
+      setTotal(data.total);
+      setPages(data.pages);
+    }
+    setLoading(false);
+  }, [adminToken]);
+
+  useEffect(() => { load(page, search); }, [page, load, search]);
+
+  const doSearch = (e: React.FormEvent) => { e.preventDefault(); setPage(1); load(1, search); };
+
+  const deleteUser = async (id: string, email: string) => {
+    if (!confirm(`Delete user ${email}? This cannot be undone.`)) return;
+    setDeleting(id);
+    await fetch(`/api/admin/users?id=${id}`, {
+      method: "DELETE",
+      headers: { "x-admin-token": adminToken },
+    });
+    setUsers(u => u.filter(x => x.id !== id));
+    setTotal(t => t - 1);
+    setDeleting(null);
+  };
+
+  return (
+    <div className={styles.tabContent}>
+      <div className={styles.tabHeader}>
+        <h2>User Management</h2>
+        <span className={styles.tabDesc}>View and manage registered users. {total} total user{total !== 1 ? "s" : ""}.</span>
+      </div>
+
+      <form onSubmit={doSearch} className={styles.usersSearch}>
+        <Search size={14} className={styles.usersSearchIcon} />
+        <input
+          className={styles.usersSearchInput}
+          placeholder="Search by email, username, or name…"
+          value={search}
+          onChange={(e) => { setSearch(e.target.value); if (!e.target.value) { setPage(1); load(1, ""); } }}
+        />
+      </form>
+
+      <div className={styles.usersTable}>
+        <div className={styles.usersHeader}>
+          <span style={{ flex: 2 }}>User</span>
+          <span style={{ flex: 1 }}>Auth</span>
+          <span style={{ flex: 1 }}>Activity</span>
+          <span style={{ flex: 1 }}>Joined</span>
+          <span style={{ width: 40 }} />
+        </div>
+
+        {loading && users.length === 0 ? (
+          <div className={styles.empty} style={{ margin: 0, borderRadius: 0 }}>Loading users…</div>
+        ) : users.length === 0 ? (
+          <div className={styles.empty} style={{ margin: 0, borderRadius: 0 }}>No users found.</div>
+        ) : (
+          users.map((u) => (
+            <div key={u.id} className={styles.usersRow}>
+              <div style={{ flex: 2, minWidth: 0 }}>
+                <div className={styles.userName}>
+                  {u.avatar ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={u.avatar} alt="" className={styles.userAvatar} />
+                  ) : (
+                    <div className={styles.userAvatarFallback}>{(u.username || u.email)[0].toUpperCase()}</div>
+                  )}
+                  <div style={{ minWidth: 0 }}>
+                    <div className={styles.userPrimary}>{u.username}</div>
+                    <div className={styles.userEmail}>{u.email}</div>
+                  </div>
+                </div>
+              </div>
+              <div style={{ flex: 1 }}>
+                <div className={styles.userAuthBadge}>
+                  {u.authMethod === "google" ? <Globe size={11} /> : <Mail size={11} />}
+                  {u.authMethod === "google" ? "Google" : "Email"}
+                </div>
+                {u.emailVerified ? (
+                  <span className={styles.userVerified}><CheckCircle2 size={10} /> Verified</span>
+                ) : (
+                  <span className={styles.userUnverified}><XCircle size={10} /> Unverified</span>
+                )}
+              </div>
+              <div style={{ flex: 1 }}>
+                <div className={styles.userStat}>{u._count.favorites} fav</div>
+                <div className={styles.userStat}>{u._count.debateVotes} votes</div>
+              </div>
+              <div style={{ flex: 1 }}>
+                <div className={styles.userDate}>{new Date(u.createdAt).toLocaleDateString()}</div>
+              </div>
+              <div style={{ width: 40, display: "flex", justifyContent: "center" }}>
+                <button
+                  className={styles.userDeleteBtn}
+                  onClick={() => deleteUser(u.id, u.email)}
+                  disabled={deleting === u.id}
+                  title="Delete user"
+                >
+                  <Trash2 size={13} />
+                </button>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {pages > 1 && (
+        <div className={styles.usersPagination}>
+          <button className={styles.btnGhost} disabled={page <= 1} onClick={() => setPage(p => p - 1)}>Previous</button>
+          <span className={styles.usersPageInfo}>Page {page} of {pages}</span>
+          <button className={styles.btnGhost} disabled={page >= pages} onClick={() => setPage(p => p + 1)}>Next</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ── Nav items ─────────────────────────────────── */
 const NAV = [
   { key: "overview",     label: "Overview",     icon: LayoutDashboard },
+  { key: "users",        label: "Users",        icon: Users },
   { key: "flags",        label: "Feature Flags", icon: Flag },
   { key: "sports",       label: "Sports",       icon: Dumbbell },
   { key: "maintenance",  label: "Maintenance",  icon: Wrench },
@@ -608,6 +755,7 @@ export default function AdminPage() {
 
         <div className={styles.content}>
           {tab === "overview"    && <OverviewTab flags={flags} />}
+          {tab === "users"       && <UsersTab adminToken={token()} />}
           {tab === "flags"       && <FlagsTab flags={flags} onSave={saveFlags} />}
           {tab === "sports"      && <SportsTab flags={flags} onSave={saveFlags} />}
           {tab === "maintenance" && <MaintenanceTab flags={flags} onSave={saveFlags} />}

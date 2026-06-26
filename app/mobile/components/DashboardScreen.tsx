@@ -125,7 +125,8 @@ export default function DashboardScreen({ sport, setSport, onOpenMatch, onOpenPl
         onBell={onBell}
         hasNotification={unread > 0}
       />
-      <div className="cs-scroll" style={{ flex: 1, overflow: 'auto', padding: '14px 14px 96px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <div className="cs-scroll cs-screen-scroll" style={{ flex: 1, overflow: 'auto', display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div className="cs-content-wrap" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         <SportSelector active={sport} onSelect={setSport} />
 
         {/* Live scores */}
@@ -172,7 +173,7 @@ export default function DashboardScreen({ sport, setSport, onOpenMatch, onOpenPl
             <div style={{ fontFamily: 'var(--display)', fontWeight: 800, fontSize: 20, color: 'var(--ink)', letterSpacing: '-0.02em' }}>Today in sports</div>
             <span style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--orange)', fontWeight: 700, cursor: 'pointer' }} onClick={onSearch}>All →</span>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div className="cs-tablet-grid" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {newsLoading ? (
               <SkeletonList count={3}>{i => <SkeletonNewsCard style={{ '--i': i } as React.CSSProperties} />}</SkeletonList>
             ) : articles.length > 0 ? articles.map(n => (
@@ -235,6 +236,7 @@ export default function DashboardScreen({ sport, setSport, onOpenMatch, onOpenPl
             </Card>
           );
         })}
+        </div>
       </div>
     </div>
   );

@@ -17,11 +17,17 @@ interface AuthContextValue {
   /** Logged-in but hasn't chosen a favourite team yet */
   isNewUser: boolean;
   authError: string | null;
+  /** Whether OTP verification is needed (signup or unverified login) */
+  needsVerification: boolean;
+  verificationEmail: string;
   login: (email: string, password: string) => Promise<void>;
   signup: (email: string, password: string, username: string) => Promise<void>;
   logout: () => Promise<void>;
   setFavTeam: (team: { code: string; name: string }) => Promise<void>;
   clearAuthError: () => void;
+  verifyOtp: (code: string) => Promise<void>;
+  resendOtp: () => Promise<void>;
+  cancelVerification: () => void;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -37,12 +43,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [authError, setAuthError] = useState<string | null>(null);
+  const [needsVerification, setNeedsVerification] = useState(false);
+  const [verificationEmail, setVerificationEmail] = useState('');
   const mountedRef = useRef(true);
 
   const fetchProfile = useCallback(async () => {
     try {
-      const res = await fetch('/api/user/profile');
+      const signal = AbortSignal.timeout(8000); // 8s safety net
+      let res = await fetch('/api/user/profile', { signal });
       if (!mountedRef.current) return null;
+
+      // If access token expired, try refreshing
+      if (res.status === 401) {
+        const refreshRes = await fetch('/api/auth/refresh', { method: 'POST', signal });
+        if (refreshRes.ok) {
+          res = await fetch('/api/user/profile', { signal });
+          if (!mountedRef.current) return null;
+        }
+      }
+
       if (res.ok) {
         const data = await res.json();
         const p: UserProfile = {
@@ -68,9 +87,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const init = async () => {
       try {
-        const timeout = new Promise<null>(resolve => setTimeout(() => resolve(null), 2000));
-        const profileReq = fetchProfile();
-        await Promise.race([profileReq, timeout]);
+        await fetchProfile();
       } catch {
         // network error — treat as logged out
       }
@@ -93,7 +110,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       body: JSON.stringify({ email, password }),
     });
     if (!res.ok) {
-      const data = await res.json().catch(() => ({})) as { error?: string };
+      const data = await res.json().catch(() => ({})) as { error?: string; needsVerification?: boolean; email?: string };
+      if (data.needsVerification) {
+        setNeedsVerification(true);
+        setVerificationEmail(data.email || email);
+        return;
+      }
       const msg = data.error || 'Incorrect email or password.';
       setAuthError(msg);
       throw new Error(msg);
@@ -109,13 +131,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password, username }),
     });
+    const data = await res.json().catch(() => ({})) as { error?: string; needsVerification?: boolean };
     if (!res.ok) {
-      const data = await res.json().catch(() => ({})) as { error?: string };
       const msg = data.error || 'Signup failed. Please try again.';
       setAuthError(msg);
       throw new Error(msg);
     }
-    // Signup now logs in automatically (JWT cookies set by response)
+    if (data.needsVerification) {
+      setNeedsVerification(true);
+      setVerificationEmail(email);
+      return;
+    }
     await fetchProfile();
   };
 
@@ -128,17 +154,57 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const setFavTeam = async (team: { code: string; name: string }) => {
     setProfile(p => p ? { ...p, favTeam: team } : p);
     setUser(u => u ? { ...u, favTeam: team } : u);
-    // TODO: persist favTeam to user profile via API if needed
+    await fetch('/api/user/profile', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ favTeam: team }),
+    }).catch(() => {});
   };
 
   const clearAuthError = () => setAuthError(null);
+
+  const verifyOtp = async (code: string) => {
+    setAuthError(null);
+    const res = await fetch('/api/auth/verify-otp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: verificationEmail, otp: code }),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({})) as { error?: string };
+      throw new Error(data.error || 'Verification failed.');
+    }
+    setNeedsVerification(false);
+    setVerificationEmail('');
+    await fetchProfile();
+  };
+
+  const resendOtp = async () => {
+    const res = await fetch('/api/auth/resend-verification', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: verificationEmail }),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({})) as { error?: string };
+      throw new Error(data.error || 'Failed to resend code.');
+    }
+  };
+
+  const cancelVerification = () => {
+    setNeedsVerification(false);
+    setVerificationEmail('');
+    setAuthError(null);
+  };
 
   const isNewUser = !!user && !profile?.favTeam;
 
   return (
     <AuthContext.Provider value={{
       user, profile, isLoading, isNewUser, authError,
+      needsVerification, verificationEmail,
       login, signup, logout, setFavTeam, clearAuthError,
+      verifyOtp, resendOtp, cancelVerification,
     }}>
       {children}
     </AuthContext.Provider>

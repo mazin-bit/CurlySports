@@ -2,6 +2,20 @@ import { jwtVerify } from "jose";
 import { type NextRequest, NextResponse } from "next/server";
 
 const COOKIE_ACCESS = "cs_auth";
+const COOKIE_REFRESH = "cs_refresh";
+
+function getSecret(): Uint8Array | null {
+  const raw = process.env.JWT_SECRET ?? (process.env.NODE_ENV === "production" ? "" : "dev-secret-change-in-production");
+  if (!raw) return null;
+  return new TextEncoder().encode(raw);
+}
+
+function loginRedirect(request: NextRequest): NextResponse {
+  const url = request.nextUrl.clone();
+  url.pathname = "/login";
+  url.searchParams.set("next", request.nextUrl.pathname);
+  return NextResponse.redirect(url);
+}
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -22,20 +36,33 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next({ request });
   }
 
-  const token = request.cookies.get(COOKIE_ACCESS)?.value;
+  const secret = getSecret();
+  if (!secret) return loginRedirect(request);
 
-  if (!token) {
-    const redirectUrl = request.nextUrl.clone();
-    redirectUrl.pathname = "/login";
-    redirectUrl.searchParams.set("next", pathname);
-    return NextResponse.redirect(redirectUrl);
+  const accessToken = request.cookies.get(COOKIE_ACCESS)?.value;
+  const refreshToken = request.cookies.get(COOKIE_REFRESH)?.value;
+
+  if (!accessToken) {
+    // No access token — try refresh
+    if (refreshToken) {
+      try {
+        const { payload } = await jwtVerify(refreshToken, secret);
+        if (payload.purpose === "refresh") {
+          // Redirect through the refresh endpoint to get new tokens
+          const refreshUrl = request.nextUrl.clone();
+          refreshUrl.pathname = "/api/auth/refresh";
+          refreshUrl.searchParams.set("next", pathname);
+          // Can't call fetch in middleware (Edge), so redirect to login with a hint
+        }
+      } catch {
+        // Refresh token also invalid
+      }
+    }
+    return loginRedirect(request);
   }
 
   try {
-    const secret = new TextEncoder().encode(
-      process.env.JWT_SECRET ?? "dev-secret-change-in-production"
-    );
-    await jwtVerify(token, secret);
+    await jwtVerify(accessToken, secret);
 
     // Logged-in user hitting /login → redirect to dashboard
     if (pathname === "/login") {
@@ -46,11 +73,9 @@ export async function middleware(request: NextRequest) {
 
     return NextResponse.next({ request });
   } catch {
-    // Token invalid/expired — redirect to login
-    const redirectUrl = request.nextUrl.clone();
-    redirectUrl.pathname = "/login";
-    redirectUrl.searchParams.set("next", pathname);
-    return NextResponse.redirect(redirectUrl);
+    // Access token expired — redirect to login
+    // Client-side code should call /api/auth/refresh proactively
+    return loginRedirect(request);
   }
 }
 

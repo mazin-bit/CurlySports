@@ -2,9 +2,9 @@ import { SignJWT, jwtVerify, type JWTPayload } from "jose";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET ?? "dev-secret-change-in-production"
-);
+const jwtSecretRaw = process.env.JWT_SECRET ?? (process.env.NODE_ENV === "production" ? "" : "dev-secret-change-in-production");
+if (!jwtSecretRaw) throw new Error("JWT_SECRET environment variable is required in production");
+const JWT_SECRET = new TextEncoder().encode(jwtSecretRaw);
 
 export const COOKIE_ACCESS = "cs_auth";
 export const COOKIE_REFRESH = "cs_refresh";
@@ -18,7 +18,7 @@ export interface AuthPayload extends JWTPayload {
   username: string;
   name?: string | null;
   avatar?: string | null;
-  purpose: "access" | "refresh" | "reset" | "verify";
+  purpose: "access" | "refresh" | "reset";
 }
 
 export async function signAccessToken(user: {
@@ -57,15 +57,6 @@ export async function signResetToken(email: string) {
     .setSubject(email)
     .setIssuedAt()
     .setExpirationTime("1h")
-    .sign(JWT_SECRET);
-}
-
-export async function signVerifyToken(email: string) {
-  return new SignJWT({ email, purpose: "verify" })
-    .setProtectedHeader({ alg: "HS256" })
-    .setSubject(email)
-    .setIssuedAt()
-    .setExpirationTime("24h")
     .sign(JWT_SECRET);
 }
 

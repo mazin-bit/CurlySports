@@ -1,65 +1,92 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth";
-import { createClient } from "@/utils/supabase/server";
+import prisma from "@/lib/prisma";
+import { logger } from "@/lib/logger";
 
 // GET /api/user-favorites — list authenticated user's favorites
 export async function GET() {
-  const auth = await requireAuth();
-  if (auth instanceof NextResponse) return auth;
-  const { user } = auth;
-  const supabase = await createClient();
+  try {
+    const auth = await requireAuth();
+    if (auth instanceof NextResponse) return auth;
+    const { user } = auth;
 
-  const { data, error } = await supabase
-    .from("user_favorites")
-    .select("*")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false });
+    const rows = await prisma.userFavorite.findMany({
+      where: { userId: user.id },
+      orderBy: { createdAt: "desc" },
+    });
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ favorites: data ?? [] });
+    // Map to snake_case keys the UI expects
+    const favorites = rows.map((r) => ({
+      id: r.id,
+      type: r.type,
+      espn_id: r.espnId,
+      data: r.data,
+      created_at: r.createdAt.toISOString(),
+    }));
+
+    return NextResponse.json({ favorites });
+  } catch (err) {
+    logger.error("user-favorites GET error", { error: String(err) });
+    return NextResponse.json({ error: "Failed to fetch favorites" }, { status: 500 });
+  }
 }
 
 // POST /api/user-favorites — add a favorite
 export async function POST(req: NextRequest) {
-  const auth = await requireAuth();
-  if (auth instanceof NextResponse) return auth;
-  const { user } = auth;
-  const supabase = await createClient();
+  try {
+    const auth = await requireAuth();
+    if (auth instanceof NextResponse) return auth;
+    const { user } = auth;
 
-  const { type, espn_id, data: itemData } = await req.json() as {
-    type: "team" | "player";
-    espn_id: string;
-    data: Record<string, unknown>;
-  };
+    const { type, espn_id, data: itemData } = (await req.json()) as {
+      type: "team" | "player";
+      espn_id: string;
+      data: Record<string, unknown>;
+    };
 
-  if (!type || !espn_id) return NextResponse.json({ error: "type and espn_id required" }, { status: 400 });
+    if (!type || !espn_id) {
+      return NextResponse.json({ error: "type and espn_id required" }, { status: 400 });
+    }
 
-  const { data, error } = await supabase
-    .from("user_favorites")
-    .upsert({ user_id: user.id, type, espn_id, data: itemData ?? {} }, { onConflict: "user_id,type,espn_id" })
-    .select()
-    .single();
+    const row = await prisma.userFavorite.upsert({
+      where: {
+        userId_type_espnId: { userId: user.id, type, espnId: espn_id },
+      },
+      update: { data: itemData ?? {} },
+      create: {
+        userId: user.id,
+        type,
+        espnId: espn_id,
+        data: itemData ?? {},
+      },
+    });
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json(data, { status: 201 });
+    return NextResponse.json(
+      { id: row.id, type: row.type, espn_id: row.espnId, data: row.data, created_at: row.createdAt.toISOString() },
+      { status: 201 }
+    );
+  } catch (err) {
+    logger.error("user-favorites POST error", { error: String(err) });
+    return NextResponse.json({ error: "Failed to add favorite" }, { status: 500 });
+  }
 }
 
 // DELETE /api/user-favorites — remove a favorite
 export async function DELETE(req: NextRequest) {
-  const auth = await requireAuth();
-  if (auth instanceof NextResponse) return auth;
-  const { user } = auth;
-  const supabase = await createClient();
+  try {
+    const auth = await requireAuth();
+    if (auth instanceof NextResponse) return auth;
+    const { user } = auth;
 
-  const { type, espn_id } = await req.json() as { type: string; espn_id: string };
+    const { type, espn_id } = (await req.json()) as { type: string; espn_id: string };
 
-  const { error } = await supabase
-    .from("user_favorites")
-    .delete()
-    .eq("user_id", user.id)
-    .eq("type", type)
-    .eq("espn_id", espn_id);
+    await prisma.userFavorite.deleteMany({
+      where: { userId: user.id, type, espnId: espn_id },
+    });
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    logger.error("user-favorites DELETE error", { error: String(err) });
+    return NextResponse.json({ error: "Failed to remove favorite" }, { status: 500 });
+  }
 }

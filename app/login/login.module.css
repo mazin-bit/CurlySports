@@ -338,4 +338,49 @@
   .formSub { font-size: 14px; margin-bottom: 24px; }
   .field input { padding: 12px 14px; font-size: 14px; }
   .btnPrimary { padding: 14px 20px; font-size: 14px; }
+  .otpInput { width: 40px; height: 48px; font-size: 20px; }
+  .otpGroup { gap: 6px; }
+}
+
+/* ── OTP verification ── */
+.otpGroup {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin: 24px 0 16px;
+}
+.otpInput {
+  width: 48px;
+  height: 56px;
+  background: #fffdf7;
+  border: 2px solid #0c0a1d;
+  border-radius: 12px;
+  font-family: var(--mono);
+  font-size: 24px;
+  font-weight: 800;
+  text-align: center;
+  color: #0c0a1d;
+  outline: none;
+  caret-color: #ff5b3d;
+  transition: box-shadow 0.15s, transform 0.1s, border-color 0.15s;
+}
+.otpInput:focus {
+  box-shadow: 4px 4px 0 #ff5b3d;
+  transform: translate(-2px, -2px);
+  border-color: #ff5b3d;
+}
+.otpInput::placeholder {
+  color: rgba(12,10,29,0.15);
+}
+.otpTimer {
+  text-align: center;
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: rgba(12,10,29,0.5);
+  margin-bottom: 16px;
+}
+.otpTimer strong {
+  color: #ff5b3d;
 }

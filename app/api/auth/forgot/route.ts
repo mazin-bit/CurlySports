@@ -3,6 +3,7 @@ import prisma from "@/lib/prisma";
 import { signResetToken } from "@/lib/jwt";
 import { sendEmail } from "@/lib/email";
 import { rateLimiters } from "@/lib/rate-limit";
+import { logger } from "@/lib/logger";
 
 export async function POST(req: NextRequest) {
   const limited = await rateLimiters.auth(req);
@@ -32,7 +33,9 @@ export async function POST(req: NextRequest) {
       to: email,
       subject: "Reset your Curly Sports password",
       html: buildResetEmail(resetUrl),
-    }).catch(() => {});
+    }).catch((err) =>
+      logger.error("password reset email failed", { email, error: String(err) })
+    );
   }
 
   return NextResponse.json({ success: true });

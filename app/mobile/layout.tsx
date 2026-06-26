@@ -16,7 +16,7 @@ export const viewport: Viewport = {
 
 export default function MobileLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="cs-mobile" style={{ height: '100dvh', overflow: 'hidden' }}>
+    <div className="cs-mobile" style={{ height: '100dvh', overflow: 'hidden', overscrollBehavior: 'none' }}>
       {children}
     </div>
   );

@@ -10,6 +10,14 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+// Verify SMTP connectivity on startup (non-blocking)
+if (process.env.SMTP_HOST) {
+  transporter.verify().then(
+    () => console.log("[INF] SMTP transporter verified", process.env.SMTP_HOST),
+    (err) => console.error("[ERR] SMTP transporter verification failed:", String(err)),
+  );
+}
+
 export async function sendEmail({
   to,
   subject,
@@ -21,8 +29,11 @@ export async function sendEmail({
   html: string;
   text?: string;
 }) {
+  const smtpFrom = process.env.SMTP_FROM;
+  if (!smtpFrom) throw new Error("SMTP_FROM environment variable is not set");
+
   return transporter.sendMail({
-    from: `"${process.env.SMTP_FROM_NAME ?? "Curly Sports"}" <${process.env.SMTP_FROM}>`,
+    from: `"${process.env.SMTP_FROM_NAME ?? "Curly Sports"}" <${smtpFrom}>`,
     to,
     subject,
     html,

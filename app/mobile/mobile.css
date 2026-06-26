@@ -3,7 +3,7 @@
  * Scoped under .cs-mobile to avoid conflicts with desktop theme
  * ========================================================= */
 
-@import url("https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;700;800&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap");
+/* Fonts are loaded via globals.css from root layout — no duplicate @import needed */
 
 .cs-mobile {
   /* ---- Paper / background scale (warm cream) ---- */
@@ -126,6 +126,8 @@
   text-rendering: optimizeLegibility;
   height: 100%;
   overflow: hidden;
+  overscroll-behavior: none;           /* kill native pull-to-refresh */
+  -webkit-overflow-scrolling: touch;   /* smooth momentum scroll on iOS */
 }
 
 .cs-mobile *, .cs-mobile *::before, .cs-mobile *::after {
@@ -264,9 +266,24 @@
 .cs-mobile .cs-team .name { font-weight: 700; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink); }
 
 /* ---- SCROLL ---- */
-.cs-mobile .cs-scroll { scrollbar-width: none; }
+.cs-mobile .cs-scroll {
+  scrollbar-width: none;
+  overscroll-behavior-y: contain;      /* prevent pull-to-refresh on scroll-up */
+  -webkit-overflow-scrolling: touch;
+}
 .cs-mobile .cs-scroll::-webkit-scrollbar { display: none; }
 .cs-mobile .cs-scroll > * { flex-shrink: 0; }
+
+/* Prevent pull-to-refresh on ANY scrollable child within mobile app */
+.cs-mobile [style*="overflow: auto"],
+.cs-mobile [style*="overflow:auto"],
+.cs-mobile [style*="overflow-y: auto"],
+.cs-mobile [style*="overflow-y:auto"],
+.cs-mobile [style*="overflow: scroll"],
+.cs-mobile [style*="overflow:scroll"] {
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+}
 
 /* ---- SKELETON ---- */
 .cs-mobile .cs-skeleton {
@@ -279,6 +296,12 @@
 .cs-mobile .cs-skeleton-text.lg { height: 16px; }
 .cs-mobile .cs-skeleton-text.sm { height: 9px; }
 .cs-mobile .cs-skeleton-circle { border-radius: 50%; }
+
+/* ---- SCREEN SCROLL AREA ---- */
+.cs-mobile .cs-screen-scroll {
+  padding: 14px 14px 96px;
+}
+/* Override inline padding on all .cs-scroll containers at tablet+ widths */
 
 /* ---- TAB ENTER ANIMATION ---- */
 .cs-mobile .cs-tab-enter { animation: cs-tabEnter 0.34s var(--ease-pop) both; }
@@ -310,6 +333,111 @@
     --fs-h2: 17px;
   }
   .cs-mobile .cs-card { padding: 12px; }
+}
+
+/* ── Responsive: tablets (iPad / 768px+) ──────────────────── */
+@media (min-width: 768px) {
+  .cs-mobile {
+    --fs-display: 38px;
+    --fs-h1: 28px;
+    --fs-h2: 22px;
+    --fs-h3: 18px;
+    --fs-body: 15px;
+    --fs-sm: 14px;
+    --fs-xs: 12px;
+    --fs-mono-lbl: 11px;
+    --topbar-h: 64px;
+    --bottomnav-h: 72px;
+  }
+
+  /* Cards get more padding and larger shadows on tablet */
+  .cs-mobile .cs-card {
+    padding: 20px;
+    border-radius: var(--r-xl);
+  }
+  .cs-mobile .cs-card-title { font-size: 18px; }
+  .cs-mobile .cs-card-sub { font-size: 11px; }
+  .cs-mobile .cs-card-action { font-size: 12px; }
+
+  /* Buttons scale up */
+  .cs-mobile .cs-btn { padding: 12px 20px; font-size: 14px; min-height: 48px; }
+  .cs-mobile .cs-btn--lg { padding: 16px 28px; font-size: 16px; }
+
+  /* Chips scale up */
+  .cs-mobile .cs-chip { padding: 10px 18px; font-size: 14px; }
+
+  /* Status pills */
+  .cs-mobile .cs-status { font-size: 11px; padding: 5px 10px; }
+
+  /* Crests */
+  .cs-mobile .cs-crest { width: 34px; height: 34px; font-size: 12px; }
+  .cs-mobile .cs-crest--lg { width: 48px; height: 48px; font-size: 15px; }
+
+  /* Team rows */
+  .cs-mobile .cs-team .name { font-size: 15px; }
+
+  /* Screen scroll area gets more padding on tablet — !important overrides inline styles */
+  .cs-mobile .cs-scroll { padding: 20px 24px 96px !important; }
+
+  /* Topbar scales up on tablet — !important overrides inline styles */
+  .cs-mobile .cs-topbar { padding: 16px 24px !important; gap: 16px !important; }
+  .cs-mobile .cs-topbar-logo { width: 44px !important; height: 44px !important; border-radius: 14px !important; }
+  .cs-mobile .cs-topbar-title { font-size: 22px !important; }
+  .cs-mobile .cs-topbar-sub { font-size: 11px !important; }
+  .cs-mobile .cs-topbar-btn { width: 42px !important; height: 42px !important; border-radius: 12px !important; }
+  .cs-mobile .cs-topbar-btn svg { width: 20px; height: 20px; }
+
+  /* BottomNav scales up on tablet — !important overrides inline styles */
+  .cs-mobile .cs-bottomnav { padding: 12px 24px 16px !important; }
+  .cs-mobile .cs-bottomnav-item { gap: 6px !important; font-size: 11px !important; }
+  .cs-mobile .cs-bottomnav-icon svg { width: 26px; height: 26px; }
+
+  /* Tablet grid helper: 2-col layout for card lists — !important overrides inline flex */
+  .cs-mobile .cs-tablet-grid {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px !important;
+  }
+}
+
+/* ── Responsive: large tablets / small laptops (1024px+) ──── */
+@media (min-width: 1024px) {
+  .cs-mobile {
+    --fs-display: 42px;
+    --fs-h1: 32px;
+    --fs-h2: 24px;
+    --fs-body: 16px;
+    --topbar-h: 68px;
+    --bottomnav-h: 76px;
+  }
+
+  /* Constrain content width for readability on large screens */
+  .cs-mobile .cs-content-wrap {
+    max-width: 960px;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  .cs-mobile .cs-card { padding: 24px; }
+
+  .cs-mobile .cs-scroll { padding: 24px 32px 96px !important; }
+
+  /* Topbar even larger on big screens */
+  .cs-mobile .cs-topbar { padding: 18px 32px !important; }
+  .cs-mobile .cs-topbar-logo { width: 48px !important; height: 48px !important; }
+  .cs-mobile .cs-topbar-title { font-size: 24px !important; }
+  .cs-mobile .cs-topbar-btn { width: 46px !important; height: 46px !important; }
+  .cs-mobile .cs-topbar-btn svg { width: 22px; height: 22px; }
+
+  /* BottomNav wider spacing on big screens */
+  .cs-mobile .cs-bottomnav { padding: 14px 48px 18px !important; }
+  .cs-mobile .cs-bottomnav-item { font-size: 12px !important; }
+  .cs-mobile .cs-bottomnav-icon svg { width: 28px; height: 28px; }
+
+  /* 3-col grid on large screens */
+  .cs-mobile .cs-tablet-grid {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
 }
 
 /* ── Reduced motion ────────────────────────────────────────── */

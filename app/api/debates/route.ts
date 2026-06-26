@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { parseBody, createDebateSchema } from "@/lib/validation";
+import { requireAuth } from "@/lib/auth";
 import { logger } from "@/lib/logger";
 
 export async function GET(req: NextRequest) {
@@ -23,12 +24,15 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const body = await req.json().catch(() => ({}));
-  const parsed = parseBody(createDebateSchema, body);
-  if (!parsed.success) return parsed.response;
-  const { question, optionA, optionB, sport, expiresAt } = parsed.data;
-
   try {
+    const auth = await requireAuth();
+    if (auth instanceof NextResponse) return auth;
+
+    const body = await req.json().catch(() => ({}));
+    const parsed = parseBody(createDebateSchema, body);
+    if (!parsed.success) return parsed.response;
+    const { question, optionA, optionB, sport, expiresAt } = parsed.data;
+
     const debate = await prisma.debate.create({
       data: {
         question,
@@ -42,6 +46,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(debate, { status: 201 });
   } catch (err) {
     logger.error("debate create failed", { error: String(err) });
-    return NextResponse.json({ error: "Database not available" }, { status: 503 });
+    return NextResponse.json({ error: "Failed to create debate" }, { status: 500 });
   }
 }
