@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const sport  = searchParams.get("sport");
   const cursor = searchParams.get("cursor");
-  const limit  = Math.min(parseInt(searchParams.get("limit") ?? "20"), 50);
+  const limit  = Math.min(parseInt(searchParams.get("limit") ?? "20") || 20, 50);
 
   let query = supabase
     .from("posts")

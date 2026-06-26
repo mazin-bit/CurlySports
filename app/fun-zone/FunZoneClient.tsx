@@ -6,7 +6,7 @@ import styles from "./fun-zone.module.css";
 import {
   Flame, Zap, MessageCircle, ThumbsUp, Share2,
   TrendingUp, BarChart2, Clock, Plus, X, Image as ImageIcon,
-  ChevronUp, AlertCircle, Send, Loader2,
+  ChevronUp, AlertCircle, Send, Loader2, Trash2, Check, Vote,
 } from "lucide-react";
 import { useActiveSport } from "@/contexts/SportContext";
 
@@ -41,6 +41,18 @@ interface Comment {
   likes_count: number;
   created_at: string;
   liked: boolean;
+}
+
+interface Debate {
+  id: string;
+  question: string;
+  optionA: string;
+  optionB: string;
+  sport: string | null;
+  votesA: number;
+  votesB: number;
+  isLive: boolean;
+  createdAt: string;
 }
 
 const TAGS = ["DEBATE", "GOAT DEBATE", "HOT TAKE", "TRANSFERS", "PREDICTIONS", "QUESTION", "NEWS"];
@@ -248,7 +260,7 @@ function ComposeModal({
 
 // ─── Post Card ─────────────────────────────────────────────────────────────────
 
-function PostCard({ post: initialPost }: { post: Post }) {
+function PostCard({ post: initialPost, currentUserId, onDelete }: { post: Post; currentUserId: string | null; onDelete: (id: string) => void }) {
   const [post, setPost] = useState(initialPost);
   const [expanded, setExpanded] = useState(false);
   const [comments, setComments] = useState<Comment[]>([]);
@@ -256,6 +268,23 @@ function PostCard({ post: initialPost }: { post: Post }) {
   const [newComment, setNewComment] = useState("");
   const [sendingComment, setSendingComment] = useState(false);
   const [likingPost, setLikingPost] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [showCopied, setShowCopied] = useState(false);
+
+  const isOwner = currentUserId && post.user_id === currentUserId;
+
+  const handleDelete = async () => {
+    if (!confirm("Delete this post? This cannot be undone.")) return;
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/posts/${post.id}`, { method: "DELETE" });
+      if (res.ok) {
+        onDelete(post.id);
+      }
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   const toggleExpand = async () => {
     setExpanded((v) => !v);
@@ -352,11 +381,16 @@ function PostCard({ post: initialPost }: { post: Post }) {
     }
   };
 
-  const sharePost = () => {
+  const sharePost = async () => {
+    const shareText = `${post.author_name}: ${post.content}`;
     if (navigator.share) {
-      navigator.share({ title: post.author_name, text: post.content });
+      try { await navigator.share({ title: post.author_name, text: shareText }); } catch { /* user cancelled */ }
     } else {
-      navigator.clipboard.writeText(window.location.href).catch(() => {});
+      try {
+        await navigator.clipboard.writeText(shareText);
+        setShowCopied(true);
+        setTimeout(() => setShowCopied(false), 2000);
+      } catch { /* clipboard not available */ }
     }
   };
 
@@ -427,10 +461,15 @@ function PostCard({ post: initialPost }: { post: Post }) {
           <MessageCircle size={15} strokeWidth={2} />
           {post.comments_count}
         </button>
-        <button className={styles.actionBtn} onClick={sharePost}>
-          <Share2 size={15} strokeWidth={2} />
-          Share
+        <button className={`${styles.actionBtn}${showCopied ? " " + styles.actionBtnActive : ""}`} onClick={sharePost}>
+          {showCopied ? <Check size={15} strokeWidth={2} /> : <Share2 size={15} strokeWidth={2} />}
+          {showCopied ? "Copied!" : "Share"}
         </button>
+        {isOwner && (
+          <button className={`${styles.actionBtn} ${styles.deleteBtn}`} onClick={handleDelete} disabled={deleting}>
+            {deleting ? <Loader2 size={14} className={styles.spin} /> : <Trash2 size={14} strokeWidth={2} />}
+          </button>
+        )}
       </div>
 
       {/* Comments */}
@@ -494,6 +533,45 @@ export default function DebatesPage() {
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState("");
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [debates, setDebates] = useState<Debate[]>([]);
+  const [debateVotes, setDebateVotes] = useState<Record<string, string>>({});
+  const [votingDebate, setVotingDebate] = useState<string | null>(null);
+
+  // Fetch current user
+  useEffect(() => {
+    fetch("/api/auth/me").then((r) => r.json()).then((d) => {
+      if (d.user?.id) setCurrentUserId(d.user.id);
+    }).catch(() => {});
+  }, []);
+
+  // Fetch featured debates
+  useEffect(() => {
+    fetch("/api/debates?live=true").then((r) => r.json()).then((d) => {
+      if (Array.isArray(d)) setDebates(d);
+    }).catch(() => {});
+  }, []);
+
+  const voteDebate = async (debateId: string, option: "A" | "B") => {
+    if (votingDebate || debateVotes[debateId]) return;
+    setVotingDebate(debateId);
+    try {
+      const res = await fetch(`/api/debates/${debateId}/vote`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ option }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setDebateVotes((prev) => ({ ...prev, [debateId]: data.userVote ?? option }));
+        setDebates((prev) => prev.map((d) =>
+          d.id === debateId ? { ...d, votesA: data.votesA, votesB: data.votesB } : d
+        ));
+      }
+    } finally {
+      setVotingDebate(null);
+    }
+  };
 
   const fetchPosts = useCallback(async (sport: string, replace = true) => {
     if (replace) setLoading(true);
@@ -539,6 +617,10 @@ export default function DebatesPage() {
     setShowCompose(false);
   };
 
+  const handleDeletePost = (id: string) => {
+    setPosts((prev) => prev.filter((p) => p.id !== id));
+  };
+
   // Filtered posts
   const displayed = filter === "hot"
     ? [...posts].sort((a, b) => (b.likes_count + b.comments_count) - (a.likes_count + a.comments_count))
@@ -582,6 +664,54 @@ export default function DebatesPage() {
           </div>
         </div>
 
+        {/* Featured Debates */}
+        {debates.length > 0 && (
+          <div className={styles.featuredDebates}>
+            <div className="sec-head" style={{ marginBottom: 12 }}>
+              <div className="title">
+                <Vote size={17} className="title-icon" strokeWidth={2} />
+                <span className="accent">Featured Polls</span>
+              </div>
+            </div>
+            <div className={styles.debateGrid}>
+              {debates.map((d) => {
+                const total = d.votesA + d.votesB;
+                const pctA = total > 0 ? Math.round((d.votesA / total) * 100) : 50;
+                const pctB = total > 0 ? Math.round((d.votesB / total) * 100) : 50;
+                const userVote = debateVotes[d.id];
+                return (
+                  <div key={d.id} className={styles.debateCard}>
+                    <p className={styles.debateQuestion}>{d.question}</p>
+                    <div className={styles.debateOptions}>
+                      <button
+                        className={`${styles.debateOpt}${userVote === "A" ? " " + styles.debateOptVoted : ""}`}
+                        onClick={() => voteDebate(d.id, "A")}
+                        disabled={!!userVote || votingDebate === d.id}
+                      >
+                        <div className={styles.debateFill} style={{ width: userVote ? `${pctA}%` : "0%" }} />
+                        <span className={styles.debateLabel}>{d.optionA}</span>
+                        {userVote && <span className={styles.debatePct}>{pctA}%</span>}
+                      </button>
+                      <button
+                        className={`${styles.debateOpt}${userVote === "B" ? " " + styles.debateOptVoted : ""}`}
+                        onClick={() => voteDebate(d.id, "B")}
+                        disabled={!!userVote || votingDebate === d.id}
+                      >
+                        <div className={styles.debateFill} style={{ width: userVote ? `${pctB}%` : "0%" }} />
+                        <span className={styles.debateLabel}>{d.optionB}</span>
+                        {userVote && <span className={styles.debatePct}>{pctB}%</span>}
+                      </button>
+                    </div>
+                    <div className={styles.debateMeta}>
+                      {total.toLocaleString()} votes{!userVote && " · tap to vote"}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* Feed */}
         {loading ? (
           <div className={styles.feedLoading}>
@@ -607,7 +737,7 @@ export default function DebatesPage() {
         ) : (
           <div className={styles.feed}>
             {displayed.map((post) => (
-              <PostCard key={post.id} post={post} />
+              <PostCard key={post.id} post={post} currentUserId={currentUserId} onDelete={handleDeletePost} />
             ))}
 
             {nextCursor && (

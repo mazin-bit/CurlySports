@@ -19,6 +19,10 @@ export async function POST(
   if (!parsed.success) return parsed.response;
   const { option } = parsed.data;
 
+  if (!user.email) {
+    return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+  }
+
   try {
     // Ensure Prisma User record exists (upsert by email)
     let dbUser = await prisma.user.findFirst({ where: { email: user.email } });

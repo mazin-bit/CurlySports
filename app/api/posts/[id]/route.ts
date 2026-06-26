@@ -12,21 +12,27 @@ export async function DELETE(
   if (auth instanceof NextResponse) return auth;
   const { user } = auth;
 
-  const supabase = await createClient();
   const { id } = await params;
 
-  // Only allow deleting own posts
-  const { error } = await supabase
-    .from("posts")
-    .delete()
-    .eq("id", id)
-    .eq("user_id", user.id);
+  try {
+    const supabase = await createClient();
 
-  if (error) {
-    logger.error("post delete failed", { postId: id, code: error.code });
-    return NextResponse.json({ error: "Failed to delete post" }, { status: 500 });
+    // Only allow deleting own posts
+    const { error } = await supabase
+      .from("posts")
+      .delete()
+      .eq("id", id)
+      .eq("user_id", user.id);
+
+    if (error) {
+      logger.error("post delete failed", { postId: id, code: error.code });
+      return NextResponse.json({ error: "Failed to delete post" }, { status: 500 });
+    }
+
+    logger.info("post deleted", { postId: id });
+    return NextResponse.json({ deleted: true });
+  } catch (err) {
+    logger.error("post delete error", { postId: id, error: String(err) });
+    return NextResponse.json({ error: "Service unavailable" }, { status: 503 });
   }
-
-  logger.info("post deleted", { postId: id });
-  return NextResponse.json({ deleted: true });
 }
