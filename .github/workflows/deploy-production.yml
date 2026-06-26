@@ -44,19 +44,42 @@ jobs:
       - name: Pull migration env
         id: migration-env
         run: |
+          echo "::group::Pulling env from Vercel"
           vercel env pull .env.migrate --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+          echo "::endgroup::"
+
+          # Debug: show which env vars were pulled (values masked)
+          echo "::group::Env vars pulled (keys only)"
+          grep -oP '^[A-Z_]+(?==)' .env.migrate || echo "(no vars found)"
+          echo "::endgroup::"
+
+          # Debug: show raw DIRECT_URL and DATABASE_URL lines (mask passwords)
+          echo "::group::Database URL diagnostics"
+          grep -E '^(DIRECT_URL|DATABASE_URL)=' .env.migrate | sed 's/:\/\/[^:]*:[^@]*@/:\/\/***:***@/g' || echo "(neither DIRECT_URL nor DATABASE_URL found)"
+          echo "::endgroup::"
+
           # Migrations need a direct (non-pgbouncer) connection on port 5432.
           sed -i 's|\.pooler\.supabase\.com:6543/|.pooler.supabase.com:5432/|g' .env.migrate
           sed -i '/^DIRECT_URL=/s/?pgbouncer=true//' .env.migrate
 
-          # Check if DIRECT_URL is available
+          # Check DIRECT_URL first, fall back to DATABASE_URL
           DIRECT_URL_LINE=$(grep -m1 '^DIRECT_URL=' .env.migrate || true)
           DIRECT_URL_VAL="${DIRECT_URL_LINE#DIRECT_URL=}"
-          DIRECT_URL_VAL="${DIRECT_URL_VAL#\"}" DIRECT_URL_VAL="${DIRECT_URL_VAL%\"}"
+          DIRECT_URL_VAL=$(echo "$DIRECT_URL_VAL" | sed 's/^"//;s/"$//')
+
+          DATABASE_URL_LINE=$(grep -m1 '^DATABASE_URL=' .env.migrate || true)
+          DATABASE_URL_VAL="${DATABASE_URL_LINE#DATABASE_URL=}"
+          DATABASE_URL_VAL=$(echo "$DATABASE_URL_VAL" | sed 's/^"//;s/"$//')
+
           if [ -n "$DIRECT_URL_VAL" ]; then
             echo "has_direct_url=true" >> "$GITHUB_OUTPUT"
+            echo "Using DIRECT_URL for migrations"
+          elif [ -n "$DATABASE_URL_VAL" ]; then
+            echo "::notice::DIRECT_URL is empty but DATABASE_URL exists — using DATABASE_URL for migrations"
+            echo "DIRECT_URL=$DATABASE_URL_VAL" >> .env.migrate
+            echo "has_direct_url=true" >> "$GITHUB_OUTPUT"
           else
-            echo "::warning::DIRECT_URL is not set — skipping database migrations"
+            echo "::error::Neither DIRECT_URL nor DATABASE_URL is set — cannot run migrations. Add DATABASE_URL to Vercel env vars."
             echo "has_direct_url=false" >> "$GITHUB_OUTPUT"
             rm -f .env.migrate
           fi
@@ -68,23 +91,33 @@ jobs:
         if: steps.migration-env.outputs.has_direct_url == 'true'
         run: |
           # Show which database host Prisma will connect to (password is not printed).
+          echo "::group::Migration connection info"
           node --env-file=.env.migrate -e "
-            const u = process.env.DIRECT_URL || process.env.DATABASE_URL || '';
-            const masked = u.replace(/:([^:@]+)@/, ':***@');
-            console.log('[migrate] connecting via:', masked);
+            const d = process.env.DIRECT_URL || '';
+            const db = process.env.DATABASE_URL || '';
+            console.log('[migrate] DIRECT_URL:', d ? d.replace(/:([^:@]+)@/, ':***@') : '(empty)');
+            console.log('[migrate] DATABASE_URL:', db ? db.replace(/:([^:@]+)@/, ':***@') : '(empty)');
           "
+          echo "::endgroup::"
+
+          # Check pending migrations
+          echo "::group::Prisma migrate status"
+          npx dotenv -e .env.migrate -- npx prisma migrate status || true
+          echo "::endgroup::"
 
           # Apply all pending migrations
-          node --env-file=.env.migrate -e "
-            const { execSync } = require('child_process');
-            try {
-              execSync('npx prisma migrate deploy', { stdio: 'inherit' });
-            } catch (e) {
-              console.error('::error::Database migration failed — deploy aborted. Fix the migration and redeploy.');
-              process.exit(1);
-            }
-          "
+          echo "::group::Running prisma migrate deploy"
+          npx dotenv -e .env.migrate -- npx prisma migrate deploy
+          MIGRATE_EXIT=$?
+          echo "::endgroup::"
 
+          if [ $MIGRATE_EXIT -ne 0 ]; then
+            echo "::error::Database migration failed (exit code $MIGRATE_EXIT) — deploy aborted."
+            rm -f .env.migrate
+            exit 1
+          fi
+
+          echo "Migrations applied successfully"
           rm -f .env.migrate
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
