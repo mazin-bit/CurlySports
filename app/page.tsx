@@ -646,7 +646,7 @@ export default function LandingPage() {
           <div className="l-big-word">curly.</div>
           <div className="l-foot-bottom">
             <span>© 2026 Curly Sports. Made on a napkin in May.</span>
-            <span>v1.0.14 · Status: All systems live ●</span>
+            <span>v1.0.15 · Status: All systems live ●</span>
           </div>
         </div>
       </footer>
