@@ -232,15 +232,46 @@ input, textarea, select { font-family: inherit; }
 .sb-profile-meta { font-size: 11px; color: var(--text-mute); margin-top: 2px; }
 .sb-profile-meta .accent { color: var(--orange); font-weight: 700; }
 
-.sb-logout {
+button.sb-item {
+  width: 100%;
+  background: none;
+  font-size: inherit;
+  text-align: left;
+  line-height: inherit;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.sb-item.sb-logout {
   margin-top: 6px;
   color: var(--text-mute) !important;
+  display: block;
+  text-align: center;
 }
 .sb-logout:hover {
   color: var(--coral) !important;
   background: rgba(255,68,68,0.08) !important;
   border-color: var(--coral) !important;
   box-shadow: 3px 3px 0 var(--coral) !important;
+}
+.sb-delete-link {
+  display: block;
+  width: 100%;
+  padding: 6px 0;
+  margin-top: 2px;
+  background: none;
+  border: none;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--text-mute);
+  opacity: 0.5;
+  cursor: pointer;
+  text-align: center;
+  transition: opacity 0.15s, color 0.15s;
+}
+.sb-delete-link:hover {
+  opacity: 1;
+  color: var(--coral);
 }
 
 /* ========== TOP BAR ========== */

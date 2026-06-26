@@ -23,6 +23,7 @@ interface AuthContextValue {
   login: (email: string, password: string) => Promise<void>;
   signup: (email: string, password: string, username: string) => Promise<void>;
   logout: () => Promise<void>;
+  deleteAccount: (password?: string) => Promise<void>;
   setFavTeam: (team: { code: string; name: string }) => Promise<void>;
   clearAuthError: () => void;
   verifyOtp: (code: string) => Promise<void>;
@@ -151,6 +152,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setProfile(null);
   };
 
+  const deleteAccount = async (password?: string) => {
+    const res = await fetch('/api/user/delete', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(password ? { password } : {}),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({})) as { error?: string; requiresPassword?: boolean };
+      throw new Error(data.error || 'Failed to delete account.');
+    }
+    setUser(null);
+    setProfile(null);
+  };
+
   const setFavTeam = async (team: { code: string; name: string }) => {
     setProfile(p => p ? { ...p, favTeam: team } : p);
     setUser(u => u ? { ...u, favTeam: team } : u);
@@ -203,7 +218,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     <AuthContext.Provider value={{
       user, profile, isLoading, isNewUser, authError,
       needsVerification, verificationEmail,
-      login, signup, logout, setFavTeam, clearAuthError,
+      login, signup, logout, deleteAccount, setFavTeam, clearAuthError,
       verifyOtp, resendOtp, cancelVerification,
     }}>
       {children}

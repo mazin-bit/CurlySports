@@ -44,9 +44,13 @@ function Row({ icon, color, title, sub, children, last }: { icon: string; color:
 const fetcher = (url: string) => fetch(url).then(r => r.json());
 
 export default function ProfileScreen({ fav, onSearch, onBell, unread }: ProfileProps) {
-  const { profile, logout } = useAuth();
+  const { profile, logout, deleteAccount } = useAuth();
   const [toggles, setToggles] = useState({ goals: true, debates: true, news: false, theme: false });
   const [loggingOut, setLoggingOut] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deletePassword, setDeletePassword] = useState('');
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const { data: statsData } = useSWR<{ posts: number; votes: number }>(
     '/api/user/stats',
@@ -66,6 +70,18 @@ export default function ProfileScreen({ fav, onSearch, onBell, unread }: Profile
   const handleLogout = async () => {
     setLoggingOut(true);
     await logout();
+  };
+
+  const handleDeleteAccount = async () => {
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      await deleteAccount(deletePassword || undefined);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to delete account.';
+      setDeleteError(msg);
+      setDeleting(false);
+    }
   };
 
   return (
@@ -137,6 +153,63 @@ export default function ProfileScreen({ fav, onSearch, onBell, unread }: Profile
         >
           <Icon name="logout" size={15} /> {loggingOut ? 'Signing out…' : 'Log out'}
         </button>
+
+        <button
+          onClick={() => { setShowDeleteModal(true); setDeleteError(null); setDeletePassword(''); }}
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', padding: 14, background: 'none', border: 'none', fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 600, color: 'var(--text-mute)', cursor: 'pointer', opacity: 0.7 }}
+        >
+          <Icon name="trash" size={13} /> Delete account
+        </button>
+
+        {/* Delete confirmation modal */}
+        {showDeleteModal && (
+          <div style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'grid', placeItems: 'center', background: 'rgba(0,0,0,0.6)', padding: 20 }}>
+            <div style={{ background: 'var(--surface)', border: '2px solid var(--ink)', borderRadius: 16, padding: 24, width: '100%', maxWidth: 340, boxShadow: '6px 6px 0 var(--ink)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+                <span style={{ width: 38, height: 38, borderRadius: 10, background: 'var(--coral)', border: '2px solid var(--ink)', display: 'grid', placeItems: 'center', color: 'var(--ink)' }}>
+                  <Icon name="trash" size={18} />
+                </span>
+                <div>
+                  <div style={{ fontFamily: 'var(--display)', fontWeight: 800, fontSize: 18, color: 'var(--ink)' }}>Delete account</div>
+                  <div style={{ fontFamily: 'var(--mono)', fontSize: 10.5, color: 'var(--text-mute)', marginTop: 1 }}>This cannot be undone</div>
+                </div>
+              </div>
+
+              <p style={{ fontFamily: 'var(--body)', fontSize: 13, color: 'var(--text-mute)', lineHeight: 1.5, margin: '0 0 16px' }}>
+                Your profile, favourites, predictions, and votes will be permanently removed.
+              </p>
+
+              <input
+                type="password"
+                placeholder="Enter your password to confirm"
+                value={deletePassword}
+                onChange={e => setDeletePassword(e.target.value)}
+                style={{ width: '100%', padding: '10px 12px', fontFamily: 'var(--mono)', fontSize: 12, background: 'var(--bg)', border: '2px solid var(--border-2)', borderRadius: 10, color: 'var(--ink)', outline: 'none', boxSizing: 'border-box' }}
+              />
+
+              {deleteError && (
+                <div style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--coral)', marginTop: 8 }}>{deleteError}</div>
+              )}
+
+              <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
+                <button
+                  onClick={() => setShowDeleteModal(false)}
+                  disabled={deleting}
+                  style={{ flex: 1, padding: 12, fontFamily: 'var(--mono)', fontSize: 12, fontWeight: 700, background: 'var(--surface-3)', border: '2px solid var(--border-2)', borderRadius: 10, color: 'var(--ink)', cursor: 'pointer' }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDeleteAccount}
+                  disabled={deleting}
+                  style={{ flex: 1, padding: 12, fontFamily: 'var(--mono)', fontSize: 12, fontWeight: 700, background: 'var(--coral)', border: '2px solid var(--ink)', borderRadius: 10, color: 'var(--ink)', cursor: deleting ? 'not-allowed' : 'pointer', boxShadow: '3px 3px 0 var(--ink)' }}
+                >
+                  {deleting ? 'Deleting…' : 'Delete'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div style={{ textAlign: 'center', fontFamily: 'var(--mono)', fontSize: 9.5, color: 'var(--text-mute)', letterSpacing: '0.06em' }}>CURLYSPORTS.COM · v2.4 · MADE IN A BEDROOM</div>
       </div>
