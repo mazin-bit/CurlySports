@@ -23,7 +23,7 @@ function Stage() {
       <div className={`${styles.scribble} ${styles.sc2}`}>← built for fans</div>
       <div className={styles.ribbon}>
         <span><span className={styles.lime}>●</span> Real-time scores · 150+ leagues</span>
-        <span>v1.0 · made for fans</span>
+        <span>v1.0.12 · made for fans</span>
       </div>
     </div>
   );
