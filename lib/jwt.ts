@@ -18,7 +18,7 @@ export interface AuthPayload extends JWTPayload {
   username: string;
   name?: string | null;
   avatar?: string | null;
-  purpose: "access" | "refresh" | "reset";
+  purpose: "access" | "refresh" | "reset" | "verify";
 }
 
 export async function signAccessToken(user: {
