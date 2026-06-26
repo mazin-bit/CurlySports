@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import { logger } from "@/lib/logger";
 
 // GET /api/user-favorites — list authenticated user's favorites
@@ -52,12 +53,12 @@ export async function POST(req: NextRequest) {
       where: {
         userId_type_espnId: { userId: user.id, type, espnId: espn_id },
       },
-      update: { data: itemData ?? {} },
+      update: { data: (itemData ?? {}) as Prisma.InputJsonValue },
       create: {
         userId: user.id,
         type,
         espnId: espn_id,
-        data: itemData ?? {},
+        data: (itemData ?? {}) as Prisma.InputJsonValue,
       },
     });
 
