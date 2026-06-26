@@ -6,7 +6,7 @@ import {
   LogOut, Eye, EyeOff, Shield, Save, RefreshCw,
   Activity, Zap, Globe, CheckCircle2, XCircle,
   ChevronRight, AlertTriangle, BarChart2, Clock,
-  Wifi, WifiOff, Users, Search, Trash2, Mail,
+  Wifi, WifiOff, Users, Search, Trash2, Mail, MessageSquare, Radio,
 } from "lucide-react";
 import styles from "./admin.module.css";
 import { DEFAULT_FLAGS, AdminFlags } from "@/lib/featureFlags";
@@ -618,14 +618,179 @@ function UsersTab({ adminToken }: { adminToken: string }) {
   );
 }
 
+/* ── Debates tab ───────────────────────────────── */
+interface RealDebate {
+  id: string; question: string; optionA: string; optionB: string;
+  sport?: string; votesA: number; votesB: number; isLive: boolean;
+  createdAt: string;
+}
+
+function DebatesTab({ adminToken }: { adminToken: string }) {
+  const [debates, setDebates] = useState<RealDebate[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [form, setForm] = useState({ question: "", optionA: "", optionB: "", sport: "" });
+  const [creating, setCreating] = useState(false);
+  const [formErr, setFormErr] = useState("");
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    const res = await fetch("/api/debates");
+    if (res.ok) setDebates(await res.json());
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  async function create(e: React.FormEvent) {
+    e.preventDefault();
+    if (!form.question || !form.optionA || !form.optionB) {
+      setFormErr("Question, Option A, and Option B are required.");
+      return;
+    }
+    setCreating(true); setFormErr("");
+    const body: Record<string, string> = { question: form.question, optionA: form.optionA, optionB: form.optionB };
+    if (form.sport) body.sport = form.sport.toUpperCase();
+    const res = await fetch("/api/debates", {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-admin-token": adminToken },
+      body: JSON.stringify(body),
+    });
+    if (res.ok) {
+      const debate = await res.json();
+      setDebates(prev => [debate, ...prev]);
+      setForm({ question: "", optionA: "", optionB: "", sport: "" });
+    } else {
+      const data = await res.json().catch(() => ({})) as { error?: string };
+      setFormErr(data.error ?? "Failed to create debate.");
+    }
+    setCreating(false);
+  }
+
+  async function toggleLive(id: string, current: boolean) {
+    const res = await fetch(`/api/debates/${id}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json", "x-admin-token": adminToken },
+      body: JSON.stringify({ isLive: !current }),
+    });
+    if (res.ok) setDebates(prev => prev.map(d => d.id === id ? { ...d, isLive: !current } : d));
+  }
+
+  async function deleteDebate(id: string) {
+    if (!confirm("Delete this debate?")) return;
+    const res = await fetch(`/api/debates/${id}`, {
+      method: "DELETE",
+      headers: { "x-admin-token": adminToken },
+    });
+    if (res.ok) setDebates(prev => prev.filter(d => d.id !== id));
+  }
+
+  const SPORTS = ["FOOTBALL", "BASKETBALL", "NFL", "TENNIS", "BASEBALL", "F1", "CRICKET", "HOCKEY", "GOLF", "BOXING"];
+
+  return (
+    <div className={styles.tabContent}>
+      <div className={styles.tabHeader}>
+        <h2>Debates</h2>
+        <span className={styles.tabDesc}>Create and manage the featured debate polls shown in the mobile app.</span>
+      </div>
+
+      {/* Create form */}
+      <div className={styles.section}>
+        <div className={styles.sectionTitle}>New Debate</div>
+        <form onSubmit={create} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <input
+            className={styles.input}
+            placeholder="Debate question…"
+            value={form.question}
+            onChange={e => setForm(f => ({ ...f, question: e.target.value }))}
+            maxLength={200}
+          />
+          <div style={{ display: "flex", gap: 10 }}>
+            <input
+              className={styles.input}
+              placeholder="Option A"
+              value={form.optionA}
+              onChange={e => setForm(f => ({ ...f, optionA: e.target.value }))}
+              maxLength={80}
+              style={{ flex: 1 }}
+            />
+            <input
+              className={styles.input}
+              placeholder="Option B"
+              value={form.optionB}
+              onChange={e => setForm(f => ({ ...f, optionB: e.target.value }))}
+              maxLength={80}
+              style={{ flex: 1 }}
+            />
+          </div>
+          <select
+            className={styles.input}
+            value={form.sport}
+            onChange={e => setForm(f => ({ ...f, sport: e.target.value }))}
+          >
+            <option value="">Any sport (optional)</option>
+            {SPORTS.map(s => <option key={s} value={s}>{s}</option>)}
+          </select>
+          {formErr && <div className={styles.loginErr}>{formErr}</div>}
+          <button className={styles.btnSave} disabled={creating} type="submit" style={{ marginTop: 4 }}>
+            {creating ? <><RefreshCw size={14} className={styles.spin} /> Creating…</> : <><Save size={14} /> Create debate</>}
+          </button>
+        </form>
+      </div>
+
+      {/* Debates list */}
+      <div className={styles.section}>
+        <div className={styles.sectionTitle} style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <span>All debates ({debates.length})</span>
+          <button className={styles.refreshBtn} onClick={load} title="Refresh"><RefreshCw size={14} /></button>
+        </div>
+        {loading ? (
+          <div style={{ padding: 16, opacity: 0.5 }}>Loading…</div>
+        ) : debates.length === 0 ? (
+          <div className={styles.empty}>No debates yet. Create one above.</div>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {debates.map(d => (
+              <div key={d.id} className={styles.flagRow} style={{ flexDirection: "column", alignItems: "flex-start", gap: 8 }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", gap: 8 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div className={styles.flagLabel}>
+                      {d.isLive ? <Radio size={13} color="#22c55e" /> : <Radio size={13} color="#ef4444" />}
+                      <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{d.question}</span>
+                    </div>
+                    <div className={styles.flagDesc} style={{ marginTop: 2 }}>
+                      <strong>{d.optionA}</strong> · {d.votesA} vs <strong>{d.optionB}</strong> · {d.votesB}
+                      {d.sport && <span style={{ marginLeft: 8, opacity: 0.6 }}>{d.sport}</span>}
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", gap: 6, flexShrink: 0, alignItems: "center" }}>
+                    <Toggle on={d.isLive} onChange={() => toggleLive(d.id, d.isLive)} />
+                    <button
+                      onClick={() => deleteDebate(d.id)}
+                      style={{ background: "none", border: "none", cursor: "pointer", color: "#ef4444", padding: 4 }}
+                      title="Delete"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 /* ── Nav items ─────────────────────────────────── */
 const NAV = [
-  { key: "overview",     label: "Overview",     icon: LayoutDashboard },
-  { key: "users",        label: "Users",        icon: Users },
+  { key: "overview",     label: "Overview",      icon: LayoutDashboard },
+  { key: "users",        label: "Users",         icon: Users },
   { key: "flags",        label: "Feature Flags", icon: Flag },
-  { key: "sports",       label: "Sports",       icon: Dumbbell },
-  { key: "maintenance",  label: "Maintenance",  icon: Wrench },
-  { key: "notice",       label: "Site Notice",  icon: Bell },
+  { key: "sports",       label: "Sports",        icon: Dumbbell },
+  { key: "debates",      label: "Debates",       icon: MessageSquare },
+  { key: "maintenance",  label: "Maintenance",   icon: Wrench },
+  { key: "notice",       label: "Site Notice",   icon: Bell },
 ];
 
 /* ── Main dashboard ────────────────────────────── */
@@ -758,6 +923,7 @@ export default function AdminPage() {
           {tab === "users"       && <UsersTab adminToken={token()} />}
           {tab === "flags"       && <FlagsTab flags={flags} onSave={saveFlags} />}
           {tab === "sports"      && <SportsTab flags={flags} onSave={saveFlags} />}
+          {tab === "debates"     && <DebatesTab adminToken={token()} />}
           {tab === "maintenance" && <MaintenanceTab flags={flags} onSave={saveFlags} />}
           {tab === "notice"      && <NoticeTab flags={flags} onSave={saveFlags} />}
         </div>
