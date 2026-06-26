@@ -185,7 +185,9 @@ export default function PrivacyPage() {
             <li>Opt out of non-essential notifications at any time</li>
           </ul>
           <p>
-            To exercise any of these rights, contact us at{" "}
+            To delete your account and all associated data, visit our{" "}
+            <Link href="/delete-account">Account Deletion</Link> page. For
+            other requests, contact us at{" "}
             <a href="mailto:privacy@curlysports.com">privacy@curlysports.com</a>.
           </p>
         </div>
@@ -239,6 +241,8 @@ export default function PrivacyPage() {
           <Link href="/terms">Terms of Service</Link>
           &nbsp;&middot;&nbsp;{" "}
           <Link href="/privacy">Privacy Policy</Link>
+          &nbsp;&middot;&nbsp;{" "}
+          <Link href="/delete-account">Delete Account</Link>
         </p>
       </footer>
     </div>
