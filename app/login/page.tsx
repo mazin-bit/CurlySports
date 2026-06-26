@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import styles from "./login.module.css";
-import { Mail } from "lucide-react";
+import { Mail, Eye, EyeOff } from "lucide-react";
 
 type Mode = "login" | "signup" | "forgot";
 
@@ -41,7 +41,7 @@ function Stage() {
 
       <div className={styles.ribbon}>
         <span><span className={styles.lime}>●</span> Real-time scores · 150+ leagues</span>
-        <span>v1.0.17 · made for fans</span>
+        <span>v1.0.18 · made for fans</span>
       </div>
     </div>
   );
@@ -241,6 +241,7 @@ export default function LoginPage() {
   const [username, setUsername] = useState("");
   const [error, setError]       = useState<string | null>(null);
   const [loading, setLoading]   = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
   const [needsVerification, setNeedsVerification] = useState(false);
   const [verificationEmail, setVerificationEmail] = useState("");
@@ -486,16 +487,26 @@ export default function LoginPage() {
                   </button>
                 )}
               </div>
-              <input
-                id="password"
-                type="password"
-                placeholder="••••••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                autoComplete={mode === "login" ? "current-password" : "new-password"}
-                minLength={mode === "signup" ? 8 : undefined}
-              />
+              <div className={styles.passwordWrap}>
+                <input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="••••••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  autoComplete={mode === "login" ? "current-password" : "new-password"}
+                  minLength={mode === "signup" ? 8 : undefined}
+                />
+                <button
+                  type="button"
+                  className={styles.eyeToggle}
+                  onClick={() => setShowPassword((v) => !v)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
               {mode === "signup" && (
                 <div className={styles.fieldHelper}>At least 8 characters.</div>
               )}
