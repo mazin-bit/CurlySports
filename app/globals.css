@@ -246,6 +246,9 @@ button.sb-item {
   color: var(--text-mute) !important;
   display: block;
   text-align: center;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  font-weight: 600;
 }
 .sb-logout:hover {
   color: var(--coral) !important;
