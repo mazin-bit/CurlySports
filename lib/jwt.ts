@@ -2,9 +2,11 @@ import { SignJWT, jwtVerify, type JWTPayload } from "jose";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
-const jwtSecretRaw = process.env.JWT_SECRET ?? (process.env.NODE_ENV === "production" ? "" : "dev-secret-change-in-production");
-if (!jwtSecretRaw) throw new Error("JWT_SECRET environment variable is required in production");
-const JWT_SECRET = new TextEncoder().encode(jwtSecretRaw);
+function getJwtSecret(): Uint8Array {
+  const raw = process.env.JWT_SECRET ?? (process.env.NODE_ENV === "production" ? "" : "dev-secret-change-in-production");
+  if (!raw) throw new Error("JWT_SECRET environment variable is required in production");
+  return new TextEncoder().encode(raw);
+}
 
 export const COOKIE_ACCESS = "cs_auth";
 export const COOKIE_REFRESH = "cs_refresh";
@@ -39,7 +41,7 @@ export async function signAccessToken(user: {
     .setSubject(user.id)
     .setIssuedAt()
     .setExpirationTime(ACCESS_TTL)
-    .sign(JWT_SECRET);
+    .sign(getJwtSecret());
 }
 
 export async function signRefreshToken(userId: string) {
@@ -48,7 +50,7 @@ export async function signRefreshToken(userId: string) {
     .setSubject(userId)
     .setIssuedAt()
     .setExpirationTime(REFRESH_TTL)
-    .sign(JWT_SECRET);
+    .sign(getJwtSecret());
 }
 
 export async function signResetToken(email: string) {
@@ -57,12 +59,12 @@ export async function signResetToken(email: string) {
     .setSubject(email)
     .setIssuedAt()
     .setExpirationTime("1h")
-    .sign(JWT_SECRET);
+    .sign(getJwtSecret());
 }
 
 export async function verifyToken(token: string): Promise<AuthPayload | null> {
   try {
-    const { payload } = await jwtVerify(token, JWT_SECRET);
+    const { payload } = await jwtVerify(token, getJwtSecret());
     return payload as AuthPayload;
   } catch {
     return null;
