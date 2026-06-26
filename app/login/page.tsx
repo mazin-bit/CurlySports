@@ -41,7 +41,7 @@ function Stage() {
 
       <div className={styles.ribbon}>
         <span><span className={styles.lime}>●</span> Real-time scores · 150+ leagues</span>
-        <span>v1.0.18 · made for fans</span>
+        <span>v1.0.19 · made for fans</span>
       </div>
     </div>
   );
