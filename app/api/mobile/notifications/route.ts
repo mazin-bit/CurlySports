@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { optionalAuth } from "@/lib/auth";
 import { createClient } from "@/utils/supabase/server";
 
 interface MobileNotif {
@@ -30,8 +31,8 @@ const TAG_META: Record<string, { icon: string; color: string }> = {
 };
 
 export async function GET() {
+  const user = await optionalAuth();
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
   const now = new Date();
   const todayCutoff = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
@@ -57,7 +58,7 @@ export async function GET() {
           icon: "heart",
           color: "#ff5d9e",
           title: `Your take got ${p.likes_count} like${p.likes_count !== 1 ? "s" : ""}`,
-          body: p.content.slice(0, 90) + (p.content.length > 90 ? "…" : ""),
+          body: p.content.slice(0, 90) + (p.content.length > 90 ? "..." : ""),
           time: timeAgo(dt, now),
           unread: group === "today",
         });
@@ -76,7 +77,7 @@ export async function GET() {
         icon: meta.icon,
         color: meta.color,
         title: `${p.author_name} dropped a take`,
-        body: p.content.slice(0, 90) + (p.content.length > 90 ? "…" : ""),
+        body: p.content.slice(0, 90) + (p.content.length > 90 ? "..." : ""),
         time: timeAgo(dt, now),
         unread: group === "today",
       });

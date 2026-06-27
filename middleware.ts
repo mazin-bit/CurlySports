@@ -1,72 +1,81 @@
-import { createServerClient } from "@supabase/ssr";
+import { jwtVerify } from "jose";
 import { type NextRequest, NextResponse } from "next/server";
+
+const COOKIE_ACCESS = "cs_auth";
+const COOKIE_REFRESH = "cs_refresh";
+
+function getSecret(): Uint8Array | null {
+  const raw = process.env.JWT_SECRET ?? (process.env.NODE_ENV === "production" ? "" : "dev-secret-change-in-production");
+  if (!raw) return null;
+  return new TextEncoder().encode(raw);
+}
+
+function loginRedirect(request: NextRequest): NextResponse {
+  const url = request.nextUrl.clone();
+  url.pathname = "/login";
+  url.searchParams.set("next", request.nextUrl.pathname);
+  return NextResponse.redirect(url);
+}
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Public paths that never require auth
-  const publicPaths = ["/login", "/auth/callback", "/auth/check-email", "/reset-password", "/", "/mobile"];
-  const isPublic = publicPaths.some((p) => pathname === p || pathname.startsWith(p + "?") || pathname.startsWith(p + "/"));
+  const publicPaths = [
+    "/login", "/auth/callback", "/auth/check-email",
+    "/reset-password", "/verify-email", "/", "/mobile", "/privacy", "/terms", "/admin",
+  ];
+  const isPublic = publicPaths.some(
+    (p) => pathname === p || pathname.startsWith(p + "?") || pathname.startsWith(p + "/")
+  );
 
   // API routes handle their own auth
   const isApi = pathname.startsWith("/api/");
 
-  // Skip Supabase entirely for public pages and API routes — avoids hanging
-  // requests when Supabase is slow/unreachable (critical for mobile via IP)
   if (isPublic || isApi) {
     return NextResponse.next({ request });
   }
 
-  // Skip Supabase if env vars are missing
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!supabaseUrl || !supabaseKey) {
-    return NextResponse.next({ request });
+  const secret = getSecret();
+  if (!secret) return loginRedirect(request);
+
+  const accessToken = request.cookies.get(COOKIE_ACCESS)?.value;
+  const refreshToken = request.cookies.get(COOKIE_REFRESH)?.value;
+
+  if (!accessToken) {
+    // No access token — try refresh
+    if (refreshToken) {
+      try {
+        const { payload } = await jwtVerify(refreshToken, secret);
+        if (payload.purpose === "refresh") {
+          // Redirect through the refresh endpoint to get new tokens
+          const refreshUrl = request.nextUrl.clone();
+          refreshUrl.pathname = "/api/auth/refresh";
+          refreshUrl.searchParams.set("next", pathname);
+          // Can't call fetch in middleware (Edge), so redirect to login with a hint
+        }
+      } catch {
+        // Refresh token also invalid
+      }
+    }
+    return loginRedirect(request);
   }
 
   try {
-    let supabaseResponse = NextResponse.next({ request });
+    await jwtVerify(accessToken, secret);
 
-    const supabase = createServerClient(supabaseUrl, supabaseKey, {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll();
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-          supabaseResponse = NextResponse.next({ request });
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
-          );
-        },
-      },
-    });
-
-    // Race getUser against a timeout to prevent middleware from hanging
-    const userResult = await Promise.race([
-      supabase.auth.getUser(),
-      new Promise<null>((resolve) => setTimeout(() => resolve(null), 3000)),
-    ]);
-
-    const user = userResult && "data" in userResult ? userResult.data.user : null;
-
-    if (!user) {
-      const redirectUrl = request.nextUrl.clone();
-      redirectUrl.pathname = "/login";
-      redirectUrl.searchParams.set("next", pathname);
-      return NextResponse.redirect(redirectUrl);
-    }
-
-    if (user && pathname === "/login") {
+    // Logged-in user hitting /login → redirect to dashboard
+    if (pathname === "/login") {
       const redirectUrl = request.nextUrl.clone();
       redirectUrl.pathname = "/dashboard";
       return NextResponse.redirect(redirectUrl);
     }
 
-    return supabaseResponse;
-  } catch {
-    // If Supabase fails, allow the request through rather than crashing
     return NextResponse.next({ request });
+  } catch {
+    // Access token expired — redirect to login
+    // Client-side code should call /api/auth/refresh proactively
+    return loginRedirect(request);
   }
 }
 

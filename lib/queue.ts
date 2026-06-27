@@ -25,7 +25,7 @@
  * - "players"   - Fetch player stats (hourly)
  */
 
-import { Queue, Worker, QueueEvents, type Job } from "bullmq";
+import { Queue, Worker, QueueEvents, type Job, type ConnectionOptions } from "bullmq";
 import IORedis from "ioredis";
 
 const REDIS_HOST = process.env.REDIS_HOST;
@@ -62,6 +62,10 @@ export function getRedisConnection(): IORedis {
   return _connection;
 }
 
+function getBullMQConnection(): ConnectionOptions {
+  return getRedisConnection() as unknown as ConnectionOptions;
+}
+
 // ─── Queue definitions ─────────────────────────────────────────────────────
 
 export type JobType =
@@ -94,7 +98,7 @@ let _queue: Queue | null = null;
 export function getQueue(): Queue<JobPayload> {
   if (!_queue) {
     _queue = new Queue<JobPayload>("curly-sports", {
-      connection: getRedisConnection(),
+      connection: getBullMQConnection(),
       defaultJobOptions: {
         removeOnComplete: { count: 100 },
         removeOnFail: { count: 50 },
@@ -182,7 +186,7 @@ export function createWorker(
     "curly-sports",
     processor,
     {
-      connection: getRedisConnection(),
+      connection: getBullMQConnection(),
       concurrency,
       limiter: {
         max: 20,       // max 20 jobs per duration

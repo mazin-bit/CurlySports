@@ -353,6 +353,29 @@ export default function DebatesScreen({ sport, onSearch, onBell, unread }: Debat
     }
   };
 
+  const [copiedToast, setCopiedToast] = useState(false);
+
+  const deletePost = async (postId: string) => {
+    if (!confirm('Delete this post? This cannot be undone.')) return;
+    const res = await fetch(`/api/posts/${postId}`, { method: 'DELETE' });
+    if (res.ok) {
+      setAllPosts(prev => prev.filter(p => p.id !== postId));
+    }
+  };
+
+  const sharePost = async (post: Post) => {
+    const shareText = `${post.author_name}: ${post.content}`;
+    if (navigator.share) {
+      try { await navigator.share({ title: post.author_name, text: shareText }); } catch { /* user cancelled */ }
+    } else {
+      try {
+        await navigator.clipboard.writeText(shareText);
+        setCopiedToast(true);
+        setTimeout(() => setCopiedToast(false), 2000);
+      } catch { /* clipboard not available */ }
+    }
+  };
+
   const question = liveDebate?.question ?? 'What\'s the biggest debate in football today?';
   const labelA   = liveDebate?.optionA ?? 'YES';
   const labelB   = liveDebate?.optionB ?? 'NO';
@@ -423,6 +446,8 @@ export default function DebatesScreen({ sport, onSearch, onBell, unread }: Debat
             onLike={() => toggleLike(post.id, post.liked)}
             onVote={(i) => votePoll(post.id, i)}
             onComment={() => setOpenComments(post.id)}
+            onDelete={() => deletePost(post.id)}
+            onShare={() => sharePost(post)}
           />
         ))}
 
@@ -552,13 +577,27 @@ export default function DebatesScreen({ sport, onSearch, onBell, unread }: Debat
 
       {/* ── Comments sheet ── */}
       {openComments && <CommentsSheet postId={openComments} onClose={() => setOpenComments(null)} />}
+
+      {/* ── Copied toast ── */}
+      {copiedToast && (
+        <div style={{
+          position: 'fixed', bottom: 90, left: '50%', transform: 'translateX(-50%)',
+          background: 'var(--ink)', color: 'var(--accent)', padding: '8px 18px',
+          borderRadius: 10, fontFamily: 'var(--mono)', fontSize: 12, fontWeight: 700,
+          boxShadow: 'var(--shadow-md)', zIndex: 300,
+          animation: 'cs-fadeIn 0.2s var(--ease-pop)',
+        }}>
+          Copied to clipboard
+        </div>
+      )}
     </div>
   );
 }
 
 // ─── Post card ────────────────────────────────────────────────────────────────
-function PostCard({ post, onLike, onVote, onComment }: { post: Post; onLike: () => void; onVote: (i: number) => void; onComment: () => void }) {
+function PostCard({ post, onLike, onVote, onComment, onDelete, onShare }: { post: Post; onLike: () => void; onVote: (i: number) => void; onComment: () => void; onDelete?: () => void; onShare: () => void }) {
   const { user } = useAuth();
+  const isOwner = user && post.user_id === user.id;
   const AV_COLORS = ['var(--orange)', 'var(--ink)', 'var(--purple)', 'var(--sky)', 'var(--coral)'];
   const colorIdx  = (post.author_name?.charCodeAt(0) ?? 0) % AV_COLORS.length;
   const avaBg     = AV_COLORS[colorIdx];
@@ -612,14 +651,21 @@ function PostCard({ post, onLike, onVote, onComment }: { post: Post; onLike: () 
       )}
 
       {/* Actions */}
-      <div style={{ display: 'flex', gap: 18, fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 700, color: 'var(--text-mute)' }}>
+      <div style={{ display: 'flex', gap: 18, fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 700, color: 'var(--text-mute)', alignItems: 'center' }}>
         <span onClick={onLike} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, cursor: 'pointer', color: post.liked ? 'var(--orange)' : 'var(--text-mute)' }}>
           <Icon name="heart" size={14} /> {post.likes_count > 0 ? post.likes_count : ''}
         </span>
         <span onClick={onComment} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, cursor: 'pointer' }}>
           <Icon name="chat" size={14} /> {post.comments_count > 0 ? post.comments_count : ''}
         </span>
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><Icon name="share" size={14} /></span>
+        <span onClick={onShare} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, cursor: 'pointer' }}>
+          <Icon name="share" size={14} />
+        </span>
+        {isOwner && onDelete && (
+          <span onClick={onDelete} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, cursor: 'pointer', marginLeft: 'auto' }}>
+            <Icon name="trash" size={14} />
+          </span>
+        )}
       </div>
     </Card>
   );

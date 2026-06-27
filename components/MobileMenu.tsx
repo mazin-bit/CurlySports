@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { X, ChevronDown } from "lucide-react";
-import { createClient } from "@/utils/supabase/client";
+
 import { Ico } from "./Icons";
 import { useActiveSport, SPORT_CONFIGS } from "@/contexts/SportContext";
 
@@ -51,13 +51,15 @@ export default function MobileMenu({ active, onClose }: MobileMenuProps) {
   const [sportOpen, setSportOpen] = useState(false);
 
   useEffect(() => {
-    const supabase = createClient();
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) {
-        const name = user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split("@")[0] || "User";
-        setProfile({ name, email: user.email ?? "", initials: getInitials(name) });
-      }
-    });
+    fetch("/api/user/profile")
+      .then((r) => r.ok ? r.json() : null)
+      .then((profile) => {
+        if (profile) {
+          const name = profile.name || profile.username || "User";
+          setProfile({ name, email: profile.email ?? "", initials: getInitials(name) });
+        }
+      })
+      .catch(() => {});
     fetch("/api/admin/flags")
       .then((r) => r.json())
       .then((f) => {
@@ -74,8 +76,7 @@ export default function MobileMenu({ active, onClose }: MobileMenuProps) {
   }, []);
 
   const handleLogout = async () => {
-    const supabase = createClient();
-    await supabase.auth.signOut();
+    await fetch("/api/user/logout", { method: "POST" });
     onClose();
     router.push("/login");
   };

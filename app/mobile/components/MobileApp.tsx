@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { AuthProvider, useAuth } from './AuthContext';
 import type { Match } from '../data';
 import BottomNav from './ui/BottomNav';
@@ -22,10 +22,63 @@ import VideosScreen from './VideosScreen';
 import MiniGamesScreen from './MiniGamesScreen';
 import PlayersScreen from './PlayersScreen';
 import { hapticImpact } from '@/lib/native';
+import { Wrench } from 'lucide-react';
 
 type Tab = 'home' | 'live' | 'funzone' | 'leagues' | 'profile' | 'news' | 'teams' | 'favorites' | 'videos' | 'minigames' | 'players';
 type OverlayType = 'match' | 'player' | 'search' | 'notifications';
 interface Overlay { type: OverlayType; data?: Match; playerId?: string; playerLeagueId?: string }
+
+interface Flags {
+  maintenanceMode: boolean;
+  maintenanceMessage: string;
+  maintenanceEstimated: string;
+  siteNoticeEnabled: boolean;
+  siteNotice: string;
+  features: Record<string, boolean>;
+  sports: Record<string, boolean>;
+}
+
+function useFlags(): Flags | null {
+  const [flags, setFlags] = useState<Flags | null>(null);
+  const load = useCallback(async () => {
+    try {
+      const res = await fetch('/api/admin/flags');
+      if (res.ok) setFlags(await res.json());
+    } catch { /* ignore */ }
+  }, []);
+  useEffect(() => { load(); const id = setInterval(load, 30_000); return () => clearInterval(id); }, [load]);
+  return flags;
+}
+
+// Feature key → tab mapping
+const FEATURE_TAB: Record<string, Tab> = {
+  liveScores: 'live',
+  funZone: 'funzone',
+  leagues: 'leagues',
+  news: 'news',
+  teams: 'teams',
+  favorites: 'favorites',
+  miniGames: 'minigames',
+  players: 'players',
+};
+
+function MaintenanceScreen({ message, estimated }: { message: string; estimated: string }) {
+  return (
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'var(--bg)', gap: 16, padding: 32, textAlign: 'center' }}>
+      <div style={{ width: 56, height: 56, background: 'var(--surface)', borderRadius: 16, border: '2px solid var(--ink)', display: 'grid', placeItems: 'center' }}>
+        <Wrench size={24} style={{ color: 'var(--accent)' }} />
+      </div>
+      <div style={{ fontFamily: 'var(--display)', fontWeight: 800, fontSize: 20, color: 'var(--ink)' }}>We&apos;ll be right back</div>
+      <div style={{ fontFamily: 'var(--body)', fontSize: 14, color: 'var(--text-dim)', maxWidth: 280, lineHeight: 1.5 }}>
+        {message || "We're making some improvements."}
+      </div>
+      {estimated && <div style={{ fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--accent)', fontWeight: 700 }}>{estimated}</div>}
+      <div style={{ marginTop: 16, fontFamily: 'var(--display)', fontSize: 13, fontWeight: 700, color: 'var(--text-mute)' }}>
+        curly<span style={{ color: 'var(--coral)' }}>.</span>sports
+      </div>
+    </div>
+  );
+}
 
 function LoadingSplash() {
   return (
@@ -59,11 +112,18 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
 
 function AppInner() {
   const { user, profile, isLoading, isNewUser, setFavTeam } = useAuth();
+  const flags = useFlags();
   const [tab, setTab] = useState<Tab>('home');
   const [sport, setSport] = useState('football');
   const [stack, setStack] = useState<Overlay[]>([]);
   const [menuOpen, setMenuOpen] = useState(false);
   const [unread, setUnread] = useState(0);
+
+  const feat = flags?.features ?? {};
+  const isFeatureOff = (t: Tab) => {
+    const entry = Object.entries(FEATURE_TAB).find(([, v]) => v === t);
+    return entry ? feat[entry[0]] === false : false;
+  };
 
   const push = (o: Overlay) => setStack(s => [...s, o]);
   const pop  = () => setStack(s => s.slice(0, -1));
@@ -74,7 +134,10 @@ function AppInner() {
   const openSearch        = () => push({ type: 'search' });
   const openNotifications = () => { setUnread(0); push({ type: 'notifications' }); };
 
-  const goTab = (key: Tab) => { clearStack(); setTab(key); };
+  const goTab = (key: Tab) => {
+    if (isFeatureOff(key)) return;
+    clearStack(); setTab(key);
+  };
   const nav   = { onSearch: openSearch, onBell: openNotifications, unread };
 
   const onBottom = (key: string) => {
@@ -99,7 +162,12 @@ function AppInner() {
   // 2 — Not authenticated → Login
   if (!user) return <LoginScreen />;
 
-  // 3 — Authenticated but no fav team → Onboarding
+  // 3 — Maintenance mode (after auth so admins can still log in)
+  if (flags?.maintenanceMode) {
+    return <MaintenanceScreen message={flags.maintenanceMessage} estimated={flags.maintenanceEstimated} />;
+  }
+
+  // 4 — Authenticated but no fav team → Onboarding
   if (isNewUser) {
     return (
       <OnboardingScreen
@@ -108,10 +176,15 @@ function AppInner() {
     );
   }
 
-  // 4 — Main app
+  // 5 — Main app
   const fav = profile?.favTeam
     ? { code: profile.favTeam.code, name: profile.favTeam.name, first: profile.username ?? 'You' }
     : undefined;
+
+  // If current tab is disabled by admin, redirect to home
+  if (isFeatureOff(tab) && tab !== 'home' && tab !== 'profile') {
+    setTab('home');
+  }
 
   const top = stack[stack.length - 1];
   if (top) {
@@ -145,6 +218,11 @@ function AppInner() {
 
   return (
     <div style={{ position: 'relative', height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--bg-2)' }}>
+      {flags?.siteNoticeEnabled && flags.siteNotice && (
+        <div style={{ padding: '8px 16px', background: 'var(--accent)', color: 'var(--ink)', fontSize: 12, fontWeight: 700, textAlign: 'center', fontFamily: 'var(--mono)', flexShrink: 0 }}>
+          {flags.siteNotice}
+        </div>
+      )}
       <div key={tab} className="cs-tab-enter" style={{ flex: 1, minHeight: 0 }}>{screen}</div>
       <BottomNav active={bottomActive} onSelect={onBottom} />
       {menuOpen && <MenuDrawer active={tab} onClose={() => setMenuOpen(false)} onNavigate={onMenuNav} user={{ username: profile?.username, email: user?.email }} />}

@@ -2,8 +2,9 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/utils/supabase/client";
+
 import { Ico } from "./Icons";
 import AdSlot from "./AdSlot";
 import { useActiveSport, SPORT_CONFIGS } from "@/contexts/SportContext";
@@ -167,13 +168,15 @@ export default function Sidebar({ active }: { active: string }) {
   const [flagsLoaded, setFlagsLoaded] = useState(false);
 
   useEffect(() => {
-    const supabase = createClient();
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) {
-        const name = user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split("@")[0] || "User";
-        setProfile({ name, email: user.email ?? "", initials: getInitials(name) });
-      }
-    });
+    fetch("/api/user/profile")
+      .then((r) => r.ok ? r.json() : null)
+      .then((profile) => {
+        if (profile) {
+          const name = profile.name || profile.username || "User";
+          setProfile({ name, email: profile.email ?? "", initials: getInitials(name) });
+        }
+      })
+      .catch(() => {});
   }, []);
 
   // Load feature flags to filter nav
@@ -194,10 +197,35 @@ export default function Sidebar({ active }: { active: string }) {
       .catch(() => setFlagsLoaded(true));
   }, []);
 
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deletePassword, setDeletePassword] = useState("");
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
   const handleLogout = async () => {
-    const supabase = createClient();
-    await supabase.auth.signOut();
+    await fetch("/api/user/logout", { method: "POST" });
     router.push("/login");
+  };
+
+  const handleDeleteAccount = async () => {
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      const res = await fetch("/api/user/delete", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(deletePassword ? { password: deletePassword } : {}),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({})) as { error?: string };
+        throw new Error(data.error || "Failed to delete account.");
+      }
+      router.push("/login");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to delete account.";
+      setDeleteError(msg);
+      setDeleting(false);
+    }
   };
 
   // Filter nav items by feature flags (show all if flags not yet loaded)
@@ -207,6 +235,7 @@ export default function Sidebar({ active }: { active: string }) {
   }
 
   return (
+    <>
     <aside className="sb">
       <Link className="sb-logo" href="/dashboard">
         <div className="mark">
@@ -256,9 +285,66 @@ export default function Sidebar({ active }: { active: string }) {
       </div>
 
       <button onClick={handleLogout} className="sb-item sb-logout">
-        <span className="ico"><Ico id="i-logout" /></span>
         <span className="label">Log out</span>
       </button>
+
+      <button
+        onClick={() => { setShowDeleteModal(true); setDeleteError(null); setDeletePassword(""); }}
+        className="sb-delete-link"
+      >
+        Delete account
+      </button>
+
     </aside>
+    {showDeleteModal && createPortal(
+      <div style={{ position: "fixed", inset: 0, zIndex: 9999, display: "grid", placeItems: "center", background: "rgba(0,0,0,0.5)" }}>
+        <div style={{ background: "var(--surface)", border: "2px solid var(--ink)", borderRadius: 16, padding: 28, width: 360, maxWidth: "90vw", boxShadow: "6px 6px 0 var(--ink)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
+            <span style={{ width: 40, height: 40, borderRadius: 10, background: "var(--coral)", border: "2px solid var(--ink)", display: "grid", placeItems: "center", color: "var(--ink)", flexShrink: 0 }}>
+              <svg width="18" height="18" aria-hidden="true"><use href="#i-trash" /></svg>
+            </span>
+            <div>
+              <div style={{ fontFamily: "var(--display)", fontWeight: 800, fontSize: 18, color: "var(--ink)" }}>Delete account</div>
+              <div style={{ fontFamily: "var(--mono)", fontSize: 10.5, color: "var(--text-mute)", marginTop: 1 }}>This cannot be undone</div>
+            </div>
+          </div>
+
+          <p style={{ fontFamily: "var(--body)", fontSize: 13.5, color: "var(--text-mute)", lineHeight: 1.5, margin: "0 0 18px" }}>
+            Your profile, favourites, predictions, and votes will be permanently removed.
+          </p>
+
+          <input
+            type="password"
+            placeholder="Enter your password to confirm"
+            value={deletePassword}
+            onChange={(e) => setDeletePassword(e.target.value)}
+            style={{ width: "100%", padding: "10px 14px", fontFamily: "var(--mono)", fontSize: 12, background: "var(--bg)", border: "2px solid var(--border-2)", borderRadius: 10, color: "var(--ink)", outline: "none", boxSizing: "border-box" }}
+          />
+
+          {deleteError && (
+            <div style={{ fontFamily: "var(--mono)", fontSize: 11, color: "var(--coral)", marginTop: 8 }}>{deleteError}</div>
+          )}
+
+          <div style={{ display: "flex", gap: 10, marginTop: 18 }}>
+            <button
+              onClick={() => setShowDeleteModal(false)}
+              disabled={deleting}
+              style={{ flex: 1, padding: 12, fontFamily: "var(--mono)", fontSize: 12, fontWeight: 700, background: "var(--surface-3)", border: "2px solid var(--border-2)", borderRadius: 10, color: "var(--ink)", cursor: "pointer" }}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleDeleteAccount}
+              disabled={deleting}
+              style={{ flex: 1, padding: 12, fontFamily: "var(--mono)", fontSize: 12, fontWeight: 700, background: "var(--coral)", border: "2px solid var(--ink)", borderRadius: 10, color: "var(--ink)", cursor: deleting ? "not-allowed" : "pointer", boxShadow: "3px 3px 0 var(--ink)" }}
+            >
+              {deleting ? "Deleting…" : "Delete"}
+            </button>
+          </div>
+        </div>
+      </div>,
+      document.body
+    )}
+    </>
   );
 }

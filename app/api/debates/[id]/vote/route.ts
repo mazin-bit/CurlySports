@@ -19,16 +19,20 @@ export async function POST(
   if (!parsed.success) return parsed.response;
   const { option } = parsed.data;
 
+  if (!user.email) {
+    return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+  }
+
   try {
     // Ensure Prisma User record exists (upsert by email)
-    let dbUser = await prisma.user.findFirst({ where: { email: user.email! } });
+    let dbUser = await prisma.user.findFirst({ where: { email: user.email } });
     if (!dbUser) {
-      const base = user.user_metadata?.username || user.email!.split("@")[0];
+      const base = user.username || user.email.split("@")[0];
       const username = `${base}_${Date.now().toString(36)}`;
       try {
-        dbUser = await prisma.user.create({ data: { email: user.email!, username } });
+        dbUser = await prisma.user.create({ data: { email: user.email, username } });
       } catch {
-        dbUser = await prisma.user.findFirst({ where: { email: user.email! } });
+        dbUser = await prisma.user.findFirst({ where: { email: user.email } });
       }
     }
     if (!dbUser) return NextResponse.json({ error: "User record not found" }, { status: 500 });

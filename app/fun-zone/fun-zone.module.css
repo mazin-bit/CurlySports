@@ -319,6 +319,67 @@
 .likeBtn:hover { border-color: var(--ink); color: var(--ink); }
 .liked { border-color: var(--orange) !important; color: var(--orange) !important; background: rgba(255,91,61,0.08) !important; }
 
+/* Delete button */
+.deleteBtn {
+  margin-left: auto !important;
+  color: var(--text-mute) !important;
+  border-color: var(--border-2) !important;
+}
+.deleteBtn:hover:not(:disabled) {
+  border-color: #ff5050 !important;
+  color: #ff5050 !important;
+  background: rgba(255,80,80,0.08) !important;
+}
+.deleteBtn:disabled { opacity: 0.5; }
+
+/* ── Featured Debates ────────────────────────────────────────────────────────*/
+.featuredDebates {
+  display: flex; flex-direction: column; gap: 0;
+}
+.debateGrid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+}
+.debateCard {
+  background: var(--surface);
+  border: 2px solid var(--ink);
+  border-radius: var(--r-lg);
+  padding: 18px 20px;
+  box-shadow: var(--shadow-sm);
+  display: flex; flex-direction: column; gap: 12px;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.debateCard:hover { transform: translate(-2px,-2px); box-shadow: var(--shadow-md); }
+.debateQuestion {
+  font-family: var(--display); font-weight: 700;
+  font-size: 14px; line-height: 1.4; color: var(--ink); margin: 0;
+}
+.debateOptions { display: flex; flex-direction: column; gap: 8px; }
+.debateOpt {
+  position: relative; overflow: hidden;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 11px 14px;
+  background: var(--surface-2); border: 1.5px solid var(--border-2); border-radius: 9px;
+  font-size: 13px; font-weight: 600; color: var(--ink);
+  cursor: pointer; text-align: left; transition: border-color 0.15s, transform 0.12s;
+}
+.debateOpt:hover:not(:disabled) { border-color: var(--ink); transform: translate(-1px,-1px); }
+.debateOpt:disabled { cursor: default; }
+.debateOptVoted { border-color: var(--accent) !important; }
+.debateFill {
+  position: absolute; left: 0; top: 0; bottom: 0;
+  background: rgba(200,255,61,0.15); border-radius: 8px;
+  transition: width 0.5s ease; pointer-events: none;
+}
+.debateLabel { position: relative; z-index: 1; }
+.debatePct {
+  position: relative; z-index: 1;
+  font-family: var(--mono); font-size: 12px; font-weight: 700; color: var(--orange);
+}
+.debateMeta {
+  font-family: var(--mono); font-size: 11px; color: var(--text-mute);
+}
+
 /* Spinner */
 @keyframes spin { to { transform: rotate(360deg); } }
 .spin { animation: spin 0.8s linear infinite; }

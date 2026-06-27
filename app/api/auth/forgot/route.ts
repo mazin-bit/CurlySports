@@ -1,45 +1,42 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabaseAdmin } from "@/utils/supabase/admin";
+import prisma from "@/lib/prisma";
+import { signResetToken } from "@/lib/jwt";
 import { sendEmail } from "@/lib/email";
+import { rateLimiters } from "@/lib/rate-limit";
+import { logger } from "@/lib/logger";
 
 export async function POST(req: NextRequest) {
-  const body = await req.json() as { email?: string; redirectTo?: string };
-  const { email, redirectTo } = body;
+  const limited = await rateLimiters.auth(req);
+  if (limited) return limited;
+
+  const body = (await req.json().catch(() => ({}))) as {
+    email?: string;
+    redirectTo?: string;
+  };
+  const { email } = body;
 
   if (!email) {
     return NextResponse.json({ error: "Email is required." }, { status: 400 });
   }
 
-  // Extract the `next` path from redirectTo (e.g. /auth/callback?next=/reset-password?mobile=1)
-  let nextPath = "/reset-password";
-  if (redirectTo) {
-    try {
-      const nextParam = new URL(redirectTo).searchParams.get("next");
-      if (nextParam) nextPath = nextParam;
-    } catch { /* keep default */ }
+  // Always respond with success to prevent email enumeration
+  const user = await prisma.user.findUnique({
+    where: { email: email.toLowerCase().trim() },
+  });
+
+  if (user) {
+    const resetToken = await signResetToken(user.email);
+    const siteOrigin = req.nextUrl.origin;
+    const resetUrl = `${siteOrigin}/reset-password?token=${encodeURIComponent(resetToken)}`;
+
+    await sendEmail({
+      to: email,
+      subject: "Reset your Curly Sports password",
+      html: buildResetEmail(resetUrl),
+    }).catch((err) =>
+      logger.error("password reset email failed", { email, error: String(err) })
+    );
   }
-
-  // Generate the recovery link — we only need hashed_token to build our own callback URL
-  // so the flow goes through /auth/callback → verifyOtp → session set → /reset-password
-  const { data, error } = await supabaseAdmin.auth.admin.generateLink({
-    type: "recovery",
-    email,
-  });
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 400 });
-
-  const siteOrigin = req.nextUrl.origin;
-  const verifyUrl =
-    `${siteOrigin}/auth/callback` +
-    `?token_hash=${encodeURIComponent(data.properties.hashed_token)}` +
-    `&type=recovery` +
-    `&next=${encodeURIComponent(nextPath)}`;
-
-  await sendEmail({
-    to: email,
-    subject: "Reset your Curly Sports password",
-    html: buildResetEmail(verifyUrl),
-  });
 
   return NextResponse.json({ success: true });
 }
@@ -70,20 +67,16 @@ function buildResetEmail(resetUrl: string): string {
 
         <!-- Body -->
         <tr><td style="background:#fffdf7;padding:40px 40px 36px;border-left:2px solid #07090b;border-right:2px solid #07090b">
-
           <h1 style="margin:0 0 8px;font-size:36px;font-weight:900;letter-spacing:-0.03em;color:#07090b;line-height:1.05;font-family:Georgia,serif">
             Reset your
           </h1>
           <h1 style="margin:0 0 24px;font-size:36px;font-weight:900;letter-spacing:-0.03em;color:#07090b;line-height:1.05;font-family:Georgia,serif">
             <span style="background:#c8ff3d;padding:2px 12px;border-radius:10px;display:inline-block">password.</span>
           </h1>
-
           <p style="margin:0 0 24px;font-size:15px;color:#2a2540;line-height:1.65">
             We received a request to reset the password on your Curly Sports account.
             Click the button below to choose a new one.
           </p>
-
-          <!-- CTA -->
           <table cellpadding="0" cellspacing="0" border="0" style="margin:0 auto 32px">
             <tr><td style="background:#07090b;border-radius:999px;box-shadow:4px 4px 0 #c8ff3d">
               <a href="${resetUrl}"
@@ -92,8 +85,6 @@ function buildResetEmail(resetUrl: string): string {
               </a>
             </td></tr>
           </table>
-
-          <!-- Expiry notice -->
           <table cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-bottom:24px">
             <tr><td style="background:#f4ede0;border-radius:10px;border:1.5px solid #e0d8cc;padding:14px 18px">
               <table cellpadding="0" cellspacing="0" border="0" width="100%">
@@ -106,9 +97,7 @@ function buildResetEmail(resetUrl: string): string {
               </table>
             </td></tr>
           </table>
-
           <hr style="border:none;border-top:1.5px solid #ede5d8;margin:0 0 20px">
-
           <p style="margin:0;font-size:12px;color:#999;line-height:1.6">
             Button not working? Paste this link into your browser:<br>
             <a href="${resetUrl}" style="color:#999;word-break:break-all;font-size:11px">${resetUrl}</a>

@@ -1,12 +1,13 @@
 "use client";
 export const dynamic = "force-dynamic";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/utils/supabase/client";
 import styles from "./login.module.css";
-import { Mail } from "lucide-react";
+import { Mail, Eye, EyeOff } from "lucide-react";
 
 type Mode = "login" | "signup" | "forgot";
+
+const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ?? "";
 
 /* ── Shared mascot left-panel ──────────────────────────────── */
 function Stage() {
@@ -40,8 +41,195 @@ function Stage() {
 
       <div className={styles.ribbon}>
         <span><span className={styles.lime}>●</span> Real-time scores · 150+ leagues</span>
-        <span>v1.0 · made for fans</span>
+        <span>v1.0.19 · made for fans</span>
       </div>
+    </div>
+  );
+}
+
+/* ── OTP verification component ────────────────────────────── */
+function OtpScreen({
+  email, error, setError, onBack, onVerified,
+}: {
+  email: string;
+  error: string | null;
+  setError: (e: string | null) => void;
+  onBack: () => void;
+  onVerified: () => void;
+}) {
+  const [otp, setOtp] = useState<string[]>(["", "", "", "", "", ""]);
+  const [verifying, setVerifying] = useState(false);
+  const [otpError, setOtpError] = useState<string | null>(null);
+  const [otpSuccess, setOtpSuccess] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(600);
+  const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+  useEffect(() => {
+    setTimeLeft(600);
+    const interval = setInterval(() => {
+      setTimeLeft((t) => {
+        if (t <= 1) { clearInterval(interval); return 0; }
+        return t - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => { otpRefs.current[0]?.focus(); }, []);
+
+  function formatTimer(seconds: number): string {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${s.toString().padStart(2, "0")}`;
+  }
+
+  function handleOtpChange(index: number, value: string) {
+    if (value && !/^\d$/.test(value)) return;
+    const newOtp = [...otp];
+    newOtp[index] = value;
+    setOtp(newOtp);
+    setOtpError(null);
+    if (value && index < 5) otpRefs.current[index + 1]?.focus();
+  }
+
+  function handleOtpKeyDown(index: number, e: React.KeyboardEvent) {
+    if (e.key === "Backspace" && !otp[index] && index > 0) {
+      otpRefs.current[index - 1]?.focus();
+    }
+  }
+
+  function handleOtpPaste(e: React.ClipboardEvent) {
+    e.preventDefault();
+    const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
+    if (!pasted) return;
+    const newOtp = [...otp];
+    for (let i = 0; i < 6; i++) newOtp[i] = pasted[i] || "";
+    setOtp(newOtp);
+    const nextEmpty = newOtp.findIndex((d) => !d);
+    otpRefs.current[nextEmpty >= 0 ? nextEmpty : 5]?.focus();
+  }
+
+  async function handleVerify() {
+    const code = otp.join("");
+    if (code.length !== 6) return;
+    setVerifying(true);
+    setOtpError(null);
+    try {
+      const res = await fetch("/api/auth/verify-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, otp: code }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Verification failed.");
+      setOtpSuccess(true);
+      setTimeout(onVerified, 1500);
+    } catch (err: unknown) {
+      setOtpError(err instanceof Error ? err.message : "Verification failed.");
+      setOtp(["", "", "", "", "", ""]);
+      otpRefs.current[0]?.focus();
+    } finally {
+      setVerifying(false);
+    }
+  }
+
+  async function handleResend() {
+    setResending(true);
+    setError(null);
+    setOtpError(null);
+    try {
+      const res = await fetch("/api/auth/resend-verification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Failed to resend.");
+      setOtp(["", "", "", "", "", ""]);
+      otpRefs.current[0]?.focus();
+      setTimeLeft(600);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to resend.");
+    } finally {
+      setResending(false);
+    }
+  }
+
+  if (otpSuccess) {
+    return (
+      <div className={styles.formSide}>
+        <div className={styles.formTag}>verified</div>
+        <h1 className={styles.formTitle}>You&apos;re <em>in.</em></h1>
+        <p className={styles.formSub}>Email verified successfully. Redirecting to your dashboard...</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className={styles.formSide}>
+      <a href="/" className={styles.mobileBrand}>
+        <div className={styles.mobileBrandMark}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/curly-guy.png" alt="Curly" />
+        </div>
+        <span>curly<span className={styles.dot}>.</span>sports</span>
+      </a>
+      <div className={styles.formTag}>verify email</div>
+      <h1 className={styles.formTitle}>Enter your<br /><em>code.</em></h1>
+      <p className={styles.formSub}>
+        We sent a 6-digit code to <strong>{email}</strong>. Enter it below to verify your account.
+      </p>
+
+      <div className={styles.otpGroup}>
+        {otp.map((digit, i) => (
+          <input
+            key={i}
+            ref={(el) => { otpRefs.current[i] = el; }}
+            className={styles.otpInput}
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]"
+            maxLength={1}
+            value={digit}
+            placeholder="-"
+            onChange={(e) => handleOtpChange(i, e.target.value)}
+            onKeyDown={(e) => handleOtpKeyDown(i, e)}
+            onPaste={handleOtpPaste}
+          />
+        ))}
+      </div>
+
+      <div className={styles.otpTimer}>
+        {timeLeft > 0 ? <>Code expires in <strong>{formatTimer(timeLeft)}</strong></> : <strong>Code expired</strong>}
+      </div>
+
+      {(otpError || error) && <div className={styles.errorBanner}>{otpError || error}</div>}
+
+      <button
+        className={styles.btnPrimary}
+        onClick={handleVerify}
+        disabled={verifying || otp.join("").length < 6}
+      >
+        {verifying ? "Verifying..." : "Verify code"}
+      </button>
+
+      <div className={styles.emailSentBox}>
+        <div className={styles.emailSentIcon}><Mail size={24} strokeWidth={1.5} /></div>
+        <p>Didn&apos;t get the code? Check your spam folder, or{" "}
+          <button className={styles.inlineLink} onClick={handleResend} disabled={resending}>
+            {resending ? "sending..." : "resend code"}
+          </button>.
+        </p>
+      </div>
+
+      <button
+        className={styles.btnPrimary}
+        style={{ marginTop: "1rem", background: "transparent", color: "#0c0a1d", boxShadow: "none" }}
+        onClick={onBack}
+      >
+        Back to login
+      </button>
     </div>
   );
 }
@@ -53,10 +241,12 @@ export default function LoginPage() {
   const [username, setUsername] = useState("");
   const [error, setError]       = useState<string | null>(null);
   const [loading, setLoading]   = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
+  const [needsVerification, setNeedsVerification] = useState(false);
+  const [verificationEmail, setVerificationEmail] = useState("");
 
   const router = useRouter();
-  const supabase = createClient();
 
   function switchMode(m: Mode) {
     setMode(m);
@@ -71,8 +261,20 @@ export default function LoginPage() {
 
     try {
       if (mode === "login") {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
+        const res = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
+        });
+        const json = await res.json();
+        if (!res.ok) {
+          if (json.needsVerification) {
+            setVerificationEmail(json.email || email);
+            setNeedsVerification(true);
+            return;
+          }
+          throw new Error(json.error ?? "Login failed.");
+        }
         router.push("/dashboard");
         router.refresh();
 
@@ -85,16 +287,19 @@ export default function LoginPage() {
         });
         const json = await res.json();
         if (!res.ok) throw new Error(json.error ?? "Signup failed.");
-        setEmailSent(true);
+        if (json.needsVerification) {
+          setVerificationEmail(email);
+          setNeedsVerification(true);
+          return;
+        }
+        router.push("/dashboard");
+        router.refresh();
 
       } else if (mode === "forgot") {
         const res = await fetch("/api/auth/forgot", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            email,
-            redirectTo: `${window.location.origin}/auth/callback?next=/reset-password`,
-          }),
+          body: JSON.stringify({ email }),
         });
         const json = await res.json();
         if (!res.ok) throw new Error(json.error ?? "Failed to send reset link.");
@@ -107,19 +312,39 @@ export default function LoginPage() {
     }
   }
 
-  async function handleGoogle() {
-    setLoading(true);
-    setError(null);
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      },
-    });
-    if (error) {
-      setError(error.message);
-      setLoading(false);
+  function handleGoogle() {
+    if (!GOOGLE_CLIENT_ID) {
+      setError("Google login is not configured.");
+      return;
     }
+    const origin = window.location.origin.replace("://0.0.0.0", "://localhost");
+    const redirectUri = `${origin}/auth/callback`;
+    const params = new URLSearchParams({
+      client_id: GOOGLE_CLIENT_ID,
+      redirect_uri: redirectUri,
+      response_type: "code",
+      scope: "openid email profile",
+      access_type: "offline",
+      prompt: "select_account",
+      state: "/dashboard",
+    });
+    window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
+  }
+
+  /* ── OTP verification screen ───────────────────────────────── */
+  if (needsVerification) {
+    return (
+      <div className={styles.layout}>
+        <Stage />
+        <OtpScreen
+          email={verificationEmail}
+          error={error}
+          setError={setError}
+          onBack={() => { setNeedsVerification(false); setError(null); switchMode("login"); }}
+          onVerified={() => { router.push("/dashboard"); router.refresh(); }}
+        />
+      </div>
+    );
   }
 
   /* ── "Check your email" screen ─────────────────────────────── */
@@ -135,20 +360,12 @@ export default function LoginPage() {
             </div>
             <span>curly<span className={styles.dot}>.</span>sports</span>
           </a>
-          <div className={styles.formTag}>
-            {mode === "signup" ? "almost there" : "check inbox"}
-          </div>
+          <div className={styles.formTag}>check inbox</div>
           <h1 className={styles.formTitle}>
-            {mode === "signup" ? (
-              <>Check<br />your <em>email.</em></>
-            ) : (
-              <>Reset<br />link <em>sent.</em></>
-            )}
+            <>Reset<br />link <em>sent.</em></>
           </h1>
           <p className={styles.formSub}>
-            {mode === "signup"
-              ? `We sent a verification link to ${email}. Click it to activate your account.`
-              : `We sent a password reset link to ${email}. Check your inbox (and spam).`}
+            {`We sent a password reset link to ${email}. Check your inbox (and spam).`}
           </p>
           <div className={styles.emailSentBox}>
             <div className={styles.emailSentIcon}><Mail size={24} strokeWidth={1.5} /></div>
@@ -270,16 +487,26 @@ export default function LoginPage() {
                   </button>
                 )}
               </div>
-              <input
-                id="password"
-                type="password"
-                placeholder="••••••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                autoComplete={mode === "login" ? "current-password" : "new-password"}
-                minLength={mode === "signup" ? 8 : undefined}
-              />
+              <div className={styles.passwordWrap}>
+                <input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="••••••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  autoComplete={mode === "login" ? "current-password" : "new-password"}
+                  minLength={mode === "signup" ? 8 : undefined}
+                />
+                <button
+                  type="button"
+                  className={styles.eyeToggle}
+                  onClick={() => setShowPassword((v) => !v)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
               {mode === "signup" && (
                 <div className={styles.fieldHelper}>At least 8 characters.</div>
               )}

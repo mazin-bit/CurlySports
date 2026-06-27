@@ -1,8 +1,8 @@
 "use client";
 export const dynamic = "force-dynamic";
 import { useState, Suspense } from "react";
+import { Eye, EyeOff } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { createClient } from "@/utils/supabase/client";
 import styles from "../login/login.module.css";
 
 function Stage() {
@@ -24,7 +24,7 @@ function Stage() {
       <div className={`${styles.scribble} ${styles.sc2}`}>← built for fans</div>
       <div className={styles.ribbon}>
         <span><span className={styles.lime}>●</span> Real-time scores · 150+ leagues</span>
-        <span>v1.0 · made for fans</span>
+        <span>v1.0.19 · made for fans</span>
       </div>
     </div>
   );
@@ -36,11 +36,13 @@ function ResetPasswordForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   const router = useRouter();
   const searchParams = useSearchParams();
+  const token = searchParams.get("token");
   const isMobile = searchParams.get("mobile") === "1";
-  const supabase = createClient();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -48,11 +50,20 @@ function ResetPasswordForm() {
       setError("Passwords don't match.");
       return;
     }
+    if (!token) {
+      setError("Invalid reset link. Please request a new one.");
+      return;
+    }
     setError(null);
     setLoading(true);
     try {
-      const { error } = await supabase.auth.updateUser({ password });
-      if (error) throw error;
+      const res = await fetch("/api/auth/reset-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token, password }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Something went wrong.");
       setDone(true);
       setTimeout(() => router.push(isMobile ? "/mobile" : "/dashboard"), 2200);
     } catch (err: unknown) {
@@ -102,31 +113,51 @@ function ResetPasswordForm() {
         <form onSubmit={handleSubmit}>
           <div className={styles.field}>
             <label htmlFor="new-password">New password</label>
-            <input
-              id="new-password"
-              type="password"
-              placeholder="8+ characters"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              minLength={8}
-              autoComplete="new-password"
-            />
+            <div className={styles.passwordWrap}>
+              <input
+                id="new-password"
+                type={showPassword ? "text" : "password"}
+                placeholder="8+ characters"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                minLength={8}
+                autoComplete="new-password"
+              />
+              <button
+                type="button"
+                className={styles.eyeToggle}
+                onClick={() => setShowPassword((v) => !v)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
             <div className={styles.fieldHelper}>At least 8 characters.</div>
           </div>
 
           <div className={styles.field}>
             <label htmlFor="confirm-password">Confirm password</label>
-            <input
-              id="confirm-password"
-              type="password"
-              placeholder="Same again"
-              value={confirm}
-              onChange={(e) => setConfirm(e.target.value)}
-              required
-              minLength={8}
-              autoComplete="new-password"
-            />
+            <div className={styles.passwordWrap}>
+              <input
+                id="confirm-password"
+                type={showConfirm ? "text" : "password"}
+                placeholder="Same again"
+                value={confirm}
+                onChange={(e) => setConfirm(e.target.value)}
+                required
+                minLength={8}
+                autoComplete="new-password"
+              />
+              <button
+                type="button"
+                className={styles.eyeToggle}
+                onClick={() => setShowConfirm((v) => !v)}
+                aria-label={showConfirm ? "Hide password" : "Show password"}
+              >
+                {showConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
           </div>
 
           <button className={styles.btnPrimary} type="submit" disabled={loading}>

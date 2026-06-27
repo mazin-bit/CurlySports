@@ -19,6 +19,14 @@ export const forgotPasswordSchema = z.object({
   email: z.string().email("Invalid email address"),
 });
 
+export const verifyOtpSchema = z.object({
+  email: z.string().email("Invalid email address"),
+  otp: z
+    .string()
+    .length(6, "Code must be exactly 6 digits")
+    .regex(/^\d{6}$/, "Code must contain only digits"),
+});
+
 // ─── Posts ───────────────────────────────────────────────────────────────────
 
 export const createPostSchema = z.object({

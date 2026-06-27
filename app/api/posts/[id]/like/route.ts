@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
+import { requireAuth } from "@/lib/auth";
 import { logger } from "@/lib/logger";
 
 // POST /api/posts/[id]/like — toggles like for current user
@@ -7,10 +8,11 @@ export async function POST(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const auth = await requireAuth();
+  if (auth instanceof NextResponse) return auth;
+  const { user } = auth;
 
+  const supabase = await createClient();
   const { id } = await params;
 
   const { data, error } = await supabase.rpc("toggle_post_like", {
