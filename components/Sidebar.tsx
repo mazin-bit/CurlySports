@@ -125,15 +125,17 @@ function SportDropdown({ enabledSports }: { enabledSports: Set<string> }) {
           {visibleSports.map((s) => (
             <button
               key={s.slug}
-              onClick={() => { setActiveSport(s.slug); setOpen(false); }}
+              onClick={() => { if (!s.comingSoon) { setActiveSport(s.slug); setOpen(false); } }}
+              disabled={s.comingSoon}
               style={{
                 display: "flex", alignItems: "center", gap: 10,
                 width: "100%", padding: "9px 14px", border: "none",
                 borderBottom: "1px solid var(--border-2)",
                 background: activeSport === s.slug ? "rgba(200,255,61,0.12)" : "transparent",
-                cursor: "pointer", transition: "background 0.1s",
+                cursor: s.comingSoon ? "default" : "pointer", transition: "background 0.1s",
                 fontFamily: "var(--display)", fontSize: 13, fontWeight: activeSport === s.slug ? 700 : 600,
-                color: activeSport === s.slug ? "var(--ink)" : "var(--text-dim)",
+                color: s.comingSoon ? "var(--text-mute)" : activeSport === s.slug ? "var(--ink)" : "var(--text-dim)",
+                opacity: s.comingSoon ? 0.5 : 1,
               }}
             >
               <span style={{
@@ -145,7 +147,15 @@ function SportDropdown({ enabledSports }: { enabledSports: Set<string> }) {
                 letterSpacing: "0.05em", flexShrink: 0,
               }}>{s.icon}</span>
               {s.label}
-              {activeSport === s.slug && (
+              {s.comingSoon && (
+                <span style={{
+                  marginLeft: "auto", fontSize: 8, fontWeight: 800, fontFamily: "var(--mono)",
+                  color: "var(--text-mute)", background: "var(--surface-2)",
+                  padding: "2px 5px", borderRadius: 3, letterSpacing: "0.04em",
+                  textTransform: "uppercase", flexShrink: 0,
+                }}>Soon</span>
+              )}
+              {!s.comingSoon && activeSport === s.slug && (
                 <span style={{ marginLeft: "auto", width: 7, height: 7, borderRadius: "50%", background: "var(--accent)", flexShrink: 0 }} />
               )}
             </button>

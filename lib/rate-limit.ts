@@ -63,21 +63,25 @@ export async function rateLimit(
   if (!limiter) return null; // No Redis = no rate limiting (dev)
 
   const id = opts.identifier || getClientIp(req);
-  const { success, limit, remaining, reset } = await limiter.limit(id);
+  try {
+    const { success, limit, reset } = await limiter.limit(id);
 
-  if (!success) {
-    return NextResponse.json(
-      { error: "Too many requests. Please try again later." },
-      {
-        status: 429,
-        headers: {
-          "X-RateLimit-Limit": limit.toString(),
-          "X-RateLimit-Remaining": "0",
-          "X-RateLimit-Reset": reset.toString(),
-          "Retry-After": Math.ceil((reset - Date.now()) / 1000).toString(),
-        },
-      }
-    );
+    if (!success) {
+      return NextResponse.json(
+        { error: "Too many requests. Please try again later." },
+        {
+          status: 429,
+          headers: {
+            "X-RateLimit-Limit": limit.toString(),
+            "X-RateLimit-Remaining": "0",
+            "X-RateLimit-Reset": reset.toString(),
+            "Retry-After": Math.ceil((reset - Date.now()) / 1000).toString(),
+          },
+        }
+      );
+    }
+  } catch {
+    // Redis connection failed — allow the request through rather than blocking
   }
 
   return null;

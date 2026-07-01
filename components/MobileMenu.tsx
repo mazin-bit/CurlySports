@@ -153,8 +153,10 @@ export default function MobileMenu({ active, onClose }: MobileMenuProps) {
                 {visibleSports.map((s) => (
                   <button
                     key={s.slug}
-                    className={`mn-sport-opt${activeSport === s.slug ? " mn-sport-opt-active" : ""}`}
-                    onClick={() => { setActiveSport(s.slug); setSportOpen(false); }}
+                    className={`mn-sport-opt${activeSport === s.slug && !s.comingSoon ? " mn-sport-opt-active" : ""}`}
+                    onClick={() => { if (!s.comingSoon) { setActiveSport(s.slug); setSportOpen(false); } }}
+                    disabled={s.comingSoon}
+                    style={s.comingSoon ? { opacity: 0.5, cursor: "default" } : undefined}
                   >
                     <span
                       style={{
@@ -167,7 +169,15 @@ export default function MobileMenu({ active, onClose }: MobileMenuProps) {
                       {s.icon}
                     </span>
                     {s.label}
-                    {activeSport === s.slug && (
+                    {s.comingSoon && (
+                      <span style={{
+                        marginLeft: "auto", fontSize: 8, fontWeight: 800, fontFamily: "var(--mono)",
+                        color: "var(--text-mute)", background: "var(--surface-2)",
+                        padding: "2px 5px", borderRadius: 3, letterSpacing: "0.04em",
+                        textTransform: "uppercase", flexShrink: 0,
+                      }}>Soon</span>
+                    )}
+                    {!s.comingSoon && activeSport === s.slug && (
                       <span style={{ marginLeft: "auto", width: 6, height: 6, borderRadius: "50%", background: "var(--accent)", flexShrink: 0 }} />
                     )}
                   </button>

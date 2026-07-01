@@ -24,26 +24,73 @@ export interface SportConfig {
   espnStandingsPath: string | null;
   tavilyQuery: string;
   statsLabel: string; // e.g. "Goals" for football, "Points" for basketball
+  comingSoon?: boolean; // shown on mobile as "Coming Soon" badge
 }
 
 export const SPORT_CONFIGS: SportConfig[] = [
+  // ── Primary sports (fully supported) ──────────────────────────────────────
   {
     slug: "football",
     label: "Football",
     icon: "SOC",
     color: "#c8ff3d",
     espnScorePaths: [
+      // International first — users find international more engaging
+      { path: "soccer/fifa.world", leagueName: "FIFA World Cup", shortName: "WC", id: "fifa.world" },
+      { path: "soccer/uefa.euro", leagueName: "UEFA Euro", shortName: "EURO", id: "uefa.euro" },
+      { path: "soccer/conmebol.america", leagueName: "Copa America", shortName: "CA", id: "conmebol.america" },
+      { path: "soccer/uefa.champions", leagueName: "Champions League", shortName: "UCL", id: "uefa.champions" },
+      // Club leagues
       { path: "soccer/eng.1", leagueName: "Premier League", shortName: "EPL", id: "eng.1" },
       { path: "soccer/esp.1", leagueName: "La Liga", shortName: "LaLiga", id: "esp.1" },
       { path: "soccer/ger.1", leagueName: "Bundesliga", shortName: "BL", id: "ger.1" },
       { path: "soccer/ita.1", leagueName: "Serie A", shortName: "SA", id: "ita.1" },
       { path: "soccer/fra.1", leagueName: "Ligue 1", shortName: "L1", id: "fra.1" },
-      { path: "soccer/uefa.champions", leagueName: "Champions League", shortName: "UCL", id: "uefa.champions" },
     ],
     espnNewsPath: "soccer/eng.1",
-    espnStandingsPath: "soccer/eng.1",
-    tavilyQuery: "football soccer premier league latest news transfers today",
+    espnStandingsPath: "soccer/fifa.world",
+    tavilyQuery: "football soccer world cup premier league latest news transfers today",
     statsLabel: "Goals",
+  },
+  {
+    slug: "cricket",
+    label: "Cricket",
+    icon: "CRI",
+    color: "#ff8c42",
+    espnScorePaths: [
+      // ── ICC Events (International first) ──────────────────────────────────
+      { path: "cricket/icc.t20wc",    leagueName: "ICC T20 World Cup",       shortName: "T20WC", id: "icc.t20wc"    },
+      { path: "cricket/icc.wc",       leagueName: "ICC ODI World Cup",       shortName: "CWC",   id: "icc.wc"       },
+      { path: "cricket/icc.champions",leagueName: "ICC Champions Trophy",    shortName: "CT",    id: "icc.champions" },
+      { path: "cricket/icc.wtc",      leagueName: "World Test Championship", shortName: "WTC",   id: "icc.wtc"      },
+      // ── International Series ──────────────────────────────────────────────
+      { path: "cricket/ashes",        leagueName: "The Ashes",               shortName: "ASHES", id: "ashes"        },
+      { path: "cricket/icc.test",     leagueName: "International Tests",     shortName: "TEST",  id: "icc.test"     },
+      { path: "cricket/icc.odi",      leagueName: "International ODIs",      shortName: "ODI",   id: "icc.odi"      },
+      { path: "cricket/icc.t20i",     leagueName: "International T20Is",     shortName: "T20I",  id: "icc.t20i"     },
+      // ── Premier T20 Leagues ───────────────────────────────────────────────
+      { path: "cricket/ipl",          leagueName: "Indian Premier League",   shortName: "IPL",   id: "ipl"          },
+      { path: "cricket/big.bash",     leagueName: "Big Bash League",         shortName: "BBL",   id: "big.bash"     },
+      { path: "cricket/psl",          leagueName: "Pakistan Super League",   shortName: "PSL",   id: "psl"          },
+      { path: "cricket/cplt20",       leagueName: "Caribbean Premier Lge",   shortName: "CPL",   id: "cplt20"       },
+      { path: "cricket/sa.domestic",  leagueName: "SA20",                    shortName: "SA20",  id: "sa.domestic"  },
+      { path: "cricket/ilt20",        leagueName: "Int'l League T20",        shortName: "ILT20", id: "ilt20"        },
+      { path: "cricket/mlc",          leagueName: "Major League Cricket",    shortName: "MLC",   id: "mlc"          },
+      { path: "cricket/lpl",          leagueName: "Lanka Premier League",    shortName: "LPL",   id: "lpl"          },
+      { path: "cricket/bpl",          leagueName: "Bangladesh Premier Lge",  shortName: "BPL",   id: "bpl"          },
+      { path: "cricket/gt20",         leagueName: "GT20 Canada",             shortName: "GT20",  id: "gt20"         },
+      // ── Domestic ──────────────────────────────────────────────────────────
+      { path: "cricket/eng.domestic", leagueName: "County Championship",     shortName: "CC",    id: "eng.domestic" },
+      { path: "cricket/ind.domestic", leagueName: "Ranji Trophy",            shortName: "RAN",   id: "ind.domestic" },
+      { path: "cricket/aus.domestic", leagueName: "Sheffield Shield",        shortName: "SS",    id: "aus.domestic" },
+      { path: "cricket/nz.domestic",  leagueName: "Plunket Shield",          shortName: "PLK",   id: "nz.domestic"  },
+      { path: "cricket/pak.domestic", leagueName: "Quaid-e-Azam Trophy",     shortName: "QAT",   id: "pak.domestic" },
+      { path: "cricket/sa.domestic2", leagueName: "CSA 4-Day Series",        shortName: "CSA4",  id: "sa.domestic2" },
+    ],
+    espnNewsPath: "cricket/ipl",
+    espnStandingsPath: "cricket/icc.t20wc",
+    tavilyQuery: "cricket IPL test ODI T20 match results news today",
+    statsLabel: "Runs",
   },
   {
     slug: "basketball",
@@ -60,6 +107,20 @@ export const SPORT_CONFIGS: SportConfig[] = [
     statsLabel: "Points",
   },
   {
+    slug: "f1",
+    label: "Formula 1",
+    icon: "F1",
+    color: "#e10600",
+    espnScorePaths: [
+      { path: "racing/f1", leagueName: "Formula 1", shortName: "F1", id: "f1" },
+    ],
+    espnNewsPath: "racing/f1",
+    espnStandingsPath: "racing/f1",
+    tavilyQuery: "Formula 1 F1 race Grand Prix news results today",
+    statsLabel: "Points",
+  },
+  // ── Coming Soon sports (functional but marked as upcoming) ────────────────
+  {
     slug: "nfl",
     label: "NFL",
     icon: "NFL",
@@ -71,46 +132,7 @@ export const SPORT_CONFIGS: SportConfig[] = [
     espnStandingsPath: "football/nfl",
     tavilyQuery: "NFL american football latest news today",
     statsLabel: "TDs",
-  },
-  {
-    slug: "cricket",
-    label: "Cricket",
-    icon: "CRI",
-    color: "#ff8c42",
-    espnScorePaths: [
-      // ── Premier T20 Leagues ────────────────────────────────────────────────
-      { path: "cricket/ipl",          leagueName: "Indian Premier League",   shortName: "IPL",   id: "ipl"          },
-      { path: "cricket/big.bash",     leagueName: "Big Bash League",         shortName: "BBL",   id: "big.bash"     },
-      { path: "cricket/psl",          leagueName: "Pakistan Super League",   shortName: "PSL",   id: "psl"          },
-      { path: "cricket/cplt20",       leagueName: "Caribbean Premier Lge",   shortName: "CPL",   id: "cplt20"       },
-      { path: "cricket/sa.domestic",  leagueName: "SA20",                    shortName: "SA20",  id: "sa.domestic"  },
-      { path: "cricket/ilt20",        leagueName: "Int'l League T20",        shortName: "ILT20", id: "ilt20"        },
-      { path: "cricket/mlc",          leagueName: "Major League Cricket",    shortName: "MLC",   id: "mlc"          },
-      { path: "cricket/lpl",          leagueName: "Lanka Premier League",    shortName: "LPL",   id: "lpl"          },
-      { path: "cricket/bpl",          leagueName: "Bangladesh Premier Lge",  shortName: "BPL",   id: "bpl"          },
-      { path: "cricket/gt20",         leagueName: "GT20 Canada",             shortName: "GT20",  id: "gt20"         },
-      // ── ICC Events ────────────────────────────────────────────────────────
-      { path: "cricket/icc.t20wc",    leagueName: "ICC T20 World Cup",       shortName: "T20WC", id: "icc.t20wc"    },
-      { path: "cricket/icc.wc",       leagueName: "ICC ODI World Cup",       shortName: "CWC",   id: "icc.wc"       },
-      { path: "cricket/icc.champions",leagueName: "ICC Champions Trophy",    shortName: "CT",    id: "icc.champions" },
-      { path: "cricket/icc.wtc",      leagueName: "World Test Championship", shortName: "WTC",   id: "icc.wtc"      },
-      // ── International Series ──────────────────────────────────────────────
-      { path: "cricket/ashes",        leagueName: "The Ashes",               shortName: "ASHES", id: "ashes"        },
-      { path: "cricket/icc.test",     leagueName: "International Tests",     shortName: "TEST",  id: "icc.test"     },
-      { path: "cricket/icc.odi",      leagueName: "International ODIs",      shortName: "ODI",   id: "icc.odi"      },
-      { path: "cricket/icc.t20i",     leagueName: "International T20Is",     shortName: "T20I",  id: "icc.t20i"     },
-      // ── Domestic ──────────────────────────────────────────────────────────
-      { path: "cricket/eng.domestic", leagueName: "County Championship",     shortName: "CC",    id: "eng.domestic" },
-      { path: "cricket/ind.domestic", leagueName: "Ranji Trophy",            shortName: "RAN",   id: "ind.domestic" },
-      { path: "cricket/aus.domestic", leagueName: "Sheffield Shield",        shortName: "SS",    id: "aus.domestic" },
-      { path: "cricket/nz.domestic",  leagueName: "Plunket Shield",          shortName: "PLK",   id: "nz.domestic"  },
-      { path: "cricket/pak.domestic", leagueName: "Quaid-e-Azam Trophy",     shortName: "QAT",   id: "pak.domestic" },
-      { path: "cricket/sa.domestic2", leagueName: "CSA 4-Day Series",        shortName: "CSA4",  id: "sa.domestic2" },
-    ],
-    espnNewsPath: "cricket/ipl",
-    espnStandingsPath: "cricket/ipl",
-    tavilyQuery: "cricket IPL test ODI T20 match results news today",
-    statsLabel: "Runs",
+    comingSoon: true,
   },
   {
     slug: "tennis",
@@ -124,19 +146,7 @@ export const SPORT_CONFIGS: SportConfig[] = [
     espnStandingsPath: "tennis/atp.1",
     tavilyQuery: "tennis ATP WTA Grand Slam tournament news today",
     statsLabel: "Sets",
-  },
-  {
-    slug: "f1",
-    label: "Formula 1",
-    icon: "F1",
-    color: "#e10600",
-    espnScorePaths: [
-      { path: "racing/f1", leagueName: "Formula 1", shortName: "F1", id: "f1" },
-    ],
-    espnNewsPath: "racing/f1",
-    espnStandingsPath: "racing/f1",
-    tavilyQuery: "Formula 1 F1 race Grand Prix news results today",
-    statsLabel: "Points",
+    comingSoon: true,
   },
   {
     slug: "mma",
@@ -150,6 +160,7 @@ export const SPORT_CONFIGS: SportConfig[] = [
     espnStandingsPath: null,
     tavilyQuery: "UFC MMA fight news results today",
     statsLabel: "KOs",
+    comingSoon: true,
   },
   {
     slug: "baseball",
@@ -163,6 +174,7 @@ export const SPORT_CONFIGS: SportConfig[] = [
     espnStandingsPath: "baseball/mlb",
     tavilyQuery: "MLB baseball latest news today",
     statsLabel: "HRs",
+    comingSoon: true,
   },
   {
     slug: "golf",
@@ -176,6 +188,7 @@ export const SPORT_CONFIGS: SportConfig[] = [
     espnStandingsPath: null,
     tavilyQuery: "PGA Tour golf tournament leaderboard news today",
     statsLabel: "Score",
+    comingSoon: true,
   },
   {
     slug: "hockey",
@@ -189,6 +202,7 @@ export const SPORT_CONFIGS: SportConfig[] = [
     espnStandingsPath: "hockey/nhl",
     tavilyQuery: "NHL hockey latest news today",
     statsLabel: "Goals",
+    comingSoon: true,
   },
 ];
 

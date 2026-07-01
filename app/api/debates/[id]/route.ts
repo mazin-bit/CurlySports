@@ -1,22 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import { timingSafeEqual } from "crypto";
 import prisma from "@/lib/prisma";
+import { requireAuth } from "@/lib/auth";
 import { logger } from "@/lib/logger";
-
-function isAdmin(req: NextRequest): boolean {
-  const token = req.headers.get("x-admin-token");
-  if (!token || !process.env.ADMIN_PASSWORD) return false;
-  const a = Buffer.from(token);
-  const b = Buffer.from(process.env.ADMIN_PASSWORD);
-  if (a.length !== b.length) return false;
-  return timingSafeEqual(a, b);
-}
 
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  if (!isAdmin(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const auth = await requireAuth();
+  if (auth instanceof NextResponse) return auth;
+
   const { id } = await params;
   const body = await req.json().catch(() => ({}));
   try {
@@ -29,10 +22,12 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  req: NextRequest,
+  _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  if (!isAdmin(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const auth = await requireAuth();
+  if (auth instanceof NextResponse) return auth;
+
   const { id } = await params;
   try {
     await prisma.debate.delete({ where: { id } });

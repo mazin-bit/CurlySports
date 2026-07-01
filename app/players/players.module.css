@@ -1,12 +1,19 @@
 .leagueTabs {
-  display: flex; gap: 6px; flex-wrap: wrap;
-  padding-bottom: 4px;
+  display: flex; gap: 6px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding-bottom: 8px;
 }
+.leagueTabs::-webkit-scrollbar { display: none; }
 .leagueTab {
   padding: 6px 14px; border-radius: 20px; border: 2px solid var(--border-2);
   background: var(--surface); color: var(--text-dim); font-size: 12px;
   font-weight: 700; font-family: var(--body); cursor: pointer;
-  transition: all 0.15s; white-space: nowrap;
+  transition: all 0.15s; white-space: nowrap; flex-shrink: 0;
+  min-height: 36px; display: inline-flex; align-items: center;
+  -webkit-tap-highlight-color: rgba(200,255,61,0.15);
+  touch-action: manipulation;
 }
 .leagueTab:hover { border-color: var(--ink); color: var(--ink); }
 .leagueTabActive {
@@ -14,7 +21,14 @@
   border-color: var(--ink);
 }
 
-.filterRow { display: flex; gap: 8px; flex-wrap: wrap; }
+.filterRow {
+  display: flex; gap: 8px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding-bottom: 4px;
+}
+.filterRow::-webkit-scrollbar { display: none; }
 .searchRow { display: flex; align-items: center; }
 .searchInput {
   width: 100%; padding: 10px 16px;
@@ -36,6 +50,9 @@
   cursor: pointer; transition: transform 0.15s, box-shadow 0.15s;
   text-align: center; display: flex; flex-direction: column;
   align-items: center; gap: 6px; box-shadow: var(--shadow-sm);
+  text-decoration: none; color: inherit;
+  -webkit-tap-highlight-color: rgba(200,255,61,0.15);
+  touch-action: manipulation;
 }
 .playerCard:hover {
   transform: translate(-3px, -3px);
@@ -73,5 +90,10 @@
 }
 
 @media (max-width: 480px) {
-  .playersGrid { grid-template-columns: repeat(2, 1fr); }
+  .playersGrid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .leagueTab { padding: 8px 16px; font-size: 13px; min-height: 40px; }
+  .playerCard { padding: 14px 10px; }
+  .playerName { font-size: 12px; }
+  .playerAvatarImg { width: 52px; height: 52px; }
+  .playerAvatar { width: 52px; height: 52px; font-size: 17px; }
 }

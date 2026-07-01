@@ -115,9 +115,9 @@ function initials(name: string) {
   return name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
 }
 
-function PlayerPhoto({ name, espnSrc }: { name: string; espnSrc: string | null }) {
+function PlayerPhoto({ name, espnSrc, sport = "football" }: { name: string; espnSrc: string | null; sport?: string }) {
   // If no ESPN headshot, go straight to Wikipedia fallback
-  const wikiSrc = `/api/player-photo?name=${encodeURIComponent(name)}`;
+  const wikiSrc = `/api/player-photo?name=${encodeURIComponent(name)}&sport=${sport}`;
   const [src, setSrc] = useState<string | null>(espnSrc ?? wikiSrc);
   const [failed, setFailed] = useState(false);
 
@@ -147,10 +147,10 @@ function PlayerPhoto({ name, espnSrc }: { name: string; espnSrc: string | null }
   );
 }
 
-function PlayerCard({ player }: { player: Player }) {
+function PlayerCard({ player, sport }: { player: Player; sport: string }) {
   return (
     <Link href={`/players/${player.id}?league=${player.leagueId}`} className={styles.playerCard}>
-      <PlayerPhoto name={player.name} espnSrc={player.headshot} />
+      <PlayerPhoto name={player.name} espnSrc={player.headshot} sport={sport} />
       <div className={styles.playerPos}>{player.position}</div>
       <h3 className={styles.playerName}>{player.name}</h3>
       <p className={styles.playerTeam}>{player.teamName}</p>
@@ -163,10 +163,10 @@ function PlayerCard({ player }: { player: Player }) {
   );
 }
 
-function GlobalPlayerCard({ player }: { player: Player }) {
+function GlobalPlayerCard({ player, sport }: { player: Player; sport: string }) {
   return (
     <Link href={`/players/${player.id}?league=${player.leagueId}`} className={styles.playerCard}>
-      <PlayerPhoto name={player.name} espnSrc={player.headshot} />
+      <PlayerPhoto name={player.name} espnSrc={player.headshot} sport={sport} />
       <div className={styles.playerPos}>{player.position}</div>
       <h3 className={styles.playerName}>{player.name}</h3>
       <p className={styles.playerTeam}>{player.teamName}</p>
@@ -342,7 +342,7 @@ export default function PlayersPage() {
             ) : (
               <div className={styles.playersGrid}>
                 {globalResults.map((p) => (
-                  <GlobalPlayerCard key={`${p.id}-${p.leagueId}`} player={p} />
+                  <GlobalPlayerCard key={`${p.id}-${p.leagueId}`} player={p} sport={activeSport} />
                 ))}
               </div>
             )}
@@ -402,7 +402,7 @@ export default function PlayersPage() {
           ) : (
             <>
               <div className={styles.playersGrid}>
-                {visible.map((p) => <PlayerCard key={p.id} player={p} />)}
+                {visible.map((p) => <PlayerCard key={p.id} player={p} sport={activeSport} />)}
               </div>
               {hasMore && (
                 <div style={{ textAlign: "center", padding: "28px 0" }}>

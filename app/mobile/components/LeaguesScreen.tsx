@@ -8,11 +8,22 @@ import Card from './ui/Card';
 import Chip from './ui/Chip';
 import TeamCrest from './ui/TeamCrest';
 import Icon from './ui/Icon';
+import SportSelector from './ui/SportSelector';
 import { SkeletonTableRow, SkeletonList } from './ui/Skeletons';
 
 const LEAGUES: { id: string; label: string; sport: string; group?: string }[] = [
+  // Football — International (first!)
+  { id: 'fifa.world',     label: 'FIFA World Cup',     sport: 'football', group: 'International' },
+  { id: 'uefa.euro',      label: 'UEFA Euro',          sport: 'football', group: 'International' },
+  { id: 'conmebol.america', label: 'Copa America',     sport: 'football', group: 'International' },
+  { id: 'caf.nations',    label: 'AFCON',              sport: 'football', group: 'International' },
+  { id: 'concacaf.gold',  label: 'Gold Cup',           sport: 'football', group: 'International' },
+  // Football — Club Cups
+  { id: 'uefa.champions', label: 'Champions League',   sport: 'football', group: 'Club Cups' },
+  { id: 'uefa.europa',    label: 'Europa League',      sport: 'football', group: 'Club Cups' },
+  { id: 'uefa.europa_conf', label: 'Conference League', sport: 'football', group: 'Club Cups' },
   // Football — Top Leagues
-  { id: 'eng.1',          label: 'Premier League',    sport: 'football', group: 'Top Leagues' },
+  { id: 'eng.1',          label: 'Premier League',     sport: 'football', group: 'Top Leagues' },
   { id: 'esp.1',          label: 'La Liga',            sport: 'football', group: 'Top Leagues' },
   { id: 'ger.1',          label: 'Bundesliga',         sport: 'football', group: 'Top Leagues' },
   { id: 'ita.1',          label: 'Serie A',            sport: 'football', group: 'Top Leagues' },
@@ -22,24 +33,33 @@ const LEAGUES: { id: string; label: string; sport: string; group?: string }[] = 
   { id: 'tur.1',          label: 'Süper Lig',          sport: 'football', group: 'Top Leagues' },
   { id: 'sco.1',          label: 'Scottish Prem',      sport: 'football', group: 'Top Leagues' },
   { id: 'eng.2',          label: 'Championship',       sport: 'football', group: 'Top Leagues' },
-  // Football — Cups
-  { id: 'uefa.champions', label: 'Champions League',  sport: 'football', group: 'Cups' },
-  { id: 'uefa.europa',    label: 'Europa League',      sport: 'football', group: 'Cups' },
   // Football — Americas
   { id: 'usa.1',          label: 'MLS',                sport: 'football', group: 'Americas' },
   { id: 'mex.1',          label: 'Liga MX',            sport: 'football', group: 'Americas' },
   { id: 'bra.1',          label: 'Brasileirão',        sport: 'football', group: 'Americas' },
   { id: 'arg.1',          label: 'Liga Profesional',   sport: 'football', group: 'Americas' },
+  // Cricket — ICC Events first
+  { id: 'icc.t20wc',      label: 'T20 World Cup',     sport: 'cricket', group: 'ICC Events' },
+  { id: 'icc.champions',  label: 'Champions Trophy',  sport: 'cricket', group: 'ICC Events' },
+  // Cricket — T20 Leagues
+  { id: 'ipl',            label: 'IPL',                sport: 'cricket', group: 'T20 Leagues' },
+  { id: 'psl',            label: 'PSL',                sport: 'cricket', group: 'T20 Leagues' },
+  { id: 'big.bash',       label: 'Big Bash',           sport: 'cricket', group: 'T20 Leagues' },
+  { id: 'sa.domestic',    label: 'SA20',               sport: 'cricket', group: 'T20 Leagues' },
+  { id: 'cplt20',         label: 'CPL',                sport: 'cricket', group: 'T20 Leagues' },
   // Basketball
-  { id: 'nba',            label: 'NBA',                sport: 'basketball', group: 'Basketball' },
-  // American Football
-  { id: 'nfl',            label: 'NFL',                sport: 'nfl', group: 'NFL' },
-  // Baseball
-  { id: 'mlb',            label: 'MLB',                sport: 'baseball', group: 'Baseball' },
-  // Cricket
-  { id: 'ipl',            label: 'IPL',                sport: 'cricket', group: 'Cricket' },
-  { id: 'psl',            label: 'PSL',                sport: 'cricket', group: 'Cricket' },
-  { id: 'big.bash',       label: 'Big Bash',           sport: 'cricket', group: 'Cricket' },
+  { id: 'nba',            label: 'NBA',                sport: 'basketball', group: 'NBA & WNBA' },
+  { id: 'wnba',           label: 'WNBA',              sport: 'basketball', group: 'NBA & WNBA' },
+  // F1
+  { id: 'f1',             label: 'Formula 1',          sport: 'f1', group: 'Motorsport' },
+];
+
+// Sport categories for the pill selector
+const SPORT_CATEGORIES = [
+  { slug: 'football', label: 'Football', color: '#c8ff3d' },
+  { slug: 'cricket', label: 'Cricket', color: '#ff8c42' },
+  { slug: 'basketball', label: 'Basketball', color: '#ff5b3d' },
+  { slug: 'f1', label: 'F1', color: '#ff5d9e' },
 ];
 
 const SEASONS = ['2026', '2025', '2024', '2023'];
@@ -47,32 +67,35 @@ const DEFAULT_SEASON = String(new Date().getFullYear());
 
 interface LeaguesProps {
   sport: string;
+  setSport: (s: string) => void;
   onSearch: () => void;
   onBell: () => void;
   onOpenPlayer: (playerId?: string, leagueId?: string) => void;
   unread: number;
 }
 
-export default function LeaguesScreen({ sport, onSearch, onBell, onOpenPlayer, unread }: LeaguesProps) {
+export default function LeaguesScreen({ sport, setSport, onSearch, onBell, onOpenPlayer, unread }: LeaguesProps) {
   const [leagueIdx, setLeagueIdx] = useState(0);
   const [season, setSeason] = useState<string>(DEFAULT_SEASON);
   const [showSeasonPicker, setShowSeasonPicker] = useState(false);
   const [activeTab, setActiveTab] = useState<'table' | 'bracket'>('table');
 
+  // Filter leagues by sport
+  const filteredLeagues = LEAGUES.filter(l => l.sport === sport);
+
   // Auto-jump to the first league matching the selected sport
   useEffect(() => {
-    const idx = LEAGUES.findIndex(l => l.sport === sport);
-    if (idx !== -1) setLeagueIdx(idx);
+    setLeagueIdx(0);
   }, [sport]);
 
   // Reset to table tab when league changes
   useEffect(() => { setActiveTab('table'); }, [leagueIdx]);
 
-  const selected = LEAGUES[leagueIdx];
+  const selected = filteredLeagues[leagueIdx] ?? filteredLeagues[0];
 
-  const { standings, isLoading } = useSingleStandings(selected.id, season);
+  const { standings, isLoading } = useSingleStandings(selected?.id ?? null, season);
   const table = standings?.entries ?? [];
-  const { rounds, isLoading: bracketLoading } = useBracket(selected.id, season);
+  const { rounds, isLoading: bracketLoading } = useBracket(selected?.id ?? null, season);
   const hasBracket = rounds.length > 0;
 
   return (
@@ -86,10 +109,13 @@ export default function LeaguesScreen({ sport, onSearch, onBell, onOpenPlayer, u
         hasNotification={unread > 0}
       />
       <div className="cs-scroll" style={{ flex: 1, overflow: 'auto', padding: '14px 14px 96px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-        {/* League chips */}
+        {/* Sport category selector */}
+        <SportSelector active={sport} onSelect={setSport} />
+
+        {/* League chips — filtered by sport */}
         <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 2 }}>
-          {LEAGUES.map((l, i) => (
-            <Chip key={l.id} active={leagueIdx === i} onClick={() => setLeagueIdx(i)}>{l.label}</Chip>
+          {filteredLeagues.map((l, i) => (
+            <Chip key={l.id} active={leagueIdx === i} onClick={() => setLeagueIdx(i)} style={{ flexShrink: 0 }}>{l.label}</Chip>
           ))}
         </div>
 

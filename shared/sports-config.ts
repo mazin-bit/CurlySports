@@ -174,15 +174,15 @@ export interface SportTab {
 
 export const SPORT_TABS: SportTab[] = [
   { slug: "football",   label: "Football",   espnSport: "soccer",     espnLeague: "eng.1"        },
-  { slug: "basketball", label: "Basketball", espnSport: "basketball", espnLeague: "nba"          },
-  { slug: "nfl",        label: "NFL",        espnSport: "football",   espnLeague: "nfl"          },
   { slug: "cricket",    label: "Cricket",    espnSport: "cricket",    espnLeague: "ipl"          },
+  { slug: "basketball", label: "Basketball", espnSport: "basketball", espnLeague: "nba"          },
+  { slug: "f1",         label: "F1",         espnSport: "racing",     espnLeague: "f1"           },
+  { slug: "nfl",        label: "NFL",        espnSport: "football",   espnLeague: "nfl"          },
+  { slug: "tennis",     label: "Tennis",     espnSport: "tennis",     espnLeague: "atp.1"        },
   { slug: "baseball",   label: "Baseball",   espnSport: "baseball",   espnLeague: "mlb"          },
   { slug: "hockey",     label: "Hockey",     espnSport: "hockey",     espnLeague: "nhl"          },
-  { slug: "tennis",     label: "Tennis",     espnSport: "tennis",     espnLeague: "atp.1"        },
-  { slug: "golf",       label: "Golf",       espnSport: "golf",       espnLeague: "pga"          },
   { slug: "mma",        label: "MMA",        espnSport: "mma",        espnLeague: "ufc"          },
-  { slug: "f1",         label: "F1",         espnSport: "racing",     espnLeague: "f1"           },
+  { slug: "golf",       label: "Golf",       espnSport: "golf",       espnLeague: "pga"          },
 ];
 
 // ─── Leagues grouped by sport (for Leagues & Players filter UI) ───────────────

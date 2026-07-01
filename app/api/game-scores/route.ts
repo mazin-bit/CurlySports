@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
   const supabase = await createClient();
 
   const { game_type, sport, score } = await req.json() as {
-    game_type: "quiz" | "player_guess";
+    game_type: string;
     sport: string;
     score: number;
   };
@@ -53,6 +53,14 @@ export async function POST(req: NextRequest) {
     .select()
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) {
+    if (error.code === "23503") {
+      return NextResponse.json(
+        { error: "Database migration needed. Run the user_id fix migration." },
+        { status: 503 }
+      );
+    }
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
   return NextResponse.json(data, { status: 201 });
 }

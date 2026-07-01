@@ -31,6 +31,12 @@ export async function POST(
       return NextResponse.json({ error: "Already voted" }, { status: 409 });
     }
     logger.error("post vote failed", { postId: id, code: error.code });
+    if (error.code === "23503") {
+      return NextResponse.json(
+        { error: "Database migration needed. Run the user_id fix migration." },
+        { status: 503 }
+      );
+    }
     return NextResponse.json({ error: "Failed to cast vote" }, { status: 500 });
   }
 

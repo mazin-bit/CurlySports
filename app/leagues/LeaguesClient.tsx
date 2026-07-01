@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import { useSingleStandings } from "@/hooks/useStandings";
 import { useBracket } from "@/hooks/useBracket";
-import { useActiveSport } from "@/contexts/SportContext";
+import { useActiveSport, SPORT_CONFIGS } from "@/contexts/SportContext";
 import type { StandingEntry, LeagueStandings } from "@/hooks/useStandings";
 import type { BracketRound, BracketMatch } from "@/hooks/useBracket";
 import { LEAGUE_META } from "@curly/shared";
@@ -64,6 +64,14 @@ const GROUP_STAGE_LEAGUES = new Set([
 const LEAGUE_GROUPS: Record<string, { title: string; ids: string[] }[]> = {
   football: [
     {
+      title: "International",
+      ids: ["fifa.world","uefa.euro","conmebol.america","caf.nations","concacaf.gold","afc.cup","concacaf.nations","uefa.nations"],
+    },
+    {
+      title: "Club Cups",
+      ids: ["uefa.champions","uefa.europa","uefa.europa_conf","conmebol.libertadores","conmebol.sudamericana","concacaf.champions"],
+    },
+    {
       title: "Top Leagues",
       ids: ["eng.1","esp.1","ger.1","ita.1","fra.1","por.1","ned.1","tur.1","sco.1","bel.1","eng.2"],
     },
@@ -75,30 +83,22 @@ const LEAGUE_GROUPS: Record<string, { title: string; ids: string[] }[]> = {
       title: "Asia & Rest",
       ids: ["jpn.1","ksa.1","aus.1","chn.1","idn.1","rus.1","gre.1"],
     },
-    {
-      title: "Club Cups",
-      ids: ["uefa.champions","uefa.europa","uefa.europa_conf","conmebol.libertadores","conmebol.sudamericana","concacaf.champions"],
-    },
-    {
-      title: "International",
-      ids: ["fifa.world","uefa.euro","conmebol.america","caf.nations","concacaf.gold","afc.cup","concacaf.nations","uefa.nations"],
-    },
+  ],
+  cricket: [
+    { title: "ICC Events",   ids: ["icc.t20wc", "icc.champions"] },
+    { title: "T20 Leagues",  ids: ["ipl", "psl", "big.bash", "sa.domestic", "cplt20"] },
   ],
   basketball: [
     { title: "NBA & WNBA", ids: ["nba", "wnba"] },
     { title: "College", ids: ["ncaab", "ncaaw"] },
   ],
-  nfl:        [{ title: "American Football", ids: ["nfl"] }],
-  hockey:     [{ title: "Hockey", ids: ["nhl"] }],
-  baseball:   [{ title: "Baseball", ids: ["mlb"] }],
-  tennis:     [{ title: "Tennis", ids: ["atp.1","wta.1"] }],
   f1:         [{ title: "Motorsport", ids: ["f1"] }],
-  golf:       [{ title: "Golf", ids: ["pga"] }],
+  nfl:        [{ title: "American Football", ids: ["nfl"] }],
+  tennis:     [{ title: "Tennis", ids: ["atp.1","wta.1"] }],
+  baseball:   [{ title: "Baseball", ids: ["mlb"] }],
+  hockey:     [{ title: "Hockey", ids: ["nhl"] }],
   mma:        [{ title: "MMA", ids: ["ufc"] }],
-  cricket: [
-    { title: "T20 Leagues",  ids: ["ipl", "psl", "big.bash", "sa.domestic", "cplt20"] },
-    { title: "ICC Events",   ids: ["icc.t20wc", "icc.champions"] },
-  ],
+  golf:       [{ title: "Golf", ids: ["pga"] }],
 };
 
 // ─── Season selector ───────────────────────────────────────────────────────────
@@ -523,7 +523,7 @@ function CompetitionDetail({ leagueId, season }: { leagueId: string; season: str
 // ─── Page ──────────────────────────────────────────────────────────────────────
 
 export default function LeaguesPage() {
-  const { activeSport, activeSportConfig } = useActiveSport();
+  const { activeSport, activeSportConfig, setActiveSport } = useActiveSport();
   const [season, setSeason] = useState(SEASONS[0]); // defaults to current year
   const [selectedLeague, setSelectedLeague] = useState<string | null>(null);
 
@@ -533,9 +533,25 @@ export default function LeaguesPage() {
     setSelectedLeague(prev => (prev === id ? null : id));
   };
 
+  const sportPills = SPORT_CONFIGS.filter(s => LEAGUE_GROUPS[s.slug] && !s.comingSoon);
+
   return (
     <AppShell active="leagues" title="Leagues" subtitle={`${activeSportConfig.label} standings`}>
       <div className="stack">
+        {/* Sport selector pills — especially useful on mobile */}
+        <div className={styles.sportPills}>
+          {sportPills.map(s => (
+            <button
+              key={s.slug}
+              className={`${styles.sportPill}${activeSport === s.slug ? " " + styles.sportPillActive : ""}`}
+              onClick={() => { setActiveSport(s.slug); setSelectedLeague(null); }}
+            >
+              <span className={styles.pillIcon}>{s.icon}</span>
+              {s.label}
+            </button>
+          ))}
+        </div>
+
         <div className="sec-head">
           <div className="title">
             <Trophy size={17} className="title-icon" strokeWidth={2} />

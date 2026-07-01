@@ -57,6 +57,122 @@ interface Debate {
 
 const TAGS = ["DEBATE", "GOAT DEBATE", "HOT TAKE", "TRANSFERS", "PREDICTIONS", "QUESTION", "NEWS"];
 
+// ─── Create Debate Modal ────────────────────────────────────────────────────
+
+function CreateDebateModal({
+  onClose,
+  onCreated,
+  sport,
+}: {
+  onClose: () => void;
+  onCreated: (debate: Debate) => void;
+  sport: string;
+}) {
+  const [question, setQuestion] = useState("");
+  const [optionA, setOptionA] = useState("");
+  const [optionB, setOptionB] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
+
+  const canSubmit = question.trim().length > 0 && optionA.trim().length > 0 && optionB.trim().length > 0;
+
+  const submit = async () => {
+    if (!canSubmit || submitting) return;
+    setSubmitting(true);
+    setError("");
+
+    try {
+      const res = await fetch("/api/debates", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          question: question.trim(),
+          optionA: optionA.trim(),
+          optionB: optionB.trim(),
+          sport: sport.toUpperCase(),
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        if (res.status === 401) {
+          setError("You must be logged in to create a debate.");
+        } else {
+          setError(data.error ?? "Failed to create debate.");
+        }
+        return;
+      }
+
+      const debate = await res.json();
+      onCreated(debate);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className={styles.composeOverlay} onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className={styles.composeModal}>
+        <div className={styles.composeHead}>
+          <span className={styles.composeTitle}>New Debate</span>
+          <button className={styles.composeClose} onClick={onClose}><X size={15} /></button>
+        </div>
+
+        <div className={styles.composeBody}>
+          <textarea
+            className={styles.composeContentInput}
+            placeholder="Ask a debate question..."
+            value={question}
+            onChange={(e) => setQuestion(e.target.value)}
+            rows={2}
+            maxLength={200}
+            autoFocus
+          />
+
+          <div className={styles.pollSection}>
+            <div className={styles.composeOptsLabel}>Options</div>
+            <div className={styles.composeOptRow}>
+              <input
+                className={styles.composeOptInput}
+                placeholder="Option A (e.g. Messi)"
+                value={optionA}
+                onChange={(e) => setOptionA(e.target.value)}
+                maxLength={60}
+              />
+            </div>
+            <div className={styles.composeOptRow}>
+              <input
+                className={styles.composeOptInput}
+                placeholder="Option B (e.g. Ronaldo)"
+                value={optionB}
+                onChange={(e) => setOptionB(e.target.value)}
+                maxLength={60}
+              />
+            </div>
+          </div>
+
+          {error && <div className={styles.composeError}><AlertCircle size={13} /> {error}</div>}
+        </div>
+
+        <div className={styles.composeFoot}>
+          <div />
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <button className={styles.composeCancelBtn} onClick={onClose}>Cancel</button>
+            <button
+              className={styles.composePostBtn}
+              disabled={!canSubmit || submitting}
+              onClick={submit}
+            >
+              {submitting ? <Loader2 size={13} className={styles.spin} /> : <Vote size={13} />}
+              Create
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function timeAgo(iso: string) {
   const diff = Date.now() - new Date(iso).getTime();
   const s = Math.floor(diff / 1000);
@@ -537,6 +653,7 @@ export default function DebatesPage() {
   const [debates, setDebates] = useState<Debate[]>([]);
   const [debateVotes, setDebateVotes] = useState<Record<string, string>>({});
   const [votingDebate, setVotingDebate] = useState<string | null>(null);
+  const [showCreateDebate, setShowCreateDebate] = useState(false);
 
   // Fetch current user
   useEffect(() => {
@@ -547,7 +664,7 @@ export default function DebatesPage() {
 
   // Fetch featured debates
   useEffect(() => {
-    fetch("/api/debates?live=true").then((r) => r.json()).then((d) => {
+    fetch("/api/debates").then((r) => r.json()).then((d) => {
       if (Array.isArray(d)) setDebates(d);
     }).catch(() => {});
   }, []);
@@ -665,14 +782,17 @@ export default function DebatesPage() {
         </div>
 
         {/* Featured Debates */}
-        {debates.length > 0 && (
-          <div className={styles.featuredDebates}>
-            <div className="sec-head" style={{ marginBottom: 12 }}>
-              <div className="title">
-                <Vote size={17} className="title-icon" strokeWidth={2} />
-                <span className="accent">Featured Polls</span>
-              </div>
+        <div className={styles.featuredDebates}>
+          <div className="sec-head" style={{ marginBottom: 12 }}>
+            <div className="title">
+              <Vote size={17} className="title-icon" strokeWidth={2} />
+              <span className="accent">Debates</span>
             </div>
+            <button className={styles.createDebateBtn} onClick={() => setShowCreateDebate(true)}>
+              <Plus size={13} /> New Debate
+            </button>
+          </div>
+          {debates.length > 0 && (
             <div className={styles.debateGrid}>
               {debates.map((d) => {
                 const total = d.votesA + d.votesB;
@@ -709,8 +829,8 @@ export default function DebatesPage() {
                 );
               })}
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
         {/* Feed */}
         {loading ? (
@@ -753,6 +873,17 @@ export default function DebatesPage() {
         <ComposeModal
           onClose={() => setShowCompose(false)}
           onPost={handleNewPost}
+          sport={activeSport}
+        />
+      )}
+
+      {showCreateDebate && (
+        <CreateDebateModal
+          onClose={() => setShowCreateDebate(false)}
+          onCreated={(debate) => {
+            setDebates((prev) => [debate, ...prev]);
+            setShowCreateDebate(false);
+          }}
           sport={activeSport}
         />
       )}

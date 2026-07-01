@@ -58,6 +58,12 @@
   font-size: 13px;
 }
 
+.chip.soon {
+  opacity: 0.4;
+  cursor: default;
+  pointer-events: none;
+}
+
 /* Active sport color indicator bar at bottom */
 .indicator {
   height: 3px;

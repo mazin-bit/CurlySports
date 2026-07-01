@@ -14,12 +14,13 @@ export default function SportSelector() {
           return (
             <button
               key={s.slug}
-              className={`${styles.chip}${isActive ? " " + styles.active : ""}`}
-              onClick={() => setActiveSport(s.slug)}
-              style={isActive ? ({ "--sport-color": s.color } as React.CSSProperties) : {}}
+              className={`${styles.chip}${isActive && !s.comingSoon ? " " + styles.active : ""}${s.comingSoon ? " " + styles.soon : ""}`}
+              onClick={() => { if (!s.comingSoon) setActiveSport(s.slug); }}
+              disabled={s.comingSoon}
+              style={isActive && !s.comingSoon ? ({ "--sport-color": s.color } as React.CSSProperties) : {}}
             >
               <span className={styles.icon}>{s.icon}</span>
-              <span className={styles.label}>{s.label}</span>
+              <span className={styles.label}>{s.comingSoon ? "Soon" : s.label}</span>
             </button>
           );
         })}

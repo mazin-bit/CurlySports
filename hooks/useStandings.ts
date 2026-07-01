@@ -51,7 +51,8 @@ export function useStandings(sport?: string, leagueId?: string, season?: string)
   if (sport) params.set("sport", sport);
   if (leagueId) params.set("league", leagueId);
   if (season) params.set("season", season);
-  const url = `/api/espn/standings?${params.toString()}`;
+  const hasKey = !!(sport || leagueId);
+  const url = hasKey ? `/api/espn/standings?${params.toString()}` : null;
 
   const { data, error, isLoading, isValidating } = useSWR<StandingsResponse>(
     url,
@@ -61,18 +62,19 @@ export function useStandings(sport?: string, leagueId?: string, season?: string)
 
   return {
     standings: data?.standings ?? [],
-    isLoading,
+    isLoading: hasKey ? isLoading : false,
     isValidating,
     error,
   };
 }
 
-export function useSingleStandings(leagueId: string, season?: string) {
-  const params = new URLSearchParams({ league: leagueId });
+export function useSingleStandings(leagueId: string | null, season?: string) {
+  const params = new URLSearchParams();
+  if (leagueId) params.set("league", leagueId);
   if (season) params.set("season", season);
 
   const { data, error, isLoading } = useSWR<LeagueStandings>(
-    `/api/espn/standings?${params.toString()}`,
+    leagueId ? `/api/espn/standings?${params.toString()}` : null,
     fetcher,
     { refreshInterval: 60_000 }
   );

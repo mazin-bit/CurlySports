@@ -3,8 +3,10 @@ import React, { useState, useEffect } from 'react';
 import type { Match } from '../data';
 import { useScoresStream } from '@/hooks/useScoresStream';
 import { useNews } from '@/hooks/useNews';
-import { useStandings } from '@/hooks/useStandings';
-import type { StandingEntry } from '@/hooks/useStandings';
+import { useStandings, useSingleStandings } from '@/hooks/useStandings';
+import { useBracket } from '@/hooks/useBracket';
+import type { BracketRound, BracketMatch } from '@/hooks/useBracket';
+import type { StandingEntry, GroupStandings } from '@/hooks/useStandings';
 import { normalizedToMobile } from './api';
 import type { NormalizedMatch } from '@/lib/types';
 import Topbar from './ui/Topbar';
@@ -71,6 +73,93 @@ function MiniStandingsTable({ entries, leagueName }: { entries: StandingEntry[];
   );
 }
 
+/* ── World Cup Groups Grid (mobile) ─────────────────────────── */
+function MobileWCGroupsGrid({ groups, leagueName }: { groups: GroupStandings[]; leagueName: string }) {
+  return (
+    <div style={{ marginBottom: 12 }}>
+      <div style={{ fontFamily: 'var(--display)', fontWeight: 800, fontSize: 18, color: 'var(--ink)', marginBottom: 12, letterSpacing: '-0.02em' }}>
+        {leagueName} — Group Stage
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10 }}>
+        {groups.map(g => (
+          <Card key={g.groupName} style={{ padding: 10 }}>
+            <div style={{ fontFamily: 'var(--mono)', fontWeight: 800, fontSize: 10, letterSpacing: '0.08em', color: 'var(--orange)', textTransform: 'uppercase', marginBottom: 6 }}>{g.groupName}</div>
+            <div style={{ display: 'flex', fontFamily: 'var(--mono)', fontSize: 8, color: 'var(--text-mute)', textTransform: 'uppercase', letterSpacing: '0.06em', padding: '0 0 4px', borderBottom: '1px solid var(--border-3)' }}>
+              <span style={{ flex: 1 }}>Team</span>
+              <span style={{ width: 18, textAlign: 'center' }}>P</span>
+              <span style={{ width: 18, textAlign: 'center' }}>W</span>
+              <span style={{ width: 18, textAlign: 'center' }}>L</span>
+              <span style={{ width: 22, textAlign: 'right', color: 'var(--orange)', fontWeight: 700 }}>Pts</span>
+            </div>
+            {g.entries.slice(0, 4).map((row, idx) => (
+              <div key={row.teamId || idx} style={{ display: 'flex', alignItems: 'center', padding: '4px 0', borderBottom: idx < 3 ? '1px solid var(--border-3)' : 'none' }}>
+                <span style={{ width: 14, fontFamily: 'var(--mono)', fontWeight: 700, fontSize: 9, color: idx < 2 ? 'var(--orange)' : 'var(--text-mute)' }}>{row.rank || idx + 1}</span>
+                <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 4, minWidth: 0 }}>
+                  {row.teamLogo ? (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img src={row.teamLogo} alt="" width={14} height={14} style={{ objectFit: 'contain', flexShrink: 0 }} onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
+                  ) : (
+                    <div style={{ width: 14, height: 14, borderRadius: 3, background: 'var(--surface-3)', display: 'grid', placeItems: 'center', fontSize: 6, fontFamily: 'var(--mono)', fontWeight: 700, color: 'var(--text-mute)' }}>{row.teamAbbr.slice(0, 3)}</div>
+                  )}
+                  <span style={{ fontWeight: 600, fontSize: 10, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{row.teamAbbr}</span>
+                </div>
+                <span style={{ width: 18, textAlign: 'center', fontFamily: 'var(--mono)', fontSize: 9, color: 'var(--text-dim)' }}>{row.gamesPlayed}</span>
+                <span style={{ width: 18, textAlign: 'center', fontFamily: 'var(--mono)', fontSize: 9, color: 'var(--text-dim)' }}>{row.wins}</span>
+                <span style={{ width: 18, textAlign: 'center', fontFamily: 'var(--mono)', fontSize: 9, color: 'var(--text-dim)' }}>{row.losses}</span>
+                <span style={{ width: 22, textAlign: 'right', fontFamily: 'var(--display)', fontWeight: 800, fontSize: 11, color: 'var(--ink)' }}>{row.points}</span>
+              </div>
+            ))}
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ── Knockout Bracket (mobile) ─────────────────────────────── */
+function MobileKnockoutBracket({ rounds, leagueName }: { rounds: BracketRound[]; leagueName: string }) {
+  if (rounds.length === 0) return null;
+  return (
+    <div>
+      <div style={{ fontFamily: 'var(--display)', fontWeight: 800, fontSize: 16, color: 'var(--ink)', marginBottom: 10, letterSpacing: '-0.02em' }}>Knockout Stage</div>
+      {rounds.map((round) => (
+        <div key={round.name} style={{ marginBottom: 12 }}>
+          <div style={{ fontFamily: 'var(--mono)', fontWeight: 700, fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--orange)', marginBottom: 6 }}>{round.name}</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {round.matches.map((m: BracketMatch) => (
+              <div key={m.id} style={{ background: 'var(--surface-2)', borderRadius: 8, border: '1.5px solid var(--border-2)', overflow: 'hidden' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 10px', borderBottom: '1px solid var(--border-3)' }}>
+                  {m.home.logo && !m.home.isPlaceholder ? (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img src={m.home.logo} alt="" width={16} height={16} style={{ objectFit: 'contain', flexShrink: 0 }} />
+                  ) : (
+                    <div style={{ width: 16, height: 16, borderRadius: 3, background: 'var(--surface-3)', display: 'grid', placeItems: 'center', fontSize: 6, fontFamily: 'var(--mono)', fontWeight: 700, color: 'var(--text-mute)' }}>{m.home.shortName?.slice(0, 3) ?? '?'}</div>
+                  )}
+                  <span style={{ flex: 1, fontWeight: m.home.winner ? 700 : 500, fontSize: 12, color: m.home.winner ? 'var(--ink)' : 'var(--text-dim)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.home.shortName}</span>
+                  <span style={{ fontFamily: 'var(--display)', fontWeight: 800, fontSize: 14, color: m.home.winner ? 'var(--orange)' : 'var(--ink)', minWidth: 16, textAlign: 'center' }}>{m.home.score !== null ? m.home.score : '-'}</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 10px' }}>
+                  {m.away.logo && !m.away.isPlaceholder ? (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img src={m.away.logo} alt="" width={16} height={16} style={{ objectFit: 'contain', flexShrink: 0 }} />
+                  ) : (
+                    <div style={{ width: 16, height: 16, borderRadius: 3, background: 'var(--surface-3)', display: 'grid', placeItems: 'center', fontSize: 6, fontFamily: 'var(--mono)', fontWeight: 700, color: 'var(--text-mute)' }}>{m.away.shortName?.slice(0, 3) ?? '?'}</div>
+                  )}
+                  <span style={{ flex: 1, fontWeight: m.away.winner ? 700 : 500, fontSize: 12, color: m.away.winner ? 'var(--ink)' : 'var(--text-dim)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.away.shortName}</span>
+                  <span style={{ fontFamily: 'var(--display)', fontWeight: 800, fontSize: 14, color: m.away.winner ? 'var(--orange)' : 'var(--ink)', minWidth: 16, textAlign: 'center' }}>{m.away.score !== null ? m.away.score : '-'}</span>
+                </div>
+                {m.statusDisplay && (
+                  <div style={{ padding: '4px 10px 5px', borderTop: '1px solid var(--border-3)', fontFamily: 'var(--mono)', fontSize: 8.5, color: 'var(--text-mute)' }}>{m.statusDisplay}</div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function toDateKey(d: Date) {
   return String(d.getFullYear()) + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0');
 }
@@ -79,8 +168,19 @@ export default function DashboardScreen({ sport, setSport, onOpenMatch, onOpenPl
   const todayKey = toDateKey(new Date());
   const { groups, isConnected, liveCount } = useScoresStream(sport, todayKey);
   const { articles, isLoading: newsLoading } = useNews(20, sport);
-  const { standings, isLoading: standingsLoading } = useStandings(sport);
+
+  // Football: show World Cup groups + knockout bracket
+  const isFootball = sport === 'football';
+  const { standings: wcStandings, isLoading: wcLoading } = useSingleStandings(isFootball ? 'fifa.world' : null);
+  const { rounds: wcRounds, isLoading: bracketLoading } = useBracket(isFootball ? 'fifa.world' : null);
+
+  // Other sports: show regular standings
+  const { standings, isLoading: standingsLoading } = useStandings(isFootball ? undefined : sport);
   const [upcoming, setUpcoming] = useState<{ label: string; matches: Match[] } | null>(null);
+
+  const showWcGroups = isFootball && wcStandings && wcStandings.hasGroups && wcStandings.groups && wcStandings.groups.length > 0;
+  const showWcBracket = isFootball && wcRounds.length > 0;
+  const wcSectionLoading = isFootball && (wcLoading || bracketLoading);
 
   // Same sort order as web DashboardClient: LIVE → HALF_TIME → SCHEDULED → FINISHED
   const allMatches = groups.flatMap(g => g.matches).sort((a, b) => {
@@ -177,7 +277,9 @@ export default function DashboardScreen({ sport, setSport, onOpenMatch, onOpenPl
             {newsLoading ? (
               <SkeletonList count={3}>{i => <SkeletonNewsCard style={{ '--i': i } as React.CSSProperties} />}</SkeletonList>
             ) : articles.length > 0 ? articles.map(n => (
-              <Card key={n.id} tappable style={{ padding: 0, overflow: 'hidden', display: 'flex', alignItems: 'stretch', gap: 0, cursor: 'pointer' }}>
+              <Card key={n.id} tappable style={{ padding: 0, overflow: 'hidden', display: 'flex', alignItems: 'stretch', gap: 0, cursor: 'pointer' }}
+                onClick={() => { if (n.url) window.open(n.url, '_blank', 'noopener'); }}
+              >
                 {n.imageUrl ? (
                   <div style={{ width: 88, flexShrink: 0, background: 'var(--surface-3)', borderRight: '2px solid var(--ink)', overflow: 'hidden', display: 'flex', alignItems: 'center' }}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -191,8 +293,11 @@ export default function DashboardScreen({ sport, setSport, onOpenMatch, onOpenPl
                 <div style={{ padding: 14, minWidth: 0 }}>
                   <Badge tone="mute">{n.source}</Badge>
                   <div style={{ fontFamily: 'var(--display)', fontWeight: 700, fontSize: 14, color: 'var(--ink)', lineHeight: 1.25, margin: '8px 0', letterSpacing: '-0.01em' }}>{n.title}</div>
-                  <div style={{ fontFamily: 'var(--mono)', fontSize: 9.5, color: 'var(--text-mute)' }}>
-                    {n.publishedAt ? new Date(n.publishedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span style={{ fontFamily: 'var(--mono)', fontSize: 9.5, color: 'var(--text-mute)' }}>
+                      {n.publishedAt ? new Date(n.publishedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                    </span>
+                    {n.url && <span style={{ fontFamily: 'var(--mono)', fontSize: 9, color: 'var(--orange)', fontWeight: 700 }}>Read more</span>}
                   </div>
                 </div>
               </Card>
@@ -205,8 +310,32 @@ export default function DashboardScreen({ sport, setSport, onOpenMatch, onOpenPl
           </div>
         </div>
 
-        {/* League Standings — same as web dashboard */}
-        {(standingsLoading || standings.length > 0) && (
+        {/* World Cup Standings (football only) */}
+        {isFootball && (wcSectionLoading || showWcGroups || showWcBracket) && (
+          <div>
+            <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 12 }}>
+              <div style={{ fontFamily: 'var(--display)', fontWeight: 800, fontSize: 20, color: 'var(--ink)', letterSpacing: '-0.02em' }}>
+                FIFA World Cup
+              </div>
+              <span style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--orange)', fontWeight: 700 }}>{wcStandings?.season ?? ''}</span>
+            </div>
+            {wcSectionLoading ? (
+              <SkeletonList count={5}>{i => <SkeletonTableRow style={{ '--i': i } as React.CSSProperties} />}</SkeletonList>
+            ) : (
+              <>
+                {showWcGroups && (
+                  <MobileWCGroupsGrid groups={wcStandings!.groups!} leagueName={wcStandings!.leagueName} />
+                )}
+                {showWcBracket && (
+                  <MobileKnockoutBracket rounds={wcRounds} leagueName={wcStandings?.leagueName ?? 'FIFA World Cup'} />
+                )}
+              </>
+            )}
+          </div>
+        )}
+
+        {/* League Standings (non-football sports) */}
+        {!isFootball && (standingsLoading || standings.length > 0) && (
           <div>
             <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 12 }}>
               <div style={{ fontFamily: 'var(--display)', fontWeight: 800, fontSize: 20, color: 'var(--ink)', letterSpacing: '-0.02em' }}>Standings</div>

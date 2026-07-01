@@ -108,9 +108,17 @@ const STANDINGS_PATHS: Record<string, { path: string; leagueName: string }> = {
   "ufc":   { path: "mma/ufc",         leagueName: "UFC" },
 };
 
-// Sport → leagues to show standings for
+// Sport → leagues to show standings for (international first for user engagement)
 const SPORT_LEAGUES: Record<string, string[]> = {
   football: [
+    // International first
+    "fifa.world", "fifa.worldq.uefa", "fifa.worldq.conmebol",
+    "uefa.euro", "conmebol.america", "caf.nations", "concacaf.gold",
+    "uefa.nations",
+    // European cups
+    "uefa.champions", "uefa.europa", "uefa.europa_conf",
+    // American cups
+    "conmebol.libertadores",
     // Top 5
     "eng.1", "esp.1", "ger.1", "ita.1", "fra.1",
     // More European
@@ -119,15 +127,8 @@ const SPORT_LEAGUES: Record<string, string[]> = {
     "usa.1", "mex.1", "bra.1", "arg.1",
     // Asia
     "jpn.1", "ksa.1", "idn.1",
-    // European cups
-    "uefa.champions", "uefa.europa", "uefa.europa_conf",
-    // American cups
-    "conmebol.libertadores",
-    // International
-    "fifa.world", "fifa.worldq.uefa", "fifa.worldq.conmebol",
-    "uefa.euro", "conmebol.america", "caf.nations", "concacaf.gold",
-    "uefa.nations",
   ],
+  cricket: ["icc.t20wc", "icc.champions", "ipl", "psl", "big.bash", "sa.domestic", "cplt20"],
   basketball: ["nba", "wnba", "ncaab", "ncaaw", "nba.gl"],
   nfl: ["nfl"],
   hockey: ["nhl"],
@@ -136,7 +137,6 @@ const SPORT_LEAGUES: Record<string, string[]> = {
   f1: ["f1"],
   golf: ["pga"],
   mma: ["ufc"],
-  cricket: ["ipl", "psl", "big.bash", "sa.domestic", "cplt20", "icc.t20wc", "icc.champions"],
 };
 
 // ─── stat helper ─────────────────────────────────────────────────────────────

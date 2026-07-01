@@ -26,25 +26,31 @@ async function loadFlags(): Promise<AdminFlags> {
   }
 
   try {
-    const { data, error } = await supabaseAdmin
-      .from("admin_flags")
-      .select("flags")
-      .eq("id", 1)
-      .single();
-
-    if (error || !data) {
-      logger.warn("admin_flags table not found or empty, using defaults");
+    // Guard: if Supabase env vars are missing, skip DB and use defaults
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      logger.warn("Supabase not configured, using default flags");
       cachedFlags = { ...DEFAULT_FLAGS };
     } else {
-      const stored = (data.flags ?? {}) as Partial<AdminFlags>;
-      cachedFlags = {
-        ...DEFAULT_FLAGS,
-        ...stored,
-        sports: { ...DEFAULT_FLAGS.sports, ...(stored.sports ?? {}) },
-        features: { ...DEFAULT_FLAGS.features, ...(stored.features ?? {}) },
-        pageViews: stored.pageViews ?? DEFAULT_FLAGS.pageViews,
-        activityLog: stored.activityLog ?? DEFAULT_FLAGS.activityLog,
-      };
+      const { data, error } = await supabaseAdmin
+        .from("admin_flags")
+        .select("flags")
+        .eq("id", 1)
+        .single();
+
+      if (error || !data) {
+        logger.warn("admin_flags table not found or empty, using defaults");
+        cachedFlags = { ...DEFAULT_FLAGS };
+      } else {
+        const stored = (data.flags ?? {}) as Partial<AdminFlags>;
+        cachedFlags = {
+          ...DEFAULT_FLAGS,
+          ...stored,
+          sports: { ...DEFAULT_FLAGS.sports, ...(stored.sports ?? {}) },
+          features: { ...DEFAULT_FLAGS.features, ...(stored.features ?? {}) },
+          pageViews: stored.pageViews ?? DEFAULT_FLAGS.pageViews,
+          activityLog: stored.activityLog ?? DEFAULT_FLAGS.activityLog,
+        };
+      }
     }
   } catch {
     logger.warn("Failed to load admin flags from DB, using defaults");
@@ -57,16 +63,22 @@ async function loadFlags(): Promise<AdminFlags> {
 
 /** Write flags to Supabase */
 async function saveFlags(flags: AdminFlags): Promise<void> {
+  // Update cache immediately regardless of DB result
+  cachedFlags = flags;
+  cacheTime = Date.now();
+
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    logger.warn("Supabase not configured, flags saved to in-memory cache only");
+    return;
+  }
+
   try {
     await supabaseAdmin
       .from("admin_flags")
       .upsert({ id: 1, flags, updated_at: new Date().toISOString() });
   } catch {
-    logger.warn("Failed to save admin flags to DB");
+    logger.warn("Failed to save admin flags to DB, using in-memory cache");
   }
-  // Update cache immediately
-  cachedFlags = flags;
-  cacheTime = Date.now();
 }
 
 // Public read

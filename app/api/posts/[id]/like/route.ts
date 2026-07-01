@@ -22,6 +22,12 @@ export async function POST(
 
   if (error) {
     logger.error("post like failed", { postId: id, code: error.code });
+    if (error.code === "23503") {
+      return NextResponse.json(
+        { error: "Database migration needed. Run the user_id fix migration." },
+        { status: 503 }
+      );
+    }
     return NextResponse.json({ error: "Failed to toggle like" }, { status: 500 });
   }
 

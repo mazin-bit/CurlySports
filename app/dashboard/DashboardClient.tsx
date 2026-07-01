@@ -7,10 +7,12 @@ import styles from "./dashboard.module.css";
 import { Zap, Newspaper, Trophy, ArrowRightLeft, CircleDot, ChevronRight, Radio } from "lucide-react";
 import { useScoresStream } from "@/hooks/useScoresStream";
 import { useNews } from "@/hooks/useNews";
-import { useStandings } from "@/hooks/useStandings";
+import { useStandings, useSingleStandings } from "@/hooks/useStandings";
+import { useBracket } from "@/hooks/useBracket";
+import type { BracketRound, BracketMatch } from "@/hooks/useBracket";
 import { useActiveSport } from "@/contexts/SportContext";
 import type { NormalizedMatch, NormalizedNews } from "@/lib/types";
-import type { StandingEntry } from "@/hooks/useStandings";
+import type { StandingEntry, GroupStandings } from "@/hooks/useStandings";
 
 /* ── Helpers ─────────────────────────────────────────────────── */
 function toDateKey(d: Date) {
@@ -206,6 +208,115 @@ function StandingsTable({ entries, leagueName, max = 8 }: { entries: StandingEnt
   );
 }
 
+/* ── World Cup Groups Grid ──────────────────────────────────── */
+function WorldCupGroupsGrid({ groups, leagueName }: { groups: GroupStandings[]; leagueName: string }) {
+  return (
+    <div>
+      <div className={styles.wcHeader}>
+        <span className={styles.wcTitle}>{leagueName} — Group Stage</span>
+      </div>
+      <div className={styles.wcGroupsGrid}>
+        {groups.map((g) => (
+          <div key={g.groupName} className={styles.wcGroupCard}>
+            <div className={styles.wcGroupTitle}>{g.groupName}</div>
+            <div className={styles.wcGroupHead}>
+              <span className={styles.wcColTeam}>Team</span>
+              <span className={styles.wcColStat}>P</span>
+              <span className={styles.wcColStat}>W</span>
+              <span className={styles.wcColStat}>L</span>
+              <span className={styles.wcColStatPts}>Pts</span>
+            </div>
+            {g.entries.slice(0, 4).map((row, idx) => (
+              <div key={row.teamId || idx} className={styles.wcTeamRow}>
+                <span className={styles.wcRank} style={{ color: idx < 2 ? "var(--accent)" : "var(--text-mute)" }}>
+                  {row.rank || idx + 1}
+                </span>
+                <div className={styles.wcTeamInfo}>
+                  {row.teamLogo ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={row.teamLogo} alt={row.teamAbbr} width={20} height={20} style={{ objectFit: "contain", flexShrink: 0 }} />
+                  ) : (
+                    <div className="crest" style={{ width: 20, height: 20, fontSize: 7 }}>{row.teamAbbr.slice(0, 3)}</div>
+                  )}
+                  <span className={styles.wcTeamName}>{row.teamAbbr}</span>
+                </div>
+                <span className={styles.wcStat}>{row.gamesPlayed}</span>
+                <span className={styles.wcStat}>{row.wins}</span>
+                <span className={styles.wcStat}>{row.losses}</span>
+                <span className={styles.wcStatPts}>{row.points}</span>
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ── Dashboard Knockout Bracket ──────────────────────────────── */
+function DashKnockoutMatch({ match }: { match: BracketMatch }) {
+  const isFinished = match.status.includes("FINAL") || match.status.includes("FULL_TIME") || match.status.includes("FT");
+  const hasScore = match.home.score !== null && match.away.score !== null;
+  const homeWin = match.home.winner;
+  const awayWin = match.away.winner;
+
+  return (
+    <div className={styles.koMatch}>
+      <div className={`${styles.koTeam}${homeWin ? " " + styles.koWinner : ""}`}>
+        <div className={styles.koTeamInfo}>
+          {match.home.logo && !match.home.isPlaceholder ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={match.home.logo} alt={match.home.shortName} width={18} height={18} style={{ objectFit: "contain", flexShrink: 0 }} />
+          ) : (
+            <div className={styles.koLogoPh}>{match.home.shortName?.slice(0, 3) ?? "?"}</div>
+          )}
+          <span className={match.home.isPlaceholder ? styles.koTeamPh : undefined}>{match.home.shortName}</span>
+        </div>
+        <span className={`${styles.koScore}${homeWin ? " " + styles.koScoreWin : ""}`}>
+          {hasScore ? match.home.score : "–"}
+        </span>
+      </div>
+      <div className={`${styles.koTeam}${awayWin ? " " + styles.koWinner : ""}`}>
+        <div className={styles.koTeamInfo}>
+          {match.away.logo && !match.away.isPlaceholder ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={match.away.logo} alt={match.away.shortName} width={18} height={18} style={{ objectFit: "contain", flexShrink: 0 }} />
+          ) : (
+            <div className={styles.koLogoPh}>{match.away.shortName?.slice(0, 3) ?? "?"}</div>
+          )}
+          <span className={match.away.isPlaceholder ? styles.koTeamPh : undefined}>{match.away.shortName}</span>
+        </div>
+        <span className={`${styles.koScore}${awayWin ? " " + styles.koScoreWin : ""}`}>
+          {hasScore ? match.away.score : "–"}
+        </span>
+      </div>
+      {isFinished && match.statusDisplay && (
+        <div className={styles.koResult}>{match.statusDisplay}</div>
+      )}
+    </div>
+  );
+}
+
+function DashKnockoutBracket({ rounds, leagueName }: { rounds: BracketRound[]; leagueName: string }) {
+  if (rounds.length === 0) return null;
+
+  return (
+    <div className={styles.koSection}>
+      <div className={styles.koSectionTitle}>Knockout Stage</div>
+      {rounds.map((round) => (
+        <div key={round.name} className={styles.koRound}>
+          <div className={styles.koRoundName}>{round.name}</div>
+          <div className={styles.koMatchGrid}>
+            {round.matches.map((m) => (
+              <DashKnockoutMatch key={m.id} match={m} />
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 /* ── Upcoming matches hook ───────────────────────────────────── */
 function useUpcomingMatches(sport: string, todayKey: string, skip: boolean) {
   const [upcoming, setUpcoming] = useState<{ matches: NormalizedMatch[]; dateLabel: string } | null>(null);
@@ -260,7 +371,14 @@ export default function DashboardClient() {
   const scoresValidating = !scoresConnected && groups.length > 0;
 
   const { articles, isLoading: newsLoading } = useNews(12, activeSport);
-  const { standings, isLoading: standingsLoading } = useStandings(activeSport);
+
+  // Football: show World Cup groups + knockout bracket
+  const isFootball = activeSport === "football";
+  const { standings: wcStandings, isLoading: wcLoading } = useSingleStandings(isFootball ? "fifa.world" : null);
+  const { rounds: wcRounds, isLoading: bracketLoading } = useBracket(isFootball ? "fifa.world" : null);
+
+  // Other sports: show regular standings
+  const { standings, isLoading: standingsLoading } = useStandings(isFootball ? undefined : activeSport);
 
   const allMatches = groups.flatMap((g) => g.matches).sort((a, b) => {
     const p = (s: string) => (s === "LIVE" ? 0 : s === "HALF_TIME" ? 1 : s === "SCHEDULED" ? 2 : 3);
@@ -275,7 +393,12 @@ export default function DashboardClient() {
   const noMatchesToday = !scoresLoading && allMatches.length === 0;
   const upcomingData = useUpcomingMatches(activeSport, todayKey, !noMatchesToday);
 
-  const featuredStandings = standings[0];
+  const featuredStandings = isFootball ? null : standings[0];
+
+  // Football: World Cup data ready?
+  const showWcGroups = isFootball && wcStandings && wcStandings.hasGroups && wcStandings.groups && wcStandings.groups.length > 0;
+  const showWcBracket = isFootball && wcRounds.length > 0;
+  const wcSectionLoading = isFootball && (wcLoading || bracketLoading);
 
   return (
     <>
@@ -371,8 +494,45 @@ export default function DashboardClient() {
         ) : null}
       </section>
 
-      {/* League Standings */}
-      {(standingsLoading || featuredStandings) && (
+      {/* World Cup Standings (football only) */}
+      {isFootball && (wcSectionLoading || showWcGroups || showWcBracket) && (
+        <section className="section">
+          <div className="sec-head">
+            <div>
+              <div className="title">
+                <Trophy size={17} className="title-icon" strokeWidth={2} />
+                {activeSportConfig.icon} FIFA World Cup <span className="accent">Standings</span>
+              </div>
+              <div className="sub">{wcStandings?.season}</div>
+            </div>
+            <Link href="/leagues" className={styles.viewAll}>
+              Full table <ChevronRight size={13} strokeWidth={2.5} />
+            </Link>
+          </div>
+
+          {wcSectionLoading ? (
+            <div className="skeleton-row" style={{ height: 320, borderRadius: 12 }} />
+          ) : (
+            <>
+              {showWcGroups && (
+                <WorldCupGroupsGrid
+                  groups={wcStandings!.groups!}
+                  leagueName={wcStandings!.leagueName}
+                />
+              )}
+              {showWcBracket && (
+                <DashKnockoutBracket
+                  rounds={wcRounds}
+                  leagueName={wcStandings?.leagueName ?? "FIFA World Cup"}
+                />
+              )}
+            </>
+          )}
+        </section>
+      )}
+
+      {/* League Standings (non-football sports) */}
+      {!isFootball && (standingsLoading || featuredStandings) && (
         <section className="section">
           <div className="sec-head">
             <div>
@@ -391,15 +551,24 @@ export default function DashboardClient() {
             <div className="skeleton-row" style={{ height: 320, borderRadius: 12 }} />
           ) : featuredStandings ? (
             <>
-              <StandingsTable
-                entries={featuredStandings.entries}
-                leagueName={featuredStandings.leagueName}
-              />
-              {standings[1] && (
-                <StandingsTable
-                  entries={standings[1].entries}
-                  leagueName={standings[1].leagueName}
+              {featuredStandings.hasGroups && featuredStandings.groups && featuredStandings.groups.length > 0 ? (
+                <WorldCupGroupsGrid
+                  groups={featuredStandings.groups}
+                  leagueName={featuredStandings.leagueName}
                 />
+              ) : (
+                <>
+                  <StandingsTable
+                    entries={featuredStandings.entries}
+                    leagueName={featuredStandings.leagueName}
+                  />
+                  {standings[1] && (
+                    <StandingsTable
+                      entries={standings[1].entries}
+                      leagueName={standings[1].leagueName}
+                    />
+                  )}
+                </>
               )}
             </>
           ) : null}

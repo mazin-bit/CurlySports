@@ -205,7 +205,7 @@ function AppInner() {
   if      (tab === 'home')      screen = <DashboardScreen sport={sport} setSport={setSport} onOpenMatch={openMatch} onOpenPlayer={openPlayer} fav={fav} {...nav} />;
   else if (tab === 'live')      screen = <LiveScoresScreen sport={sport} setSport={setSport} onOpenMatch={openMatch} {...nav} />;
   else if (tab === 'funzone')   screen = <DebatesScreen sport={sport} onOpenPlayer={openPlayer} {...nav} />;
-  else if (tab === 'leagues')   screen = <LeaguesScreen sport={sport} onOpenPlayer={openPlayer} {...nav} />;
+  else if (tab === 'leagues')   screen = <LeaguesScreen sport={sport} setSport={setSport} onOpenPlayer={openPlayer} {...nav} />;
   else if (tab === 'profile')   screen = <ProfileScreen fav={fav} {...nav} />;
   else if (tab === 'news')      screen = <NewsScreen sport={sport} setSport={setSport} {...nav} />;
   else if (tab === 'teams')     screen = <TeamsScreen sport={sport} setSport={setSport} onOpenPlayer={openPlayer} {...nav} />;

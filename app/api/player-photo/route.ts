@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
-// In-memory cache: name → photo URL or null (null = confirmed not found)
+// In-memory cache: "name:sport" → photo URL or null (null = confirmed not found)
 const cache = new Map<string, string | null>();
 const CACHE_MAX = 5000;
 
@@ -10,13 +10,67 @@ function wikify(name: string): string {
   return name.trim().replace(/ /g, "_");
 }
 
-async function lookupWikipedia(name: string): Promise<string | null> {
-  const candidates = [
-    name,
-    `${name} (footballer)`,
-    `${name} (soccer)`,
-    `${name} (association football)`,
-  ];
+// Sport-specific keywords for validating Wikipedia articles
+const SPORT_KEYWORDS: Record<string, string[]> = {
+  football: [
+    "football", "soccer", "footballer", "player", "goalkeeper",
+    "defender", "midfielder", "forward", "winger", "striker",
+    "association football", "soccer player",
+  ],
+  basketball: [
+    "basketball", "nba", "wnba", "guard", "center", "power forward",
+    "point guard", "shooting guard", "small forward", "basketball player",
+  ],
+  cricket: [
+    "cricket", "cricketer", "batsman", "batter", "bowler",
+    "wicket-keeper", "all-rounder", "cricket player",
+  ],
+  nfl: [
+    "football", "nfl", "quarterback", "wide receiver", "running back",
+    "linebacker", "cornerback", "tight end", "american football",
+  ],
+  hockey: [
+    "ice hockey", "hockey", "nhl", "goaltender", "defenceman",
+    "defenseman", "hockey player",
+  ],
+  baseball: [
+    "baseball", "mlb", "pitcher", "catcher", "baseman",
+    "shortstop", "outfielder", "baseball player",
+  ],
+  tennis: [
+    "tennis", "atp", "wta", "tennis player",
+  ],
+  f1: [
+    "racing", "formula one", "formula 1", "f1", "racing driver",
+    "motorsport",
+  ],
+  mma: [
+    "mixed martial arts", "mma", "ufc", "martial artist", "fighter",
+  ],
+  golf: [
+    "golf", "golfer", "pga", "golf player",
+  ],
+};
+
+// Sport-specific Wikipedia disambiguation suffixes
+const SPORT_SUFFIXES: Record<string, string[]> = {
+  football: ["(footballer)", "(soccer)", "(association football)"],
+  basketball: ["(basketball)", "(basketball player)"],
+  cricket: ["(cricketer)", "(cricket)"],
+  nfl: ["(American football)", "(gridiron football)"],
+  hockey: ["(ice hockey)", "(hockey)"],
+  baseball: ["(baseball)", "(baseball player)"],
+  tennis: ["(tennis)", "(tennis player)"],
+  f1: ["(racing driver)", "(motorsport)"],
+  mma: ["(fighter)", "(martial artist)"],
+  golf: ["(golfer)"],
+};
+
+async function lookupWikipedia(name: string, sport: string): Promise<string | null> {
+  const suffixes = SPORT_SUFFIXES[sport] ?? SPORT_SUFFIXES.football;
+  const keywords = SPORT_KEYWORDS[sport] ?? SPORT_KEYWORDS.football;
+
+  const candidates = [name, ...suffixes.map(s => `${name} ${s}`)];
 
   for (const candidate of candidates) {
     try {
@@ -25,25 +79,15 @@ async function lookupWikipedia(name: string): Promise<string | null> {
       if (!r.ok) continue;
       const d = await r.json();
 
-      // Verify it's a person (not a disambiguation page or unrelated article)
       const desc: string = (d.description ?? "").toLowerCase();
       const extract: string = (d.extract ?? "").toLowerCase();
       const type: string = d.type ?? "";
 
       if (type === "disambiguation") continue;
 
-      const isPlayer =
-        desc.includes("football") || desc.includes("soccer") ||
-        desc.includes("footballer") || desc.includes("player") ||
-        desc.includes("goalkeeper") || desc.includes("defender") ||
-        desc.includes("midfielder") || desc.includes("forward") ||
-        desc.includes("winger") || desc.includes("striker") ||
-        extract.includes("footballer") || extract.includes("soccer player") ||
-        extract.includes("association football");
+      // Always validate that this Wikipedia article is about a sports person
+      const isPlayer = keywords.some(kw => desc.includes(kw) || extract.includes(kw));
 
-      // For exact name match (first candidate), only require a thumbnail
-      // For disambiguation variants, require footballer description
-      if (candidate === name && d.thumbnail?.source) return d.thumbnail.source;
       if (isPlayer && d.thumbnail?.source) return d.thumbnail.source;
     } catch {
       // continue to next candidate
@@ -54,25 +98,29 @@ async function lookupWikipedia(name: string): Promise<string | null> {
 
 export async function GET(req: NextRequest) {
   const name = req.nextUrl.searchParams.get("name")?.trim() ?? "";
+  const sport = req.nextUrl.searchParams.get("sport")?.trim() ?? "football";
+
   if (!name || name.length < 2) {
     return NextResponse.json({ error: "name required" }, { status: 400 });
   }
 
+  const cacheKey = `${name}:${sport}`;
+
   // Return cached result
-  if (cache.has(name)) {
-    const url = cache.get(name);
+  if (cache.has(cacheKey)) {
+    const url = cache.get(cacheKey);
     if (!url) return NextResponse.json({ error: "not found" }, { status: 404 });
     return NextResponse.redirect(url, { status: 302 });
   }
 
-  const photoUrl = await lookupWikipedia(name);
+  const photoUrl = await lookupWikipedia(name, sport);
 
   // Trim cache if too large
   if (cache.size >= CACHE_MAX) {
     const firstKey = cache.keys().next().value;
     if (firstKey !== undefined) cache.delete(firstKey);
   }
-  cache.set(name, photoUrl ?? null);
+  cache.set(cacheKey, photoUrl ?? null);
 
   if (!photoUrl) {
     return NextResponse.json({ error: "not found" }, { status: 404 });

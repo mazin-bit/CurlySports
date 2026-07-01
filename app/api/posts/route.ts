@@ -99,7 +99,14 @@ export async function POST(req: NextRequest) {
     .single();
 
   if (error) {
-    logger.error("post create failed", { code: error.code });
+    logger.error("post create failed", { code: error.code, message: error.message });
+    // FK constraint violation means posts.user_id still references auth.users
+    if (error.code === "23503") {
+      return NextResponse.json(
+        { error: "Database migration needed. Run the user_id fix migration in Supabase SQL editor." },
+        { status: 503 }
+      );
+    }
     return NextResponse.json({ error: "Failed to create post" }, { status: 500 });
   }
 

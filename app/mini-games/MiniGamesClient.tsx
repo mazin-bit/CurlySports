@@ -3,124 +3,28 @@
 import AppShell from "@/components/AppShell";
 import { useState, useEffect, useRef, useCallback } from "react";
 import styles from "./mini-games.module.css";
-import { Medal, Gamepad2, HelpCircle, Zap, RefreshCw, CheckCircle, XCircle, User, Trophy, Search, Clock } from "lucide-react";
+import { Medal, Gamepad2, HelpCircle, Zap, RefreshCw, CheckCircle, XCircle, User, Trophy, Search, Clock, Target, Shield, CircleDot, Timer, Disc } from "lucide-react";
 import { useActiveSport } from "@/contexts/SportContext";
+import { QUIZ_DATA } from "./quiz-data";
+import { PLAYER_GUESSES } from "./player-guess-data";
 
-/* ── Quiz data ──────────────────────────────────────────────── */
+/* ── Helper: shuffle + pick N questions from pool ──────────── */
 
-const QUIZ_DATA: Record<string, { q: string; options: string[]; answer: number }[]> = {
-  football: [
-    { q: "Who won the 2024 UEFA Champions League?", options: ["Real Madrid", "Bayern Munich", "Arsenal", "PSG"], answer: 0 },
-    { q: "Which club has won the most Premier League titles?", options: ["Liverpool", "Manchester City", "Manchester United", "Arsenal"], answer: 2 },
-    { q: "How many players are on a football team on the pitch?", options: ["10", "11", "12", "9"], answer: 1 },
-    { q: "Which country won the 2022 FIFA World Cup?", options: ["Brazil", "France", "Argentina", "Germany"], answer: 2 },
-    { q: "Who is the all-time top scorer in Champions League history?", options: ["Messi", "Ronaldo", "Lewandowski", "Müller"], answer: 1 },
-    { q: "What shape is a football pitch?", options: ["Square", "Circle", "Rectangle", "Oval"], answer: 2 },
-  ],
-  basketball: [
-    { q: "How many players are on a basketball team on the court?", options: ["4", "5", "6", "7"], answer: 1 },
-    { q: "Which team has the most NBA championships?", options: ["Lakers", "Celtics", "Bulls", "Warriors"], answer: 1 },
-    { q: "How high is a standard basketball hoop?", options: ["8 feet", "9 feet", "10 feet", "11 feet"], answer: 2 },
-    { q: "Who scored 100 points in a single NBA game?", options: ["Michael Jordan", "Kobe Bryant", "Wilt Chamberlain", "LeBron James"], answer: 2 },
-    { q: "How long is a standard NBA game?", options: ["40 min", "48 min", "60 min", "36 min"], answer: 1 },
-  ],
-  nfl: [
-    { q: "How many points is a touchdown worth?", options: ["3", "6", "7", "4"], answer: 1 },
-    { q: "Which team has the most Super Bowl wins?", options: ["New England Patriots", "Dallas Cowboys", "San Francisco 49ers", "Pittsburgh Steelers"], answer: 0 },
-    { q: "How many players are on the field per team in NFL?", options: ["9", "11", "12", "10"], answer: 1 },
-    { q: "How long is a standard NFL game in quarters?", options: ["Two 30-min", "Four 15-min", "Three 20-min", "Two 25-min"], answer: 1 },
-  ],
-  cricket: [
-    { q: "How many players are in a cricket team?", options: ["9", "10", "11", "12"], answer: 2 },
-    { q: "Which country has won the most Cricket World Cups?", options: ["India", "Australia", "West Indies", "England"], answer: 1 },
-    { q: "What is it called when a bowler takes 3 wickets in 3 balls?", options: ["Triple play", "Hat-trick", "Perfect over", "Golden wickets"], answer: 1 },
-    { q: "How many balls in a standard cricket over?", options: ["4", "5", "6", "8"], answer: 2 },
-  ],
-  tennis: [
-    { q: "How many Grand Slams are there in tennis?", options: ["2", "3", "4", "5"], answer: 2 },
-    { q: "What is the term for a score of 40-40 in tennis?", options: ["Tie", "Deuce", "Love", "Break"], answer: 1 },
-    { q: "Which Grand Slam is played on clay?", options: ["Wimbledon", "US Open", "Roland Garros", "Australian Open"], answer: 2 },
-    { q: "What is the score called when a player wins 0 points in tennis?", options: ["Zero", "Nil", "Love", "None"], answer: 2 },
-  ],
-  f1: [
-    { q: "How many points does a race winner get in F1?", options: ["15", "20", "25", "30"], answer: 2 },
-    { q: "Which constructor has the most F1 championships?", options: ["McLaren", "Mercedes", "Ferrari", "Red Bull"], answer: 2 },
-    { q: "Which driver has the most F1 World Championships?", options: ["Ayrton Senna", "Michael Schumacher", "Lewis Hamilton", "Sebastian Vettel"], answer: 2 },
-    { q: "What does DRS stand for in F1?", options: ["Drag Reduction System", "Dynamic Race Speed", "Driver Response System", "Dual Racing Speed"], answer: 0 },
-  ],
-  mma: [
-    { q: "What does MMA stand for?", options: ["Multiple Martial Arts", "Mixed Martial Arts", "Modern Martial Arts", "Major Martial Arts"], answer: 1 },
-    { q: "How many rounds in a non-title UFC fight?", options: ["2", "3", "4", "5"], answer: 1 },
-    { q: "What organization is the largest MMA promoter?", options: ["Bellator", "ONE Championship", "UFC", "PFL"], answer: 2 },
-    { q: "What is it called when a fighter gives up by tapping?", options: ["Knockout", "TKO", "Submission", "DQ"], answer: 2 },
-  ],
-  baseball: [
-    { q: "How many innings in a standard baseball game?", options: ["7", "8", "9", "10"], answer: 2 },
-    { q: "Which team has the most World Series titles?", options: ["Red Sox", "Yankees", "Dodgers", "Cardinals"], answer: 1 },
-    { q: "How many strikes to strike out a batter?", options: ["2", "3", "4", "5"], answer: 1 },
-    { q: "What is a 'perfect game' in baseball?", options: ["No hits allowed", "No runs scored", "No baserunners in 27 outs", "Hitting 4 home runs"], answer: 2 },
-  ],
-  golf: [
-    { q: "What is a score of 1 under par called?", options: ["Eagle", "Birdie", "Bogey", "Albatross"], answer: 1 },
-    { q: "How many holes in a standard round of golf?", options: ["9", "12", "18", "21"], answer: 2 },
-    { q: "What is a score of 2 under par called?", options: ["Birdie", "Eagle", "Albatross", "Condor"], answer: 1 },
-    { q: "Which surface is Wimbledon played on?", options: ["Clay", "Hard", "Grass", "Carpet"], answer: 2 },
-  ],
-  hockey: [
-    { q: "How many players per team on the ice in NHL (excl. goalie)?", options: ["4", "5", "6", "7"], answer: 1 },
-    { q: "Which team has won the most Stanley Cup championships?", options: ["Montreal Canadiens", "Toronto Maple Leafs", "Detroit Red Wings", "Boston Bruins"], answer: 0 },
-    { q: "How many periods in a standard NHL game?", options: ["2", "3", "4", "5"], answer: 1 },
-    { q: "What is a hat trick in hockey?", options: ["3 assists in one game", "3 goals in one game", "3 saves", "3 penalties"], answer: 1 },
-  ],
-};
+function shuffleArray<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
 
-/* ── Player Guess data ──────────────────────────────────────── */
+function pickQuestions(sport: string, count = 10) {
+  const pool = QUIZ_DATA[sport] ?? QUIZ_DATA.football;
+  const shuffled = shuffleArray(pool);
+  return shuffled.slice(0, Math.min(count, shuffled.length));
+}
 
-const PLAYER_GUESSES: Record<string, { clues: string[]; answer: string }[]> = {
-  football: [
-    { clues: ["Born in 1987 in Rosario, Argentina", "Has won 8 Ballon d'Or awards", "Scored 91 goals in calendar year 2012", "Currently plays for Inter Miami"], answer: "Lionel Messi" },
-    { clues: ["Portuguese forward, born 1985", "Has scored 900+ career goals", "Won 5 UEFA Champions Leagues", "Currently plays in Saudi Arabia"], answer: "Cristiano Ronaldo" },
-    { clues: ["Norwegian centre-forward", "Scored 36 Premier League goals in 22/23", "Plays for Manchester City"], answer: "Erling Haaland" },
-    { clues: ["French forward, born 2 Feb 1998", "Won the 2018 FIFA World Cup at age 19", "Most expensive transfer in history at the time", "Now plays for Real Madrid"], answer: "Kylian Mbappé" },
-  ],
-  basketball: [
-    { clues: ["Born in Akron, Ohio in 1984", "Nicknamed 'The King'", "Won 4 NBA championships with 3 different teams", "His son LeBron Jr is also in the NBA"], answer: "LeBron James" },
-    { clues: ["Plays for the Golden State Warriors", "Nicknamed 'Chef Curry' for his shooting", "Holds the NBA record for 3-pointers made", "Won 4 NBA championships"], answer: "Stephen Curry" },
-    { clues: ["Serbian point guard, born 1989", "6x NBA Most Valuable Player", "Known for his footwork and playmaking", "Plays for the Oklahoma City Thunder"], answer: "Nikola Jokic" },
-  ],
-  nfl: [
-    { clues: ["Quarterback for the Kansas City Chiefs", "Son of former NFL pitcher Pat Mahomes Sr", "Youngest player to win the NFL MVP award", "Won 3 Super Bowls"], answer: "Patrick Mahomes" },
-    { clues: ["Won 7 Super Bowl rings", "Played for the Patriots and Buccaneers", "Nicknamed 'GOAT'", "Retired in 2023 at age 45"], answer: "Tom Brady" },
-  ],
-  cricket: [
-    { clues: ["Indian batsman, born 5 Nov 1988", "Has scored 50+ Test centuries", "Nicknamed 'King Kohli'", "Married to actress Anushka Sharma"], answer: "Virat Kohli" },
-    { clues: ["Indian wicket-keeper, born 1981", "Won the 2011 Cricket World Cup as captain", "Known as 'Captain Cool'", "Famous for finishing matches with sixes"], answer: "MS Dhoni" },
-  ],
-  tennis: [
-    { clues: ["Serbian tennis player, born 1987", "Holds the record for most Grand Slam singles titles", "Known as 'Nole'", "Career Grand Slam winner on all surfaces"], answer: "Novak Djokovic" },
-    { clues: ["Spanish tennis player, born 1986", "King of clay, won Roland Garros 14 times", "Won 22 Grand Slams", "Nicknamed 'The Bull'"], answer: "Rafael Nadal" },
-  ],
-  f1: [
-    { clues: ["Dutch racing driver", "Won 3 consecutive F1 World Championships (2021-2023)", "Drives the Red Bull RB", "His father Jos Verstappen also raced in F1"], answer: "Max Verstappen" },
-    { clues: ["British driver, born 1985", "Holds the record for most F1 World Championships (7)", "Drives for Mercedes", "Raised in Stevenage, England"], answer: "Lewis Hamilton" },
-  ],
-  mma: [
-    { clues: ["American fighter, born 1987", "Nicknamed 'Bones'", "Undefeated in official UFC title fights", "Former UFC Light Heavyweight Champion"], answer: "Jon Jones" },
-    { clues: ["Irish fighter, born 1988", "First fighter to hold two UFC championships simultaneously", "Known as 'The Notorious'", "Famous for KO wins and trash talk"], answer: "Conor McGregor" },
-  ],
-  baseball: [
-    { clues: ["Japanese-born pitcher and designated hitter", "First player since Babe Ruth to be elite at both pitching and hitting", "Won the AL MVP in 2021 and 2023", "Plays for the LA Dodgers"], answer: "Shohei Ohtani" },
-    { clues: ["Known as 'The Great Bambino'", "Hit 714 career home runs", "Also an elite pitcher before switching to hitting", "Played for the New York Yankees"], answer: "Babe Ruth" },
-  ],
-  golf: [
-    { clues: ["American golfer, born 1975", "Won 15 Major championships", "Returned from serious injuries to win the 2019 Masters", "Changed golf forever with his dominance"], answer: "Tiger Woods" },
-    { clues: ["Northern Irish golfer", "Has won 4 Major championships", "Known as 'Rors'", "Plays in the PGA Tour and DP World Tour"], answer: "Rory McIlroy" },
-  ],
-  hockey: [
-    { clues: ["Canadian centre, born 1997", "Plays for the Edmonton Oilers", "2x Hart Trophy winner", "Consistently wins the NHL fastest skater competition"], answer: "Connor McDavid" },
-    { clues: ["Known as 'The Great One'", "Has more assists than any other player has total points", "Played for the Oilers and Kings", "Scored 894 career goals"], answer: "Wayne Gretzky" },
-  ],
-};
 
 /* ── Score Predictor data ────────────────────────────────────── */
 
@@ -143,7 +47,7 @@ const PREDICT_MATCHES: Record<string, { home: string; away: string; league: stri
 
 /* ── Score submit helper ─────────────────────────────────────── */
 
-async function submitScore(game_type: "quiz" | "player_guess", sport: string, score: number) {
+async function submitScore(game_type: string, sport: string, score: number) {
   try {
     await fetch("/api/game-scores", {
       method: "POST",
@@ -156,9 +60,10 @@ async function submitScore(game_type: "quiz" | "player_guess", sport: string, sc
 /* ── Timed Quiz ──────────────────────────────────────────────── */
 
 const QUIZ_TIME = 15;
+const DIFF_POINTS: Record<string, number> = { easy: 10, medium: 15, hard: 20 };
 
 function QuizGame({ sport, onComplete }: { sport: string; onComplete: (score: number) => void }) {
-  const questions = QUIZ_DATA[sport] ?? QUIZ_DATA.football;
+  const [questions] = useState(() => pickQuestions(sport, 10));
   const [qIdx, setQIdx] = useState(0);
   const [score, setScore] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
@@ -208,8 +113,9 @@ function QuizGame({ sport, onComplete }: { sport: string; onComplete: (score: nu
     clearInterval(timerRef.current);
     setSelected(i);
     if (i === current.answer) {
+      const base = DIFF_POINTS[current.difficulty ?? "easy"] ?? 10;
       const bonus = timeLeft > 10 ? 5 : timeLeft > 5 ? 3 : 0;
-      setScore(s => s + 10 + bonus);
+      setScore(s => s + base + bonus);
     }
     setTimeout(() => advanceRef.current(), 1200);
   };
@@ -249,6 +155,9 @@ function QuizGame({ sport, onComplete }: { sport: string; onComplete: (score: nu
       </div>
       <div className={styles.quizMeta}>
         <span className={styles.quizNum}>Q{qIdx + 1} / {questions.length}</span>
+        <span className={`${styles.diffBadge} ${styles[current.difficulty === "hard" ? "diffHard" : current.difficulty === "medium" ? "diffMedium" : "diffEasy"]}`}>
+          {current.difficulty ?? "easy"}
+        </span>
         <span className={styles.timerCount} style={{ color: timerColor }}>{timeLeft}s</span>
         <span className={styles.quizScore}>{score} pts</span>
       </div>
@@ -280,7 +189,10 @@ function QuizGame({ sport, onComplete }: { sport: string; onComplete: (score: nu
 /* ── Guess the Player ───────────────────────────────────────── */
 
 function PlayerGuessGame({ sport, onComplete }: { sport: string; onComplete: (score: number) => void }) {
-  const players = PLAYER_GUESSES[sport] ?? PLAYER_GUESSES.football;
+  const [players] = useState(() => {
+    const pool = PLAYER_GUESSES[sport] ?? PLAYER_GUESSES.football;
+    return shuffleArray(pool).slice(0, Math.min(5, pool.length));
+  });
   const [pIdx, setPIdx] = useState(0);
   const [cluesShown, setCluesShown] = useState(1);
   const [guess, setGuess] = useState("");
@@ -456,6 +368,697 @@ function PredictorGame({ sport }: { sport: string }) {
   );
 }
 
+/* ── Penalty Kick Game (Football) ──────────────────────────── */
+
+const KEEPER_ZONES = [0, 1, 2, 3, 4, 5]; // 6 zones in 3x2 grid
+type PKResult = "goal" | "saved" | "keeper_goal" | "keeper_save" | null;
+
+function PenaltyKickGame({ onComplete }: { onComplete: (score: number) => void }) {
+  const [phase, setPhase] = useState<"shoot" | "save" | "done">("shoot");
+  const [round, setRound] = useState(0); // 0-4 for each phase
+  const [playerGoals, setPlayerGoals] = useState(0);
+  const [botGoals, setBotGoals] = useState(0);
+  const [shootHistory, setShootHistory] = useState<("goal" | "miss" | "saved")[]>([]);
+  const [saveHistory, setSaveHistory] = useState<("goal" | "save" | "miss")[]>([]);
+  const [lastResult, setLastResult] = useState<PKResult>(null);
+  const [shotZone, setShotZone] = useState<number | null>(null);
+  const [keeperZone, setKeeperZone] = useState<number | null>(null);
+  const [submitted, setSubmitted] = useState(false);
+  const [waiting, setWaiting] = useState(false);
+
+  const totalRounds = 5;
+
+  const handleShoot = (zone: number) => {
+    if (waiting || phase !== "shoot") return;
+    setWaiting(true);
+    const kZone = KEEPER_ZONES[Math.floor(Math.random() * KEEPER_ZONES.length)];
+    setShotZone(zone);
+    setKeeperZone(kZone);
+
+    const scored = zone !== kZone;
+    if (scored) {
+      setPlayerGoals(g => g + 1);
+      setShootHistory(h => [...h, "goal"]);
+      setLastResult("goal");
+    } else {
+      setShootHistory(h => [...h, "saved"]);
+      setLastResult("saved");
+    }
+
+    setTimeout(() => {
+      setShotZone(null); setKeeperZone(null); setLastResult(null);
+      if (round + 1 >= totalRounds) {
+        setPhase("save"); setRound(0);
+      } else {
+        setRound(r => r + 1);
+      }
+      setWaiting(false);
+    }, 1400);
+  };
+
+  const handleSave = (zone: number) => {
+    if (waiting || phase !== "save") return;
+    setWaiting(true);
+    const botShot = KEEPER_ZONES[Math.floor(Math.random() * KEEPER_ZONES.length)];
+    setShotZone(botShot);
+    setKeeperZone(zone);
+
+    const saved = zone === botShot;
+    if (saved) {
+      setSaveHistory(h => [...h, "save"]);
+      setLastResult("keeper_save");
+    } else {
+      setBotGoals(g => g + 1);
+      setSaveHistory(h => [...h, "goal"]);
+      setLastResult("keeper_goal");
+    }
+
+    setTimeout(() => {
+      setShotZone(null); setKeeperZone(null); setLastResult(null);
+      if (round + 1 >= totalRounds) {
+        setPhase("done");
+      } else {
+        setRound(r => r + 1);
+      }
+      setWaiting(false);
+    }, 1400);
+  };
+
+  useEffect(() => {
+    if (phase === "done" && !submitted) {
+      setSubmitted(true);
+      const saves = saveHistory.filter(s => s === "save").length;
+      const totalScore = playerGoals * 10 + saves * 10;
+      submitScore("sport_game", "football", totalScore).then(() => onComplete(totalScore));
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase]);
+
+  const restart = () => {
+    setPhase("shoot"); setRound(0); setPlayerGoals(0); setBotGoals(0);
+    setShootHistory([]); setSaveHistory([]); setLastResult(null);
+    setShotZone(null); setKeeperZone(null); setSubmitted(false); setWaiting(false);
+  };
+
+  if (phase === "done") {
+    const saves = saveHistory.filter(s => s === "save").length;
+    const totalScore = playerGoals * 10 + saves * 10;
+    const won = playerGoals > botGoals;
+    const draw = playerGoals === botGoals;
+    return (
+      <div className={styles.quizDone}>
+        <div className={styles.quizEmoji}><Target size={36} strokeWidth={1.5} style={{ color: won ? "#22c55e" : "var(--coral)" }} /></div>
+        <h3 className={styles.quizDoneTitle}>{won ? "You Win!" : draw ? "It's a Draw!" : "You Lose!"}</h3>
+        <p className={styles.quizDoneScore}>{playerGoals} - {botGoals}</p>
+        <p className={styles.quizDoneSub}>
+          {playerGoals} goals scored, {saves} saves made — {totalScore} pts
+        </p>
+        <button className="btn btn-primary" onClick={restart} style={{ marginTop: 16, display: "inline-flex", alignItems: "center", gap: 6 }}>
+          <RefreshCw size={13} strokeWidth={2} /> Play Again
+        </button>
+      </div>
+    );
+  }
+
+  const zoneLabels = ["TL", "TC", "TR", "BL", "BC", "BR"];
+
+  return (
+    <div className={styles.penaltyWrap}>
+      <div className={styles.penaltyHeader}>
+        <span className={styles.penaltyRound}>
+          {phase === "shoot" ? "Shooting" : "Saving"} — Kick {round + 1}/{totalRounds}
+        </span>
+        <div className={styles.penaltyScoreboard}>
+          <span className={styles.penaltyScoreYou}>{playerGoals}</span>
+          <span className={styles.penaltyScoreVs}>vs</span>
+          <span className={styles.penaltyScoreBot}>{botGoals}</span>
+        </div>
+      </div>
+      <p className={styles.penaltyPhase}>
+        {phase === "shoot" ? "Click a zone to shoot!" : "Click where you think they'll shoot!"}
+      </p>
+      <div className={styles.goalFrame}>
+        <div className={styles.goalGrid}>
+          {[0, 1, 2, 3, 4, 5].map(z => {
+            let cls = styles.goalZone;
+            if (shotZone === z && keeperZone === z) cls += " " + styles.goalZoneSaved;
+            else if (shotZone === z) cls += " " + styles.goalZoneHit;
+            else if (keeperZone === z) cls += " " + styles.goalZoneKeeper;
+            return (
+              <button key={z} className={cls}
+                onClick={() => phase === "shoot" ? handleShoot(z) : handleSave(z)}
+                disabled={waiting}
+              >
+                {shotZone === z && <Target size={20} strokeWidth={2} />}
+                {keeperZone === z && shotZone !== z && <Shield size={20} strokeWidth={2} />}
+                {shotZone === null && keeperZone === null && (
+                  <span style={{ fontSize: 10, fontFamily: "var(--mono)", color: "var(--text-mute)", opacity: 0.5 }}>{zoneLabels[z]}</span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+      <div className={styles.goalGrass} />
+      {lastResult && (
+        <div className={styles.penaltyResult} style={{
+          color: lastResult === "goal" || lastResult === "keeper_save" ? "#22c55e" : "var(--coral)",
+        }}>
+          {lastResult === "goal" && "GOAL! +10 pts"}
+          {lastResult === "saved" && "Saved by the keeper!"}
+          {lastResult === "keeper_save" && "Great save! +10 pts"}
+          {lastResult === "keeper_goal" && "Goal conceded!"}
+        </div>
+      )}
+      <div className={styles.penaltyKicks}>
+        {phase === "shoot"
+          ? shootHistory.map((r, i) => (
+              <div key={i} className={`${styles.penaltyDot} ${r === "goal" ? styles.penaltyDotGoal : styles.penaltyDotMiss}`} />
+            ))
+          : saveHistory.map((r, i) => (
+              <div key={i} className={`${styles.penaltyDot} ${r === "save" ? styles.penaltyDotSave : styles.penaltyDotMiss}`} />
+            ))
+        }
+        {Array.from({ length: totalRounds - (phase === "shoot" ? shootHistory.length : saveHistory.length) }).map((_, i) => (
+          <div key={`empty-${i}`} className={styles.penaltyDot} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ── Super Over Game (Cricket) ─────────────────────────────── */
+
+type ShotType = "defensive" | "normal" | "aggressive" | "slog";
+type DeliveryType = "good_length" | "short" | "yorker" | "full_toss";
+
+const SHOTS: { type: ShotType; label: string; risk: string }[] = [
+  { type: "defensive", label: "Defensive", risk: "Safe - 0-2 runs" },
+  { type: "normal", label: "Normal", risk: "Balanced - 1-4 runs" },
+  { type: "aggressive", label: "Aggressive", risk: "Risky - 0-6 runs" },
+  { type: "slog", label: "Slog Sweep", risk: "High risk - W or 4-6" },
+];
+
+const DELIVERIES: DeliveryType[] = ["good_length", "short", "yorker", "full_toss"];
+
+function getOutcome(shot: ShotType, delivery: DeliveryType): { runs: number; isWicket: boolean } {
+  const rand = Math.random();
+  const matrix: Record<ShotType, Record<DeliveryType, () => { runs: number; isWicket: boolean }>> = {
+    defensive: {
+      good_length: () => ({ runs: rand < 0.6 ? 0 : rand < 0.9 ? 1 : 2, isWicket: rand > 0.97 }),
+      short: () => ({ runs: rand < 0.4 ? 0 : rand < 0.8 ? 1 : 2, isWicket: rand > 0.95 }),
+      yorker: () => ({ runs: rand < 0.7 ? 0 : 1, isWicket: rand > 0.92 }),
+      full_toss: () => ({ runs: rand < 0.3 ? 1 : rand < 0.7 ? 2 : 3, isWicket: false }),
+    },
+    normal: {
+      good_length: () => ({ runs: rand < 0.3 ? 0 : rand < 0.6 ? 1 : rand < 0.85 ? 2 : 4, isWicket: rand > 0.9 }),
+      short: () => ({ runs: rand < 0.2 ? 0 : rand < 0.5 ? 1 : rand < 0.8 ? 4 : 6, isWicket: rand > 0.85 }),
+      yorker: () => ({ runs: rand < 0.5 ? 0 : rand < 0.8 ? 1 : 2, isWicket: rand > 0.88 }),
+      full_toss: () => ({ runs: rand < 0.2 ? 2 : rand < 0.6 ? 4 : 6, isWicket: rand > 0.95 }),
+    },
+    aggressive: {
+      good_length: () => ({ runs: rand < 0.3 ? 0 : rand < 0.5 ? 2 : rand < 0.75 ? 4 : 6, isWicket: rand > 0.78 }),
+      short: () => ({ runs: rand < 0.2 ? 0 : rand < 0.5 ? 4 : 6, isWicket: rand > 0.72 }),
+      yorker: () => ({ runs: rand < 0.4 ? 0 : rand < 0.7 ? 1 : 4, isWicket: rand > 0.75 }),
+      full_toss: () => ({ runs: rand < 0.1 ? 2 : rand < 0.4 ? 4 : 6, isWicket: rand > 0.9 }),
+    },
+    slog: {
+      good_length: () => ({ runs: rand < 0.4 ? 0 : rand < 0.6 ? 4 : 6, isWicket: rand > 0.6 }),
+      short: () => ({ runs: rand < 0.3 ? 0 : rand < 0.5 ? 4 : 6, isWicket: rand > 0.55 }),
+      yorker: () => ({ runs: rand < 0.5 ? 0 : rand < 0.7 ? 2 : 6, isWicket: rand > 0.5 }),
+      full_toss: () => ({ runs: rand < 0.15 ? 2 : rand < 0.45 ? 4 : 6, isWicket: rand > 0.7 }),
+    },
+  };
+  return matrix[shot][delivery]();
+}
+
+function SuperOverGame({ onComplete }: { onComplete: (score: number) => void }) {
+  const [phase, setPhase] = useState<"bat" | "bowl" | "done">("bat");
+  const [ball, setBall] = useState(0);
+  const [playerRuns, setPlayerRuns] = useState(0);
+  const [playerWickets, setPlayerWickets] = useState(0);
+  const [botRuns, setBotRuns] = useState(0);
+  const [botWickets, setBotWickets] = useState(0);
+  const [ballResults, setBallResults] = useState<string[]>([]);
+  const [lastOutcome, setLastOutcome] = useState<string | null>(null);
+  const [submitted, setSubmitted] = useState(false);
+  const [waiting, setWaiting] = useState(false);
+
+  const totalBalls = 6;
+
+  const playBatShot = (shot: ShotType) => {
+    if (waiting) return;
+    setWaiting(true);
+    const delivery = DELIVERIES[Math.floor(Math.random() * DELIVERIES.length)];
+    const outcome = getOutcome(shot, delivery);
+
+    if (outcome.isWicket) {
+      setPlayerWickets(w => w + 1);
+      setBallResults(r => [...r, "W"]);
+      setLastOutcome("WICKET! Out!");
+      if (playerWickets + 1 >= 3) {
+        setTimeout(() => { setPhase("bowl"); setBall(0); setBallResults([]); setLastOutcome(null); setWaiting(false); }, 1400);
+        return;
+      }
+    } else {
+      setPlayerRuns(s => s + outcome.runs);
+      setBallResults(r => [...r, String(outcome.runs)]);
+      setLastOutcome(outcome.runs === 6 ? "SIX!" : outcome.runs === 4 ? "FOUR!" : outcome.runs === 0 ? "Dot ball" : `${outcome.runs} run${outcome.runs > 1 ? "s" : ""}`);
+    }
+
+    setTimeout(() => {
+      setLastOutcome(null);
+      if (ball + 1 >= totalBalls) {
+        setPhase("bowl"); setBall(0); setBallResults([]);
+      } else {
+        setBall(b => b + 1);
+      }
+      setWaiting(false);
+    }, 1200);
+  };
+
+  const playBowl = (bowlType: ShotType) => {
+    if (waiting) return;
+    setWaiting(true);
+    // Bot picks a random shot, we use our bowl type as delivery modifier
+    const botShot: ShotType = (["defensive", "normal", "aggressive", "slog"] as ShotType[])[Math.floor(Math.random() * 4)];
+    const deliveryMap: Record<ShotType, DeliveryType> = {
+      defensive: "good_length", normal: "good_length", aggressive: "yorker", slog: "short",
+    };
+    const outcome = getOutcome(botShot, deliveryMap[bowlType]);
+
+    if (outcome.isWicket) {
+      setBotWickets(w => w + 1);
+      setBallResults(r => [...r, "W"]);
+      setLastOutcome("WICKET! Got them!");
+      if (botWickets + 1 >= 3) {
+        setTimeout(() => { setPhase("done"); setLastOutcome(null); setWaiting(false); }, 1400);
+        return;
+      }
+    } else {
+      setBotRuns(s => s + outcome.runs);
+      setBallResults(r => [...r, String(outcome.runs)]);
+      setLastOutcome(outcome.runs === 6 ? "SIX conceded!" : outcome.runs === 4 ? "FOUR conceded!" : outcome.runs === 0 ? "Dot ball!" : `${outcome.runs} run${outcome.runs > 1 ? "s" : ""} conceded`);
+      if (botRuns + outcome.runs > playerRuns) {
+        setTimeout(() => { setPhase("done"); setLastOutcome(null); setWaiting(false); }, 1400);
+        return;
+      }
+    }
+
+    setTimeout(() => {
+      setLastOutcome(null);
+      if (ball + 1 >= totalBalls) {
+        setPhase("done");
+      } else {
+        setBall(b => b + 1);
+      }
+      setWaiting(false);
+    }, 1200);
+  };
+
+  useEffect(() => {
+    if (phase === "done" && !submitted) {
+      setSubmitted(true);
+      const won = playerRuns > botRuns;
+      const totalScore = playerRuns + (won ? 20 : 0) + (3 - Math.min(3, botWickets)) * 5;
+      submitScore("sport_game", "cricket", totalScore).then(() => onComplete(totalScore));
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase]);
+
+  const restart = () => {
+    setPhase("bat"); setBall(0); setPlayerRuns(0); setPlayerWickets(0);
+    setBotRuns(0); setBotWickets(0); setBallResults([]); setLastOutcome(null);
+    setSubmitted(false); setWaiting(false);
+  };
+
+  if (phase === "done") {
+    const won = playerRuns > botRuns;
+    const draw = playerRuns === botRuns;
+    const totalScore = playerRuns + (won ? 20 : 0) + (3 - Math.min(3, botWickets)) * 5;
+    return (
+      <div className={styles.quizDone}>
+        <div className={styles.quizEmoji}><CircleDot size={36} strokeWidth={1.5} style={{ color: won ? "#22c55e" : "var(--coral)" }} /></div>
+        <h3 className={styles.quizDoneTitle}>{won ? "You Win!" : draw ? "Super Over Tied!" : "You Lose!"}</h3>
+        <p className={styles.quizDoneScore}>{playerRuns}/{playerWickets} vs {botRuns}/{botWickets}</p>
+        <p className={styles.quizDoneSub}>{totalScore} pts earned</p>
+        <button className="btn btn-primary" onClick={restart} style={{ marginTop: 16, display: "inline-flex", alignItems: "center", gap: 6 }}>
+          <RefreshCw size={13} strokeWidth={2} /> Play Again
+        </button>
+      </div>
+    );
+  }
+
+  const bowlLabels: { type: ShotType; label: string; risk: string }[] = [
+    { type: "defensive", label: "Good Length", risk: "Tight line" },
+    { type: "normal", label: "Short Ball", risk: "Bouncer" },
+    { type: "aggressive", label: "Yorker", risk: "Death bowling" },
+    { type: "slog", label: "Slower Ball", risk: "Variation" },
+  ];
+
+  return (
+    <div className={styles.superOverWrap}>
+      <div className={styles.soScoreboard}>
+        <div className={styles.soTeam}>
+          <div className={styles.soTeamLabel}>You</div>
+          <div className={styles.soTeamScore}>{playerRuns}<span style={{ fontSize: 14, color: "var(--text-mute)" }}>/{playerWickets}</span></div>
+        </div>
+        <div className={styles.soVs}>vs</div>
+        <div className={styles.soTeam}>
+          <div className={styles.soTeamLabel}>Bot</div>
+          <div className={styles.soTeamScore}>{botRuns}<span style={{ fontSize: 14, color: "var(--text-mute)" }}>/{botWickets}</span></div>
+        </div>
+      </div>
+      <div className={styles.soPhase}>
+        {phase === "bat" ? "Your Batting — Pick a shot!" : "Your Bowling — Pick a delivery!"}
+        {" "}(Ball {ball + 1}/{totalBalls})
+      </div>
+      <div className={styles.soBallsRow}>
+        {ballResults.map((r, i) => (
+          <div key={i} className={`${styles.soBall} ${r === "W" ? styles.soBallWicket : styles.soBallDone}`}>{r}</div>
+        ))}
+        {ball < totalBalls && <div className={`${styles.soBall} ${styles.soBallActive}`}>{ball + 1}</div>}
+        {Array.from({ length: Math.max(0, totalBalls - ballResults.length - 1) }).map((_, i) => (
+          <div key={`e-${i}`} className={styles.soBall}>{ballResults.length + i + 2}</div>
+        ))}
+      </div>
+      <div className={styles.soShotGrid}>
+        {(phase === "bat" ? SHOTS : bowlLabels).map(s => (
+          <button key={s.type} className={styles.soShotBtn} onClick={() => phase === "bat" ? playBatShot(s.type) : playBowl(s.type)} disabled={waiting}>
+            {s.label}
+            <span className={styles.soShotRisk}>{s.risk}</span>
+          </button>
+        ))}
+      </div>
+      {lastOutcome && (
+        <div className={styles.soResultBanner} style={{
+          color: lastOutcome.includes("SIX") || lastOutcome.includes("FOUR") || lastOutcome.includes("Got them") ? "#22c55e" : lastOutcome.includes("WICKET") || lastOutcome.includes("conceded") ? "var(--coral)" : "var(--ink)",
+          background: lastOutcome.includes("SIX") || lastOutcome.includes("FOUR") || lastOutcome.includes("Got them") ? "rgba(34,197,94,0.1)" : lastOutcome.includes("WICKET") || lastOutcome.includes("conceded") ? "rgba(239,68,68,0.08)" : "var(--surface-2)",
+        }}>
+          {lastOutcome}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── Free Throw Game (Basketball) ──────────────────────────── */
+
+function FreeThrowGame({ onComplete }: { onComplete: (score: number) => void }) {
+  const [attempt, setAttempt] = useState(0);
+  const [score, setScore] = useState(0);
+  const [results, setResults] = useState<boolean[]>([]);
+  const [meterPos, setMeterPos] = useState(0);
+  const [shooting, setShooting] = useState(false);
+  const [result, setResult] = useState<"made" | "missed" | null>(null);
+  const [done, setDone] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [running, setRunning] = useState(true);
+  const meterRef = useRef<ReturnType<typeof setInterval>>(undefined);
+  const dirRef = useRef(1);
+
+  const totalAttempts = 10;
+  // Sweet spot: 40-60% of the bar
+  const sweetMin = 40;
+  const sweetMax = 60;
+
+  useEffect(() => {
+    if (done || !running) return;
+    dirRef.current = 1;
+    let pos = 0;
+    meterRef.current = setInterval(() => {
+      pos += dirRef.current * 2.5;
+      if (pos >= 100) { pos = 100; dirRef.current = -1; }
+      if (pos <= 0) { pos = 0; dirRef.current = 1; }
+      setMeterPos(pos);
+    }, 25);
+    return () => clearInterval(meterRef.current);
+  }, [done, running, attempt]);
+
+  const shoot = () => {
+    if (shooting || done) return;
+    clearInterval(meterRef.current);
+    setShooting(true);
+    setRunning(false);
+
+    const made = meterPos >= sweetMin && meterPos <= sweetMax;
+    setResult(made ? "made" : "missed");
+    if (made) setScore(s => s + 10);
+    setResults(r => [...r, made]);
+
+    setTimeout(() => {
+      if (attempt + 1 >= totalAttempts) {
+        setDone(true);
+      } else {
+        setAttempt(a => a + 1);
+        setShooting(false);
+        setResult(null);
+        setRunning(true);
+      }
+    }, 1200);
+  };
+
+  useEffect(() => {
+    if (done && !submitted) {
+      setSubmitted(true);
+      submitScore("sport_game", "basketball", score).then(() => onComplete(score));
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [done]);
+
+  const restart = () => {
+    setAttempt(0); setScore(0); setResults([]);
+    setMeterPos(0); setShooting(false); setResult(null);
+    setDone(false); setSubmitted(false); setRunning(true);
+  };
+
+  if (done) {
+    const made = results.filter(Boolean).length;
+    return (
+      <div className={styles.quizDone}>
+        <div className={styles.quizEmoji}><Disc size={36} strokeWidth={1.5} style={{ color: "var(--orange)" }} /></div>
+        <h3 className={styles.quizDoneTitle}>Free Throws Complete!</h3>
+        <p className={styles.quizDoneScore}>{made}/{totalAttempts}</p>
+        <p className={styles.quizDoneSub}>
+          {made >= 9 ? "Clutch shooter! Almost perfect!" : made >= 7 ? "Solid from the line!" : made >= 5 ? "Decent shooting!" : "Need more practice!"}
+          {" "}{score} pts
+        </p>
+        <button className="btn btn-primary" onClick={restart} style={{ marginTop: 16, display: "inline-flex", alignItems: "center", gap: 6 }}>
+          <RefreshCw size={13} strokeWidth={2} /> Play Again
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className={styles.ftWrap}>
+      <div className={styles.ftHeader}>
+        <span className={styles.ftAttempt}>Shot {attempt + 1} / {totalAttempts}</span>
+        <span className={styles.ftScore}>{score} pts</span>
+      </div>
+      <div className={styles.ftCourt}>
+        <div className={`${styles.ftHoop} ${result === "made" ? styles.ftHoopMade : result === "missed" ? styles.ftHoopMissed : ""}`}>
+          <Disc size={28} strokeWidth={1.5} style={{ color: result === "made" ? "#22c55e" : result === "missed" ? "var(--coral)" : "var(--orange)" }} />
+        </div>
+        <div className={styles.ftMeterWrap} onClick={shoot}>
+          <div className={styles.ftSweetSpot} style={{ left: `${sweetMin}%`, width: `${sweetMax - sweetMin}%` }} />
+          <div className={styles.ftMeterFill} style={{
+            width: `${meterPos}%`,
+            background: meterPos >= sweetMin && meterPos <= sweetMax ? "#22c55e" : "var(--coral)",
+          }} />
+          <div className={styles.ftMeterMarker} style={{ left: `${meterPos}%` }} />
+        </div>
+        <button className={styles.ftShootBtn} onClick={shoot} disabled={shooting}>
+          {shooting ? (result === "made" ? "Swish!" : "Clank!") : "SHOOT"}
+        </button>
+      </div>
+      {result && (
+        <div className={styles.ftResult} style={{ color: result === "made" ? "#22c55e" : "var(--coral)" }}>
+          {result === "made" ? "Nothing but net! +10 pts" : "Off the rim!"}
+        </div>
+      )}
+      <div className={styles.ftDots}>
+        {results.map((r, i) => (
+          <div key={i} className={`${styles.ftDot} ${r ? styles.ftDotMade : styles.ftDotMissed}`} />
+        ))}
+        {Array.from({ length: totalAttempts - results.length }).map((_, i) => (
+          <div key={`e-${i}`} className={styles.ftDot} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ── Pit Stop Game (F1) ────────────────────────────────────── */
+
+const TIRE_LABELS = ["Front Left", "Front Right", "Rear Left", "Rear Right"];
+
+function PitStopGame({ onComplete }: { onComplete: (score: number) => void }) {
+  const [gameState, setGameState] = useState<"idle" | "running" | "done">("idle");
+  const [activeTire, setActiveTire] = useState(-1);
+  const [tiresDone, setTiresDone] = useState<boolean[]>([false, false, false, false]);
+  const [startTime, setStartTime] = useState(0);
+  const [elapsed, setElapsed] = useState(0);
+  const [finalTime, setFinalTime] = useState(0);
+  const [submitted, setSubmitted] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setInterval>>(undefined);
+  const tireOrder = useRef<number[]>([]);
+
+  const start = () => {
+    const order = shuffleArray([0, 1, 2, 3]);
+    tireOrder.current = order;
+    setTiresDone([false, false, false, false]);
+    setGameState("running");
+    setActiveTire(-1);
+    setElapsed(0);
+
+    // Random delay before first tire lights up (0.5-1.5s)
+    setTimeout(() => {
+      const t = Date.now();
+      setStartTime(t);
+      setActiveTire(order[0]);
+      timerRef.current = setInterval(() => {
+        setElapsed(Date.now() - t);
+      }, 50);
+    }, 500 + Math.random() * 1000);
+  };
+
+  const hitTire = (tireIdx: number) => {
+    if (gameState !== "running" || tireIdx !== activeTire) return;
+
+    const newDone = [...tiresDone];
+    newDone[tireIdx] = true;
+    setTiresDone(newDone);
+
+    const doneCount = newDone.filter(Boolean).length;
+    if (doneCount >= 4) {
+      clearInterval(timerRef.current);
+      const total = Date.now() - startTime;
+      setFinalTime(total);
+      setElapsed(total);
+      setActiveTire(-1);
+      setGameState("done");
+    } else {
+      // Next tire with small delay
+      setActiveTire(-1);
+      setTimeout(() => {
+        const nextIdx = tireOrder.current[doneCount];
+        setActiveTire(nextIdx);
+      }, 150 + Math.random() * 200);
+    }
+  };
+
+  useEffect(() => {
+    if (gameState === "done" && !submitted) {
+      setSubmitted(true);
+      const secs = finalTime / 1000;
+      const pts = secs < 2.0 ? 50 : secs < 2.5 ? 40 : secs < 3.0 ? 30 : secs < 4.0 ? 20 : 10;
+      submitScore("sport_game", "f1", pts).then(() => onComplete(pts));
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gameState]);
+
+  const restart = () => {
+    clearInterval(timerRef.current);
+    setGameState("idle"); setActiveTire(-1); setTiresDone([false, false, false, false]);
+    setElapsed(0); setFinalTime(0); setSubmitted(false);
+  };
+
+  const formatTime = (ms: number) => (ms / 1000).toFixed(2) + "s";
+
+  if (gameState === "done") {
+    const secs = finalTime / 1000;
+    const pts = secs < 2.0 ? 50 : secs < 2.5 ? 40 : secs < 3.0 ? 30 : secs < 4.0 ? 20 : 10;
+    const rating = secs < 2.0 ? "Red Bull-level!" : secs < 2.5 ? "World class!" : secs < 3.0 ? "Solid stop!" : secs < 4.0 ? "Needs practice" : "Slow stop!";
+    const ratingColor = secs < 2.0 ? "#22c55e" : secs < 2.5 ? "var(--accent)" : secs < 3.0 ? "var(--orange)" : "var(--coral)";
+    return (
+      <div className={styles.quizDone}>
+        <div className={styles.quizEmoji}><Timer size={36} strokeWidth={1.5} style={{ color: ratingColor }} /></div>
+        <h3 className={styles.quizDoneTitle}>Pit Stop Complete!</h3>
+        <p className={styles.quizDoneScore}>{formatTime(finalTime)}</p>
+        <p className={styles.pitStopRating} style={{ color: ratingColor }}>{rating}</p>
+        <p className={styles.quizDoneSub}>{pts} pts earned</p>
+        <button className="btn btn-primary" onClick={restart} style={{ marginTop: 16, display: "inline-flex", alignItems: "center", gap: 6 }}>
+          <RefreshCw size={13} strokeWidth={2} /> Play Again
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className={styles.pitStopWrap}>
+      <div className={styles.pitStopHeader}>
+        <div className={styles.pitStopTimer}>
+          {gameState === "running" ? formatTime(elapsed) : "0.00s"}
+        </div>
+        <div className={styles.pitStopPhase}>
+          {gameState === "idle" ? "Press start when ready" : activeTire === -1 ? "Get ready..." : "Change the highlighted tire!"}
+        </div>
+      </div>
+      <div className={styles.pitStopCar}>
+        {[0, 1, 2, 3].map(i => {
+          const isReady = activeTire === i;
+          const isDone = tiresDone[i];
+          return (
+            <button key={i}
+              className={`${styles.tireSlot} ${isDone ? styles.tireSlotDone : isReady ? styles.tireSlotReady : styles.tireSlotWaiting}`}
+              onClick={() => hitTire(i)}
+              disabled={!isReady}
+            >
+              <Disc size={28} strokeWidth={2} style={{ color: isDone ? "#22c55e" : isReady ? "var(--orange)" : "var(--text-mute)" }} />
+              <span className={`${styles.tireLabel} ${isDone ? styles.tireLabelDone : isReady ? styles.tireLabelReady : ""}`}>
+                {TIRE_LABELS[i]}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+      {gameState === "idle" && (
+        <button className={styles.pitStopStartBtn} onClick={start}>
+          START PIT STOP
+        </button>
+      )}
+    </div>
+  );
+}
+
+/* ── Sport-specific game configs ───────────────────────────── */
+
+type GameType = "quiz" | "guess" | "predictor" | "penalty" | "superover" | "freethrow" | "pitstop";
+
+const SPORT_GAMES: Record<string, { type: GameType; label: string; icon: typeof HelpCircle }[]> = {
+  football: [
+    { type: "quiz", label: "Trivia Quiz", icon: HelpCircle },
+    { type: "guess", label: "Guess Player", icon: User },
+    { type: "predictor", label: "Predictor", icon: Zap },
+    { type: "penalty", label: "Penalty Kick", icon: Target },
+  ],
+  cricket: [
+    { type: "quiz", label: "Trivia Quiz", icon: HelpCircle },
+    { type: "guess", label: "Guess Player", icon: User },
+    { type: "predictor", label: "Predictor", icon: Zap },
+    { type: "superover", label: "Super Over", icon: CircleDot },
+  ],
+  basketball: [
+    { type: "quiz", label: "Trivia Quiz", icon: HelpCircle },
+    { type: "guess", label: "Guess Player", icon: User },
+    { type: "predictor", label: "Predictor", icon: Zap },
+    { type: "freethrow", label: "Free Throw", icon: Disc },
+  ],
+  f1: [
+    { type: "quiz", label: "Trivia Quiz", icon: HelpCircle },
+    { type: "guess", label: "Guess Driver", icon: User },
+    { type: "predictor", label: "Predictor", icon: Zap },
+    { type: "pitstop", label: "Pit Stop", icon: Timer },
+  ],
+};
+
+const DEFAULT_GAMES: { type: GameType; label: string; icon: typeof HelpCircle }[] = [
+  { type: "quiz", label: "Trivia Quiz", icon: HelpCircle },
+  { type: "guess", label: "Guess Player", icon: User },
+  { type: "predictor", label: "Predictor", icon: Zap },
+];
+
 /* ── Leaderboard types ───────────────────────────────────────── */
 
 interface LeaderboardEntry {
@@ -473,13 +1076,13 @@ const RANK_LABELS = ["1st", "2nd", "3rd"];
 
 export default function MiniGamesPage() {
   const { activeSport, activeSportConfig } = useActiveSport();
-  const [activeGame, setActiveGame] = useState<"quiz" | "guess" | "predictor">("quiz");
+  const [activeGame, setActiveGame] = useState<GameType>("quiz");
   const [quizKey, setQuizKey] = useState(0);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
-  const [lbGame, setLbGame] = useState<"quiz" | "player_guess">("quiz");
+  const [lbGame, setLbGame] = useState<"quiz" | "player_guess" | "sport_game">("quiz");
   const [lbLoading, setLbLoading] = useState(true);
 
-  const fetchLeaderboard = useCallback(async (game_type: "quiz" | "player_guess") => {
+  const fetchLeaderboard = useCallback(async (game_type: "quiz" | "player_guess" | "sport_game") => {
     setLbLoading(true);
     try {
       const res = await fetch(`/api/game-scores?game_type=${game_type}`);
@@ -490,7 +1093,15 @@ export default function MiniGamesPage() {
   }, []);
 
   useEffect(() => { fetchLeaderboard(lbGame); }, [lbGame, fetchLeaderboard]);
-  useEffect(() => { setQuizKey(k => k + 1); }, [activeSport]);
+  useEffect(() => {
+    setQuizKey(k => k + 1);
+    // Reset to quiz if current game isn't available for the new sport
+    const availableGames = SPORT_GAMES[activeSport] ?? DEFAULT_GAMES;
+    if (!availableGames.some(g => g.type === activeGame)) {
+      setActiveGame("quiz");
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeSport]);
 
   const handleGameComplete = (score: number) => {
     if (score > 0) fetchLeaderboard(lbGame);
@@ -516,6 +1127,12 @@ export default function MiniGamesPage() {
                   background: lbGame === "player_guess" ? "var(--accent)" : "transparent",
                   color: lbGame === "player_guess" ? "#000" : "var(--text-dim)" }}
               >Guess</button>
+              <button
+                onClick={() => setLbGame("sport_game")}
+                style={{ fontSize: 11, padding: "3px 10px", borderRadius: 6, border: "1px solid var(--border)", cursor: "pointer",
+                  background: lbGame === "sport_game" ? "var(--accent)" : "transparent",
+                  color: lbGame === "sport_game" ? "#000" : "var(--text-dim)" }}
+              >Games</button>
               <span style={{ fontFamily: "var(--mono)", fontSize: 11, color: "var(--text-mute)", alignSelf: "center", marginLeft: 4 }}>Resets Sunday</span>
             </div>
           </div>
@@ -555,22 +1172,19 @@ export default function MiniGamesPage() {
           </div>
 
           <div className={styles.gameTabs}>
-            <button className={`${styles.gameTab}${activeGame === "quiz" ? " " + styles.gameTabActive : ""}`} onClick={() => setActiveGame("quiz")}>
-              <HelpCircle size={15} strokeWidth={2} /> Trivia Quiz
-            </button>
-            <button className={`${styles.gameTab}${activeGame === "guess" ? " " + styles.gameTabActive : ""}`} onClick={() => setActiveGame("guess")}>
-              <User size={15} strokeWidth={2} /> Guess the Player
-            </button>
-            <button className={`${styles.gameTab}${activeGame === "predictor" ? " " + styles.gameTabActive : ""}`} onClick={() => setActiveGame("predictor")}>
-              <Zap size={15} strokeWidth={2} /> Score Predictor
-            </button>
+            {(SPORT_GAMES[activeSport] ?? DEFAULT_GAMES).map(g => (
+              <button key={g.type} className={`${styles.gameTab}${activeGame === g.type ? " " + styles.gameTabActive : ""}`}
+                onClick={() => setActiveGame(g.type)}>
+                <g.icon size={15} strokeWidth={2} /> {g.label}
+              </button>
+            ))}
           </div>
 
           {activeGame === "quiz" && (
             <div>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
                 <p style={{ fontSize: 13, color: "var(--text-dim)" }}>
-                  {activeSportConfig.icon} {activeSportConfig.label} trivia — 15s per question, +5 pts speed bonus
+                  {activeSportConfig.icon} {activeSportConfig.label} trivia — 15s per question, difficulty bonuses
                 </p>
                 <button className={styles.restartBtn} onClick={() => setQuizKey(k => k + 1)}>
                   <RefreshCw size={12} strokeWidth={2} /> New quiz
@@ -600,6 +1214,62 @@ export default function MiniGamesPage() {
                 {activeSportConfig.icon} Predict upcoming {activeSportConfig.label} results
               </p>
               <PredictorGame key={activeSport} sport={activeSport} />
+            </div>
+          )}
+
+          {activeGame === "penalty" && (
+            <div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                <p style={{ fontSize: 13, color: "var(--text-dim)" }}>
+                  {activeSportConfig.icon} Take 5 penalty kicks, then save 5 — beat the bot!
+                </p>
+                <button className={styles.restartBtn} onClick={() => setQuizKey(k => k + 1)}>
+                  <RefreshCw size={12} strokeWidth={2} /> Restart
+                </button>
+              </div>
+              <PenaltyKickGame key={`pk-${quizKey}`} onComplete={handleGameComplete} />
+            </div>
+          )}
+
+          {activeGame === "superover" && (
+            <div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                <p style={{ fontSize: 13, color: "var(--text-dim)" }}>
+                  {activeSportConfig.icon} 6 balls batting, 6 balls bowling — outscore the bot!
+                </p>
+                <button className={styles.restartBtn} onClick={() => setQuizKey(k => k + 1)}>
+                  <RefreshCw size={12} strokeWidth={2} /> Restart
+                </button>
+              </div>
+              <SuperOverGame key={`so-${quizKey}`} onComplete={handleGameComplete} />
+            </div>
+          )}
+
+          {activeGame === "freethrow" && (
+            <div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                <p style={{ fontSize: 13, color: "var(--text-dim)" }}>
+                  {activeSportConfig.icon} Stop the meter in the green zone — 10 attempts!
+                </p>
+                <button className={styles.restartBtn} onClick={() => setQuizKey(k => k + 1)}>
+                  <RefreshCw size={12} strokeWidth={2} /> Restart
+                </button>
+              </div>
+              <FreeThrowGame key={`ft-${quizKey}`} onComplete={handleGameComplete} />
+            </div>
+          )}
+
+          {activeGame === "pitstop" && (
+            <div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                <p style={{ fontSize: 13, color: "var(--text-dim)" }}>
+                  {activeSportConfig.icon} Change all 4 tires as fast as possible!
+                </p>
+                <button className={styles.restartBtn} onClick={() => setQuizKey(k => k + 1)}>
+                  <RefreshCw size={12} strokeWidth={2} /> Restart
+                </button>
+              </div>
+              <PitStopGame key={`ps-${quizKey}`} onComplete={handleGameComplete} />
             </div>
           )}
         </section>

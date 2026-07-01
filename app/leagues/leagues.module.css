@@ -2,6 +2,34 @@
    Leagues page — card grid, detail panel, standings, bracket
    ──────────────────────────────────────────────────────────── */
 
+/* ── Sport selector pills ──────────────────────────────────── */
+.sportPills {
+  display: flex; gap: 6px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding-bottom: 4px;
+}
+.sportPills::-webkit-scrollbar { display: none; }
+.sportPill {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 14px;
+  background: var(--surface-2); border: 2px solid var(--border-2);
+  border-radius: 20px;
+  font-family: var(--display); font-weight: 700; font-size: 12px;
+  color: var(--text-dim); cursor: pointer;
+  white-space: nowrap; flex-shrink: 0;
+  transition: all 0.15s;
+}
+.sportPill:hover { border-color: var(--ink); color: var(--ink); }
+.sportPillActive {
+  background: var(--ink); border-color: var(--ink); color: var(--bg);
+}
+.pillIcon {
+  font-family: var(--mono); font-size: 9px; font-weight: 900;
+  letter-spacing: 0.05em;
+}
+
 /* ── Season selector ───────────────────────────────────────── */
 
 .seasonWrap { display: flex; align-items: center; gap: 8px; }

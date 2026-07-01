@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import useSWR from 'swr';
 import Topbar from './ui/Topbar';
 import SportSelector from './ui/SportSelector';
@@ -179,7 +179,7 @@ export default function PlayersScreen({ sport, setSport, onSearch, onBell, onOpe
           </div>
         )}
         {isSearching && visiblePlayers.map(p => (
-          <PlayerRow key={p.id} player={p} onOpen={() => onOpenPlayer(p.id, p.leagueId)} />
+          <PlayerRow key={p.id} player={p} onOpen={() => onOpenPlayer(p.id, p.leagueId)} sport={sport} />
         ))}
         {isSearching && hasMore && (
           <button onClick={() => setPage(prev => prev + 1)} style={{ width: '100%', padding: '12px 0', background: 'var(--surface)', border: '2px solid var(--ink)', borderRadius: 12, fontFamily: 'var(--mono)', fontWeight: 700, fontSize: 12, color: 'var(--ink)', cursor: 'pointer', letterSpacing: '0.05em' }}>
@@ -221,17 +221,39 @@ export default function PlayersScreen({ sport, setSport, onSearch, onBell, onOpe
   );
 }
 
-function PlayerRow({ player, onOpen }: { player: PlayerResult; onOpen: () => void }) {
+function PlayerPhoto({ name, espnSrc, sport = 'football' }: { name: string; espnSrc: string | null; sport?: string }) {
+  const wikiSrc = `/api/player-photo?name=${encodeURIComponent(name)}&sport=${sport}`;
+  const [src, setSrc] = useState<string | null>(espnSrc ?? wikiSrc);
+  const [failed, setFailed] = useState(false);
+
+  const handleError = useCallback(() => {
+    if (src && !src.includes('/api/player-photo')) {
+      setSrc(wikiSrc);
+    } else {
+      setFailed(true);
+    }
+  }, [src, wikiSrc]);
+
+  if (failed || !src) {
+    return (
+      <div style={{ width: 40, height: 40, borderRadius: 10, overflow: 'hidden', border: '2px solid var(--ink)', flexShrink: 0, background: 'var(--surface-3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Icon name="user" size={18} style={{ color: 'var(--text-mute)' }} />
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ width: 40, height: 40, borderRadius: 10, overflow: 'hidden', border: '2px solid var(--ink)', flexShrink: 0, background: 'var(--surface-3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={src} alt="" width={40} height={40} style={{ objectFit: 'cover', display: 'block' }} onError={handleError} />
+    </div>
+  );
+}
+
+function PlayerRow({ player, onOpen, sport }: { player: PlayerResult; onOpen: () => void; sport?: string }) {
   return (
     <button onClick={onOpen} style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', padding: '12px 14px', background: 'var(--surface)', border: '2px solid var(--ink)', borderRadius: 12, boxShadow: 'var(--shadow-sm)', cursor: 'pointer', textAlign: 'left' }}>
-      <div style={{ width: 40, height: 40, borderRadius: 10, overflow: 'hidden', border: '2px solid var(--ink)', flexShrink: 0, background: 'var(--surface-3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        {player.headshot ? (
-          /* eslint-disable-next-line @next/next/no-img-element */
-          <img src={player.headshot} alt="" width={40} height={40} style={{ objectFit: 'cover', display: 'block' }} onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
-        ) : (
-          <Icon name="user" size={18} style={{ color: 'var(--text-mute)' }} />
-        )}
-      </div>
+      <PlayerPhoto name={player.name} espnSrc={player.headshot} sport={sport} />
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontWeight: 700, fontSize: 13.5, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{player.name}</div>
         <div style={{ fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--text-mute)', marginTop: 2 }}>
