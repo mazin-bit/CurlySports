@@ -23,11 +23,13 @@ export async function sendEmail({
   subject,
   html,
   text,
+  attachments,
 }: {
   to: string;
   subject: string;
   html: string;
   text?: string;
+  attachments?: { filename: string; content: Buffer; cid: string }[];
 }) {
   const smtpFrom = process.env.SMTP_FROM;
   if (!smtpFrom) throw new Error("SMTP_FROM environment variable is not set");
@@ -38,5 +40,6 @@ export async function sendEmail({
     subject,
     html,
     text,
+    attachments,
   });
 }

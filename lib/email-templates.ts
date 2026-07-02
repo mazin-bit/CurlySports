@@ -1,3 +1,16 @@
+import { readFileSync } from "fs";
+import { join } from "path";
+
+let _mascotBuffer: Buffer | null = null;
+
+/** Returns the curly-guy.png as a Buffer (cached after first read). */
+export function getMascotAttachment(): { filename: string; content: Buffer; cid: string } {
+  if (!_mascotBuffer) {
+    _mascotBuffer = readFileSync(join(process.cwd(), "public", "curly-guy.png"));
+  }
+  return { filename: "curly-guy.png", content: _mascotBuffer, cid: "curly-mascot" };
+}
+
 /** OTP verification email template — matches the existing Curly Sports brand style. */
 export function buildOtpEmail(otp: string, appUrl: string): string {
   return `<!DOCTYPE html>
@@ -14,7 +27,7 @@ export function buildOtpEmail(otp: string, appUrl: string): string {
           </tr>
         </table>
         <div style="width:150px;height:150px;border-radius:50%;background:#0c0a1d;border:3px solid #0c0a1d;box-shadow:6px 6px 0 #0c0a1d;overflow:hidden;display:inline-block;margin-bottom:16px;">
-          <img src="${appUrl}/curly-guy.png" width="150" height="150" alt="Curly" style="width:150px;height:150px;display:block;object-fit:cover;"/>
+          <img src="cid:curly-mascot" width="150" height="150" alt="Curly" style="width:150px;height:150px;display:block;object-fit:cover;"/>
         </div>
         <p style="font-family:Arial,sans-serif;font-size:12px;font-weight:700;color:#0c0a1d;letter-spacing:0.06em;margin:0 0 20px;opacity:0.6;text-transform:uppercase;">Verification code</p>
       </td></tr>

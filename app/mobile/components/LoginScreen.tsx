@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useAuth } from './AuthContext';
 import Icon from './ui/Icon';
 
@@ -195,7 +195,26 @@ export default function LoginScreen() {
   const [submitting, setSubmitting] = useState(false);
   const [forgotSent, setForgotSent] = useState(false);
   const [forgotError, setForgotError] = useState<string | null>(null);
+  const [usernameStatus, setUsernameStatus] = useState<'idle' | 'checking' | 'available' | 'taken' | 'invalid'>('idle');
+  const usernameTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { login, signup, authError, clearAuthError, needsVerification } = useAuth();
+
+  const checkUsername = useCallback((value: string) => {
+    if (usernameTimerRef.current) clearTimeout(usernameTimerRef.current);
+    const trimmed = value.trim();
+    if (!trimmed || trimmed.length < 2) { setUsernameStatus('idle'); return; }
+    if (!/^[a-zA-Z0-9_.-]+$/.test(trimmed)) { setUsernameStatus('invalid'); return; }
+    setUsernameStatus('checking');
+    usernameTimerRef.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/auth/check-username?username=${encodeURIComponent(trimmed)}`);
+        const data = await res.json();
+        setUsernameStatus(data.available ? 'available' : 'taken');
+      } catch {
+        setUsernameStatus('idle');
+      }
+    }, 500);
+  }, []);
 
   const switchMode = (m: Mode) => {
     clearAuthError();
@@ -415,7 +434,7 @@ export default function LoginScreen() {
             <label style={labelStyle}>Username</label>
             <input
               value={username}
-              onChange={e => setUsername(e.target.value)}
+              onChange={e => { setUsername(e.target.value); checkUsername(e.target.value); }}
               placeholder="your_handle"
               required
               minLength={3}
@@ -423,6 +442,24 @@ export default function LoginScreen() {
               autoComplete="username"
               style={inputStyle}
             />
+            <div style={{ fontFamily: 'var(--mono)', fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', marginTop: 6, minHeight: 16 }}>
+              {usernameStatus === 'checking' && (
+                <span style={{ color: 'var(--text-mute)' }}>Checking...</span>
+              )}
+              {usernameStatus === 'available' && (
+                <span style={{ color: '#22c55e', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                  <Icon name="check" size={11} /> Available
+                </span>
+              )}
+              {usernameStatus === 'taken' && (
+                <span style={{ color: 'var(--coral)', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                  <Icon name="close" size={11} /> Username taken
+                </span>
+              )}
+              {usernameStatus === 'invalid' && (
+                <span style={{ color: 'var(--coral)' }}>Letters, numbers, underscores, dots, hyphens only</span>
+              )}
+            </div>
           </div>
         )}
 

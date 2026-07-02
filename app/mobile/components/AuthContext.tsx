@@ -20,6 +20,8 @@ interface AuthContextValue {
   /** Whether OTP verification is needed (signup or unverified login) */
   needsVerification: boolean;
   verificationEmail: string;
+  /** True while OTP was verified and profile is being fetched */
+  verifyingOtp: boolean;
   login: (email: string, password: string) => Promise<void>;
   signup: (email: string, password: string, username: string) => Promise<void>;
   logout: () => Promise<void>;
@@ -46,6 +48,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [authError, setAuthError] = useState<string | null>(null);
   const [needsVerification, setNeedsVerification] = useState(false);
   const [verificationEmail, setVerificationEmail] = useState('');
+  const [verifyingOtp, setVerifyingOtp] = useState(false);
   const mountedRef = useRef(true);
 
   const fetchProfile = useCallback(async () => {
@@ -189,9 +192,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const data = await res.json().catch(() => ({})) as { error?: string };
       throw new Error(data.error || 'Verification failed.');
     }
+    // Show loading splash while fetching profile (prevents login screen flash)
+    setVerifyingOtp(true);
     setNeedsVerification(false);
     setVerificationEmail('');
     await fetchProfile();
+    setVerifyingOtp(false);
   };
 
   const resendOtp = async () => {
@@ -217,7 +223,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   return (
     <AuthContext.Provider value={{
       user, profile, isLoading, isNewUser, authError,
-      needsVerification, verificationEmail,
+      needsVerification, verificationEmail, verifyingOtp,
       login, signup, logout, deleteAccount, setFavTeam, clearAuthError,
       verifyOtp, resendOtp, cancelVerification,
     }}>

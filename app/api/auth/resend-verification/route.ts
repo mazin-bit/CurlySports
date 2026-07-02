@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { generateOtp, hashOtp } from "@/lib/otp";
 import { sendEmail } from "@/lib/email";
-import { buildOtpEmail } from "@/lib/email-templates";
+import { buildOtpEmail, getMascotAttachment } from "@/lib/email-templates";
 import { rateLimiters, rateLimit } from "@/lib/rate-limit";
 import { logger } from "@/lib/logger";
 
@@ -60,6 +60,7 @@ export async function POST(req: NextRequest) {
     to: user.email,
     subject: "Your verification code - Curly Sports",
     html: buildOtpEmail(otp, appUrl),
+    attachments: [getMascotAttachment()],
   }).catch((err) =>
     logger.error("resend otp email failed", { email: user.email, error: String(err) })
   );

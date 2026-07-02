@@ -77,6 +77,32 @@ export default function App() {
     await SplashScreen.hideAsync();
   }, []);
 
+  // ── Intercept external URLs → open in system browser ────
+  const appHost = (() => {
+    try { return new URL(BASE_URL).host; } catch { return "curlysports.com"; }
+  })();
+
+  const onShouldStartLoadWithRequest = useCallback(
+    (request: { url: string; navigationType: string }) => {
+      const { url } = request;
+      // Allow javascript:, about:, data: schemes
+      if (!url.startsWith("http://") && !url.startsWith("https://")) return true;
+      try {
+        const host = new URL(url).host;
+        // Allow same-host navigation (app pages)
+        if (host === appHost || host === "localhost" || host.startsWith("192.168.") || host.startsWith("10.") || host === "0.0.0.0") {
+          return true;
+        }
+        // External URL → open in system browser
+        Linking.openURL(url);
+        return false;
+      } catch {
+        return true;
+      }
+    },
+    [appHost]
+  );
+
   // ── Android back button ───────────────────────────────────
   useEffect(() => {
     if (Platform.OS !== "android") return;
@@ -239,6 +265,7 @@ export default function App() {
           }
         }}
         onNavigationStateChange={(nav) => setCanGoBack(nav.canGoBack)}
+        onShouldStartLoadWithRequest={onShouldStartLoadWithRequest}
         // Performance
         javaScriptEnabled
         domStorageEnabled
@@ -266,11 +293,23 @@ function LoadingView() {
       <View style={styles.logo}>
         <Text style={styles.logoText}>C</Text>
       </View>
-      <ActivityIndicator
-        color="#c8ff3d"
-        size="small"
-        style={{ marginTop: 20 }}
-      />
+      <Text style={styles.brandName}>
+        curly<Text style={{ color: "#ff5b3d" }}>.</Text>sports
+      </Text>
+      <View style={{ flexDirection: "row", gap: 6, marginTop: 24 }}>
+        {[0, 1, 2].map((i) => (
+          <View
+            key={i}
+            style={{
+              width: 6,
+              height: 6,
+              borderRadius: 3,
+              backgroundColor: "#c8ff3d",
+              opacity: 0.5,
+            }}
+          />
+        ))}
+      </View>
     </View>
   );
 }
@@ -291,20 +330,32 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   logo: {
-    width: 72,
-    height: 72,
+    width: 80,
+    height: 80,
     backgroundColor: "#c8ff3d",
-    borderRadius: 18,
+    borderRadius: 22,
     borderWidth: 2.5,
-    borderColor: "#f5f5f5",
+    borderColor: "rgba(255,255,255,0.15)",
     alignItems: "center",
     justifyContent: "center",
     transform: [{ rotate: "-6deg" }],
+    shadowColor: "#c8ff3d",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 32,
+    elevation: 8,
   },
   logoText: {
-    fontSize: 32,
+    fontSize: 36,
     fontWeight: "900",
     color: "#07090b",
     transform: [{ rotate: "6deg" }],
+  },
+  brandName: {
+    marginTop: 18,
+    fontSize: 22,
+    fontWeight: "900",
+    color: "#fffdf7",
+    letterSpacing: -0.5,
   },
 });

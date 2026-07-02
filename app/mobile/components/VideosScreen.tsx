@@ -7,6 +7,7 @@ import Badge from './ui/Badge';
 import Icon from './ui/Icon';
 import SportSelector from './ui/SportSelector';
 import { SkeletonCard, SkeletonList } from './ui/Skeletons';
+import { openExternal } from '@/lib/native';
 
 interface VideoHighlight {
   id: string;
@@ -50,7 +51,7 @@ export default function VideosScreen({ sport, setSport, onSearch, onBell, unread
   const videos = data?.videos ?? [];
 
   const openVideo = (url: string) => {
-    if (typeof window !== 'undefined') window.open(url, '_blank', 'noopener');
+    openExternal(url);
   };
 
   return (

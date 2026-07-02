@@ -3,7 +3,7 @@ import bcrypt from "bcryptjs";
 import prisma from "@/lib/prisma";
 import { generateOtp, hashOtp } from "@/lib/otp";
 import { sendEmail } from "@/lib/email";
-import { buildOtpEmail } from "@/lib/email-templates";
+import { buildOtpEmail, getMascotAttachment } from "@/lib/email-templates";
 import { parseBody, signupSchema } from "@/lib/validation";
 import { rateLimiters } from "@/lib/rate-limit";
 import { logger } from "@/lib/logger";
@@ -65,6 +65,7 @@ export async function POST(req: NextRequest) {
         to: normalizedEmail,
         subject: "Your verification code - Curly Sports",
         html: buildOtpEmail(otp, appUrl),
+        attachments: [getMascotAttachment()],
       });
     } catch (err) {
       emailFailed = true;

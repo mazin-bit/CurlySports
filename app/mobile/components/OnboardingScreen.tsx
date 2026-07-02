@@ -13,6 +13,7 @@ const fetcher = (url: string) => fetch(url).then(r => r.json());
 
 interface OnboardingProps {
   onDone: (team: { code: string; name: string }) => void | Promise<void>;
+  onSkip?: () => void | Promise<void>;
 }
 
 interface RealTeam {
@@ -47,12 +48,21 @@ const STATIC_FALLBACK: PickTeam[] = [
   { code: 'bos', name: 'Celtics',    logo: null },
 ];
 
-export default function OnboardingScreen({ onDone }: OnboardingProps) {
+export default function OnboardingScreen({ onDone, onSkip }: OnboardingProps) {
   const { profile } = useAuth();
   const [step, setStep] = useState(0);
   const [team, setTeam] = useState<string | null>(null);
   const [sports, setSports] = useState<string[]>(['Football']);
   const [saving, setSaving] = useState(false);
+  const [skipping, setSkipping] = useState(false);
+  const [teamSearch, setTeamSearch] = useState('');
+
+  const handleSkip = async () => {
+    setSkipping(true);
+    if (onSkip) await onSkip();
+    else await onDone({ code: '_none', name: 'None' });
+    setSkipping(false);
+  };
 
   const toggleSport = (s: string) => setSports(p => p.includes(s) ? p.filter(x => x !== s) : [...p, s]);
 
@@ -71,23 +81,32 @@ export default function OnboardingScreen({ onDone }: OnboardingProps) {
   ];
 
   const seen = new Set<string>();
-  const realPickTeams: PickTeam[] = allTeams
-    .filter(t => {
-      if (seen.has(t.id)) return false;
-      seen.add(t.id);
-      return KNOWN_CLUBS.some(k => t.name.includes(k.split(' ').slice(-1)[0]) || k.includes(t.name));
-    })
+  const dedupedAll: PickTeam[] = allTeams
+    .filter(t => { if (seen.has(t.id)) return false; seen.add(t.id); return true; })
     .map(t => ({
       code: t.abbr.toLowerCase().replace(/[^a-z]/g, '').slice(0, 4),
       name: t.shortName || t.name,
       logo: t.logo,
-    }))
+    }));
+
+  const realPickTeams: PickTeam[] = dedupedAll
+    .filter(t => {
+      const raw = allTeams.find(a => (a.shortName || a.name) === t.name || a.abbr.toLowerCase().replace(/[^a-z]/g, '').slice(0, 4) === t.code);
+      return raw && KNOWN_CLUBS.some(k => raw.name.includes(k.split(' ').slice(-1)[0]) || k.includes(raw.name));
+    })
     .slice(0, 18);
 
-  const displayTeams: PickTeam[] = realPickTeams.length >= 6 ? realPickTeams : STATIC_FALLBACK;
+  const defaultTeams: PickTeam[] = realPickTeams.length >= 6 ? realPickTeams : STATIC_FALLBACK;
+
+  const q = teamSearch.trim().toLowerCase();
+  const searchResults: PickTeam[] = q.length >= 2
+    ? dedupedAll.filter(t => t.name.toLowerCase().includes(q)).slice(0, 30)
+    : [];
+  const displayTeams = q.length >= 2 ? searchResults : defaultTeams;
 
   const finish = async () => {
-    const t = displayTeams.find(d => d.code === team);
+    const allPickable = [...defaultTeams, ...dedupedAll];
+    const t = allPickable.find(d => d.code === team);
     if (!t) return;
     setSaving(true);
     await onDone({ code: t.code, name: t.name });
@@ -122,6 +141,13 @@ export default function OnboardingScreen({ onDone }: OnboardingProps) {
           <div style={{ marginTop: 32 }}>
             <Button variant="orange" size="lg" block onClick={() => setStep(1)}>Pick your team →</Button>
           </div>
+          <button
+            onClick={handleSkip}
+            disabled={skipping}
+            style={{ marginTop: 16, background: 'none', border: 'none', fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 700, color: 'var(--text-mute)', cursor: 'pointer', letterSpacing: '0.06em', textTransform: 'uppercase', alignSelf: 'center' }}
+          >
+            {skipping ? 'Skipping...' : 'Skip for now'}
+          </button>
         </div>
       )}
 
@@ -129,7 +155,22 @@ export default function OnboardingScreen({ onDone }: OnboardingProps) {
       {step === 1 && (
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, padding: '24px 20px 0' }}>
           <div style={{ fontFamily: 'var(--mono)', fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-mute)' }}>01 · Your club</div>
-          <h2 style={{ fontFamily: 'var(--display)', fontWeight: 800, fontSize: 28, letterSpacing: '-0.02em', color: 'var(--ink)', margin: '6px 0 18px' }}>Pick your team</h2>
+          <h2 style={{ fontFamily: 'var(--display)', fontWeight: 800, fontSize: 28, letterSpacing: '-0.02em', color: 'var(--ink)', margin: '6px 0 12px' }}>Pick your team</h2>
+          <div style={{ position: 'relative', marginBottom: 14 }}>
+            <Icon name="search" size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-mute)', pointerEvents: 'none' }} />
+            <input
+              type="text"
+              value={teamSearch}
+              onChange={e => setTeamSearch(e.target.value)}
+              placeholder="Search teams..."
+              style={{ width: '100%', padding: '11px 14px 11px 36px', background: 'var(--surface)', border: '2px solid var(--ink)', borderRadius: 10, fontFamily: 'var(--body)', fontSize: 14, color: 'var(--ink)', outline: 'none', boxSizing: 'border-box' }}
+            />
+          </div>
+          {q.length >= 2 && searchResults.length === 0 && (
+            <div style={{ textAlign: 'center', padding: '20px 0', color: 'var(--text-mute)', fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 700, letterSpacing: '0.06em' }}>
+              No teams found
+            </div>
+          )}
           <div style={{ flex: 1, overflowY: 'auto', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, paddingBottom: 12 }}>
             {displayTeams.map(t => {
               const on = team === t.code;
@@ -145,9 +186,16 @@ export default function OnboardingScreen({ onDone }: OnboardingProps) {
               );
             })}
           </div>
-          <div style={{ flexShrink: 0, padding: '12px 0 22px' }}>
+          <div style={{ flexShrink: 0, padding: '12px 0 8px' }}>
             <Button variant="primary" size="lg" block disabled={!team} onClick={() => setStep(2)}>Continue →</Button>
           </div>
+          <button
+            onClick={handleSkip}
+            disabled={skipping}
+            style={{ marginBottom: 14, background: 'none', border: 'none', fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 700, color: 'var(--text-mute)', cursor: 'pointer', letterSpacing: '0.06em', textTransform: 'uppercase', alignSelf: 'center', width: '100%', textAlign: 'center' }}
+          >
+            {skipping ? 'Skipping...' : 'Skip for now'}
+          </button>
         </div>
       )}
 
@@ -168,11 +216,18 @@ export default function OnboardingScreen({ onDone }: OnboardingProps) {
             <p style={{ fontSize: 13, color: 'rgba(255,253,247,0.7)', lineHeight: 1.5, margin: '8px 0 0' }}>Get pinged the moment your team scores — and when a debate about them heats up.</p>
           </div>
           <div style={{ flex: 1 }} />
-          <div style={{ flexShrink: 0, padding: '12px 0 22px' }}>
+          <div style={{ flexShrink: 0, padding: '12px 0 8px' }}>
             <Button variant="orange" size="lg" block disabled={saving} onClick={finish}>
               {saving ? 'Saving…' : 'Enter Curly →'}
             </Button>
           </div>
+          <button
+            onClick={handleSkip}
+            disabled={skipping}
+            style={{ marginBottom: 14, background: 'none', border: 'none', fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 700, color: 'var(--text-mute)', cursor: 'pointer', letterSpacing: '0.06em', textTransform: 'uppercase', alignSelf: 'center', width: '100%', textAlign: 'center' }}
+          >
+            {skipping ? 'Skipping...' : 'Skip for now'}
+          </button>
         </div>
       )}
     </div>

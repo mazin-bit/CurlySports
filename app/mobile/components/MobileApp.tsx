@@ -82,12 +82,20 @@ function MaintenanceScreen({ message, estimated }: { message: string; estimated:
 
 function LoadingSplash() {
   return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'var(--bg)', gap: 16 }}>
-      <div style={{ width: 64, height: 64, background: 'var(--lime)', borderRadius: 18, border: '2.5px solid var(--ink)', boxShadow: '5px 5px 0 var(--ink)', transform: 'rotate(-6deg)', display: 'grid', placeItems: 'center', overflow: 'hidden' }}>
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#07090b', gap: 0 }}>
+      <div style={{ width: 80, height: 80, background: '#c8ff3d', borderRadius: 22, border: '2.5px solid rgba(255,255,255,0.15)', boxShadow: '0 8px 32px rgba(200,255,61,0.15)', transform: 'rotate(-6deg)', display: 'grid', placeItems: 'center', overflow: 'hidden' }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/curly-guy.png" alt="" style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }} />
       </div>
-      <div style={{ fontFamily: 'var(--mono)', fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-mute)' }}>Loading…</div>
+      <div style={{ marginTop: 18, fontFamily: 'var(--display, Georgia, serif)', fontWeight: 900, fontSize: 22, color: '#fffdf7', letterSpacing: '-0.5px' }}>
+        curly<span style={{ color: '#ff5b3d' }}>.</span>sports
+      </div>
+      <div style={{ marginTop: 24, display: 'flex', gap: 6 }}>
+        {[0, 1, 2].map(i => (
+          <div key={i} style={{ width: 6, height: 6, borderRadius: '50%', background: '#c8ff3d', opacity: 0.4, animation: `cs-pulse 1.2s ease-in-out ${i * 0.2}s infinite` }} />
+        ))}
+      </div>
+      <style>{`@keyframes cs-pulse { 0%,100% { opacity:0.2; transform:scale(0.8); } 50% { opacity:1; transform:scale(1.2); } }`}</style>
     </div>
   );
 }
@@ -111,7 +119,7 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
 }
 
 function AppInner() {
-  const { user, profile, isLoading, isNewUser, setFavTeam } = useAuth();
+  const { user, profile, isLoading, isNewUser, setFavTeam, verifyingOtp } = useAuth();
   const flags = useFlags();
   const [tab, setTab] = useState<Tab>('home');
   const [sport, setSport] = useState('football');
@@ -156,8 +164,8 @@ function AppInner() {
     goTab('home');
   };
 
-  // 1 — Loading session
-  if (isLoading) return <LoadingSplash />;
+  // 1 — Loading session or completing OTP verification
+  if (isLoading || verifyingOtp) return <LoadingSplash />;
 
   // 2 — Not authenticated → Login
   if (!user) return <LoginScreen />;
@@ -172,6 +180,7 @@ function AppInner() {
     return (
       <OnboardingScreen
         onDone={async team => { await setFavTeam({ code: team.code, name: team.name }); }}
+        onSkip={async () => { await setFavTeam({ code: '_none', name: 'None' }); }}
       />
     );
   }

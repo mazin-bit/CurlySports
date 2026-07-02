@@ -8,6 +8,7 @@ import { useBracket } from '@/hooks/useBracket';
 import type { BracketRound, BracketMatch } from '@/hooks/useBracket';
 import type { StandingEntry, GroupStandings } from '@/hooks/useStandings';
 import { normalizedToMobile } from './api';
+import { openExternal } from '@/lib/native';
 import type { NormalizedMatch } from '@/lib/types';
 import Topbar from './ui/Topbar';
 import Card from './ui/Card';
@@ -278,7 +279,7 @@ export default function DashboardScreen({ sport, setSport, onOpenMatch, onOpenPl
               <SkeletonList count={3}>{i => <SkeletonNewsCard style={{ '--i': i } as React.CSSProperties} />}</SkeletonList>
             ) : articles.length > 0 ? articles.map(n => (
               <Card key={n.id} tappable style={{ padding: 0, overflow: 'hidden', display: 'flex', alignItems: 'stretch', gap: 0, cursor: 'pointer' }}
-                onClick={() => { if (n.url) window.open(n.url, '_blank', 'noopener'); }}
+                onClick={() => { if (n.url) openExternal(n.url); }}
               >
                 {n.imageUrl ? (
                   <div style={{ width: 88, flexShrink: 0, background: 'var(--surface-3)', borderRight: '2px solid var(--ink)', overflow: 'hidden', display: 'flex', alignItems: 'center' }}>

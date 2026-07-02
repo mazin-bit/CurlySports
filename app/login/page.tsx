@@ -1,9 +1,9 @@
 "use client";
 export const dynamic = "force-dynamic";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import styles from "./login.module.css";
-import { Mail, Eye, EyeOff } from "lucide-react";
+import { Mail, Eye, EyeOff, Check, X, Loader2 } from "lucide-react";
 
 type Mode = "login" | "signup" | "forgot";
 
@@ -245,8 +245,27 @@ export default function LoginPage() {
   const [emailSent, setEmailSent] = useState(false);
   const [needsVerification, setNeedsVerification] = useState(false);
   const [verificationEmail, setVerificationEmail] = useState("");
+  const [usernameStatus, setUsernameStatus] = useState<"idle" | "checking" | "available" | "taken" | "invalid">("idle");
+  const usernameTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const router = useRouter();
+
+  const checkUsername = useCallback((value: string) => {
+    if (usernameTimerRef.current) clearTimeout(usernameTimerRef.current);
+    const trimmed = value.trim();
+    if (!trimmed || trimmed.length < 2) { setUsernameStatus("idle"); return; }
+    if (!/^[a-zA-Z0-9_.-]+$/.test(trimmed)) { setUsernameStatus("invalid"); return; }
+    setUsernameStatus("checking");
+    usernameTimerRef.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/auth/check-username?username=${encodeURIComponent(trimmed)}`);
+        const data = await res.json();
+        setUsernameStatus(data.available ? "available" : "taken");
+      } catch {
+        setUsernameStatus("idle");
+      }
+    }, 500);
+  }, []);
 
   function switchMode(m: Mode) {
     setMode(m);
@@ -341,7 +360,7 @@ export default function LoginPage() {
           error={error}
           setError={setError}
           onBack={() => { setNeedsVerification(false); setError(null); switchMode("login"); }}
-          onVerified={() => { router.push("/dashboard"); router.refresh(); }}
+          onVerified={() => { router.replace("/dashboard"); }}
         />
       </div>
     );
@@ -453,10 +472,30 @@ export default function LoginPage() {
                 type="text"
                 placeholder="e.g. footynerd_03"
                 value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                onChange={(e) => { setUsername(e.target.value); checkUsername(e.target.value); }}
                 required
               />
-              <div className={styles.fieldHelper}>This is what everyone sees when you debate. Choose wisely.</div>
+              <div className={styles.fieldHelper}>
+                {usernameStatus === "checking" && (
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 4, color: "#999" }}>
+                    <Loader2 size={12} style={{ animation: "spin 1s linear infinite" }} /> Checking...
+                  </span>
+                )}
+                {usernameStatus === "available" && (
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 4, color: "#22c55e" }}>
+                    <Check size={12} /> Available
+                  </span>
+                )}
+                {usernameStatus === "taken" && (
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 4, color: "#ef4444" }}>
+                    <X size={12} /> Username taken
+                  </span>
+                )}
+                {usernameStatus === "invalid" && (
+                  <span style={{ color: "#ef4444" }}>Letters, numbers, underscores, dots, hyphens only</span>
+                )}
+                {usernameStatus === "idle" && "This is what everyone sees when you debate. Choose wisely."}
+              </div>
             </div>
           )}
 

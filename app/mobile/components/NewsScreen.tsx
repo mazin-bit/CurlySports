@@ -8,6 +8,7 @@ import Chip from './ui/Chip';
 import Icon from './ui/Icon';
 import SportSelector from './ui/SportSelector';
 import { SkeletonNewsCard, SkeletonList } from './ui/Skeletons';
+import { openExternal } from '@/lib/native';
 
 const SPORT_LABELS: Record<string, string> = {
   football: 'Football', basketball: 'Basketball', nfl: 'NFL',
@@ -63,7 +64,7 @@ export default function NewsScreen({ sport, setSport, onSearch, onBell, unread }
   const articles = applyFilter(baseArticles, filter, sport);
 
   const openArticle = (url: string) => {
-    if (typeof window !== 'undefined') window.open(url, '_blank', 'noopener');
+    openExternal(url);
   };
 
   return (
