@@ -7,8 +7,9 @@ const ALLOWED_HOSTS = [
 ];
 
 export async function GET(req: NextRequest) {
-  const url = req.nextUrl.searchParams.get('url');
-  if (!url) return new NextResponse('Missing url', { status: 400 });
+  const rawUrl = req.nextUrl.searchParams.get('url');
+  if (!rawUrl) return new NextResponse('Missing url', { status: 400 });
+  const url = rawUrl.replaceAll('&amp;', '&');
 
   let parsed: URL;
   try {
