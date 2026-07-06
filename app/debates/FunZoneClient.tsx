@@ -2,6 +2,7 @@
 
 import AppShell from "@/components/AppShell";
 import { useState, useEffect, useRef, useCallback } from "react";
+import { createPortal } from "react-dom";
 import styles from "./fun-zone.module.css";
 import {
   Flame, Zap, MessageCircle, ThumbsUp, Share2,
@@ -270,7 +271,7 @@ function ComposeModal({
     }
   };
 
-  return (
+  return createPortal(
     <div className={styles.composeOverlay} onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className={styles.composeModal}>
         <div className={styles.composeHead}>
@@ -370,7 +371,8 @@ function ComposeModal({
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 

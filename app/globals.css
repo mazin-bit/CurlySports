@@ -362,7 +362,7 @@ button.sb-item {
 
 /* ========== MAIN CONTENT ========== */
 .app-main { min-width: 0; overflow: hidden; }
-.app-content { padding: 26px 28px 100px; will-change: transform, opacity; }
+.app-content { padding: 26px 28px 100px; }
 .stack { display: flex; flex-direction: column; gap: 28px; }
 .stack-sm { display: flex; flex-direction: column; gap: 16px; }
 

@@ -11,7 +11,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     ...config,
     name: "Curly Sports",
     slug: "curly-sports",
-    version: "1.0.0",
+    version: "1.0.2",
     orientation: "portrait",
     icon: "./assets/icon.png",
     userInterfaceStyle: "dark",
@@ -20,7 +20,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     ios: {
       supportsTablet: false,
       bundleIdentifier: "com.curlysports.mobile",
-      buildNumber: "4",
+      buildNumber: "6",
       backgroundColor: "#07090b",
       infoPlist: {
         UIBackgroundModes: ["remote-notification"],
@@ -28,7 +28,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     },
     android: {
       package: "com.curlysports.mobile",
-      versionCode: 4,
+      versionCode: 6,
       adaptiveIcon: {
         backgroundColor: "#f5e6c8",
         foregroundImage: "./assets/android-icon-foreground.png",

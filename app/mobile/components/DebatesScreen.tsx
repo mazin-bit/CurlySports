@@ -423,46 +423,6 @@ export default function DebatesScreen({ sport, onSearch, onBell, unread }: Debat
 
       <div className="cs-scroll" style={{ flex: 1, overflow: 'auto', padding: '14px 14px 120px', display: 'flex', flexDirection: 'column', gap: 14 }}>
 
-        {/* ── Today's debate poll ── */}
-        {liveDebate && (
-          <Card style={{ background: 'var(--accent)', borderColor: 'var(--ink)' }}>
-            <div style={{ fontFamily: 'var(--mono)', fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink)', opacity: 0.7 }}>Today&apos;s debate</div>
-            <div style={{ fontFamily: 'var(--display)', fontWeight: 800, fontSize: 22, color: 'var(--ink)', letterSpacing: '-0.02em', margin: '6px 0 12px', lineHeight: 1.1 }}>{question}</div>
-
-            {userVote ? (
-              <>
-                <div style={{ display: 'flex', height: 30, borderRadius: 8, overflow: 'hidden', border: '2px solid var(--ink)', boxShadow: 'var(--shadow-sm)' }}>
-                  <div style={{ width: `${pctA}%`, background: 'var(--ink)', color: 'var(--accent)', display: 'flex', alignItems: 'center', paddingLeft: 8, fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 700 }}>{labelA} {pctA}%</div>
-                  <div style={{ flex: 1, background: 'var(--surface)', color: 'var(--ink)', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', paddingRight: 8, fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 700 }}>{labelB} {pctB}%</div>
-                </div>
-                <div style={{ fontFamily: 'var(--mono)', fontSize: 10.5, color: 'var(--ink)', opacity: 0.6, marginTop: 8 }}>
-                  You voted {userVote === 'A' ? labelA : labelB} · {totalVotes.toLocaleString()} votes
-                </div>
-              </>
-            ) : (
-              <div style={{ display: 'flex', gap: 8 }}>
-                <button onClick={() => castVote('A')} disabled={votingDebate} style={voteBtn(true)}>{votingDebate ? '…' : `Vote ${labelA}`}</button>
-                <button onClick={() => castVote('B')} disabled={votingDebate} style={voteBtn(false)}>{votingDebate ? '…' : `Vote ${labelB}`}</button>
-              </div>
-            )}
-            <div style={{ fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--ink)', opacity: 0.5, marginTop: 8 }}>{totalVotes.toLocaleString()} votes cast</div>
-          </Card>
-        )}
-
-        {/* ── Create debate button ── */}
-        <button
-          onClick={() => setShowCreateDebate(true)}
-          style={{
-            width: '100%', padding: '10px 0', borderRadius: 10,
-            border: '2px solid var(--ink)', background: 'var(--accent)',
-            fontFamily: 'var(--mono)', fontWeight: 700, fontSize: 12,
-            color: 'var(--ink)', cursor: 'pointer', display: 'flex',
-            alignItems: 'center', justifyContent: 'center', gap: 6,
-          }}
-        >
-          <Icon name="plus" size={14} /> New Debate
-        </button>
-
         {/* ── Sort toggle (matches web Hot/New) ── */}
         <div style={{ display: 'flex', gap: 8 }}>
           <button onClick={() => setSort('hot')} style={{ flex: 1, padding: '8px 0', borderRadius: 10, border: '2px solid var(--ink)', fontFamily: 'var(--mono)', fontWeight: 700, fontSize: 11, cursor: 'pointer', background: sort === 'hot' ? 'var(--ink)' : 'var(--surface)', color: sort === 'hot' ? 'var(--accent)' : 'var(--ink)' }}>
@@ -624,60 +584,6 @@ export default function DebatesScreen({ sport, onSearch, onBell, unread }: Debat
           <div style={{ marginTop: 6, fontFamily: 'var(--mono)', fontSize: 10.5, color: 'var(--coral)', textAlign: 'center' }}>{postError}</div>
         )}
       </div>
-
-      {/* ── Create debate sheet ── */}
-      {showCreateDebate && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
-          <div onClick={() => setShowCreateDebate(false)} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)' }} />
-          <div style={{ position: 'relative', background: 'var(--bg)', borderRadius: '20px 20px 0 0', border: '2.5px solid var(--ink)', borderBottom: 'none', display: 'flex', flexDirection: 'column', animation: 'cs-slideUp 0.22s var(--ease-pop)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px 10px', borderBottom: '1px solid var(--border-3)', flexShrink: 0 }}>
-              <div style={{ fontFamily: 'var(--display)', fontWeight: 800, fontSize: 16, color: 'var(--ink)' }}>New Debate</div>
-              <button onClick={() => setShowCreateDebate(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-mute)', display: 'grid', placeItems: 'center' }}>
-                <Icon name="close" size={18} />
-              </button>
-            </div>
-
-            <div style={{ padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <input
-                value={debateQuestion}
-                onChange={e => setDebateQuestion(e.target.value)}
-                placeholder="Ask a debate question..."
-                maxLength={200}
-                style={{ width: '100%', padding: '10px 12px', border: '2px solid var(--border-2)', borderRadius: 10, fontSize: 14, background: 'var(--surface)', color: 'var(--ink)', outline: 'none', fontFamily: 'var(--body)' }}
-              />
-              <div style={{ fontFamily: 'var(--mono)', fontSize: 10, fontWeight: 700, color: 'var(--text-mute)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Options</div>
-              <input
-                value={debateOptA}
-                onChange={e => setDebateOptA(e.target.value)}
-                placeholder="Option A (e.g. Messi)"
-                maxLength={60}
-                style={{ width: '100%', padding: '10px 12px', border: '2px solid var(--border-2)', borderRadius: 10, fontSize: 13, background: 'var(--surface)', color: 'var(--ink)', outline: 'none', fontFamily: 'var(--body)' }}
-              />
-              <input
-                value={debateOptB}
-                onChange={e => setDebateOptB(e.target.value)}
-                placeholder="Option B (e.g. Ronaldo)"
-                maxLength={60}
-                style={{ width: '100%', padding: '10px 12px', border: '2px solid var(--border-2)', borderRadius: 10, fontSize: 13, background: 'var(--surface)', color: 'var(--ink)', outline: 'none', fontFamily: 'var(--body)' }}
-              />
-              {debateError && (
-                <div style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--coral)' }}>{debateError}</div>
-              )}
-            </div>
-
-            <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px 24px', borderTop: '1px solid var(--border-3)' }}>
-              <button onClick={() => setShowCreateDebate(false)} style={{ flex: 1, padding: '10px 0', borderRadius: 10, border: '2px solid var(--border-2)', background: 'var(--surface)', fontFamily: 'var(--mono)', fontWeight: 700, fontSize: 12, color: 'var(--text-mute)', cursor: 'pointer' }}>Cancel</button>
-              <button
-                onClick={submitDebate}
-                disabled={creatingDebate || !debateQuestion.trim() || !debateOptA.trim() || !debateOptB.trim()}
-                style={{ flex: 1, padding: '10px 0', borderRadius: 10, border: '2px solid var(--ink)', background: creatingDebate || !debateQuestion.trim() || !debateOptA.trim() || !debateOptB.trim() ? 'var(--surface-3)' : 'var(--accent)', fontFamily: 'var(--mono)', fontWeight: 700, fontSize: 12, color: 'var(--ink)', cursor: creatingDebate ? 'not-allowed' : 'pointer' }}
-              >
-                {creatingDebate ? '...' : 'Create'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* ── Comments sheet ── */}
       {openComments && <CommentsSheet postId={openComments} onClose={() => setOpenComments(null)} />}
