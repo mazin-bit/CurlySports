@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { timingSafeEqual } from "crypto";
 import prisma from "@/lib/prisma";
+import { requireAuth } from "@/lib/auth";
 import { parseBody, createDebateSchema } from "@/lib/validation";
 import { logger } from "@/lib/logger";
 
@@ -35,7 +36,11 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  if (!isAdmin(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  // Allow admin token (admin panel) or a logged-in user (mobile)
+  if (!isAdmin(req)) {
+    const auth = await requireAuth();
+    if (auth instanceof NextResponse) return auth;
+  }
 
   const body = await req.json().catch(() => ({}));
   const parsed = parseBody(createDebateSchema, body);
