@@ -29,7 +29,7 @@ const SPORT_META: Record<string, { label: string; abbr: string; color: string }>
 const FEATURE_META: Record<string, { label: string; desc: string; href: string }> = {
   liveScores: { label: "Live Scores",  desc: "Real-time match scores via ESPN SSE",        href: "/live-scores" },
   news:       { label: "News Feed",    desc: "ESPN + Tavily + RSS news aggregation",        href: "/news" },
-  funZone:    { label: "Fun Zone",     desc: "Debates, polls, and community content",       href: "/fun-zone" },
+  funZone:    { label: "Debates",      desc: "Debates, polls, and community content",       href: "/debates" },
   miniGames:  { label: "Mini Games",   desc: "Quiz games, player guess, leaderboards",      href: "/mini-games" },
   leagues:    { label: "Leagues",      desc: "Standings, tables, and season data",          href: "/leagues" },
   players:    { label: "Players",      desc: "Player profiles and stats directory",         href: "/players" },

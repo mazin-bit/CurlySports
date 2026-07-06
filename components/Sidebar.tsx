@@ -24,7 +24,7 @@ const NAV_CONTENT = [
 ];
 
 const NAV_COMMUNITY = [
-  { key: "funzone",   label: "Debates",    icon: "i-spark",  href: "/fun-zone",   count: "HOT", feature: "funZone" },
+  { key: "funzone",   label: "Debates",    icon: "i-spark",  href: "/debates",   count: "HOT", feature: "funZone" },
   { key: "minigames", label: "Mini Games", icon: "i-game",   href: "/mini-games", feature: "miniGames" },
 ];
 

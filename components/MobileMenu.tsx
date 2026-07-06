@@ -19,7 +19,7 @@ const NAV_CONTENT = [
   { key: "videos", label: "Videos", icon: "i-video", href: "/videos", feature: null,    count: null  },
 ];
 const NAV_COMMUNITY = [
-  { key: "funzone",   label: "Debates",    icon: "i-spark", href: "/fun-zone",   feature: "funZone",   count: "HOT" },
+  { key: "funzone",   label: "Debates",    icon: "i-spark", href: "/debates",   feature: "funZone",   count: "HOT" },
   { key: "minigames", label: "Mini Games", icon: "i-game",  href: "/mini-games", feature: "miniGames", count: null  },
 ];
 const NAV_PERSONAL = [

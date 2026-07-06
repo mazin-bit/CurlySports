@@ -609,7 +609,7 @@ export default function LandingPage() {
               <ul>
                 <li><a href="/dashboard">Dashboard</a></li>
                 <li><a href="/live-scores">Live scores</a></li>
-                <li><a href="/fun-zone">Debates</a></li>
+                <li><a href="/debates">Debates</a></li>
                 <li><a href="/mini-games">Mini-games</a></li>
               </ul>
             </div>

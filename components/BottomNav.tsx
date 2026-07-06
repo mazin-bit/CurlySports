@@ -4,7 +4,7 @@ import { Ico } from "./Icons";
 const ITEMS = [
   { key: "home",    label: "Home",    icon: "i-home",   href: "/dashboard" },
   { key: "live",    label: "Live",    icon: "i-live",   href: "/live-scores" },
-  { key: "funzone", label: "Debates", icon: "i-spark",  href: "/fun-zone" },
+  { key: "funzone", label: "Debates", icon: "i-spark",  href: "/debates" },
   { key: "leagues", label: "Leagues", icon: "i-trophy", href: "/leagues" },
 ];
 
