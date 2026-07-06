@@ -11,7 +11,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     ...config,
     name: "Curly Sports",
     slug: "curly-sports",
-    version: "1.0.1",
+    version: "1.0.0",
     orientation: "portrait",
     icon: "./assets/icon.png",
     userInterfaceStyle: "dark",
