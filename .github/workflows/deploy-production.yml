@@ -1,6 +1,8 @@
 name: Deploy Production to Vercel
 
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
     inputs:
       app-version:
@@ -87,7 +89,7 @@ jobs:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
-      - name: Run database migrations
+      - name: Run Prisma migrations
         if: steps.migration-env.outputs.has_direct_url == 'true'
         run: |
           # Show which database host Prisma will connect to (password is not printed).
@@ -105,19 +107,39 @@ jobs:
           npx dotenv -e .env.migrate -- npx prisma migrate status || true
           echo "::endgroup::"
 
-          # Apply all pending migrations
+          # Apply all pending Prisma migrations
           echo "::group::Running prisma migrate deploy"
           npx dotenv -e .env.migrate -- npx prisma migrate deploy
           MIGRATE_EXIT=$?
           echo "::endgroup::"
 
           if [ $MIGRATE_EXIT -ne 0 ]; then
-            echo "::error::Database migration failed (exit code $MIGRATE_EXIT) — deploy aborted."
+            echo "::error::Prisma migration failed (exit code $MIGRATE_EXIT) — deploy aborted."
             rm -f .env.migrate
             exit 1
           fi
 
-          echo "Migrations applied successfully"
+          echo "Prisma migrations applied successfully"
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      - name: Run Supabase SQL migrations
+        if: steps.migration-env.outputs.has_direct_url == 'true'
+        run: |
+          sudo apt-get install -y -q postgresql-client 2>/dev/null
+
+          # Extract the direct DB connection URL
+          MIGRATE_URL=$(grep -m1 '^DIRECT_URL=' .env.migrate | sed 's/^DIRECT_URL=//' | tr -d '"')
+
+          echo "::group::Supabase SQL migrations"
+          for f in $(ls supabase/migrations/*.sql 2>/dev/null | sort); do
+            echo "Applying $f ..."
+            psql "$MIGRATE_URL" -f "$f" -v ON_ERROR_STOP=0 2>&1 | grep -v "^$" || true
+            echo "  done"
+          done
+          echo "::endgroup::"
+
           rm -f .env.migrate
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
