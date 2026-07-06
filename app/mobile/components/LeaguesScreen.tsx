@@ -184,20 +184,21 @@ export default function LeaguesScreen({ sport, setSport, onSearch, onBell, onOpe
         )}
 
         {/* Table view */}
-        {activeTab === 'table' && <Card subtitle="Standings" title={selected.label}>
-          <div style={{ display: 'flex', fontFamily: 'var(--mono)', fontSize: 9, color: 'var(--text-mute)', textTransform: 'uppercase', letterSpacing: '0.06em', padding: '0 0 8px', borderBottom: '1px solid var(--border-3)' }}>
-            <span style={{ width: 20 }}>#</span>
-            <span style={{ flex: 1 }}>Club</span>
-            <span style={{ width: 78, textAlign: 'center' }}>Form</span>
-            <span style={{ width: 30, textAlign: 'center' }}>GD</span>
-            <span style={{ width: 28, textAlign: 'right' }}>Pts</span>
-          </div>
+        {activeTab === 'table' && (() => {
+          const groups = standings?.groups;
+          const hasGroups = standings?.hasGroups && groups && groups.length > 0;
 
-          {isLoading && (
-            <SkeletonList count={8}>{i => <SkeletonTableRow style={{ '--i': i } as React.CSSProperties} />}</SkeletonList>
-          )}
+          const TableHeader = () => (
+            <div style={{ display: 'flex', fontFamily: 'var(--mono)', fontSize: 9, color: 'var(--text-mute)', textTransform: 'uppercase', letterSpacing: '0.06em', padding: '0 0 8px', borderBottom: '1px solid var(--border-3)' }}>
+              <span style={{ width: 20 }}>#</span>
+              <span style={{ flex: 1 }}>Club</span>
+              <span style={{ width: 78, textAlign: 'center' }}>Form</span>
+              <span style={{ width: 30, textAlign: 'center' }}>GD</span>
+              <span style={{ width: 28, textAlign: 'right' }}>Pts</span>
+            </div>
+          );
 
-          {!isLoading && table.length > 0 && table.map(entry => {
+          const TeamRow = ({ entry }: { entry: typeof table[0] }) => {
             const total = Math.min(entry.wins + entry.draws + entry.losses, 5);
             const formArr: string[] = [];
             let w = Math.min(entry.wins, total), d = Math.min(entry.draws, total - w), l = total - w - d;
@@ -208,7 +209,7 @@ export default function LeaguesScreen({ sport, setSport, onSearch, onBell, onOpe
               else formArr.push('D');
             }
             return (
-              <div key={entry.teamId} style={{ display: 'flex', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid var(--border-3)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid var(--border-3)' }}>
                 <span style={{ width: 20, fontFamily: 'var(--mono)', fontWeight: 700, fontSize: 12, color: entry.rank <= 4 ? 'var(--orange)' : 'var(--text-mute)' }}>{entry.rank}</span>
                 <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 9, minWidth: 0 }}>
                   <TeamCrest code={entry.teamAbbr.toLowerCase().replace(/[^a-z]/g, '').slice(0, 4)} abbr={entry.teamAbbr.slice(0, 3).toUpperCase()} logoUrl={entry.teamLogo} />
@@ -223,20 +224,46 @@ export default function LeaguesScreen({ sport, setSport, onSearch, onBell, onOpe
                 <span style={{ width: 28, textAlign: 'right', fontFamily: 'var(--display)', fontWeight: 800, fontSize: 15, color: 'var(--ink)' }}>{entry.points}</span>
               </div>
             );
-          })}
+          };
 
-          {!isLoading && table.length === 0 && (
-            <div style={{ padding: '24px 0', textAlign: 'center', fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text-mute)' }}>
-              No standings data available
+          const FormLegend = () => (
+            <div style={{ display: 'flex', gap: 14, marginTop: 12, fontFamily: 'var(--mono)', fontSize: 9, color: 'var(--text-mute)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><span style={{ width: 9, height: 9, borderRadius: 2, background: 'var(--accent)', border: '1px solid var(--ink)', display: 'inline-block' }} /> Win</span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><span style={{ width: 9, height: 9, borderRadius: 2, background: 'var(--surface-3)', border: '1px solid var(--ink)', display: 'inline-block' }} /> Draw</span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><span style={{ width: 9, height: 9, borderRadius: 2, background: 'var(--coral)', border: '1px solid var(--ink)', display: 'inline-block' }} /> Loss</span>
             </div>
-          )}
+          );
 
-          <div style={{ display: 'flex', gap: 14, marginTop: 12, fontFamily: 'var(--mono)', fontSize: 9, color: 'var(--text-mute)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><span style={{ width: 9, height: 9, borderRadius: 2, background: 'var(--accent)', border: '1px solid var(--ink)', display: 'inline-block' }} /> Win</span>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><span style={{ width: 9, height: 9, borderRadius: 2, background: 'var(--surface-3)', border: '1px solid var(--ink)', display: 'inline-block' }} /> Draw</span>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><span style={{ width: 9, height: 9, borderRadius: 2, background: 'var(--coral)', border: '1px solid var(--ink)', display: 'inline-block' }} /> Loss</span>
-          </div>
-        </Card>}
+          if (hasGroups) {
+            return (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                {groups.map(g => (
+                  <Card key={g.groupName} subtitle="Standings" title={g.groupName}>
+                    <TableHeader />
+                    {g.entries.map(entry => <TeamRow key={entry.teamId} entry={entry} />)}
+                    <FormLegend />
+                  </Card>
+                ))}
+              </div>
+            );
+          }
+
+          return (
+            <Card subtitle="Standings" title={selected.label}>
+              <TableHeader />
+              {isLoading && (
+                <SkeletonList count={8}>{i => <SkeletonTableRow style={{ '--i': i } as React.CSSProperties} />}</SkeletonList>
+              )}
+              {!isLoading && table.length > 0 && table.map(entry => <TeamRow key={entry.teamId} entry={entry} />)}
+              {!isLoading && table.length === 0 && (
+                <div style={{ padding: '24px 0', textAlign: 'center', fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text-mute)' }}>
+                  No standings data available
+                </div>
+              )}
+              <FormLegend />
+            </Card>
+          );
+        })()}
       </div>
     </div>
   );
