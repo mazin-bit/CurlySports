@@ -781,56 +781,6 @@ export default function DebatesPage() {
           </div>
         </div>
 
-        {/* Featured Debates */}
-        <div className={styles.featuredDebates}>
-          <div className="sec-head" style={{ marginBottom: 12 }}>
-            <div className="title">
-              <Vote size={17} className="title-icon" strokeWidth={2} />
-              <span className="accent">Debates</span>
-            </div>
-            <button className={styles.createDebateBtn} onClick={() => setShowCreateDebate(true)}>
-              <Plus size={13} /> New Debate
-            </button>
-          </div>
-          {debates.length > 0 && (
-            <div className={styles.debateGrid}>
-              {debates.map((d) => {
-                const total = d.votesA + d.votesB;
-                const pctA = total > 0 ? Math.round((d.votesA / total) * 100) : 50;
-                const pctB = total > 0 ? Math.round((d.votesB / total) * 100) : 50;
-                const userVote = debateVotes[d.id];
-                return (
-                  <div key={d.id} className={styles.debateCard}>
-                    <p className={styles.debateQuestion}>{d.question}</p>
-                    <div className={styles.debateOptions}>
-                      <button
-                        className={`${styles.debateOpt}${userVote === "A" ? " " + styles.debateOptVoted : ""}`}
-                        onClick={() => voteDebate(d.id, "A")}
-                        disabled={!!userVote || votingDebate === d.id}
-                      >
-                        <div className={styles.debateFill} style={{ width: userVote ? `${pctA}%` : "0%" }} />
-                        <span className={styles.debateLabel}>{d.optionA}</span>
-                        {userVote && <span className={styles.debatePct}>{pctA}%</span>}
-                      </button>
-                      <button
-                        className={`${styles.debateOpt}${userVote === "B" ? " " + styles.debateOptVoted : ""}`}
-                        onClick={() => voteDebate(d.id, "B")}
-                        disabled={!!userVote || votingDebate === d.id}
-                      >
-                        <div className={styles.debateFill} style={{ width: userVote ? `${pctB}%` : "0%" }} />
-                        <span className={styles.debateLabel}>{d.optionB}</span>
-                        {userVote && <span className={styles.debatePct}>{pctB}%</span>}
-                      </button>
-                    </div>
-                    <div className={styles.debateMeta}>
-                      {total.toLocaleString()} votes{!userVote && " · tap to vote"}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
 
         {/* Feed */}
         {loading ? (
