@@ -729,17 +729,41 @@ async function fetchFromCricinfoHtml(leagueId: string, season?: string): Promise
   }
 }
 
+// ─── Static cricket standings fallback ────────────────────────────────────────
+// ESPNcricinfo blocks server-side requests (403) from Vercel/production IPs.
+// This static data is scraped locally and bundled as a fallback.
+
+import staticStandings from "@/lib/cricket-standings-static.json";
+
+function getStaticStandings(leagueId: string, season?: string): LeagueStandings | null {
+  const leagueData = (staticStandings as Record<string, Record<string, LeagueStandings>>)[leagueId];
+  if (!leagueData) return null;
+
+  // Try exact season, then closest available
+  if (season && leagueData[season]) return leagueData[season];
+  const available = Object.keys(leagueData).sort((a, b) => parseInt(b) - parseInt(a));
+  if (season) {
+    const reqYear = parseInt(season);
+    available.sort((a, b) => Math.abs(parseInt(a) - reqYear) - Math.abs(parseInt(b) - reqYear));
+  }
+  return available.length > 0 ? leagueData[available[0]] : null;
+}
+
 // ─── Unified cricket standings ────────────────────────────────────────────────
 
 async function fetchCricketStandings(leagueId: string, season?: string): Promise<LeagueStandings | null> {
   if (leagueId === "ipl") return fetchIPLStandings(season);
 
-  // TheSportsDB covers: big.bash, psl, bpl, cplt20, eng.t20, aus.domestic, eng.domestic(1/2)
+  // TheSportsDB covers: aus.domestic, eng.domestic(1/2)
   const tsdb = await fetchCricketStandingsFromTsdb(leagueId);
   if (tsdb) return tsdb;
 
-  // ESPNcricinfo HTML scraper covers: sa.domestic (SA20), ilt20, mlc, lpl, gt20
-  return fetchFromCricinfoHtml(leagueId, season);
+  // ESPNcricinfo HTML scraper (works locally, blocked in production by Akamai)
+  const cricinfo = await fetchFromCricinfoHtml(leagueId, season);
+  if (cricinfo) return cricinfo;
+
+  // Static fallback for when ESPNcricinfo is blocked
+  return getStaticStandings(leagueId, season);
 }
 
 // ─── route handler ────────────────────────────────────────────────────────────
