@@ -9,6 +9,7 @@ import { useNews } from "@/hooks/useNews";
 import { useActiveSport } from "@/contexts/SportContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { localizeDigits } from "@/lib/locale-utils";
+import type { Locale } from "@/lib/i18n";
 import type { NormalizedNews } from "@/lib/types";
 
 const FILTERS = [
@@ -63,7 +64,7 @@ function tagForArticle(a: NormalizedNews, t: (key: string) => string): { label: 
   return { label: labelMap[id] ?? id, color: colorMap[id] ?? "var(--accent)", id };
 }
 
-function timeSince(iso: string, t: (key: string) => string, locale: string): string {
+function timeSince(iso: string, t: (key: string) => string, locale: Locale): string {
   const diff = Date.now() - new Date(iso).getTime();
   const mins = Math.floor(diff / 60_000);
   if (mins < 1) return t("time.justNow");
@@ -73,7 +74,7 @@ function timeSince(iso: string, t: (key: string) => string, locale: string): str
   return t("time.daysAgo").replace("{n}", localizeDigits(String(Math.floor(hrs / 24)), locale));
 }
 
-function readTime(text: string, t: (key: string) => string, locale: string): string {
+function readTime(text: string, t: (key: string) => string, locale: Locale): string {
   const words = text.trim().split(/\s+/).length;
   return `${localizeDigits(String(Math.max(1, Math.round(words / 200))), locale)} ${t("time.minRead")}`;
 }
