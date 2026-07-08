@@ -128,7 +128,7 @@ const SPORT_LEAGUES: Record<string, string[]> = {
     // Asia
     "jpn.1", "ksa.1", "idn.1",
   ],
-  cricket: ["icc.t20wc", "icc.champions", "ipl", "psl", "big.bash", "sa.domestic", "cplt20"],
+  cricket: ["icc.t20wc", "icc.champions", "ipl", "psl", "big.bash", "sa.domestic", "cplt20", "ilt20", "mlc", "bpl", "lpl"],
   basketball: ["nba", "wnba", "ncaab", "ncaaw", "nba.gl"],
   nfl: ["nfl"],
   hockey: ["nhl"],
@@ -700,8 +700,16 @@ async function fetchFromCricinfoHtml(leagueId: string, season?: string): Promise
   const cfg = CRICINFO_SERIES_MAP[leagueId];
   if (!cfg) return null;
 
-  // Pick the entry that matches the requested season exactly; only fall back to latest when no season specified
-  const pick = season ? cfg.series.find(s => s.season === season) : cfg.series[0];
+  // Pick the entry that matches the requested season; fall back to the closest available
+  let pick = season ? cfg.series.find(s => s.season === season) : cfg.series[0];
+  if (!pick && season) {
+    // No exact match — fall back to closest season (prefer most recent <= requested)
+    const reqYear = parseInt(season);
+    const sorted = [...cfg.series].sort((a, b) =>
+      Math.abs(parseInt(a.season) - reqYear) - Math.abs(parseInt(b.season) - reqYear)
+    );
+    pick = sorted[0];
+  }
   if (!pick) return null;
 
   const cacheKey = `cricinfo:html:${leagueId}:${pick.season}`;

@@ -27,7 +27,7 @@ async function loadFlags(): Promise<AdminFlags> {
 
   try {
     // Guard: if Supabase env vars are missing, skip DB and use defaults
-    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    if (!process.env.SUPABASE_SERVICE_ROLE_KEY || (!process.env.DATABASE_URL && !process.env.SUPABASE_URL && !process.env.NEXT_PUBLIC_SUPABASE_URL)) {
       logger.warn("Supabase not configured, using default flags");
       cachedFlags = { ...DEFAULT_FLAGS };
     } else {
@@ -67,7 +67,7 @@ async function saveFlags(flags: AdminFlags): Promise<void> {
   cachedFlags = flags;
   cacheTime = Date.now();
 
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY || (!process.env.DATABASE_URL && !process.env.SUPABASE_URL && !process.env.NEXT_PUBLIC_SUPABASE_URL)) {
     logger.warn("Supabase not configured, flags saved to in-memory cache only");
     return;
   }

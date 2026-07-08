@@ -7,10 +7,14 @@ export async function GET() {
   const steps: Record<string, string> = {};
 
   // Step 1: Check env vars
-  steps.NEXT_PUBLIC_SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ? "set" : "MISSING";
-  steps.SUPABASE_URL = process.env.SUPABASE_URL ? "set" : "MISSING";
+  steps.DATABASE_URL = process.env.DATABASE_URL ? "set" : "MISSING";
   steps.SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY ? "set" : "MISSING";
   steps.JWT_SECRET = process.env.JWT_SECRET ? "set" : "MISSING";
+
+  // Show derived URL (project ID only, not full URL)
+  const dbUrl = process.env.DATABASE_URL || "";
+  const match = dbUrl.match(/postgres(?:ql)?:\/\/postgres\.([^:]+):/);
+  steps.derived_supabase_project = match?.[1] ? `${match[1].slice(0, 8)}...` : "NONE";
 
   // Step 2: Try creating the Supabase client
   try {
