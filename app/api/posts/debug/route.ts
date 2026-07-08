@@ -8,6 +8,7 @@ export async function GET() {
 
   // Step 1: Check env vars
   steps.NEXT_PUBLIC_SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ? "set" : "MISSING";
+  steps.SUPABASE_URL = process.env.SUPABASE_URL ? "set" : "MISSING";
   steps.SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY ? "set" : "MISSING";
   steps.JWT_SECRET = process.env.JWT_SECRET ? "set" : "MISSING";
 

@@ -1,10 +1,12 @@
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
-const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-if (!url || !key) {
-  console.warn("[supabase-admin] Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY — admin operations will fail");
+// NEXT_PUBLIC_ vars are inlined into client bundles at build time but may not
+// be in process.env on the server at runtime. Fall back to SUPABASE_URL.
+function getUrl() {
+  return process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || "";
+}
+function getKey() {
+  return process.env.SUPABASE_SERVICE_ROLE_KEY || "";
 }
 
 // Lazy-init to avoid crashing at build time when env vars are missing
@@ -12,8 +14,12 @@ let _client: SupabaseClient | null = null;
 
 function getClient(): SupabaseClient {
   if (!_client) {
+    const url = getUrl();
+    const key = getKey();
     if (!url || !key) {
-      throw new Error("supabaseAdmin: NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required");
+      throw new Error(
+        `supabaseAdmin: missing env vars — url=${url ? "set" : "MISSING (set NEXT_PUBLIC_SUPABASE_URL or SUPABASE_URL)"}, key=${key ? "set" : "MISSING (set SUPABASE_SERVICE_ROLE_KEY)"}`
+      );
     }
     _client = createClient(url, key, {
       auth: { autoRefreshToken: false, persistSession: false },
