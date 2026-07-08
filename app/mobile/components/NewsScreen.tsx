@@ -1,6 +1,7 @@
 'use client';
 import React, { useState } from 'react';
 import { useNews } from '@/hooks/useNews';
+import { useLanguage } from '@/contexts/LanguageContext';
 import Topbar from './ui/Topbar';
 import Card from './ui/Card';
 import Badge from './ui/Badge';
@@ -10,9 +11,9 @@ import SportSelector from './ui/SportSelector';
 import { SkeletonNewsCard, SkeletonList } from './ui/Skeletons';
 import { openExternal } from '@/lib/native';
 
-const SPORT_LABELS: Record<string, string> = {
-  football: 'Football', basketball: 'Basketball', nfl: 'NFL',
-  tennis: 'Tennis', baseball: 'Baseball', f1: 'Formula 1', cricket: 'Cricket',
+const SPORT_KEYS: Record<string, string> = {
+  football: 'sport.football', basketball: 'sport.basketball', nfl: 'sport.nfl',
+  tennis: 'sport.tennis', baseball: 'sport.baseball', f1: 'sport.f1', cricket: 'sport.cricket',
 };
 
 interface NewsProps {
@@ -54,6 +55,7 @@ function applyFilter(articles: ReturnType<typeof useNews>['articles'], filter: N
 }
 
 export default function NewsScreen({ sport, setSport, onSearch, onBell, unread }: NewsProps) {
+  const { t } = useLanguage();
   const [filter, setFilter] = useState<NewsFilter>('all');
 
   const { articles: sportArticles, isLoading: sportLoading } = useNews(50, sport);
@@ -70,8 +72,8 @@ export default function NewsScreen({ sport, setSport, onSearch, onBell, unread }
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--bg)' }}>
       <Topbar
-        title="News"
-        subtitle="Latest headlines"
+        title={t('news.title')}
+        subtitle={t('news.subtitle')}
         logoSrc="/curly-guy.png"
         onSearch={onSearch}
         onBell={onBell}
@@ -84,11 +86,11 @@ export default function NewsScreen({ sport, setSport, onSearch, onBell, unread }
 
         {/* Filter chips — matching web news page */}
         <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 2 }}>
-          <Chip active={filter === 'all'} onClick={() => setFilter('all')} style={{ flexShrink: 0 }}>All</Chip>
-          <Chip active={filter === 'sport'} onClick={() => setFilter('sport')} style={{ flexShrink: 0 }}>{SPORT_LABELS[sport] ?? sport}</Chip>
-          <Chip active={filter === 'transfers'} onClick={() => setFilter('transfers')} style={{ flexShrink: 0 }}>Transfers</Chip>
-          <Chip active={filter === 'match-reports'} onClick={() => setFilter('match-reports')} style={{ flexShrink: 0 }}>Match Reports</Chip>
-          <Chip active={filter === 'breaking'} onClick={() => setFilter('breaking')} style={{ flexShrink: 0 }}>Breaking</Chip>
+          <Chip active={filter === 'all'} onClick={() => setFilter('all')} style={{ flexShrink: 0 }}>{t('news.allNews')}</Chip>
+          <Chip active={filter === 'sport'} onClick={() => setFilter('sport')} style={{ flexShrink: 0 }}>{SPORT_KEYS[sport] ? t(SPORT_KEYS[sport]) : sport}</Chip>
+          <Chip active={filter === 'transfers'} onClick={() => setFilter('transfers')} style={{ flexShrink: 0 }}>{t('news.transfers')}</Chip>
+          <Chip active={filter === 'match-reports'} onClick={() => setFilter('match-reports')} style={{ flexShrink: 0 }}>{t('news.matchReports')}</Chip>
+          <Chip active={filter === 'breaking'} onClick={() => setFilter('breaking')} style={{ flexShrink: 0 }}>{t('news.breaking')}</Chip>
         </div>
 
         {isLoading && (
@@ -100,7 +102,7 @@ export default function NewsScreen({ sport, setSport, onSearch, onBell, unread }
         {!isLoading && articles.length === 0 && (
           <div style={{ padding: '40px 20px', textAlign: 'center' }}>
             <Icon name="news" size={32} style={{ color: 'var(--text-mute)', margin: '0 auto 12px' }} />
-            <div style={{ fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--text-mute)' }}>No news right now</div>
+            <div style={{ fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--text-mute)' }}>{t('dashboard.noNewsRightNow')}</div>
           </div>
         )}
 
@@ -126,9 +128,9 @@ export default function NewsScreen({ sport, setSport, onSearch, onBell, unread }
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                 <Badge tone="mute">{article.source}</Badge>
                 {article.sport && (
-                  <Badge tone="accent">{SPORT_LABELS[article.sport] ?? article.sport}</Badge>
+                  <Badge tone="accent">{SPORT_KEYS[article.sport] ? t(SPORT_KEYS[article.sport]) : article.sport}</Badge>
                 )}
-                <span style={{ marginLeft: 'auto', fontFamily: 'var(--mono)', fontSize: 9.5, color: 'var(--text-mute)' }}>
+                <span style={{ marginInlineStart: 'auto', fontFamily: 'var(--mono)', fontSize: 9.5, color: 'var(--text-mute)' }}>
                   {article.publishedAt ? timeAgo(article.publishedAt) : ''}
                 </span>
               </div>
@@ -141,7 +143,7 @@ export default function NewsScreen({ sport, setSport, onSearch, onBell, unread }
                 </div>
               )}
               <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 10, fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--orange)', fontWeight: 700 }}>
-                Read more <Icon name="arrow-right" size={11} />
+                {t('news.readMore')}<Icon name="arrow-right" size={11} />
               </div>
             </div>
           </Card>

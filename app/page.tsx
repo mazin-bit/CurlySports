@@ -428,7 +428,7 @@ export default function LandingPage() {
           <div className="l-founder-grid">
             <div className="l-founder-portrait">
               <span className="l-label-strip">Founder · Grade 9</span>
-              <span className="l-badge-strip"><MapPin size={11} strokeWidth={2} style={{ display: "inline", verticalAlign: "middle", marginRight: 3 }} /> Bedroom HQ</span>
+              <span className="l-badge-strip"><MapPin size={11} strokeWidth={2} style={{ display: "inline", verticalAlign: "middle", marginInlineEnd: 3 }} /> Bedroom HQ</span>
               <Image className="l-founder-img" src="/curly-guy.png" alt="Mazin, founder" width={400} height={440} />
             </div>
             <div>

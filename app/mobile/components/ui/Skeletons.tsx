@@ -28,13 +28,13 @@ export function SkeletonScoreCard({ style }: { style?: React.CSSProperties }) {
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
         <SkeletonCircle size={28} />
         <SkeletonLine width="55%" height={13} />
-        <SkeletonLine width={24} height={16} style={{ marginLeft: 'auto' }} />
+        <SkeletonLine width={24} height={16} style={{ marginInlineStart: 'auto' }} />
       </div>
       {/* Team row 2 */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
         <SkeletonCircle size={28} />
         <SkeletonLine width="45%" height={13} />
-        <SkeletonLine width={24} height={16} style={{ marginLeft: 'auto' }} />
+        <SkeletonLine width={24} height={16} style={{ marginInlineStart: 'auto' }} />
       </div>
       {/* Status */}
       <SkeletonLine width={80} height={9} style={{ alignSelf: 'center' }} />
@@ -63,7 +63,7 @@ export function SkeletonTableRow({ style }: { style?: React.CSSProperties }) {
       <SkeletonLine width={18} height={14} />
       <SkeletonCircle size={24} />
       <SkeletonLine width="40%" height={12} />
-      <SkeletonLine width={28} height={12} style={{ marginLeft: 'auto' }} />
+      <SkeletonLine width={28} height={12} style={{ marginInlineStart: 'auto' }} />
       <SkeletonLine width={28} height={12} />
     </div>
   );

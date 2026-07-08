@@ -8,29 +8,31 @@ import { useRouter } from "next/navigation";
 import { Ico } from "./Icons";
 import AdSlot from "./AdSlot";
 import { useActiveSport, SPORT_CONFIGS } from "@/contexts/SportContext";
-import { ChevronDown } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { LOCALES, type Locale } from "@/lib/i18n";
+import { ChevronDown, Globe } from "lucide-react";
 
 const NAV_MAIN = [
-  { key: "home",    label: "Home",        icon: "i-home",   href: "/dashboard",   feature: null },
-  { key: "live",    label: "Live Scores", icon: "i-live",   href: "/live-scores", feature: "liveScores" },
-  { key: "teams",   label: "Teams",       icon: "i-team",   href: "/teams",       feature: "teams" },
-  { key: "players", label: "Players",     icon: "i-user",   href: "/players",     feature: "players" },
-  { key: "leagues", label: "Leagues",     icon: "i-trophy", href: "/leagues",     feature: "leagues" },
+  { key: "home",    tKey: "nav.home",       icon: "i-home",   href: "/dashboard",   feature: null },
+  { key: "live",    tKey: "nav.liveScores", icon: "i-live",   href: "/live-scores", feature: "liveScores" },
+  { key: "teams",   tKey: "nav.teams",      icon: "i-team",   href: "/teams",       feature: "teams" },
+  { key: "players", tKey: "nav.players",    icon: "i-user",   href: "/players",     feature: "players" },
+  { key: "leagues", tKey: "nav.leagues",    icon: "i-trophy", href: "/leagues",     feature: "leagues" },
 ];
 
 const NAV_CONTENT = [
-  { key: "news",   label: "News",   icon: "i-news",  href: "/news",   count: "NEW", feature: "news" },
-  { key: "videos", label: "Videos", icon: "i-video", href: "/videos", feature: null },
+  { key: "news",   tKey: "nav.news",   icon: "i-news",  href: "/news",   countKey: "common.new", feature: "news" },
+  { key: "videos", tKey: "nav.videos", icon: "i-video", href: "/videos", countKey: null,          feature: null },
 ];
 
 const NAV_COMMUNITY = [
-  { key: "funzone",   label: "Debates",    icon: "i-spark",  href: "/debates",   count: "HOT", feature: "funZone" },
-  { key: "minigames", label: "Mini Games", icon: "i-game",   href: "/mini-games", feature: "miniGames" },
+  { key: "funzone",   tKey: "nav.debates",   icon: "i-spark", href: "/debates",    countKey: "common.hot", feature: "funZone" },
+  { key: "minigames", tKey: "nav.miniGames", icon: "i-game",  href: "/mini-games", countKey: null,         feature: "miniGames" },
 ];
 
 const NAV_PERSONAL = [
-  { key: "favorites",     label: "Favorites",     icon: "i-heart", href: "/favorites",     feature: "favorites" },
-  { key: "notifications", label: "Notifications", icon: "i-bell",  href: "/notifications", feature: null },
+  { key: "favorites",     tKey: "nav.favorites",     icon: "i-heart", href: "/favorites",     feature: "favorites" },
+  { key: "notifications", tKey: "nav.notifications", icon: "i-bell",  href: "/notifications", feature: null },
 ];
 
 // Map sidebar sport key → flags.sports key
@@ -50,28 +52,28 @@ const SPORT_FLAG_KEY: Record<string, string> = {
 
 interface NavItem {
   key: string;
-  label: string;
+  tKey: string;
   icon: string;
   href?: string;
-  count?: string;
+  countKey?: string | null;
   live?: boolean;
   feature: string | null;
 }
 
-function Badge({ item }: { item: NavItem }) {
+function Badge({ item, t }: { item: NavItem; t: (k: string) => string }) {
   if (item.live) return <span className="live-dot" />;
-  if (item.count) return <span className="count">{item.count}</span>;
+  if (item.countKey) return <span className="count">{t(item.countKey)}</span>;
   return <span />;
 }
 
-function SbItem({ item, active }: { item: NavItem; active: string }) {
+function SbItem({ item, active, t }: { item: NavItem; active: string; t: (k: string) => string }) {
   const isActive = active === item.key;
   const cls = `sb-item${isActive ? " active" : ""}`;
   const inner = (
     <>
       <span className="ico"><Ico id={item.icon} /></span>
-      <span className="label">{item.label}</span>
-      <Badge item={item} />
+      <span className="label">{t(item.tKey)}</span>
+      <Badge item={item} t={t} />
     </>
   );
   if (item.href) {
@@ -82,6 +84,7 @@ function SbItem({ item, active }: { item: NavItem; active: string }) {
 
 function SportDropdown({ enabledSports }: { enabledSports: Set<string> }) {
   const { activeSport, activeSportConfig, setActiveSport } = useActiveSport();
+  const { t } = useLanguage();
   const [open, setOpen] = useState(false);
 
   const visibleSports = SPORT_CONFIGS.filter((s) => {
@@ -109,8 +112,8 @@ function SportDropdown({ enabledSports }: { enabledSports: Set<string> }) {
           borderRadius: 3,
           letterSpacing: "0.05em", flexShrink: 0,
         }}>{activeSportConfig.icon}</span>
-        <span style={{ flex: 1, fontFamily: "var(--display)", fontWeight: 700, fontSize: 14, color: "var(--ink)", textAlign: "left" }}>
-          {activeSportConfig.label}
+        <span style={{ flex: 1, fontFamily: "var(--display)", fontWeight: 700, fontSize: 14, color: "var(--ink)" }}>
+          {t(`sport.${activeSport}`, activeSportConfig.label)}
         </span>
         <ChevronDown size={14} strokeWidth={2.5} style={{ color: "var(--text-mute)", transition: "transform 0.2s", transform: open ? "rotate(180deg)" : "none", flexShrink: 0 }} />
       </button>
@@ -146,17 +149,17 @@ function SportDropdown({ enabledSports }: { enabledSports: Set<string> }) {
                 borderRadius: 3,
                 letterSpacing: "0.05em", flexShrink: 0,
               }}>{s.icon}</span>
-              {s.label}
+              {t(`sport.${s.slug}`, s.label)}
               {s.comingSoon && (
                 <span style={{
-                  marginLeft: "auto", fontSize: 8, fontWeight: 800, fontFamily: "var(--mono)",
+                  marginInlineStart: "auto", fontSize: 8, fontWeight: 800, fontFamily: "var(--mono)",
                   color: "var(--text-mute)", background: "var(--surface-2)",
                   padding: "2px 5px", borderRadius: 3, letterSpacing: "0.04em",
                   textTransform: "uppercase", flexShrink: 0,
                 }}>Soon</span>
               )}
               {!s.comingSoon && activeSport === s.slug && (
-                <span style={{ marginLeft: "auto", width: 7, height: 7, borderRadius: "50%", background: "var(--accent)", flexShrink: 0 }} />
+                <span style={{ marginInlineStart: "auto", width: 7, height: 7, borderRadius: "50%", background: "var(--accent)", flexShrink: 0 }} />
               )}
             </button>
           ))}
@@ -172,10 +175,12 @@ function getInitials(name: string) {
 
 export default function Sidebar({ active }: { active: string }) {
   const router = useRouter();
+  const { t, locale, setLocale } = useLanguage();
   const [profile, setProfile] = useState<{ name: string; email: string; initials: string } | null>(null);
   const [enabledSports, setEnabledSports] = useState<Set<string>>(new Set());
   const [enabledFeatures, setEnabledFeatures] = useState<Set<string>>(new Set());
   const [flagsLoaded, setFlagsLoaded] = useState(false);
+  const [langOpen, setLangOpen] = useState(false);
 
   useEffect(() => {
     fetch("/api/user/profile")
@@ -244,6 +249,8 @@ export default function Sidebar({ active }: { active: string }) {
     return items.filter((item) => !item.feature || enabledFeatures.has(item.feature));
   }
 
+  const currentLocale = LOCALES.find((l) => l.code === locale);
+
   return (
     <>
     <aside className="sb">
@@ -262,24 +269,24 @@ export default function Sidebar({ active }: { active: string }) {
 
       <SportDropdown enabledSports={enabledSports} />
 
-      <div className="sb-section">App</div>
+      <div className="sb-section">{t("navSection.app")}</div>
       {filterByFeature(NAV_MAIN).map((item) => (
-        <SbItem key={item.key} item={item} active={active} />
+        <SbItem key={item.key} item={item} active={active} t={t} />
       ))}
 
-      <div className="sb-section">Content</div>
+      <div className="sb-section">{t("navSection.content")}</div>
       {filterByFeature(NAV_CONTENT).map((item) => (
-        <SbItem key={item.key} item={item} active={active} />
+        <SbItem key={item.key} item={item} active={active} t={t} />
       ))}
 
-      <div className="sb-section">Community</div>
+      <div className="sb-section">{t("navSection.community")}</div>
       {filterByFeature(NAV_COMMUNITY).map((item) => (
-        <SbItem key={item.key} item={item} active={active} />
+        <SbItem key={item.key} item={item} active={active} t={t} />
       ))}
 
-      <div className="sb-section">Personal</div>
+      <div className="sb-section">{t("navSection.personal")}</div>
       {filterByFeature(NAV_PERSONAL).map((item) => (
-        <SbItem key={item.key} item={item} active={active} />
+        <SbItem key={item.key} item={item} active={active} t={t} />
       ))}
 
       <div className="sb-ad">
@@ -287,22 +294,67 @@ export default function Sidebar({ active }: { active: string }) {
       </div>
 
       <div className="sb-profile">
-        <div className="sb-profile-ava">{profile?.initials ?? "…"}</div>
+        <div className="sb-profile-ava">{profile?.initials ?? "\u2026"}</div>
         <div className="sb-profile-info">
-          <div className="sb-profile-name">{profile?.name ?? "Loading…"}</div>
+          <div className="sb-profile-name">{profile?.name ?? t("common.loading")}</div>
           <div className="sb-profile-meta">{profile?.email ?? ""}</div>
         </div>
       </div>
 
+      {/* Language selector — styled like sb-item */}
+      <div style={{ position: "relative", padding: "0 12px" }}>
+        <button
+          onClick={() => setLangOpen((v) => !v)}
+          className="sb-item"
+          style={{ width: "100%", background: langOpen ? "var(--surface-3)" : "none", border: langOpen ? "2px solid var(--ink)" : "2px solid transparent", boxShadow: langOpen ? "var(--shadow-sm)" : "none", cursor: "pointer", appearance: "none" }}
+        >
+          <span className="ico" style={{ background: "var(--surface-3)", borderColor: "var(--border-2)" }}>
+            <Globe size={14} strokeWidth={2} />
+          </span>
+          <span className="label">{currentLocale?.nativeLabel ?? "English"}</span>
+          <ChevronDown size={12} strokeWidth={2.5} style={{ color: "var(--text-mute)", transition: "transform 0.2s", transform: langOpen ? "rotate(180deg)" : "none", flexShrink: 0 }} />
+        </button>
+        {langOpen && (
+          <div style={{
+            position: "absolute", left: 12, right: 12, bottom: "calc(100% + 4px)",
+            background: "var(--surface)", border: "2px solid var(--ink)",
+            borderRadius: 12, overflow: "hidden", zIndex: 200,
+            boxShadow: "4px 4px 0 var(--ink)",
+          }}>
+            {LOCALES.map((l) => (
+              <button
+                key={l.code}
+                onClick={() => { setLocale(l.code as Locale); setLangOpen(false); }}
+                style={{
+                  display: "flex", alignItems: "center", gap: 10,
+                  width: "100%", padding: "9px 14px", border: "none",
+                  borderBottom: "1px solid var(--border-2)",
+                  background: locale === l.code ? "rgba(200,255,61,0.12)" : "transparent",
+                  cursor: "pointer", transition: "background 0.1s",
+                  fontFamily: "var(--display)", fontSize: 13, fontWeight: locale === l.code ? 700 : 600,
+                  color: locale === l.code ? "var(--ink)" : "var(--text-dim)",
+                }}
+              >
+                <span style={{ flex: 1 }}>{l.nativeLabel}</span>
+                <span style={{ fontFamily: "var(--mono)", fontSize: 9, fontWeight: 700, color: "var(--text-mute)", letterSpacing: "0.04em" }}>{l.label.toUpperCase()}</span>
+                {locale === l.code && (
+                  <span style={{ width: 7, height: 7, borderRadius: "50%", background: "var(--accent)", flexShrink: 0 }} />
+                )}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
       <button onClick={handleLogout} className="sb-item sb-logout">
-        <span className="label">Log out</span>
+        <span className="label">{t("common.logOut")}</span>
       </button>
 
       <button
         onClick={() => { setShowDeleteModal(true); setDeleteError(null); setDeletePassword(""); }}
         className="sb-delete-link"
       >
-        Delete account
+        {t("common.deleteAccount")}
       </button>
 
     </aside>
@@ -314,8 +366,8 @@ export default function Sidebar({ active }: { active: string }) {
               <svg width="18" height="18" aria-hidden="true"><use href="#i-trash" /></svg>
             </span>
             <div>
-              <div style={{ fontFamily: "var(--display)", fontWeight: 800, fontSize: 18, color: "var(--ink)" }}>Delete account</div>
-              <div style={{ fontFamily: "var(--mono)", fontSize: 10.5, color: "var(--text-mute)", marginTop: 1 }}>This cannot be undone</div>
+              <div style={{ fontFamily: "var(--display)", fontWeight: 800, fontSize: 18, color: "var(--ink)" }}>{t("common.deleteAccount")}</div>
+              <div style={{ fontFamily: "var(--mono)", fontSize: 10.5, color: "var(--text-mute)", marginTop: 1 }}>{t("common.cannotBeUndone")}</div>
             </div>
           </div>
 
@@ -341,14 +393,14 @@ export default function Sidebar({ active }: { active: string }) {
               disabled={deleting}
               style={{ flex: 1, padding: 12, fontFamily: "var(--mono)", fontSize: 12, fontWeight: 700, background: "var(--surface-3)", border: "2px solid var(--border-2)", borderRadius: 10, color: "var(--ink)", cursor: "pointer" }}
             >
-              Cancel
+              {t("common.cancel")}
             </button>
             <button
               onClick={handleDeleteAccount}
               disabled={deleting}
               style={{ flex: 1, padding: 12, fontFamily: "var(--mono)", fontSize: 12, fontWeight: 700, background: "var(--coral)", border: "2px solid var(--ink)", borderRadius: 10, color: "var(--ink)", cursor: deleting ? "not-allowed" : "pointer", boxShadow: "3px 3px 0 var(--ink)" }}
             >
-              {deleting ? "Deleting…" : "Delete"}
+              {deleting ? "Deleting\u2026" : t("common.delete")}
             </button>
           </div>
         </div>

@@ -6,6 +6,7 @@ import { useState, useEffect, useRef } from "react";
 import { X, Search, Bell, BellRing, BellOff, Star, Users, Plus, Heart, Loader } from "lucide-react";
 import { SPORT_CONFIGS } from "@/contexts/SportContext";
 import type { SportSlug } from "@/contexts/SportContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -123,6 +124,7 @@ function SearchModal({
   onAddTeam: (t: RawRecord, sport: SportSlug) => void;
   onAddPlayer: (p: RawRecord, sport: SportSlug) => void;
 }) {
+  const { t } = useLanguage();
   const [sport, setSport]   = useState<SportSlug>("football");
   const [query, setQuery]   = useState("");
   const [results, setResults] = useState<SearchItem[]>([]);
@@ -171,7 +173,7 @@ function SearchModal({
     <div className={styles.searchOverlay} onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
       <div className={styles.searchModal}>
         <div className={styles.searchHead}>
-          <span className={styles.searchTitle}>Add {type === "team" ? "Team" : "Player"}</span>
+          <span className={styles.searchTitle}>{type === "team" ? t("favorites.addTeamLabel") : t("favorites.addPlayerLabel")}</span>
           <button className={styles.searchClose} onClick={onClose}><X size={16} /></button>
         </div>
         <div className={styles.searchControls}>
@@ -180,7 +182,7 @@ function SearchModal({
             <input
               ref={inputRef}
               className={styles.searchInput}
-              placeholder={type === "team" ? "Search teams…" : "Search players…"}
+              placeholder={type === "team" ? t("favorites.searchTeams") : t("favorites.searchPlayers")}
               value={query}
               onChange={e => setQuery(e.target.value)}
             />
@@ -190,13 +192,13 @@ function SearchModal({
           </select>
         </div>
         <div className={styles.searchResults}>
-          {loading && <div className={styles.searchHint}>Searching…</div>}
+          {loading && <div className={styles.searchHint}>{t("favorites.searching")}</div>}
           {!loading && query.trim() && results.length === 0 && (
-            <div className={styles.searchHint}>No results for &ldquo;{query}&rdquo;</div>
+            <div className={styles.searchHint}>{t("favorites.noResultsFor").replace("{query}", query)}</div>
           )}
           {!loading && !query.trim() && (
             <div className={styles.searchHint}>
-              {type === "team" ? "Type a team name to search" : "Type at least 2 characters to search players"}
+              {type === "team" ? t("favorites.typeToSearch") : t("favorites.searchPlayersMinChars")}
             </div>
           )}
           {results.map(r => {
@@ -223,7 +225,7 @@ function SearchModal({
                   <span className={styles.srSub}>{r._sub}</span>
                 </div>
                 <span className={styles.srAction}>
-                  {isAdded ? <span className={styles.srAddedTick}>✓ Added</span> : <Plus size={14} />}
+                  {isAdded ? <span className={styles.srAddedTick}>✓ {t("favorites.added")}</span> : <Plus size={14} />}
                 </span>
               </button>
             );
@@ -237,6 +239,7 @@ function SearchModal({
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function FavoritesPage() {
+  const { t } = useLanguage();
   const [tab, setTab]             = useState<"teams" | "players" | "notifs">("teams");
   const [favTeams, setFavTeams]   = useState<FavTeam[]>([]);
   const [favPlayers, setFavPlayers] = useState<FavPlayer[]>([]);
@@ -283,9 +286,9 @@ export default function FavoritesPage() {
       abbr: data.abbr as string, logo: data.logo as string | null, color: data.color as string | null,
       leagueId: data.leagueId as string, leagueName: data.leagueName as string, sport, addedAt: Date.now() };
     setFavTeams(prev => [optimistic, ...prev]);
-    pushNotif(`Added ${optimistic.name} to favourites`);
+    pushNotif(t("favorites.addedToFavourites").replace("{name}", optimistic.name));
     if (notifPerm === "granted") {
-      try { new Notification(optimistic.name, { body: `You'll be notified when ${optimistic.name} plays`, icon: optimistic.logo ?? undefined }); } catch {}
+      try { new Notification(optimistic.name, { body: t("favorites.youllBeNotified").replace("{name}", optimistic.name), icon: optimistic.logo ?? undefined }); } catch {}
     }
     setShowSearch(null);
     const ok = await apiAdd("team", espn_id, data);
@@ -303,7 +306,7 @@ export default function FavoritesPage() {
       teamName: data.teamName as string, headshot: data.headshot as string | null,
       leagueId: data.leagueId as string, leagueName: data.leagueName as string, sport, addedAt: Date.now() };
     setFavPlayers(prev => [optimistic, ...prev]);
-    pushNotif(`Added ${optimistic.name} to favourites`);
+    pushNotif(t("favorites.addedToFavourites").replace("{name}", optimistic.name));
     setShowSearch(null);
     const ok = await apiAdd("player", espn_id, data);
     if (!ok) setFavPlayers(prev => prev.filter(p => p.id !== espn_id));
@@ -324,8 +327,8 @@ export default function FavoritesPage() {
     const perm = await Notification.requestPermission();
     setNotifPerm(perm);
     if (perm === "granted") {
-      pushNotif("Browser notifications enabled");
-      try { new Notification("Curly Sports", { body: "You'll be notified when your favourite teams play!" }); } catch {}
+      pushNotif(t("favorites.browserNotificationsEnabled"));
+      try { new Notification("Curly Sports", { body: t("favorites.youllBeNotifiedPlay") }); } catch {}
     }
   };
 
@@ -336,27 +339,27 @@ export default function FavoritesPage() {
 
   if (!authed) {
     return (
-      <AppShell active="favorites" title="Favorites" subtitle="Your saved teams & players">
+      <AppShell active="favorites" title="Favorites" titleKey="favorites.title" subtitleKey="favorites.subtitle">
         <div style={{ padding: "48px 24px", textAlign: "center", color: "var(--text-dim)" }}>
           <Heart size={40} strokeWidth={1.5} style={{ marginBottom: 12, opacity: 0.4 }} />
-          <p>Sign in to save your favourite teams and players.</p>
+          <p>{t("favorites.signInPrompt")}</p>
         </div>
       </AppShell>
     );
   }
 
   return (
-    <AppShell active="favorites" title="Favorites" subtitle="Your saved teams & players">
+    <AppShell active="favorites" title={t("favorites.title")} subtitle={t("favorites.subtitle")}>
       <div className="stack">
 
         {/* Tabs */}
         <div className={styles.tabs}>
           <button className={`${styles.tab} ${tab === "teams" ? styles.tabActive : ""}`} onClick={() => setTab("teams")}>
-            <Star size={13} /> Teams
+            <Star size={13} /> {t("favorites.teams")}
             {favTeams.length > 0 && <span className={styles.tabCount}>{favTeams.length}</span>}
           </button>
           <button className={`${styles.tab} ${tab === "players" ? styles.tabActive : ""}`} onClick={() => setTab("players")}>
-            <Users size={13} /> Players
+            <Users size={13} /> {t("favorites.players")}
             {favPlayers.length > 0 && <span className={styles.tabCount}>{favPlayers.length}</span>}
           </button>
           <button
@@ -364,7 +367,7 @@ export default function FavoritesPage() {
             onClick={() => { setTab("notifs"); setNotifs(prev => prev.map(n => ({ ...n, read: true }))); }}
           >
             {notifPerm === "granted" ? <BellRing size={13} /> : <Bell size={13} />}
-            Alerts
+            {t("favorites.alerts")}
             {unreadCount > 0 && (
               <span className={styles.tabCount} style={{ background: "var(--coral)", color: "#fff", borderColor: "var(--coral)" }}>
                 {unreadCount}
@@ -375,11 +378,11 @@ export default function FavoritesPage() {
 
         {/* ─── TEAMS ──────────────────────────────────────────────────────── */}
         {tab === "teams" && (
-          <section className="section">
+          <section className={`section ${styles.tabPanel}`} key="teams">
             <div className="sec-head">
-              <div className="title"><Star size={15} className="title-icon" /> Favourite <span className="accent">Teams</span></div>
+              <div className="title"><Star size={15} className="title-icon" /> {t("favorites.favouriteTeams")} <span className="accent">{t("favorites.teamsAccent")}</span></div>
               <button className={styles.addBtn} onClick={() => setShowSearch("team")}>
-                <Plus size={13} /> Add Team
+                <Plus size={13} /> {t("favorites.addTeam")}
               </button>
             </div>
             {loading ? (
@@ -387,9 +390,9 @@ export default function FavoritesPage() {
             ) : favTeams.length === 0 ? (
               <div className={styles.emptyState}>
                 <Heart size={32} strokeWidth={1.5} />
-                <p>No favourite teams yet.</p>
+                <p>{t("favorites.noFavouriteTeams")}</p>
                 <button className={styles.emptyBtn} onClick={() => setShowSearch("team")}>
-                  <Plus size={12} /> Add your first team
+                  <Plus size={12} /> {t("favorites.addFirstTeam")}
                 </button>
               </div>
             ) : (
@@ -421,11 +424,11 @@ export default function FavoritesPage() {
 
         {/* ─── PLAYERS ────────────────────────────────────────────────────── */}
         {tab === "players" && (
-          <section className="section">
+          <section className={`section ${styles.tabPanel}`} key="players">
             <div className="sec-head">
-              <div className="title"><Users size={15} className="title-icon" /> Favourite <span className="accent">Players</span></div>
+              <div className="title"><Users size={15} className="title-icon" /> {t("favorites.favouritePlayers")} <span className="accent">{t("favorites.playersAccent")}</span></div>
               <button className={styles.addBtn} onClick={() => setShowSearch("player")}>
-                <Plus size={13} /> Add Player
+                <Plus size={13} /> {t("favorites.addPlayer")}
               </button>
             </div>
             {loading ? (
@@ -433,9 +436,9 @@ export default function FavoritesPage() {
             ) : favPlayers.length === 0 ? (
               <div className={styles.emptyState}>
                 <Heart size={32} strokeWidth={1.5} />
-                <p>No favourite players yet.</p>
+                <p>{t("favorites.noFavouritePlayers")}</p>
                 <button className={styles.emptyBtn} onClick={() => setShowSearch("player")}>
-                  <Plus size={12} /> Add your first player
+                  <Plus size={12} /> {t("favorites.addFirstPlayer")}
                 </button>
               </div>
             ) : (
@@ -464,14 +467,14 @@ export default function FavoritesPage() {
 
         {/* ─── NOTIFICATIONS ──────────────────────────────────────────────── */}
         {tab === "notifs" && (
-          <section className="section">
+          <section className={`section ${styles.tabPanel}`} key="notifs">
             <div className="sec-head">
               <div className="title">
                 {notifPerm === "granted" ? <BellRing size={15} className="title-icon" /> : <Bell size={15} className="title-icon" />}
-                <span className="accent">Alerts</span>
+                <span className="accent">{t("favorites.alerts")}</span>
               </div>
               {notifs.length > 0 && (
-                <button className={styles.clearBtn} onClick={() => setNotifs([])}>Clear all</button>
+                <button className={styles.clearBtn} onClick={() => setNotifs([])}>{t("favorites.clearAll")}</button>
               )}
             </div>
 
@@ -481,17 +484,17 @@ export default function FavoritesPage() {
                   {notifPerm === "denied" ? <BellOff size={18} /> : <Bell size={18} />}
                   <div>
                     <div className={styles.permTitle}>
-                      {notifPerm === "denied" ? "Notifications blocked" : "Enable browser notifications"}
+                      {notifPerm === "denied" ? t("favorites.notificationsBlocked") : t("favorites.enableNotifications")}
                     </div>
                     <div className={styles.permSub}>
                       {notifPerm === "denied"
-                        ? "Unblock in your browser settings to receive live alerts."
-                        : "Get notified when your favourite teams play, score, and win."}
+                        ? t("favorites.unblockInSettings")
+                        : t("favorites.getNotifiedWhen")}
                     </div>
                   </div>
                 </div>
                 {notifPerm !== "denied" && (
-                  <button className={styles.permBtn} onClick={requestPermission}><Bell size={12} /> Enable</button>
+                  <button className={styles.permBtn} onClick={requestPermission}><Bell size={12} /> {t("favorites.enable")}</button>
                 )}
               </div>
             )}
@@ -499,7 +502,7 @@ export default function FavoritesPage() {
             {notifs.length === 0 ? (
               <div className={styles.emptyState}>
                 <Bell size={32} strokeWidth={1.5} />
-                <p>No alerts yet. Add favourite teams and players to get updates.</p>
+                <p>{t("favorites.noAlerts")}</p>
               </div>
             ) : (
               <div className={styles.notifList}>

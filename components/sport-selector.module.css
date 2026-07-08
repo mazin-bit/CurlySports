@@ -41,6 +41,10 @@
   color: var(--ink);
   transform: translateY(-1px);
 }
+.chip:active {
+  transform: scale(0.93);
+  transition-duration: 0.08s;
+}
 .chip.active {
   background: var(--ink);
   border-color: var(--ink);

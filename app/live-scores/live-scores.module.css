@@ -29,13 +29,15 @@
   border-radius: 8px;
   font-size: 15px;
   cursor: pointer;
-  transition: transform 0.12s, box-shadow 0.12s;
+  transition: transform 0.18s cubic-bezier(.25,.46,.45,.94), box-shadow 0.18s cubic-bezier(.25,.46,.45,.94);
   line-height: 1;
+  will-change: transform;
 }
 .calArrow:hover {
   transform: translate(-1px, -1px);
   box-shadow: 3px 3px 0 var(--ink);
 }
+.calArrow:active { transform: scale(0.9); box-shadow: none; transition-duration: 0.08s; }
 .calDays {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
@@ -55,6 +57,7 @@
 }
 .calDay:last-child { border-right: none; }
 .calDay:hover:not(.calDaySel) { background: var(--surface-2); }
+.calDay:active { opacity: 0.7; transition-duration: 0.06s; }
 .calDayName {
   font-family: var(--mono);
   font-size: 9px;
@@ -127,6 +130,7 @@
 }
 .matchRow:last-child { border-bottom: none; }
 .matchRow:hover { background: var(--surface-2); }
+.matchRow:active { background: var(--surface-3); transition-duration: 0.06s; }
 
 .matchStatus { display: flex; justify-content: center; }
 .teamSide { display: flex; align-items: center; gap: 10px; min-width: 0; }
@@ -159,3 +163,15 @@
   .leagueHead { padding: 10px 14px; }
   .leagueName { font-size: 13px; }
 }
+
+/* ── RTL overrides ── */
+:global([dir="rtl"]) .calDay {
+  border-right: none;
+  border-left: 1px solid var(--border-3);
+}
+:global([dir="rtl"]) .calDay:last-child { border-left: none; }
+:global([dir="rtl"]) .homeTeam { justify-content: flex-start; }
+:global([dir="rtl"]) .teamSide { flex-direction: row-reverse; }
+:global([dir="rtl"]) .scoreBox { direction: ltr; }
+:global([dir="rtl"]) .matchStatus { direction: ltr; }
+:global([dir="rtl"]) .venue { text-align: left; }

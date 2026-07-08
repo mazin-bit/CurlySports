@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { SWRProvider } from "@/components/SWRProvider";
 import { SportProvider } from "@/contexts/SportContext";
+import { LanguageProvider } from "@/contexts/LanguageContext";
 
 const SITE_URL = "https://curlysports.com";
 
@@ -119,7 +120,9 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
         <SWRProvider>
-          <SportProvider>{children}</SportProvider>
+          <LanguageProvider>
+            <SportProvider>{children}</SportProvider>
+          </LanguageProvider>
         </SWRProvider>
       </body>
     </html>

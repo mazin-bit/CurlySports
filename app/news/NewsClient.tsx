@@ -7,9 +7,16 @@ import styles from "./news.module.css";
 import { Trophy, CircleDot, ArrowRightLeft } from "lucide-react";
 import { useNews } from "@/hooks/useNews";
 import { useActiveSport } from "@/contexts/SportContext";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { localizeDigits } from "@/lib/locale-utils";
 import type { NormalizedNews } from "@/lib/types";
 
-const FILTERS = ["All News", "Transfers", "Match Reports", "Breaking"];
+const FILTERS = [
+  { key: "news.allNews", id: "All News" },
+  { key: "news.transfers", id: "Transfers" },
+  { key: "news.matchReports", id: "Match Reports" },
+  { key: "news.breaking", id: "Breaking" },
+];
 
 function stripHtml(str: string): string {
   return str
@@ -28,35 +35,53 @@ function ArticleIcon({ article }: { article: NormalizedNews }) {
   return <CircleDot size={22} strokeWidth={1.75} />;
 }
 
-function tagForArticle(a: NormalizedNews): { label: string; color: string } {
+function tagIdForArticle(a: NormalizedNews): string {
   const title = a.title.toLowerCase();
   if (title.includes("transfer") || title.includes("sign") || title.includes("move"))
-    return { label: "TRANSFER", color: "var(--orange)" };
+    return "TRANSFER";
   if (title.includes("breaking") || title.includes("confirmed") || title.includes("official"))
-    return { label: "BREAKING", color: "var(--coral)" };
+    return "BREAKING";
   if (title.includes("champion") || title.includes("ucl"))
-    return { label: "UCL", color: "var(--purple)" };
-  return { label: "NEWS", color: "var(--accent)" };
+    return "UCL";
+  return "NEWS";
 }
 
-function timeSince(iso: string): string {
+function tagForArticle(a: NormalizedNews, t: (key: string) => string): { label: string; color: string; id: string } {
+  const id = tagIdForArticle(a);
+  const labelMap: Record<string, string> = {
+    TRANSFER: t("newsTag.transfer"),
+    BREAKING: t("newsTag.breaking"),
+    UCL: t("newsTag.ucl"),
+    NEWS: t("newsTag.news"),
+  };
+  const colorMap: Record<string, string> = {
+    TRANSFER: "var(--orange)",
+    BREAKING: "var(--coral)",
+    UCL: "var(--purple)",
+    NEWS: "var(--accent)",
+  };
+  return { label: labelMap[id] ?? id, color: colorMap[id] ?? "var(--accent)", id };
+}
+
+function timeSince(iso: string, t: (key: string) => string, locale: string): string {
   const diff = Date.now() - new Date(iso).getTime();
   const mins = Math.floor(diff / 60_000);
-  if (mins < 1) return "just now";
-  if (mins < 60) return `${mins}m ago`;
+  if (mins < 1) return t("time.justNow");
+  if (mins < 60) return t("time.minsAgo").replace("{n}", localizeDigits(String(mins), locale));
   const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  return `${Math.floor(hrs / 24)}d ago`;
+  if (hrs < 24) return t("time.hoursAgo").replace("{n}", localizeDigits(String(hrs), locale));
+  return t("time.daysAgo").replace("{n}", localizeDigits(String(Math.floor(hrs / 24)), locale));
 }
 
-function readTime(text: string): string {
+function readTime(text: string, t: (key: string) => string, locale: string): string {
   const words = text.trim().split(/\s+/).length;
-  return `${Math.max(1, Math.round(words / 200))} min read`;
+  return `${localizeDigits(String(Math.max(1, Math.round(words / 200))), locale)} ${t("time.minRead")}`;
 }
 
 function ArticleImg({ article, sizes, priority }: { article: NormalizedNews; sizes: string; priority?: boolean }) {
   const [errored, setErrored] = useState(false);
-  const { color } = tagForArticle(article);
+  const { t: tImg } = useLanguage();
+  const { color } = tagForArticle(article, tImg);
   const cssColor = color === "var(--accent)" ? "#c8ff3d" : color === "var(--orange)" ? "#ff5b3d" : color === "var(--purple)" ? "#7c5cff" : "#ff4444";
 
   if (!article.imageUrl || errored) {
@@ -82,17 +107,18 @@ function ArticleImg({ article, sizes, priority }: { article: NormalizedNews; siz
 
 export default function NewsClient() {
   const { activeSport, activeSportConfig } = useActiveSport();
+  const { t, locale } = useLanguage();
   const [activeFilter, setActiveFilter] = useState("All News");
   const { articles, isLoading, isValidating } = useNews(50, activeSport);
 
   const filtered = articles.filter((a) => {
     if (activeFilter === "All News") return true;
-    const tag = tagForArticle(a).label;
+    const tag = tagIdForArticle(a);
     if (activeFilter === "Transfers") return tag === "TRANSFER";
     if (activeFilter === "Breaking") return tag === "BREAKING";
     if (activeFilter === "Match Reports") {
-      const t = a.title.toLowerCase();
-      return t.includes("match") || t.includes("beat") || t.includes("win") || t.includes("draw") || t.includes("vs");
+      const titleLc = a.title.toLowerCase();
+      return titleLc.includes("match") || titleLc.includes("beat") || titleLc.includes("win") || titleLc.includes("draw") || titleLc.includes("vs");
     }
     return true;
   });
@@ -104,10 +130,10 @@ export default function NewsClient() {
     <>
       <div className={styles.filterRow}>
         {FILTERS.map((f) => (
-          <button key={f} className={`chip${activeFilter === f ? " active" : ""}`} onClick={() => setActiveFilter(f)}>{f}</button>
+          <button key={f.id} className={`chip${activeFilter === f.id ? " active" : ""}`} onClick={() => setActiveFilter(f.id)}>{t(f.key)}</button>
         ))}
         {isValidating && !isLoading && (
-          <span style={{ fontSize: 11, color: "var(--text-mute)", fontFamily: "var(--mono)", alignSelf: "center", marginLeft: 4 }}>● syncing</span>
+          <span style={{ fontSize: 11, color: "var(--text-mute)", fontFamily: "var(--mono)", alignSelf: "center", marginInlineStart: 4 }}>{t("news.syncing")}</span>
         )}
       </div>
 
@@ -132,9 +158,9 @@ export default function NewsClient() {
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <span
                 className={styles.tag}
-                style={{ background: tagForArticle(featured).color, color: tagForArticle(featured).color === "var(--accent)" ? "#0a0e0d" : "#fff" }}
+                style={{ background: tagForArticle(featured, t).color, color: tagForArticle(featured, t).color === "var(--accent)" ? "#0a0e0d" : "#fff" }}
               >
-                {activeSportConfig.icon} {tagForArticle(featured).label}
+                {activeSportConfig.icon} {tagForArticle(featured, t).label}
               </span>
             </div>
             <h2 className={styles.featuredTitle}>{featured.title}</h2>
@@ -142,9 +168,9 @@ export default function NewsClient() {
             <div className={styles.featuredMeta}>
               <span>{featured.source}</span>
               <div className={styles.featuredMetaDot} />
-              <span>{timeSince(featured.publishedAt)}</span>
+              <span>{timeSince(featured.publishedAt, t, locale)}</span>
               <div className={styles.featuredMetaDot} />
-              <span>{readTime(featured.title + " " + (featured.excerpt ?? ""))}</span>
+              <span>{readTime(featured.title + " " + (featured.excerpt ?? ""), t, locale)}</span>
             </div>
           </div>
         </a>
@@ -153,13 +179,13 @@ export default function NewsClient() {
       {!isLoading && rest.length > 0 && (
         <div>
           <div className="sec-head">
-            <div className="title">{activeSportConfig.icon} Latest <span className="accent">Articles</span></div>
+            <div className="title">{activeSportConfig.icon} {t("news.latestArticles")} <span className="accent">{t("news.articlesAccent")}</span></div>
           </div>
           <div className={styles.newsGrid}>
             {rest.map((a, idx) => {
-              const { label, color } = tagForArticle(a);
+              const { label, color } = tagForArticle(a, t);
               const isAccent = color === "var(--accent)";
-              const rt = readTime(a.title + " " + (a.excerpt ?? ""));
+              const rt = readTime(a.title + " " + (a.excerpt ?? ""), t, locale);
               return (
                 <div key={`${a.id}-${idx}`}>
                   <a href={a.url ?? "#"} target="_blank" rel="noopener noreferrer" className={styles.newsCard}>
@@ -173,13 +199,13 @@ export default function NewsClient() {
                       <div className={styles.newsMeta}>
                         <span>{a.source}</span>
                         <div className={styles.newsMetaDot} />
-                        <span>{timeSince(a.publishedAt)}</span>
+                        <span>{timeSince(a.publishedAt, t, locale)}</span>
                         <div className={styles.newsMetaDot} />
                         <span className={styles.newsReadTime}>{rt}</span>
                       </div>
                     </div>
                   </a>
-                  {idx === 1 && <AdSlot size="card" label="Sponsored" />}
+                  {idx === 1 && <AdSlot size="card" label={t("common.sponsored")} />}
                 </div>
               );
             })}
@@ -189,7 +215,7 @@ export default function NewsClient() {
 
       {!isLoading && filtered.length === 0 && (
         <p style={{ color: "var(--text-mute)", textAlign: "center", padding: "40px 0", fontFamily: "var(--mono)", fontSize: 13 }}>
-          {activeSportConfig.icon} No {activeSportConfig.label} articles found.
+          {activeSportConfig.icon} {t("news.noArticlesFound").replace("{sport}", activeSportConfig.label)}
         </p>
       )}
     </>

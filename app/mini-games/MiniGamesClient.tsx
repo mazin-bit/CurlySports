@@ -5,6 +5,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import styles from "./mini-games.module.css";
 import { Medal, Gamepad2, HelpCircle, Zap, RefreshCw, CheckCircle, XCircle, User, Trophy, Search, Clock, Target, Shield, CircleDot, Timer, Disc } from "lucide-react";
 import { useActiveSport } from "@/contexts/SportContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { QUIZ_DATA } from "./quiz-data";
 import { PLAYER_GUESSES } from "./player-guess-data";
 
@@ -63,6 +64,7 @@ const QUIZ_TIME = 15;
 const DIFF_POINTS: Record<string, number> = { easy: 10, medium: 15, hard: 20 };
 
 function QuizGame({ sport, onComplete }: { sport: string; onComplete: (score: number) => void }) {
+  const { t } = useLanguage();
   const [questions] = useState(() => pickQuestions(sport, 10));
   const [qIdx, setQIdx] = useState(0);
   const [score, setScore] = useState(0);
@@ -127,16 +129,16 @@ function QuizGame({ sport, onComplete }: { sport: string; onComplete: (score: nu
     return (
       <div className={styles.quizDone}>
         <div className={styles.quizEmoji}><Trophy size={36} strokeWidth={1.5} style={{ color: "var(--orange)" }} /></div>
-        <h3 className={styles.quizDoneTitle}>Quiz Complete!</h3>
+        <h3 className={styles.quizDoneTitle}>{t("miniGames.quiz.complete")}</h3>
         <p className={styles.quizDoneScore}>{score} pts</p>
         <p className={styles.quizDoneSub}>
-          {pct >= 90 ? "Outstanding! You know your stuff!"
-            : pct >= 70 ? "Great job! Very knowledgeable!"
-            : pct >= 50 ? "Not bad, keep learning!"
-            : "Keep studying, you'll get better!"}
+          {pct >= 90 ? t("miniGames.quiz.outstanding")
+            : pct >= 70 ? t("miniGames.quiz.great")
+            : pct >= 50 ? t("miniGames.quiz.notBad")
+            : t("miniGames.quiz.keepStudying")}
         </p>
         <button className="btn btn-primary" onClick={restart} style={{ marginTop: 16, display: "inline-flex", alignItems: "center", gap: 6 }}>
-          <RefreshCw size={13} strokeWidth={2} /> Play Again
+          <RefreshCw size={13} strokeWidth={2} /> {t("miniGames.playAgain")}
         </button>
       </div>
     );
@@ -173,14 +175,14 @@ function QuizGame({ sport, onComplete }: { sport: string; onComplete: (score: nu
             <button key={i} className={cls} onClick={() => pick(i)} disabled={selected !== null}>
               <span className={styles.optLetter}>{["A", "B", "C", "D"][i]}</span>
               {opt}
-              {selected !== null && i === current.answer && <CheckCircle size={16} strokeWidth={2} style={{ marginLeft: "auto", color: "#22c55e" }} />}
-              {selected !== null && i === selected && i !== current.answer && <XCircle size={16} strokeWidth={2} style={{ marginLeft: "auto", color: "var(--coral)" }} />}
+              {selected !== null && i === current.answer && <CheckCircle size={16} strokeWidth={2} style={{ marginInlineStart: "auto", color: "#22c55e" }} />}
+              {selected !== null && i === selected && i !== current.answer && <XCircle size={16} strokeWidth={2} style={{ marginInlineStart: "auto", color: "var(--coral)" }} />}
             </button>
           );
         })}
       </div>
       {selected !== null && timeLeft <= 0 && (
-        <div className={styles.timeoutBanner} style={{ display: "flex", alignItems: "center", gap: 6 }}><Clock size={14} /> Time&apos;s up! The answer was <strong>{current.options[current.answer]}</strong></div>
+        <div className={styles.timeoutBanner} style={{ display: "flex", alignItems: "center", gap: 6 }}><Clock size={14} /> {t("miniGames.quiz.timesUp")} <strong>{current.options[current.answer]}</strong></div>
       )}
     </div>
   );
@@ -189,6 +191,7 @@ function QuizGame({ sport, onComplete }: { sport: string; onComplete: (score: nu
 /* ── Guess the Player ───────────────────────────────────────── */
 
 function PlayerGuessGame({ sport, onComplete }: { sport: string; onComplete: (score: number) => void }) {
+  const { t } = useLanguage();
   const [players] = useState(() => {
     const pool = PLAYER_GUESSES[sport] ?? PLAYER_GUESSES.football;
     return shuffleArray(pool).slice(0, Math.min(5, pool.length));
@@ -247,15 +250,15 @@ function PlayerGuessGame({ sport, onComplete }: { sport: string; onComplete: (sc
     return (
       <div className={styles.quizDone}>
         <div className={styles.quizEmoji}><Search size={36} strokeWidth={1.5} style={{ color: "var(--orange)" }} /></div>
-        <h3 className={styles.quizDoneTitle}>All Players Guessed!</h3>
+        <h3 className={styles.quizDoneTitle}>{t("miniGames.guessPlayer.allGuessed")}</h3>
         <p className={styles.quizDoneScore}>{totalScore} / {maxPossible} pts</p>
         <p className={styles.quizDoneSub}>
-          {totalScore >= maxPossible * 0.8 ? "You're a true sports genius!"
-            : totalScore >= maxPossible * 0.5 ? "Solid sports knowledge!"
-            : "Keep watching the games!"}
+          {totalScore >= maxPossible * 0.8 ? t("miniGames.guessPlayer.genius")
+            : totalScore >= maxPossible * 0.5 ? t("miniGames.guessPlayer.solid")
+            : t("miniGames.guessPlayer.keepWatching")}
         </p>
         <button className="btn btn-primary" onClick={restart} style={{ marginTop: 16, display: "inline-flex", alignItems: "center", gap: 6 }}>
-          <RefreshCw size={13} strokeWidth={2} /> Play Again
+          <RefreshCw size={13} strokeWidth={2} /> {t("miniGames.playAgain")}
         </button>
       </div>
     );
@@ -266,7 +269,7 @@ function PlayerGuessGame({ sport, onComplete }: { sport: string; onComplete: (sc
       <div className={styles.guessMeta}>
         <span>Player {pIdx + 1} of {players.length}</span>
         <span className={styles.guessPoints}>
-          {result === null ? `Correct = +${pointsForCorrect} pts` : ""}
+          {result === null ? `${t("miniGames.guessPlayer.correctPlus")}${pointsForCorrect} pts` : ""}
         </span>
         <span className={styles.quizScore}>{totalScore} pts</span>
       </div>
@@ -296,7 +299,7 @@ function PlayerGuessGame({ sport, onComplete }: { sport: string; onComplete: (sc
           <input
             ref={inputRef}
             className={styles.guessBox}
-            placeholder="Who is this player?"
+            placeholder={t("miniGames.guessPlayer.whoIsThis")}
             value={guess}
             onChange={e => setGuess(e.target.value)}
             onKeyDown={e => e.key === "Enter" && submit()}
@@ -307,12 +310,12 @@ function PlayerGuessGame({ sport, onComplete }: { sport: string; onComplete: (sc
 
       {result === "correct" && (
         <div className={styles.guessResult} style={{ background: "rgba(34,197,94,0.12)", borderColor: "#22c55e", color: "#22c55e" }}>
-          <CheckCircle size={18} /> Correct! +{pointsForCorrect} pts — {current.answer}
+          <CheckCircle size={18} /> {t("miniGames.guessPlayer.correct")}{pointsForCorrect} pts — {current.answer}
         </div>
       )}
       {result === "wrong" && (
         <div className={styles.guessResult} style={{ background: "rgba(239,68,68,0.1)", borderColor: "var(--coral)", color: "var(--coral)" }}>
-          <XCircle size={18} /> The answer was <strong style={{ color: "var(--ink)" }}>{current.answer}</strong>
+          <XCircle size={18} /> {t("miniGames.guessPlayer.theAnswerWas")} <strong style={{ color: "var(--ink)" }}>{current.answer}</strong>
         </div>
       )}
     </div>
@@ -322,6 +325,7 @@ function PlayerGuessGame({ sport, onComplete }: { sport: string; onComplete: (sc
 /* ── Score Predictor ─────────────────────────────────────────── */
 
 function PredictorGame({ sport }: { sport: string }) {
+  const { t } = useLanguage();
   const matches = PREDICT_MATCHES[sport] ?? PREDICT_MATCHES.football;
   const [preds, setPreds] = useState(() => matches.map(() => ({ home: 0, away: 0 })));
   const [submitted, setSubmitted] = useState(false);
@@ -356,12 +360,12 @@ function PredictorGame({ sport }: { sport: string }) {
       ))}
       {!submitted ? (
         <button className="btn btn-primary" style={{ width: "100%", justifyContent: "center" }} onClick={() => setSubmitted(true)}>
-          Submit Predictions
+          {t("miniGames.predictor.submit")}
         </button>
       ) : (
         <div className={styles.predSubmitted}>
           <CheckCircle size={20} strokeWidth={2} style={{ color: "var(--teal)" }} />
-          <span>Predictions locked in! Check back after the matches.</span>
+          <span>{t("miniGames.predictor.locked")}</span>
         </div>
       )}
     </div>
@@ -374,6 +378,7 @@ const KEEPER_ZONES = [0, 1, 2, 3, 4, 5]; // 6 zones in 3x2 grid
 type PKResult = "goal" | "saved" | "keeper_goal" | "keeper_save" | null;
 
 function PenaltyKickGame({ onComplete }: { onComplete: (score: number) => void }) {
+  const { t } = useLanguage();
   const [phase, setPhase] = useState<"shoot" | "save" | "done">("shoot");
   const [round, setRound] = useState(0); // 0-4 for each phase
   const [playerGoals, setPlayerGoals] = useState(0);
@@ -468,13 +473,13 @@ function PenaltyKickGame({ onComplete }: { onComplete: (score: number) => void }
     return (
       <div className={styles.quizDone}>
         <div className={styles.quizEmoji}><Target size={36} strokeWidth={1.5} style={{ color: won ? "#22c55e" : "var(--coral)" }} /></div>
-        <h3 className={styles.quizDoneTitle}>{won ? "You Win!" : draw ? "It's a Draw!" : "You Lose!"}</h3>
+        <h3 className={styles.quizDoneTitle}>{won ? t("miniGames.penalty.youWin") : draw ? t("miniGames.penalty.draw") : t("miniGames.penalty.youLose")}</h3>
         <p className={styles.quizDoneScore}>{playerGoals} - {botGoals}</p>
         <p className={styles.quizDoneSub}>
-          {playerGoals} goals scored, {saves} saves made — {totalScore} pts
+          {playerGoals} {t("miniGames.penalty.goalsScored")} {saves} {t("miniGames.penalty.savesMade")} {totalScore} pts
         </p>
         <button className="btn btn-primary" onClick={restart} style={{ marginTop: 16, display: "inline-flex", alignItems: "center", gap: 6 }}>
-          <RefreshCw size={13} strokeWidth={2} /> Play Again
+          <RefreshCw size={13} strokeWidth={2} /> {t("miniGames.playAgain")}
         </button>
       </div>
     );
@@ -486,7 +491,7 @@ function PenaltyKickGame({ onComplete }: { onComplete: (score: number) => void }
     <div className={styles.penaltyWrap}>
       <div className={styles.penaltyHeader}>
         <span className={styles.penaltyRound}>
-          {phase === "shoot" ? "Shooting" : "Saving"} — Kick {round + 1}/{totalRounds}
+          {phase === "shoot" ? t("miniGames.penalty.shooting") : t("miniGames.penalty.saving")} — {t("miniGames.penalty.kick")} {round + 1}/{totalRounds}
         </span>
         <div className={styles.penaltyScoreboard}>
           <span className={styles.penaltyScoreYou}>{playerGoals}</span>
@@ -495,7 +500,7 @@ function PenaltyKickGame({ onComplete }: { onComplete: (score: number) => void }
         </div>
       </div>
       <p className={styles.penaltyPhase}>
-        {phase === "shoot" ? "Click a zone to shoot!" : "Click where you think they'll shoot!"}
+        {phase === "shoot" ? t("miniGames.penalty.clickToShoot") : t("miniGames.penalty.clickToSave")}
       </p>
       <div className={styles.goalFrame}>
         <div className={styles.goalGrid}>
@@ -524,10 +529,10 @@ function PenaltyKickGame({ onComplete }: { onComplete: (score: number) => void }
         <div className={styles.penaltyResult} style={{
           color: lastResult === "goal" || lastResult === "keeper_save" ? "#22c55e" : "var(--coral)",
         }}>
-          {lastResult === "goal" && "GOAL! +10 pts"}
-          {lastResult === "saved" && "Saved by the keeper!"}
-          {lastResult === "keeper_save" && "Great save! +10 pts"}
-          {lastResult === "keeper_goal" && "Goal conceded!"}
+          {lastResult === "goal" && t("miniGames.penalty.goal")}
+          {lastResult === "saved" && t("miniGames.penalty.savedByKeeper")}
+          {lastResult === "keeper_save" && t("miniGames.penalty.greatSave")}
+          {lastResult === "keeper_goal" && t("miniGames.penalty.goalConceded")}
         </div>
       )}
       <div className={styles.penaltyKicks}>
@@ -593,6 +598,7 @@ function getOutcome(shot: ShotType, delivery: DeliveryType): { runs: number; isW
 }
 
 function SuperOverGame({ onComplete }: { onComplete: (score: number) => void }) {
+  const { t } = useLanguage();
   const [phase, setPhase] = useState<"bat" | "bowl" | "done">("bat");
   const [ball, setBall] = useState(0);
   const [playerRuns, setPlayerRuns] = useState(0);
@@ -615,7 +621,7 @@ function SuperOverGame({ onComplete }: { onComplete: (score: number) => void }) 
     if (outcome.isWicket) {
       setPlayerWickets(w => w + 1);
       setBallResults(r => [...r, "W"]);
-      setLastOutcome("WICKET! Out!");
+      setLastOutcome(t("miniGames.superOver.wicketOut"));
       if (playerWickets + 1 >= 3) {
         setTimeout(() => { setPhase("bowl"); setBall(0); setBallResults([]); setLastOutcome(null); setWaiting(false); }, 1400);
         return;
@@ -623,7 +629,7 @@ function SuperOverGame({ onComplete }: { onComplete: (score: number) => void }) 
     } else {
       setPlayerRuns(s => s + outcome.runs);
       setBallResults(r => [...r, String(outcome.runs)]);
-      setLastOutcome(outcome.runs === 6 ? "SIX!" : outcome.runs === 4 ? "FOUR!" : outcome.runs === 0 ? "Dot ball" : `${outcome.runs} run${outcome.runs > 1 ? "s" : ""}`);
+      setLastOutcome(outcome.runs === 6 ? t("miniGames.superOver.six") : outcome.runs === 4 ? t("miniGames.superOver.four") : outcome.runs === 0 ? t("miniGames.superOver.dotBall") : `${outcome.runs} ${outcome.runs > 1 ? t("miniGames.superOver.runs") : t("miniGames.superOver.run")}`);
     }
 
     setTimeout(() => {
@@ -650,7 +656,7 @@ function SuperOverGame({ onComplete }: { onComplete: (score: number) => void }) 
     if (outcome.isWicket) {
       setBotWickets(w => w + 1);
       setBallResults(r => [...r, "W"]);
-      setLastOutcome("WICKET! Got them!");
+      setLastOutcome(t("miniGames.superOver.wicketGotThem"));
       if (botWickets + 1 >= 3) {
         setTimeout(() => { setPhase("done"); setLastOutcome(null); setWaiting(false); }, 1400);
         return;
@@ -658,7 +664,7 @@ function SuperOverGame({ onComplete }: { onComplete: (score: number) => void }) 
     } else {
       setBotRuns(s => s + outcome.runs);
       setBallResults(r => [...r, String(outcome.runs)]);
-      setLastOutcome(outcome.runs === 6 ? "SIX conceded!" : outcome.runs === 4 ? "FOUR conceded!" : outcome.runs === 0 ? "Dot ball!" : `${outcome.runs} run${outcome.runs > 1 ? "s" : ""} conceded`);
+      setLastOutcome(outcome.runs === 6 ? t("miniGames.superOver.sixConceded") : outcome.runs === 4 ? t("miniGames.superOver.fourConceded") : outcome.runs === 0 ? t("miniGames.superOver.dotBallBowl") : `${outcome.runs} ${outcome.runs > 1 ? t("miniGames.superOver.runs") : t("miniGames.superOver.run")} ${t("miniGames.superOver.conceded")}`);
       if (botRuns + outcome.runs > playerRuns) {
         setTimeout(() => { setPhase("done"); setLastOutcome(null); setWaiting(false); }, 1400);
         return;
@@ -699,39 +705,39 @@ function SuperOverGame({ onComplete }: { onComplete: (score: number) => void }) 
     return (
       <div className={styles.quizDone}>
         <div className={styles.quizEmoji}><CircleDot size={36} strokeWidth={1.5} style={{ color: won ? "#22c55e" : "var(--coral)" }} /></div>
-        <h3 className={styles.quizDoneTitle}>{won ? "You Win!" : draw ? "Super Over Tied!" : "You Lose!"}</h3>
+        <h3 className={styles.quizDoneTitle}>{won ? t("miniGames.penalty.youWin") : draw ? t("miniGames.superOver.tied") : t("miniGames.penalty.youLose")}</h3>
         <p className={styles.quizDoneScore}>{playerRuns}/{playerWickets} vs {botRuns}/{botWickets}</p>
         <p className={styles.quizDoneSub}>{totalScore} pts earned</p>
         <button className="btn btn-primary" onClick={restart} style={{ marginTop: 16, display: "inline-flex", alignItems: "center", gap: 6 }}>
-          <RefreshCw size={13} strokeWidth={2} /> Play Again
+          <RefreshCw size={13} strokeWidth={2} /> {t("miniGames.playAgain")}
         </button>
       </div>
     );
   }
 
   const bowlLabels: { type: ShotType; label: string; risk: string }[] = [
-    { type: "defensive", label: "Good Length", risk: "Tight line" },
-    { type: "normal", label: "Short Ball", risk: "Bouncer" },
-    { type: "aggressive", label: "Yorker", risk: "Death bowling" },
-    { type: "slog", label: "Slower Ball", risk: "Variation" },
+    { type: "defensive", label: t("miniGames.superOver.goodLength"), risk: t("miniGames.superOver.tightLine") },
+    { type: "normal", label: t("miniGames.superOver.shortBall"), risk: t("miniGames.superOver.bouncer") },
+    { type: "aggressive", label: t("miniGames.superOver.yorker"), risk: t("miniGames.superOver.deathBowling") },
+    { type: "slog", label: t("miniGames.superOver.slowerBall"), risk: t("miniGames.superOver.variation") },
   ];
 
   return (
     <div className={styles.superOverWrap}>
       <div className={styles.soScoreboard}>
         <div className={styles.soTeam}>
-          <div className={styles.soTeamLabel}>You</div>
+          <div className={styles.soTeamLabel}>{t("miniGames.superOver.you")}</div>
           <div className={styles.soTeamScore}>{playerRuns}<span style={{ fontSize: 14, color: "var(--text-mute)" }}>/{playerWickets}</span></div>
         </div>
         <div className={styles.soVs}>vs</div>
         <div className={styles.soTeam}>
-          <div className={styles.soTeamLabel}>Bot</div>
+          <div className={styles.soTeamLabel}>{t("miniGames.superOver.bot")}</div>
           <div className={styles.soTeamScore}>{botRuns}<span style={{ fontSize: 14, color: "var(--text-mute)" }}>/{botWickets}</span></div>
         </div>
       </div>
       <div className={styles.soPhase}>
-        {phase === "bat" ? "Your Batting — Pick a shot!" : "Your Bowling — Pick a delivery!"}
-        {" "}(Ball {ball + 1}/{totalBalls})
+        {phase === "bat" ? t("miniGames.superOver.yourBatting") : t("miniGames.superOver.yourBowling")}
+        {" "}({t("miniGames.superOver.ball")} {ball + 1}/{totalBalls})
       </div>
       <div className={styles.soBallsRow}>
         {ballResults.map((r, i) => (
@@ -752,8 +758,8 @@ function SuperOverGame({ onComplete }: { onComplete: (score: number) => void }) 
       </div>
       {lastOutcome && (
         <div className={styles.soResultBanner} style={{
-          color: lastOutcome.includes("SIX") || lastOutcome.includes("FOUR") || lastOutcome.includes("Got them") ? "#22c55e" : lastOutcome.includes("WICKET") || lastOutcome.includes("conceded") ? "var(--coral)" : "var(--ink)",
-          background: lastOutcome.includes("SIX") || lastOutcome.includes("FOUR") || lastOutcome.includes("Got them") ? "rgba(34,197,94,0.1)" : lastOutcome.includes("WICKET") || lastOutcome.includes("conceded") ? "rgba(239,68,68,0.08)" : "var(--surface-2)",
+          color: lastOutcome === t("miniGames.superOver.six") || lastOutcome === t("miniGames.superOver.four") || lastOutcome === t("miniGames.superOver.wicketGotThem") ? "#22c55e" : lastOutcome === t("miniGames.superOver.wicketOut") || lastOutcome === t("miniGames.superOver.sixConceded") || lastOutcome === t("miniGames.superOver.fourConceded") || lastOutcome.includes(t("miniGames.superOver.conceded")) ? "var(--coral)" : "var(--ink)",
+          background: lastOutcome === t("miniGames.superOver.six") || lastOutcome === t("miniGames.superOver.four") || lastOutcome === t("miniGames.superOver.wicketGotThem") ? "rgba(34,197,94,0.1)" : lastOutcome === t("miniGames.superOver.wicketOut") || lastOutcome === t("miniGames.superOver.sixConceded") || lastOutcome === t("miniGames.superOver.fourConceded") || lastOutcome.includes(t("miniGames.superOver.conceded")) ? "rgba(239,68,68,0.08)" : "var(--surface-2)",
         }}>
           {lastOutcome}
         </div>
@@ -765,6 +771,7 @@ function SuperOverGame({ onComplete }: { onComplete: (score: number) => void }) 
 /* ── Free Throw Game (Basketball) ──────────────────────────── */
 
 function FreeThrowGame({ onComplete }: { onComplete: (score: number) => void }) {
+  const { t } = useLanguage();
   const [attempt, setAttempt] = useState(0);
   const [score, setScore] = useState(0);
   const [results, setResults] = useState<boolean[]>([]);
@@ -837,14 +844,14 @@ function FreeThrowGame({ onComplete }: { onComplete: (score: number) => void }) 
     return (
       <div className={styles.quizDone}>
         <div className={styles.quizEmoji}><Disc size={36} strokeWidth={1.5} style={{ color: "var(--orange)" }} /></div>
-        <h3 className={styles.quizDoneTitle}>Free Throws Complete!</h3>
+        <h3 className={styles.quizDoneTitle}>{t("miniGames.freeThrow.complete")}</h3>
         <p className={styles.quizDoneScore}>{made}/{totalAttempts}</p>
         <p className={styles.quizDoneSub}>
-          {made >= 9 ? "Clutch shooter! Almost perfect!" : made >= 7 ? "Solid from the line!" : made >= 5 ? "Decent shooting!" : "Need more practice!"}
+          {made >= 9 ? t("miniGames.freeThrow.clutch") : made >= 7 ? t("miniGames.freeThrow.solid") : made >= 5 ? t("miniGames.freeThrow.decent") : t("miniGames.freeThrow.needPractice")}
           {" "}{score} pts
         </p>
         <button className="btn btn-primary" onClick={restart} style={{ marginTop: 16, display: "inline-flex", alignItems: "center", gap: 6 }}>
-          <RefreshCw size={13} strokeWidth={2} /> Play Again
+          <RefreshCw size={13} strokeWidth={2} /> {t("miniGames.playAgain")}
         </button>
       </div>
     );
@@ -869,12 +876,12 @@ function FreeThrowGame({ onComplete }: { onComplete: (score: number) => void }) 
           <div className={styles.ftMeterMarker} style={{ left: `${meterPos}%` }} />
         </div>
         <button className={styles.ftShootBtn} onClick={shoot} disabled={shooting}>
-          {shooting ? (result === "made" ? "Swish!" : "Clank!") : "SHOOT"}
+          {shooting ? (result === "made" ? t("miniGames.freeThrow.swish") : t("miniGames.freeThrow.clank")) : t("miniGames.freeThrow.shoot")}
         </button>
       </div>
       {result && (
         <div className={styles.ftResult} style={{ color: result === "made" ? "#22c55e" : "var(--coral)" }}>
-          {result === "made" ? "Nothing but net! +10 pts" : "Off the rim!"}
+          {result === "made" ? t("miniGames.freeThrow.nothingButNet") : t("miniGames.freeThrow.offTheRim")}
         </div>
       )}
       <div className={styles.ftDots}>
@@ -894,6 +901,7 @@ function FreeThrowGame({ onComplete }: { onComplete: (score: number) => void }) 
 const TIRE_LABELS = ["Front Left", "Front Right", "Rear Left", "Rear Right"];
 
 function PitStopGame({ onComplete }: { onComplete: (score: number) => void }) {
+  const { t } = useLanguage();
   const [gameState, setGameState] = useState<"idle" | "running" | "done">("idle");
   const [activeTire, setActiveTire] = useState(-1);
   const [tiresDone, setTiresDone] = useState<boolean[]>([false, false, false, false]);
@@ -914,11 +922,11 @@ function PitStopGame({ onComplete }: { onComplete: (score: number) => void }) {
 
     // Random delay before first tire lights up (0.5-1.5s)
     setTimeout(() => {
-      const t = Date.now();
-      setStartTime(t);
+      const now = Date.now();
+      setStartTime(now);
       setActiveTire(order[0]);
       timerRef.current = setInterval(() => {
-        setElapsed(Date.now() - t);
+        setElapsed(Date.now() - now);
       }, 50);
     }, 500 + Math.random() * 1000);
   };
@@ -969,17 +977,17 @@ function PitStopGame({ onComplete }: { onComplete: (score: number) => void }) {
   if (gameState === "done") {
     const secs = finalTime / 1000;
     const pts = secs < 2.0 ? 50 : secs < 2.5 ? 40 : secs < 3.0 ? 30 : secs < 4.0 ? 20 : 10;
-    const rating = secs < 2.0 ? "Red Bull-level!" : secs < 2.5 ? "World class!" : secs < 3.0 ? "Solid stop!" : secs < 4.0 ? "Needs practice" : "Slow stop!";
+    const rating = secs < 2.0 ? t("miniGames.pitStop.redBull") : secs < 2.5 ? t("miniGames.pitStop.worldClass") : secs < 3.0 ? t("miniGames.pitStop.solidStop") : secs < 4.0 ? t("miniGames.pitStop.needsPractice") : t("miniGames.pitStop.slowStop");
     const ratingColor = secs < 2.0 ? "#22c55e" : secs < 2.5 ? "var(--accent)" : secs < 3.0 ? "var(--orange)" : "var(--coral)";
     return (
       <div className={styles.quizDone}>
         <div className={styles.quizEmoji}><Timer size={36} strokeWidth={1.5} style={{ color: ratingColor }} /></div>
-        <h3 className={styles.quizDoneTitle}>Pit Stop Complete!</h3>
+        <h3 className={styles.quizDoneTitle}>{t("miniGames.pitStop.complete")}</h3>
         <p className={styles.quizDoneScore}>{formatTime(finalTime)}</p>
         <p className={styles.pitStopRating} style={{ color: ratingColor }}>{rating}</p>
         <p className={styles.quizDoneSub}>{pts} pts earned</p>
         <button className="btn btn-primary" onClick={restart} style={{ marginTop: 16, display: "inline-flex", alignItems: "center", gap: 6 }}>
-          <RefreshCw size={13} strokeWidth={2} /> Play Again
+          <RefreshCw size={13} strokeWidth={2} /> {t("miniGames.playAgain")}
         </button>
       </div>
     );
@@ -992,7 +1000,7 @@ function PitStopGame({ onComplete }: { onComplete: (score: number) => void }) {
           {gameState === "running" ? formatTime(elapsed) : "0.00s"}
         </div>
         <div className={styles.pitStopPhase}>
-          {gameState === "idle" ? "Press start when ready" : activeTire === -1 ? "Get ready..." : "Change the highlighted tire!"}
+          {gameState === "idle" ? t("miniGames.pitStop.pressStart") : activeTire === -1 ? t("miniGames.pitStop.getReady") : t("miniGames.pitStop.changeTire")}
         </div>
       </div>
       <div className={styles.pitStopCar}>
@@ -1015,7 +1023,7 @@ function PitStopGame({ onComplete }: { onComplete: (score: number) => void }) {
       </div>
       {gameState === "idle" && (
         <button className={styles.pitStopStartBtn} onClick={start}>
-          START PIT STOP
+          {t("miniGames.pitStop.startPitStop")}
         </button>
       )}
     </div>
@@ -1026,37 +1034,37 @@ function PitStopGame({ onComplete }: { onComplete: (score: number) => void }) {
 
 type GameType = "quiz" | "guess" | "predictor" | "penalty" | "superover" | "freethrow" | "pitstop";
 
-const SPORT_GAMES: Record<string, { type: GameType; label: string; icon: typeof HelpCircle }[]> = {
+const SPORT_GAMES: Record<string, { type: GameType; labelKey: string; icon: typeof HelpCircle }[]> = {
   football: [
-    { type: "quiz", label: "Trivia Quiz", icon: HelpCircle },
-    { type: "guess", label: "Guess Player", icon: User },
-    { type: "predictor", label: "Predictor", icon: Zap },
-    { type: "penalty", label: "Penalty Kick", icon: Target },
+    { type: "quiz", labelKey: "miniGames.quiz.name", icon: HelpCircle },
+    { type: "guess", labelKey: "miniGames.guessPlayer.name", icon: User },
+    { type: "predictor", labelKey: "miniGames.predictor.name", icon: Zap },
+    { type: "penalty", labelKey: "miniGames.penalty.name", icon: Target },
   ],
   cricket: [
-    { type: "quiz", label: "Trivia Quiz", icon: HelpCircle },
-    { type: "guess", label: "Guess Player", icon: User },
-    { type: "predictor", label: "Predictor", icon: Zap },
-    { type: "superover", label: "Super Over", icon: CircleDot },
+    { type: "quiz", labelKey: "miniGames.quiz.name", icon: HelpCircle },
+    { type: "guess", labelKey: "miniGames.guessPlayer.name", icon: User },
+    { type: "predictor", labelKey: "miniGames.predictor.name", icon: Zap },
+    { type: "superover", labelKey: "miniGames.superOver.name", icon: CircleDot },
   ],
   basketball: [
-    { type: "quiz", label: "Trivia Quiz", icon: HelpCircle },
-    { type: "guess", label: "Guess Player", icon: User },
-    { type: "predictor", label: "Predictor", icon: Zap },
-    { type: "freethrow", label: "Free Throw", icon: Disc },
+    { type: "quiz", labelKey: "miniGames.quiz.name", icon: HelpCircle },
+    { type: "guess", labelKey: "miniGames.guessPlayer.name", icon: User },
+    { type: "predictor", labelKey: "miniGames.predictor.name", icon: Zap },
+    { type: "freethrow", labelKey: "miniGames.freeThrow.name", icon: Disc },
   ],
   f1: [
-    { type: "quiz", label: "Trivia Quiz", icon: HelpCircle },
-    { type: "guess", label: "Guess Driver", icon: User },
-    { type: "predictor", label: "Predictor", icon: Zap },
-    { type: "pitstop", label: "Pit Stop", icon: Timer },
+    { type: "quiz", labelKey: "miniGames.quiz.name", icon: HelpCircle },
+    { type: "guess", labelKey: "miniGames.guessDriver.name", icon: User },
+    { type: "predictor", labelKey: "miniGames.predictor.name", icon: Zap },
+    { type: "pitstop", labelKey: "miniGames.pitStop.name", icon: Timer },
   ],
 };
 
-const DEFAULT_GAMES: { type: GameType; label: string; icon: typeof HelpCircle }[] = [
-  { type: "quiz", label: "Trivia Quiz", icon: HelpCircle },
-  { type: "guess", label: "Guess Player", icon: User },
-  { type: "predictor", label: "Predictor", icon: Zap },
+const DEFAULT_GAMES: { type: GameType; labelKey: string; icon: typeof HelpCircle }[] = [
+  { type: "quiz", labelKey: "miniGames.quiz.name", icon: HelpCircle },
+  { type: "guess", labelKey: "miniGames.guessPlayer.name", icon: User },
+  { type: "predictor", labelKey: "miniGames.predictor.name", icon: Zap },
 ];
 
 /* ── Leaderboard types ───────────────────────────────────────── */
@@ -1075,6 +1083,7 @@ const RANK_LABELS = ["1st", "2nd", "3rd"];
 /* ── Main Page ───────────────────────────────────────────────── */
 
 export default function MiniGamesPage() {
+  const { t } = useLanguage();
   const { activeSport, activeSportConfig } = useActiveSport();
   const [activeGame, setActiveGame] = useState<GameType>("quiz");
   const [quizKey, setQuizKey] = useState(0);
@@ -1108,44 +1117,44 @@ export default function MiniGamesPage() {
   };
 
   return (
-    <AppShell active="minigames" title="Mini Games" subtitle="Play · Compete · Win">
+    <AppShell active="minigames" title="Mini Games" titleKey="miniGames.title" subtitleKey="miniGames.subtitle">
       <div className="stack">
         {/* Leaderboard */}
         <section className="section">
           <div className="sec-head">
-            <div className="title"><Medal size={17} className="title-icon" strokeWidth={2} /> Weekly <span className="accent">Leaderboard</span></div>
+            <div className="title"><Medal size={17} className="title-icon" strokeWidth={2} /> {t("miniGames.weekly")} <span className="accent">{t("miniGames.leaderboard")}</span></div>
             <div style={{ display: "flex", gap: 6 }}>
               <button
                 onClick={() => setLbGame("quiz")}
                 style={{ fontSize: 11, padding: "3px 10px", borderRadius: 6, border: "1px solid var(--border)", cursor: "pointer",
                   background: lbGame === "quiz" ? "var(--accent)" : "transparent",
                   color: lbGame === "quiz" ? "#000" : "var(--text-dim)" }}
-              >Trivia</button>
+              >{t("miniGames.leaderboardTab.trivia")}</button>
               <button
                 onClick={() => setLbGame("player_guess")}
                 style={{ fontSize: 11, padding: "3px 10px", borderRadius: 6, border: "1px solid var(--border)", cursor: "pointer",
                   background: lbGame === "player_guess" ? "var(--accent)" : "transparent",
                   color: lbGame === "player_guess" ? "#000" : "var(--text-dim)" }}
-              >Guess</button>
+              >{t("miniGames.leaderboardTab.guess")}</button>
               <button
                 onClick={() => setLbGame("sport_game")}
                 style={{ fontSize: 11, padding: "3px 10px", borderRadius: 6, border: "1px solid var(--border)", cursor: "pointer",
                   background: lbGame === "sport_game" ? "var(--accent)" : "transparent",
                   color: lbGame === "sport_game" ? "#000" : "var(--text-dim)" }}
-              >Games</button>
-              <span style={{ fontFamily: "var(--mono)", fontSize: 11, color: "var(--text-mute)", alignSelf: "center", marginLeft: 4 }}>Resets Sunday</span>
+              >{t("miniGames.leaderboardTab.games")}</button>
+              <span style={{ fontFamily: "var(--mono)", fontSize: 11, color: "var(--text-mute)", alignSelf: "center", marginInlineStart: 4 }}>{t("miniGames.resetsDay")}</span>
             </div>
           </div>
           <div className={styles.leaderboard}>
             {lbLoading ? (
               <div className={styles.lbRow} style={{ justifyContent: "center", padding: "20px" }}>
-                <span style={{ fontFamily: "var(--mono)", fontSize: 12, color: "var(--text-mute)" }}>Loading…</span>
+                <span style={{ fontFamily: "var(--mono)", fontSize: 12, color: "var(--text-mute)" }}>{t("common.loading")}</span>
               </div>
             ) : leaderboard.length === 0 ? (
               <div className={styles.lbRow} style={{ justifyContent: "center", padding: "28px 20px", flexDirection: "column", alignItems: "center", gap: 8 }}>
                 <Medal size={28} strokeWidth={1.5} style={{ color: "var(--text-mute)", opacity: 0.4 }} />
                 <p style={{ fontFamily: "var(--mono)", fontSize: 12, color: "var(--text-mute)", textAlign: "center", margin: 0 }}>
-                  No scores yet this week.<br />Play a game below to claim the top spot!
+                  {t("miniGames.noScoresYet")}<br />{t("miniGames.playToClaimTop")}
                 </p>
               </div>
             ) : (
@@ -1155,7 +1164,7 @@ export default function MiniGamesPage() {
                     {RANK_LABELS[i] ?? `${i + 1}th`}
                   </span>
                   <span className={styles.lbName}>{entry.username}</span>
-                  <span className={styles.lbSport} style={{ fontFamily: "var(--mono)", fontSize: 11, color: "var(--text-mute)", marginLeft: "auto", marginRight: 12 }}>
+                  <span className={styles.lbSport} style={{ fontFamily: "var(--mono)", fontSize: 11, color: "var(--text-mute)", marginInlineStart: "auto", marginInlineEnd: 12 }}>
                     {entry.sport}
                   </span>
                   <span className={styles.lbScore}>{entry.score} pts</span>
@@ -1168,14 +1177,14 @@ export default function MiniGamesPage() {
         {/* Games */}
         <section className="section">
           <div className="sec-head">
-            <div className="title"><Gamepad2 size={17} className="title-icon" strokeWidth={2} /> {activeSportConfig.icon} Games</div>
+            <div className="title"><Gamepad2 size={17} className="title-icon" strokeWidth={2} /> {activeSportConfig.icon} {t("miniGames.games")}</div>
           </div>
 
           <div className={styles.gameTabs}>
             {(SPORT_GAMES[activeSport] ?? DEFAULT_GAMES).map(g => (
               <button key={g.type} className={`${styles.gameTab}${activeGame === g.type ? " " + styles.gameTabActive : ""}`}
                 onClick={() => setActiveGame(g.type)}>
-                <g.icon size={15} strokeWidth={2} /> {g.label}
+                <g.icon size={15} strokeWidth={2} /> {t(g.labelKey)}
               </button>
             ))}
           </div>
@@ -1184,10 +1193,10 @@ export default function MiniGamesPage() {
             <div>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
                 <p style={{ fontSize: 13, color: "var(--text-dim)" }}>
-                  {activeSportConfig.icon} {activeSportConfig.label} trivia — 15s per question, difficulty bonuses
+                  {activeSportConfig.icon} {activeSportConfig.label} {t("miniGames.quiz.desc")}
                 </p>
                 <button className={styles.restartBtn} onClick={() => setQuizKey(k => k + 1)}>
-                  <RefreshCw size={12} strokeWidth={2} /> New quiz
+                  <RefreshCw size={12} strokeWidth={2} /> {t("miniGames.newQuiz")}
                 </button>
               </div>
               <QuizGame key={`${activeSport}-${quizKey}`} sport={activeSport} onComplete={handleGameComplete} />
@@ -1198,10 +1207,10 @@ export default function MiniGamesPage() {
             <div>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
                 <p style={{ fontSize: 13, color: "var(--text-dim)" }}>
-                  {activeSportConfig.icon} Guess famous {activeSportConfig.label} athletes from clues — use fewer clues for more points
+                  {activeSportConfig.icon} {t("miniGames.guessPlayer.desc")}
                 </p>
                 <button className={styles.restartBtn} onClick={() => setQuizKey(k => k + 1)}>
-                  <RefreshCw size={12} strokeWidth={2} /> New round
+                  <RefreshCw size={12} strokeWidth={2} /> {t("miniGames.newRound")}
                 </button>
               </div>
               <PlayerGuessGame key={`guess-${activeSport}-${quizKey}`} sport={activeSport} onComplete={handleGameComplete} />
@@ -1211,7 +1220,7 @@ export default function MiniGamesPage() {
           {activeGame === "predictor" && (
             <div>
               <p style={{ fontSize: 13, color: "var(--text-dim)", marginBottom: 16 }}>
-                {activeSportConfig.icon} Predict upcoming {activeSportConfig.label} results
+                {activeSportConfig.icon} {t("miniGames.predictor.desc")}
               </p>
               <PredictorGame key={activeSport} sport={activeSport} />
             </div>
@@ -1221,10 +1230,10 @@ export default function MiniGamesPage() {
             <div>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
                 <p style={{ fontSize: 13, color: "var(--text-dim)" }}>
-                  {activeSportConfig.icon} Take 5 penalty kicks, then save 5 — beat the bot!
+                  {activeSportConfig.icon} {t("miniGames.penalty.desc")}
                 </p>
                 <button className={styles.restartBtn} onClick={() => setQuizKey(k => k + 1)}>
-                  <RefreshCw size={12} strokeWidth={2} /> Restart
+                  <RefreshCw size={12} strokeWidth={2} /> {t("miniGames.restart")}
                 </button>
               </div>
               <PenaltyKickGame key={`pk-${quizKey}`} onComplete={handleGameComplete} />
@@ -1235,10 +1244,10 @@ export default function MiniGamesPage() {
             <div>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
                 <p style={{ fontSize: 13, color: "var(--text-dim)" }}>
-                  {activeSportConfig.icon} 6 balls batting, 6 balls bowling — outscore the bot!
+                  {activeSportConfig.icon} {t("miniGames.superOver.desc")}
                 </p>
                 <button className={styles.restartBtn} onClick={() => setQuizKey(k => k + 1)}>
-                  <RefreshCw size={12} strokeWidth={2} /> Restart
+                  <RefreshCw size={12} strokeWidth={2} /> {t("miniGames.restart")}
                 </button>
               </div>
               <SuperOverGame key={`so-${quizKey}`} onComplete={handleGameComplete} />
@@ -1249,10 +1258,10 @@ export default function MiniGamesPage() {
             <div>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
                 <p style={{ fontSize: 13, color: "var(--text-dim)" }}>
-                  {activeSportConfig.icon} Stop the meter in the green zone — 10 attempts!
+                  {activeSportConfig.icon} {t("miniGames.freeThrow.desc")}
                 </p>
                 <button className={styles.restartBtn} onClick={() => setQuizKey(k => k + 1)}>
-                  <RefreshCw size={12} strokeWidth={2} /> Restart
+                  <RefreshCw size={12} strokeWidth={2} /> {t("miniGames.restart")}
                 </button>
               </div>
               <FreeThrowGame key={`ft-${quizKey}`} onComplete={handleGameComplete} />
@@ -1263,10 +1272,10 @@ export default function MiniGamesPage() {
             <div>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
                 <p style={{ fontSize: 13, color: "var(--text-dim)" }}>
-                  {activeSportConfig.icon} Change all 4 tires as fast as possible!
+                  {activeSportConfig.icon} {t("miniGames.pitStop.desc")}
                 </p>
                 <button className={styles.restartBtn} onClick={() => setQuizKey(k => k + 1)}>
-                  <RefreshCw size={12} strokeWidth={2} /> Restart
+                  <RefreshCw size={12} strokeWidth={2} /> {t("miniGames.restart")}
                 </button>
               </div>
               <PitStopGame key={`ps-${quizKey}`} onComplete={handleGameComplete} />

@@ -12,10 +12,9 @@
   font-weight: 700; font-family: var(--body); cursor: pointer;
   transition: all 0.15s; white-space: nowrap; flex-shrink: 0;
   min-height: 36px; display: inline-flex; align-items: center;
-  -webkit-tap-highlight-color: rgba(200,255,61,0.15);
-  touch-action: manipulation;
 }
 .leagueTab:hover { border-color: var(--ink); color: var(--ink); }
+.leagueTab:active { transform: scale(0.93); opacity: 0.8; transition-duration: 0.06s; }
 .leagueTabActive {
   background: var(--ink); color: var(--bg);
   border-color: var(--ink);
@@ -47,17 +46,17 @@
 .playerCard {
   background: var(--surface); border: 2px solid var(--ink);
   border-radius: var(--r-lg); padding: 18px 14px;
-  cursor: pointer; transition: transform 0.15s, box-shadow 0.15s;
+  cursor: pointer; transition: transform 0.2s cubic-bezier(.25,.46,.45,.94), box-shadow 0.2s cubic-bezier(.25,.46,.45,.94);
   text-align: center; display: flex; flex-direction: column;
   align-items: center; gap: 6px; box-shadow: var(--shadow-sm);
   text-decoration: none; color: inherit;
-  -webkit-tap-highlight-color: rgba(200,255,61,0.15);
-  touch-action: manipulation;
+  will-change: transform;
 }
 .playerCard:hover {
   transform: translate(-3px, -3px);
   box-shadow: var(--shadow-md);
 }
+.playerCard:active { transform: scale(0.96); box-shadow: var(--shadow-sm); transition-duration: 0.08s; }
 .playerAvatarImg {
   width: 64px; height: 64px; border-radius: 50%;
   object-fit: cover; border: 2.5px solid var(--ink);

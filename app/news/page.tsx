@@ -15,7 +15,7 @@ export const metadata = {
 
 export default function NewsPage() {
   return (
-    <AppShell active="news" title="News" subtitle="Sports · Real-time from ESPN & more">
+    <AppShell active="news" title="News" titleKey="news.title" subtitleKey="news.subtitle">
       <div className="stack">
         <NewsClient />
       </div>

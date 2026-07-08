@@ -127,7 +127,7 @@ export default function VideosScreen({ sport, setSport, onSearch, onBell, unread
                 <div style={{ padding: 12 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
                     <Badge tone="mute">{video.source}</Badge>
-                    <span style={{ marginLeft: 'auto', fontFamily: 'var(--mono)', fontSize: 9.5, color: 'var(--text-mute)' }}>{timeAgo(video.publishedAt)}</span>
+                    <span style={{ marginInlineStart: 'auto', fontFamily: 'var(--mono)', fontSize: 9.5, color: 'var(--text-mute)' }}>{timeAgo(video.publishedAt)}</span>
                   </div>
                   <div style={{ fontFamily: 'var(--display)', fontWeight: 700, fontSize: 14, color: 'var(--ink)', lineHeight: 1.25, letterSpacing: '-0.01em' }}>
                     {video.title}

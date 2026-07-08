@@ -9,6 +9,10 @@ import type { BracketRound, BracketMatch } from '@/hooks/useBracket';
 import type { StandingEntry, GroupStandings } from '@/hooks/useStandings';
 import { normalizedToMobile } from './api';
 import { openExternal } from '@/lib/native';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { formatDate, formatTime } from '@/lib/locale-utils';
+import { translateLeagueName } from '@/lib/league-names';
+import { translateTeamName } from '@/lib/team-names';
 import type { NormalizedMatch } from '@/lib/types';
 import Topbar from './ui/Topbar';
 import Card from './ui/Card';
@@ -30,25 +34,20 @@ interface DashboardProps {
   unread: number;
 }
 
-const SPORT_LABELS: Record<string, string> = {
-  football: 'Football', basketball: 'Basketball', nfl: 'NFL',
-  tennis: 'Tennis', baseball: 'Baseball', f1: 'Formula 1', cricket: 'Cricket',
-};
-
-function MiniStandingsTable({ entries, leagueName }: { entries: StandingEntry[]; leagueName: string }) {
+function MiniStandingsTable({ entries, leagueName, t, locale }: { entries: StandingEntry[]; leagueName: string; t: (key: string, fallback?: string) => string; locale: import('@/lib/i18n').Locale }) {
   const rows = entries.slice(0, 8);
   const isFootball = rows.some(e => e.draws > 0);
   return (
-    <Card subtitle="Standings" title={leagueName} style={{ marginBottom: 12 }}>
+    <Card subtitle={t('dashboard.standingsLabel')} title={translateLeagueName(leagueName, locale)} style={{ marginBottom: 12 }}>
       <div style={{ display: 'flex', fontFamily: 'var(--mono)', fontSize: 9, color: 'var(--text-mute)', textTransform: 'uppercase', letterSpacing: '0.06em', padding: '0 0 8px', borderBottom: '1px solid var(--border-3)' }}>
         <span style={{ width: 20 }}>#</span>
-        <span style={{ flex: 1 }}>Team</span>
-        <span style={{ width: 22, textAlign: 'center' }}>P</span>
-        <span style={{ width: 22, textAlign: 'center' }}>W</span>
-        {isFootball && <span style={{ width: 22, textAlign: 'center' }}>D</span>}
-        <span style={{ width: 22, textAlign: 'center' }}>L</span>
-        {isFootball && <span style={{ width: 28, textAlign: 'center' }}>GD</span>}
-        <span style={{ width: 28, textAlign: 'right', color: 'var(--orange)', fontWeight: 700 }}>Pts</span>
+        <span style={{ flex: 1 }}>{t('standings.team')}</span>
+        <span style={{ width: 22, textAlign: 'center' }}>{t('standings.p')}</span>
+        <span style={{ width: 22, textAlign: 'center' }}>{t('standings.w')}</span>
+        {isFootball && <span style={{ width: 22, textAlign: 'center' }}>{t('standings.d')}</span>}
+        <span style={{ width: 22, textAlign: 'center' }}>{t('standings.l')}</span>
+        {isFootball && <span style={{ width: 28, textAlign: 'center' }}>{t('standings.gd')}</span>}
+        <span style={{ width: 28, textAlign: 'right', color: 'var(--orange)', fontWeight: 700 }}>{t('standings.pts')}</span>
       </div>
       {rows.map((row, idx) => (
         <div key={row.teamId || idx} style={{ display: 'flex', alignItems: 'center', padding: '8px 0', borderBottom: idx < rows.length - 1 ? '1px solid var(--border-3)' : 'none' }}>
@@ -60,7 +59,7 @@ function MiniStandingsTable({ entries, leagueName }: { entries: StandingEntry[];
             ) : (
               <div style={{ width: 18, height: 18, borderRadius: 4, background: 'var(--surface-3)', border: '1px solid var(--border-2)', flexShrink: 0, display: 'grid', placeItems: 'center', fontSize: 7, fontFamily: 'var(--mono)', fontWeight: 700, color: 'var(--text-mute)' }}>{row.teamAbbr.slice(0, 3)}</div>
             )}
-            <span style={{ fontWeight: 600, fontSize: 12, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{row.teamName}</span>
+            <span style={{ fontWeight: 600, fontSize: 12, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{translateTeamName(row.teamName, locale)}</span>
           </div>
           <span style={{ width: 22, textAlign: 'center', fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text-dim)' }}>{row.gamesPlayed}</span>
           <span style={{ width: 22, textAlign: 'center', fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text-dim)' }}>{row.wins}</span>
@@ -75,22 +74,22 @@ function MiniStandingsTable({ entries, leagueName }: { entries: StandingEntry[];
 }
 
 /* ── World Cup Groups Grid (mobile) ─────────────────────────── */
-function MobileWCGroupsGrid({ groups, leagueName }: { groups: GroupStandings[]; leagueName: string }) {
+function MobileWCGroupsGrid({ groups, leagueName, t, locale }: { groups: GroupStandings[]; leagueName: string; t: (key: string, fallback?: string) => string; locale: import('@/lib/i18n').Locale }) {
   return (
     <div style={{ marginBottom: 12 }}>
       <div style={{ fontFamily: 'var(--display)', fontWeight: 800, fontSize: 18, color: 'var(--ink)', marginBottom: 12, letterSpacing: '-0.02em' }}>
-        {leagueName} — Group Stage
+        {translateLeagueName(leagueName, locale)} — {t('dashboard.groupStage')}
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10 }}>
         {groups.map(g => (
           <Card key={g.groupName} style={{ padding: 10 }}>
             <div style={{ fontFamily: 'var(--mono)', fontWeight: 800, fontSize: 10, letterSpacing: '0.08em', color: 'var(--orange)', textTransform: 'uppercase', marginBottom: 6 }}>{g.groupName}</div>
             <div style={{ display: 'flex', fontFamily: 'var(--mono)', fontSize: 8, color: 'var(--text-mute)', textTransform: 'uppercase', letterSpacing: '0.06em', padding: '0 0 4px', borderBottom: '1px solid var(--border-3)' }}>
-              <span style={{ flex: 1 }}>Team</span>
-              <span style={{ width: 18, textAlign: 'center' }}>P</span>
-              <span style={{ width: 18, textAlign: 'center' }}>W</span>
-              <span style={{ width: 18, textAlign: 'center' }}>L</span>
-              <span style={{ width: 22, textAlign: 'right', color: 'var(--orange)', fontWeight: 700 }}>Pts</span>
+              <span style={{ flex: 1 }}>{t('standings.team')}</span>
+              <span style={{ width: 18, textAlign: 'center' }}>{t('standings.p')}</span>
+              <span style={{ width: 18, textAlign: 'center' }}>{t('standings.w')}</span>
+              <span style={{ width: 18, textAlign: 'center' }}>{t('standings.l')}</span>
+              <span style={{ width: 22, textAlign: 'right', color: 'var(--orange)', fontWeight: 700 }}>{t('standings.pts')}</span>
             </div>
             {g.entries.slice(0, 4).map((row, idx) => (
               <div key={row.teamId || idx} style={{ display: 'flex', alignItems: 'center', padding: '4px 0', borderBottom: idx < 3 ? '1px solid var(--border-3)' : 'none' }}>
@@ -118,11 +117,11 @@ function MobileWCGroupsGrid({ groups, leagueName }: { groups: GroupStandings[]; 
 }
 
 /* ── Knockout Bracket (mobile) ─────────────────────────────── */
-function MobileKnockoutBracket({ rounds, leagueName }: { rounds: BracketRound[]; leagueName: string }) {
+function MobileKnockoutBracket({ rounds, leagueName, t, locale }: { rounds: BracketRound[]; leagueName: string; t: (key: string, fallback?: string) => string; locale: import('@/lib/i18n').Locale }) {
   if (rounds.length === 0) return null;
   return (
     <div>
-      <div style={{ fontFamily: 'var(--display)', fontWeight: 800, fontSize: 16, color: 'var(--ink)', marginBottom: 10, letterSpacing: '-0.02em' }}>Knockout Stage</div>
+      <div style={{ fontFamily: 'var(--display)', fontWeight: 800, fontSize: 16, color: 'var(--ink)', marginBottom: 10, letterSpacing: '-0.02em' }}>{t('dashboard.knockoutStage')}</div>
       {rounds.map((round) => (
         <div key={round.name} style={{ marginBottom: 12 }}>
           <div style={{ fontFamily: 'var(--mono)', fontWeight: 700, fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--orange)', marginBottom: 6 }}>{round.name}</div>
@@ -136,7 +135,7 @@ function MobileKnockoutBracket({ rounds, leagueName }: { rounds: BracketRound[];
                   ) : (
                     <div style={{ width: 16, height: 16, borderRadius: 3, background: 'var(--surface-3)', display: 'grid', placeItems: 'center', fontSize: 6, fontFamily: 'var(--mono)', fontWeight: 700, color: 'var(--text-mute)' }}>{m.home.shortName?.slice(0, 3) ?? '?'}</div>
                   )}
-                  <span style={{ flex: 1, fontWeight: m.home.winner ? 700 : 500, fontSize: 12, color: m.home.winner ? 'var(--ink)' : 'var(--text-dim)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.home.shortName}</span>
+                  <span style={{ flex: 1, fontWeight: m.home.winner ? 700 : 500, fontSize: 12, color: m.home.winner ? 'var(--ink)' : 'var(--text-dim)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.home.shortName ? translateTeamName(m.home.shortName, locale) : ''}</span>
                   <span style={{ fontFamily: 'var(--display)', fontWeight: 800, fontSize: 14, color: m.home.winner ? 'var(--orange)' : 'var(--ink)', minWidth: 16, textAlign: 'center' }}>{m.home.score !== null ? m.home.score : '-'}</span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 10px' }}>
@@ -146,7 +145,7 @@ function MobileKnockoutBracket({ rounds, leagueName }: { rounds: BracketRound[];
                   ) : (
                     <div style={{ width: 16, height: 16, borderRadius: 3, background: 'var(--surface-3)', display: 'grid', placeItems: 'center', fontSize: 6, fontFamily: 'var(--mono)', fontWeight: 700, color: 'var(--text-mute)' }}>{m.away.shortName?.slice(0, 3) ?? '?'}</div>
                   )}
-                  <span style={{ flex: 1, fontWeight: m.away.winner ? 700 : 500, fontSize: 12, color: m.away.winner ? 'var(--ink)' : 'var(--text-dim)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.away.shortName}</span>
+                  <span style={{ flex: 1, fontWeight: m.away.winner ? 700 : 500, fontSize: 12, color: m.away.winner ? 'var(--ink)' : 'var(--text-dim)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.away.shortName ? translateTeamName(m.away.shortName, locale) : ''}</span>
                   <span style={{ fontFamily: 'var(--display)', fontWeight: 800, fontSize: 14, color: m.away.winner ? 'var(--orange)' : 'var(--ink)', minWidth: 16, textAlign: 'center' }}>{m.away.score !== null ? m.away.score : '-'}</span>
                 </div>
                 {m.statusDisplay && (
@@ -166,6 +165,7 @@ function toDateKey(d: Date) {
 }
 
 export default function DashboardScreen({ sport, setSport, onOpenMatch, onOpenPlayer, onSearch, onBell, fav, unread }: DashboardProps) {
+  const { t, locale } = useLanguage();
   const todayKey = toDateKey(new Date());
   const { groups, isConnected, liveCount } = useScoresStream(sport, todayKey);
   const { articles, isLoading: newsLoading } = useNews(20, sport);
@@ -206,7 +206,7 @@ export default function DashboardScreen({ sport, setSport, onOpenMatch, onOpenPl
           const json = await res.json();
           const nMatches: NormalizedMatch[] = (json.groups ?? []).flatMap((g: { matches: NormalizedMatch[] }) => g.matches);
           if (nMatches.length > 0 && !cancelled) {
-            const label = i === 1 ? 'Tomorrow' : d.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
+            const label = i === 1 ? t('time.tomorrow') : formatDate(d, locale, { weekday: 'short', month: 'short', day: 'numeric' });
             setUpcoming({ label, matches: nMatches.slice(0, 6).map(normalizedToMobile) });
             return;
           }
@@ -214,13 +214,13 @@ export default function DashboardScreen({ sport, setSport, onOpenMatch, onOpenPl
       }
     })();
     return () => { cancelled = true; };
-  }, [isConnected, allMatches.length, sport]);
+  }, [isConnected, allMatches.length, sport, t]);
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--bg)' }}>
       <Topbar
-        title={`Hey, ${fav?.first ?? 'You'}`}
-        subtitle="Matchday · Today"
+        title={`${t('dashboard.hey')}${fav?.first ?? 'You'}`}
+        subtitle={t('dashboard.matchday')}
         logoSrc="/curly-guy.png"
         onSearch={onSearch}
         onBell={onBell}
@@ -232,8 +232,8 @@ export default function DashboardScreen({ sport, setSport, onOpenMatch, onOpenPl
 
         {/* Live scores */}
         <Card
-          subtitle={liveCount > 0 ? `● ${liveCount} live now` : '● Live & upcoming'}
-          title={SPORT_LABELS[sport] ?? sport}
+          subtitle={liveCount > 0 ? `● ${liveCount} ${t('dashboard.liveNow')}` : `● ${t('matchStatus.live')} & ${t('matchStatus.upcoming')}`}
+          title={t(`sport.${sport}`, sport)}
           action={leagueLabel || undefined}
         >
           {scoresLoading ? (
@@ -241,7 +241,7 @@ export default function DashboardScreen({ sport, setSport, onOpenMatch, onOpenPl
               <SkeletonList count={3}>{i => <SkeletonScoreCard style={{ '--i': i } as React.CSSProperties} />}</SkeletonList>
             </div>
           ) : display.length === 0 ? (
-            <div style={{ padding: '16px 0', textAlign: 'center', fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text-mute)' }}>No matches today</div>
+            <div style={{ padding: '16px 0', textAlign: 'center', fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text-mute)' }}>{t('dashboard.noMatchesToday')}</div>
           ) : (
             <div style={{ borderTop: '1px solid var(--border-3)' }}>
               {display.map(m => (
@@ -255,7 +255,7 @@ export default function DashboardScreen({ sport, setSport, onOpenMatch, onOpenPl
 
         {/* Upcoming matches (shown when no matches today) */}
         {upcoming && display.length === 0 && (
-          <Card subtitle={`Upcoming · ${upcoming.label}`} title="Next matches">
+          <Card subtitle={`${t('dashboard.upcomingNext')}${upcoming.label}`} title={t('dashboard.nextMatches')}>
             <div style={{ borderTop: '1px solid var(--border-3)' }}>
               {upcoming.matches.map(m => (
                 <div key={m.id} style={{ borderBottom: '1px solid var(--border-3)' }}>
@@ -271,8 +271,8 @@ export default function DashboardScreen({ sport, setSport, onOpenMatch, onOpenPl
         {/* News feed */}
         <div>
           <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 12 }}>
-            <div style={{ fontFamily: 'var(--display)', fontWeight: 800, fontSize: 20, color: 'var(--ink)', letterSpacing: '-0.02em' }}>Today in sports</div>
-            <span style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--orange)', fontWeight: 700, cursor: 'pointer' }} onClick={onSearch}>All →</span>
+            <div style={{ fontFamily: 'var(--display)', fontWeight: 800, fontSize: 20, color: 'var(--ink)', letterSpacing: '-0.02em' }}>{t('dashboard.todayInSports')}</div>
+            <span style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--orange)', fontWeight: 700, cursor: 'pointer' }} onClick={onSearch}>{t('common.allArrow')}</span>
           </div>
           <div className="cs-tablet-grid" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {newsLoading ? (
@@ -282,12 +282,12 @@ export default function DashboardScreen({ sport, setSport, onOpenMatch, onOpenPl
                 onClick={() => { if (n.url) openExternal(n.url); }}
               >
                 {n.imageUrl ? (
-                  <div style={{ width: 88, flexShrink: 0, background: 'var(--surface-3)', borderRight: '2px solid var(--ink)', overflow: 'hidden', display: 'flex', alignItems: 'center' }}>
+                  <div style={{ width: 88, flexShrink: 0, background: 'var(--surface-3)', borderInlineEnd: '2px solid var(--ink)', overflow: 'hidden', display: 'flex', alignItems: 'center' }}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={n.imageUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => { (e.currentTarget as HTMLImageElement).parentElement!.style.background = 'var(--surface-3)'; (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
                   </div>
                 ) : (
-                  <div style={{ width: 88, flexShrink: 0, background: 'var(--surface-3)', borderRight: '2px solid var(--ink)', display: 'grid', placeItems: 'center' }}>
+                  <div style={{ width: 88, flexShrink: 0, background: 'var(--surface-3)', borderInlineEnd: '2px solid var(--ink)', display: 'grid', placeItems: 'center' }}>
                     <Icon name="news" size={22} style={{ color: 'var(--text-mute)' }} />
                   </div>
                 )}
@@ -296,16 +296,16 @@ export default function DashboardScreen({ sport, setSport, onOpenMatch, onOpenPl
                   <div style={{ fontFamily: 'var(--display)', fontWeight: 700, fontSize: 14, color: 'var(--ink)', lineHeight: 1.25, margin: '8px 0', letterSpacing: '-0.01em' }}>{n.title}</div>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <span style={{ fontFamily: 'var(--mono)', fontSize: 9.5, color: 'var(--text-mute)' }}>
-                      {n.publishedAt ? new Date(n.publishedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                      {n.publishedAt ? formatTime(new Date(n.publishedAt), locale) : ''}
                     </span>
-                    {n.url && <span style={{ fontFamily: 'var(--mono)', fontSize: 9, color: 'var(--orange)', fontWeight: 700 }}>Read more</span>}
+                    {n.url && <span style={{ fontFamily: 'var(--mono)', fontSize: 9, color: 'var(--orange)', fontWeight: 700 }}>{t('news.readMore')}</span>}
                   </div>
                 </div>
               </Card>
             )) : (
               <div style={{ padding: '24px 0', textAlign: 'center' }}>
                 <Icon name="news" size={28} style={{ color: 'var(--text-mute)', margin: '0 auto 8px' }} />
-                <div style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text-mute)' }}>No news right now</div>
+                <div style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text-mute)' }}>{t('dashboard.noNewsRightNow')}</div>
               </div>
             )}
           </div>
@@ -316,7 +316,7 @@ export default function DashboardScreen({ sport, setSport, onOpenMatch, onOpenPl
           <div>
             <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 12 }}>
               <div style={{ fontFamily: 'var(--display)', fontWeight: 800, fontSize: 20, color: 'var(--ink)', letterSpacing: '-0.02em' }}>
-                FIFA World Cup
+                {t('dashboard.worldCupStandings')}
               </div>
               <span style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--orange)', fontWeight: 700 }}>{wcStandings?.season ?? ''}</span>
             </div>
@@ -325,10 +325,10 @@ export default function DashboardScreen({ sport, setSport, onOpenMatch, onOpenPl
             ) : (
               <>
                 {showWcGroups && (
-                  <MobileWCGroupsGrid groups={wcStandings!.groups!} leagueName={wcStandings!.leagueName} />
+                  <MobileWCGroupsGrid groups={wcStandings!.groups!} leagueName={wcStandings!.leagueName} t={t} locale={locale} />
                 )}
                 {showWcBracket && (
-                  <MobileKnockoutBracket rounds={wcRounds} leagueName={wcStandings?.leagueName ?? 'FIFA World Cup'} />
+                  <MobileKnockoutBracket rounds={wcRounds} leagueName={wcStandings?.leagueName ?? t('dashboard.worldCupStandings')} t={t} locale={locale} />
                 )}
               </>
             )}
@@ -339,13 +339,13 @@ export default function DashboardScreen({ sport, setSport, onOpenMatch, onOpenPl
         {!isFootball && (standingsLoading || standings.length > 0) && (
           <div>
             <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 12 }}>
-              <div style={{ fontFamily: 'var(--display)', fontWeight: 800, fontSize: 20, color: 'var(--ink)', letterSpacing: '-0.02em' }}>Standings</div>
+              <div style={{ fontFamily: 'var(--display)', fontWeight: 800, fontSize: 20, color: 'var(--ink)', letterSpacing: '-0.02em' }}>{t('dashboard.standingsLabel')}</div>
               <span style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--orange)', fontWeight: 700 }}>{standings[0]?.season ?? ''}</span>
             </div>
             {standingsLoading ? (
               <SkeletonList count={5}>{i => <SkeletonTableRow style={{ '--i': i } as React.CSSProperties} />}</SkeletonList>
             ) : standings.slice(0, 2).map(league => (
-              <MiniStandingsTable key={league.leagueId} entries={league.entries} leagueName={league.leagueName} />
+              <MiniStandingsTable key={league.leagueId} entries={league.entries} leagueName={league.leagueName} t={t} locale={locale} />
             ))}
           </div>
         )}
@@ -355,7 +355,7 @@ export default function DashboardScreen({ sport, setSport, onOpenMatch, onOpenPl
           const gMatches = g.matches.slice(0, 4).map(normalizedToMobile);
           if (gMatches.length === 0) return null;
           return (
-            <Card key={g.leagueId} subtitle={g.leagueShortName} title={g.leagueName}>
+            <Card key={g.leagueId} subtitle={translateLeagueName(g.leagueShortName, locale)} title={translateLeagueName(g.leagueName, locale)}>
               <div style={{ borderTop: '1px solid var(--border-3)' }}>
                 {gMatches.map(m => (
                   <div key={m.id} style={{ borderBottom: '1px solid var(--border-3)' }}>

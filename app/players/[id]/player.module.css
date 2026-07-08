@@ -300,3 +300,13 @@
   .heroName { font-size: 20px; }
   .avatarImg, .avatarFallback { width: 90px; height: 90px; }
 }
+
+/* ── RTL overrides ── */
+:global([dir="rtl"]) .jerseyBadge {
+  right: auto;
+  left: -8px;
+}
+
+:global([dir="rtl"]) .profileValue {
+  text-align: left;
+}

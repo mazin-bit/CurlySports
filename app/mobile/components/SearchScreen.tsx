@@ -134,7 +134,7 @@ export default function SearchScreen({ onBack, onOpenPlayer }: SearchProps) {
                   {teams.slice(0, 6).map(t => (
                     <button key={t.id} style={resultRow()} onClick={() => onOpenPlayer()}>
                       <TeamCrest code={t.abbr.toLowerCase().replace(/[^a-z]/g, '').slice(0, 4)} abbr={t.abbr.slice(0, 3)} logoUrl={t.logo} />
-                      <div style={{ textAlign: 'left', flex: 1, minWidth: 0 }}>
+                      <div style={{ textAlign: 'start', flex: 1, minWidth: 0 }}>
                         <div style={{ fontWeight: 700, fontSize: 13.5, color: 'var(--ink)' }}>{t.name}</div>
                         <div style={{ fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--text-mute)' }}>{t.leagueName}</div>
                       </div>
@@ -168,7 +168,7 @@ export default function SearchScreen({ onBack, onOpenPlayer }: SearchProps) {
               {filteredTeams.slice(0, 8).map(t => (
                 <button key={t.id} onClick={() => onOpenPlayer()} style={resultRow()}>
                   <TeamCrest code={t.abbr.toLowerCase().replace(/[^a-z]/g, '').slice(0, 4)} abbr={t.abbr.slice(0, 3)} logoUrl={t.logo} />
-                  <div style={{ textAlign: 'left', flex: 1, minWidth: 0 }}>
+                  <div style={{ textAlign: 'start', flex: 1, minWidth: 0 }}>
                     <div style={{ fontWeight: 700, fontSize: 13.5, color: 'var(--ink)' }}>{t.name}</div>
                     <div style={{ fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--text-mute)' }}>{t.leagueName}</div>
                   </div>
@@ -195,7 +195,7 @@ export default function SearchScreen({ onBack, onOpenPlayer }: SearchProps) {
                       <Icon name="user" size={16} />
                     </div>
                   )}
-                  <div style={{ textAlign: 'left', flex: 1, minWidth: 0 }}>
+                  <div style={{ textAlign: 'start', flex: 1, minWidth: 0 }}>
                     <div style={{ fontWeight: 700, fontSize: 13.5, color: 'var(--ink)' }}>{p.name}</div>
                     <div style={{ fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--text-mute)' }}>{p.position} · {p.teamName} · {p.leagueName}</div>
                   </div>

@@ -226,3 +226,24 @@
   .clubInfoGrid { grid-template-columns: 1fr; }
   .legendsGrid { grid-template-columns: 1fr 1fr; }
 }
+
+/* ── RTL overrides ── */
+:global([dir="rtl"]) .posCount {
+  margin-left: 0;
+  margin-right: auto;
+}
+
+:global([dir="rtl"]) .playerAge {
+  margin-left: 0;
+  margin-right: 8px;
+}
+
+:global([dir="rtl"]) .gameBadge {
+  right: auto;
+  left: 12px;
+}
+
+:global([dir="rtl"]) .favBtn {
+  right: auto;
+  left: 8px;
+}

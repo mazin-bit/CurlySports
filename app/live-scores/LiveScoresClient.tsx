@@ -6,10 +6,11 @@ import AdSlot from "@/components/AdSlot";
 import styles from "./live-scores.module.css";
 import { useScoresStream } from "@/hooks/useScoresStream";
 import { useActiveSport } from "@/contexts/SportContext";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { formatTime, formatNumber, localizeDigits, dayAbbr, monthYearLabel } from "@/lib/locale-utils";
+import { translateTeamName } from "@/lib/team-names";
+import { translateLeagueName } from "@/lib/league-names";
 import type { NormalizedMatch } from "@/lib/types";
-
-const DAY_ABBR = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
-const MONTH_ABBR = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 function toDateKey(d: Date) {
   return (
@@ -36,6 +37,7 @@ function addDays(d: Date, n: number) {
 
 /* ── Calendar Strip ──────────────────────────────────────────── */
 function CalendarStrip({ selected, onSelect }: { selected: string; onSelect: (key: string) => void }) {
+  const { locale } = useLanguage();
   const [now] = useState(() => {
     const d = new Date();
     d.setHours(0, 0, 0, 0);
@@ -48,8 +50,8 @@ function CalendarStrip({ selected, onSelect }: { selected: string; onSelect: (ke
   const last = days[6];
   const monthLabel =
     first.getMonth() === last.getMonth()
-      ? `${MONTH_ABBR[first.getMonth()]} ${first.getFullYear()}`
-      : `${MONTH_ABBR[first.getMonth()]} / ${MONTH_ABBR[last.getMonth()]} ${last.getFullYear()}`;
+      ? monthYearLabel(first, locale)
+      : `${monthYearLabel(first, locale)} / ${monthYearLabel(last, locale)}`;
 
   return (
     <div className={styles.calendar}>
@@ -69,8 +71,8 @@ function CalendarStrip({ selected, onSelect }: { selected: string; onSelect: (ke
               className={[styles.calDay, isSel ? styles.calDaySel : "", isToday && !isSel ? styles.calDayToday : ""].filter(Boolean).join(" ")}
               onClick={() => onSelect(key)}
             >
-              <span className={styles.calDayName}>{DAY_ABBR[d.getDay()]}</span>
-              <span className={styles.calDayNum}>{d.getDate()}</span>
+              <span className={styles.calDayName}>{dayAbbr(d, locale)}</span>
+              <span className={styles.calDayNum}>{localizeDigits(String(d.getDate()), locale)}</span>
               {isToday && <span className={styles.calDot} />}
             </button>
           );
@@ -81,28 +83,28 @@ function CalendarStrip({ selected, onSelect }: { selected: string; onSelect: (ke
 }
 
 /* ── Status pill ─────────────────────────────────────────────── */
-function statusPill(match: NormalizedMatch) {
+function statusPill(match: NormalizedMatch, t: (k: string) => string, locale: import("@/lib/i18n").Locale) {
   if (match.status === "LIVE") {
     const display = match.minute ? `${match.minute}'` : match.statusDisplay;
     return <span className="status-pill live">{display}</span>;
   }
-  if (match.status === "HALF_TIME") return <span className="status-pill live">HT</span>;
-  if (match.status === "FINISHED") return <span className="status-pill ft">FT</span>;
+  if (match.status === "HALF_TIME") return <span className="status-pill live">{t("matchStatus.ht")}</span>;
+  if (match.status === "FINISHED") return <span className="status-pill ft">{t("matchStatus.ft")}</span>;
   const d = new Date(match.scheduledAt);
-  const time = d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
-  return <span className="status-pill up">{time}</span>;
+  return <span className="status-pill up">{formatTime(d, locale)}</span>;
 }
 
 /* ── Match row ───────────────────────────────────────────────── */
 function MatchRow({ m }: { m: NormalizedMatch }) {
+  const { t, locale } = useLanguage();
   const homeWins = m.homeScore !== null && m.awayScore !== null && m.homeScore > m.awayScore;
   const awayWins = m.homeScore !== null && m.awayScore !== null && m.awayScore > m.homeScore;
   const href = `/matches/${m.id}?sport=${m.sport}&league=${m.league.id}`;
   return (
     <Link href={href} className={styles.matchRow} style={{ textDecoration: "none", color: "inherit", display: "flex" }}>
-      <div className={styles.matchStatus}>{statusPill(m)}</div>
+      <div className={styles.matchStatus}>{statusPill(m, t, locale)}</div>
       <div className={`${styles.teamSide} ${styles.homeTeam}`}>
-        <span className={`${styles.teamLabel}${homeWins ? " " + styles.bold : ""}`}>{m.homeTeam.shortName}</span>
+        <span className={`${styles.teamLabel}${homeWins ? " " + styles.bold : ""}`}>{translateTeamName(m.homeTeam.shortName, locale)}</span>
         {m.homeTeam.logoUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={m.homeTeam.logoUrl} alt={m.homeTeam.shortName} width={26} height={26} style={{ borderRadius: 3, objectFit: "contain" }} />
@@ -122,7 +124,7 @@ function MatchRow({ m }: { m: NormalizedMatch }) {
         ) : (
           <div className="crest" style={{ width: 26, height: 26, fontSize: 9 }}>{m.awayTeam.shortName.slice(0, 3)}</div>
         )}
-        <span className={`${styles.teamLabel}${awayWins ? " " + styles.bold : ""}`}>{m.awayTeam.shortName}</span>
+        <span className={`${styles.teamLabel}${awayWins ? " " + styles.bold : ""}`}>{translateTeamName(m.awayTeam.shortName, locale)}</span>
       </div>
       <span className={styles.venue}>{m.venue ?? ""}</span>
     </Link>
@@ -132,6 +134,7 @@ function MatchRow({ m }: { m: NormalizedMatch }) {
 /* ── Main client ─────────────────────────────────────────────── */
 export default function LiveScoresClient() {
   const { activeSport, activeSportConfig } = useActiveSport();
+  const { t, locale } = useLanguage();
 
   const [selectedDate, setSelectedDate] = useState(() => {
     const now = new Date();
@@ -166,12 +169,12 @@ export default function LiveScoresClient() {
       <div className={styles.liveCounter}>
         <span className="sec-head live-pill">
           {activeSportConfig.icon}{" "}
-          {isLoading ? "Loading…" : isToday ? `${liveCount} live now` : `${totalMatches} matches`}
+          {isLoading ? t("liveScores.loading") : isToday ? `${formatNumber(liveCount, locale)} ${t("liveScores.liveNow")}` : `${formatNumber(totalMatches, locale)} ${t("liveScores.matchCount")}`}
         </span>
         <span style={{ fontSize: 11, color: isConnected ? "var(--teal)" : "var(--text-mute)", fontFamily: "var(--mono)" }}>
-          {isConnected ? "● live" : "○ connecting…"}
+          {isConnected ? t("liveScores.connected") : t("liveScores.connecting")}
         </span>
-        {!isLoading && <span className={styles.totalCount}>{totalMatches} total</span>}
+        {!isLoading && <span className={styles.totalCount}>{formatNumber(totalMatches, locale)} {t("liveScores.total")}</span>}
       </div>
 
       {/* Skeletons */}
@@ -181,7 +184,7 @@ export default function LiveScoresClient() {
             <div key={i} className={styles.leagueGroup}>
               <div className={styles.leagueHead}>
                 <div className="skeleton-row" style={{ width: 40 }} />
-                <div className="skeleton-row" style={{ width: 160, marginLeft: 8 }} />
+                <div className="skeleton-row" style={{ width: 160, marginInlineStart: 8 }} />
               </div>
               {[1, 2, 3].map((j) => (
                 <div key={j} className="skeleton-row" style={{ margin: "8px 16px", borderRadius: 6 }} />
@@ -196,17 +199,17 @@ export default function LiveScoresClient() {
         <div className="stack-sm">
           {groups.length === 0 && (
             <p style={{ color: "var(--text-mute)", textAlign: "center", padding: "40px 0", fontFamily: "var(--mono)", fontSize: 13 }}>
-              {activeSportConfig.icon} No {activeSportConfig.label} matches on this date.
+              {activeSportConfig.icon} {t("liveScores.noMatchesOnDate").replace("{sport}", t("sport." + activeSport, activeSportConfig.label))}
             </p>
           )}
           {groups.map((league, idx) => (
             <div key={league.leagueId}>
-              {idx === 1 && <AdSlot size="banner" label="Sponsored" />}
+              {idx === 1 && <AdSlot size="banner" label={t("common.sponsored")} />}
               <div className={styles.leagueGroup}>
                 <div className={styles.leagueHead}>
-                  <span className="country-code">{league.leagueShortName}</span>
-                  <span className={styles.leagueName}>{league.leagueName}</span>
-                  <span className={styles.leagueCount}>{league.matches.length} matches</span>
+                  <span className="country-code">{translateLeagueName(league.leagueShortName, locale)}</span>
+                  <span className={styles.leagueName}>{translateLeagueName(league.leagueName, locale)}</span>
+                  <span className={styles.leagueCount}>{formatNumber(league.matches.length, locale)} {t("liveScores.matchCount")}</span>
                 </div>
                 <div className={styles.matchList}>
                   {league.matches.map((m) => <MatchRow key={m.id} m={m} />)}

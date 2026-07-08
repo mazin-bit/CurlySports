@@ -1,17 +1,18 @@
 'use client';
 import React from 'react';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const SPORTS = [
-  { slug: 'football', label: 'Football', abbr: 'FUT', color: '#c8ff3d' },
-  { slug: 'cricket', label: 'Cricket', abbr: 'CRI', color: '#ff8c42' },
-  { slug: 'basketball', label: 'Basketball', abbr: 'NBA', color: '#ff5b3d' },
-  { slug: 'f1', label: 'Formula 1', abbr: 'F1', color: '#ff5d9e' },
-  { slug: 'nfl', label: 'NFL', abbr: 'NFL', color: '#7c5cff', comingSoon: true },
-  { slug: 'tennis', label: 'Tennis', abbr: 'ATP', color: '#38c9ff', comingSoon: true },
-  { slug: 'baseball', label: 'Baseball', abbr: 'MLB', color: '#ffb74d', comingSoon: true },
-  { slug: 'mma', label: 'MMA', abbr: 'UFC', color: '#ef4444', comingSoon: true },
-  { slug: 'golf', label: 'Golf', abbr: 'PGA', color: '#22c55e', comingSoon: true },
-  { slug: 'hockey', label: 'Hockey', abbr: 'NHL', color: '#60a5fa', comingSoon: true },
+  { slug: 'football', abbr: 'FUT', color: '#c8ff3d' },
+  { slug: 'cricket', abbr: 'CRI', color: '#ff8c42' },
+  { slug: 'basketball', abbr: 'NBA', color: '#ff5b3d' },
+  { slug: 'f1', abbr: 'F1', color: '#ff5d9e' },
+  { slug: 'nfl', abbr: 'NFL', color: '#7c5cff', comingSoon: true },
+  { slug: 'tennis', abbr: 'ATP', color: '#38c9ff', comingSoon: true },
+  { slug: 'baseball', abbr: 'MLB', color: '#ffb74d', comingSoon: true },
+  { slug: 'mma', abbr: 'UFC', color: '#ef4444', comingSoon: true },
+  { slug: 'golf', abbr: 'PGA', color: '#22c55e', comingSoon: true },
+  { slug: 'hockey', abbr: 'NHL', color: '#60a5fa', comingSoon: true },
 ];
 
 interface SportSelectorProps {
@@ -20,6 +21,7 @@ interface SportSelectorProps {
 }
 
 export default function SportSelector({ active = 'football', onSelect }: SportSelectorProps) {
+  const { t } = useLanguage();
   const activeColor = (SPORTS.find(s => s.slug === active) ?? SPORTS[0]).color;
   return (
     <div style={{ background: 'var(--surface)', border: '2px solid var(--ink)', borderRadius: 'var(--r-lg)', overflow: 'hidden', boxShadow: 'var(--shadow-sm)' }}>
@@ -47,7 +49,7 @@ export default function SportSelector({ active = 'football', onSelect }: SportSe
               }}
             >
               <span style={{ fontFamily: 'var(--mono)', fontSize: 9, fontWeight: 900, letterSpacing: '0.05em', padding: '1px 5px', borderRadius: 3, background: isActive ? `${s.color}22` : 'transparent', color: isActive ? s.color : 'var(--text-mute)', border: isActive ? `1px solid ${s.color}66` : '1px solid var(--border-2)' }}>{s.abbr}</span>
-              {s.label}
+              {t(`sport.${s.slug}`, s.slug)}
               {isSoon && <span style={{ fontFamily: 'var(--mono)', fontSize: 7.5, fontWeight: 800, letterSpacing: '0.08em', padding: '1px 5px', borderRadius: 3, background: 'var(--surface-3)', color: 'var(--text-mute)', border: '1px solid var(--border-2)' }}>SOON</span>}
             </button>
           );

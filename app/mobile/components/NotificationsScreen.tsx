@@ -1,6 +1,7 @@
 'use client';
 import React, { useState } from 'react';
 import useSWR from 'swr';
+import { useLanguage } from '@/contexts/LanguageContext';
 import type { Match } from '../data';
 import Icon from './ui/Icon';
 import { SkeletonRow, SkeletonList } from './ui/Skeletons';
@@ -26,6 +27,7 @@ interface NotificationsProps {
 const fetcher = (url: string) => fetch(url).then(r => r.json());
 
 export default function NotificationsScreen({ onBack, onMarkAll }: NotificationsProps) {
+  const { t } = useLanguage();
   const [readIds, setReadIds] = useState<Set<string>>(new Set());
 
   const { data, isLoading } = useSWR<MobileNotif[]>(
@@ -39,7 +41,7 @@ export default function NotificationsScreen({ onBack, onMarkAll }: Notifications
     unread: n.unread && !readIds.has(n.id),
   }));
 
-  const groups: ['today' | 'earlier', string][] = [['today', 'Today'], ['earlier', 'Earlier']];
+  const groups: ['today' | 'earlier', string][] = [['today', t('time.today')], ['earlier', t('time.earlier')]];
 
   const handleMarkAll = () => {
     setReadIds(new Set((data ?? []).map(n => n.id)));
@@ -52,8 +54,8 @@ export default function NotificationsScreen({ onBack, onMarkAll }: Notifications
         <button onClick={onBack} aria-label="Back" style={{ width: 38, height: 38, background: 'var(--surface)', border: '2px solid var(--ink)', borderRadius: 11, display: 'grid', placeItems: 'center', color: 'var(--ink)', cursor: 'pointer' }}>
           <Icon name="chevron-left" size={18} />
         </button>
-        <div style={{ fontFamily: 'var(--display)', fontWeight: 800, fontSize: 18, color: 'var(--ink)' }}>Notifications</div>
-        <button onClick={handleMarkAll} style={{ marginLeft: 'auto', background: 'none', border: 'none', fontFamily: 'var(--mono)', fontSize: 10.5, fontWeight: 700, letterSpacing: '0.04em', color: 'var(--orange)', cursor: 'pointer' }}>MARK ALL READ</button>
+        <div style={{ fontFamily: 'var(--display)', fontWeight: 800, fontSize: 18, color: 'var(--ink)' }}>{t('notifications.title')}</div>
+        <button onClick={handleMarkAll} style={{ marginInlineStart: 'auto', background: 'none', border: 'none', fontFamily: 'var(--mono)', fontSize: 10.5, fontWeight: 700, letterSpacing: '0.04em', color: 'var(--orange)', cursor: 'pointer' }}>{t('notifications.markAllRead')}</button>
       </header>
 
       <div className="cs-scroll" style={{ flex: 1, overflow: 'auto', padding: '14px 14px 24px', display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -65,8 +67,8 @@ export default function NotificationsScreen({ onBack, onMarkAll }: Notifications
 
         {!isLoading && notifications.length === 0 && (
           <div style={{ textAlign: 'center', padding: 48 }}>
-            <div style={{ fontFamily: 'var(--display)', fontWeight: 800, fontSize: 20, color: 'var(--ink)', marginBottom: 8 }}>All caught up</div>
-            <div style={{ fontSize: 13, color: 'var(--text-dim)', lineHeight: 1.5 }}>No new notifications yet.</div>
+            <div style={{ fontFamily: 'var(--display)', fontWeight: 800, fontSize: 20, color: 'var(--ink)', marginBottom: 8 }}>{t('notifications.allCaughtUp')}</div>
+            <div style={{ fontSize: 13, color: 'var(--text-dim)', lineHeight: 1.5 }}>{t('notifications.noNew')}</div>
           </div>
         )}
 
@@ -81,7 +83,7 @@ export default function NotificationsScreen({ onBack, onMarkAll }: Notifications
                   key={n.id}
                   className="cs-stagger cs-tap"
                   onClick={() => setReadIds(prev => new Set([...prev, n.id]))}
-                  style={{ '--i': i, display: 'flex', gap: 12, alignItems: 'flex-start', textAlign: 'left', padding: 14, borderRadius: 12, cursor: 'pointer', background: n.unread ? 'var(--surface)' : 'var(--surface-2)', border: '2px solid var(--ink)', boxShadow: n.unread ? 'var(--shadow-sm)' : 'none', position: 'relative', width: '100%' } as React.CSSProperties}
+                  style={{ '--i': i, display: 'flex', gap: 12, alignItems: 'flex-start', textAlign: 'start', padding: 14, borderRadius: 12, cursor: 'pointer', background: n.unread ? 'var(--surface)' : 'var(--surface-2)', border: '2px solid var(--ink)', boxShadow: n.unread ? 'var(--shadow-sm)' : 'none', position: 'relative', width: '100%' } as React.CSSProperties}
                 >
                   <span style={{ width: 38, height: 38, flexShrink: 0, borderRadius: 11, background: n.color, border: '2px solid var(--ink)', display: 'grid', placeItems: 'center', color: 'var(--ink)' }}>
                     <Icon name={n.icon} size={18} />

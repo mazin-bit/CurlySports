@@ -1,13 +1,13 @@
 'use client';
-import React from 'react';
 import Icon from './Icon';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const ITEMS = [
-  { key: 'home', label: 'Home', icon: 'home' },
-  { key: 'live', label: 'Live', icon: 'live' },
-  { key: 'funzone', label: 'Debates', icon: 'spark' },
-  { key: 'leagues', label: 'Leagues', icon: 'trophy' },
-  { key: 'more', label: 'More', icon: 'bars' },
+  { key: 'home', tKey: 'nav.home', icon: 'home' },
+  { key: 'live', tKey: 'nav.liveScores', icon: 'live' },
+  { key: 'funzone', tKey: 'nav.debates', icon: 'spark' },
+  { key: 'leagues', tKey: 'nav.leagues', icon: 'trophy' },
+  { key: 'more', tKey: 'nav.more', icon: 'bars' },
 ];
 
 interface BottomNavProps {
@@ -16,6 +16,8 @@ interface BottomNavProps {
 }
 
 export default function BottomNav({ active = 'home', onSelect }: BottomNavProps) {
+  const { t } = useLanguage();
+
   return (
     <nav aria-label="Mobile navigation" className="cs-bottomnav" style={{ display: 'grid', gridTemplateColumns: `repeat(${ITEMS.length}, 1fr)`, background: 'var(--bg-2)', borderTop: '2.5px solid var(--ink)', padding: '10px 6px 12px', flexShrink: 0 }}>
       {ITEMS.map(item => {
@@ -30,7 +32,7 @@ export default function BottomNav({ active = 'home', onSelect }: BottomNavProps)
             <div className="cs-bottomnav-icon" style={{ transition: 'transform 0.15s var(--ease-pop)', transform: isActive ? 'scale(1.15)' : 'scale(1)' }}>
               <Icon name={item.icon} size={22} />
             </div>
-            <span>{item.label}</span>
+            <span>{t(item.tKey)}</span>
           </button>
         );
       })}

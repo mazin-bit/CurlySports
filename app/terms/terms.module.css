@@ -315,3 +315,14 @@
     padding: 20px 18px;
   }
 }
+
+/* ── RTL overrides ── */
+:global([dir="rtl"]) .section li {
+  padding-left: 0;
+  padding-right: 20px;
+}
+
+:global([dir="rtl"]) .section li::before {
+  left: auto;
+  right: 0;
+}

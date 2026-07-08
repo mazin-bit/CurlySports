@@ -15,18 +15,18 @@
   border-radius: var(--r-xl);
   overflow: hidden;
   cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition: transform 0.2s cubic-bezier(.25,.46,.45,.94), box-shadow 0.2s cubic-bezier(.25,.46,.45,.94);
   box-shadow: var(--shadow-md);
   text-decoration: none;
   color: inherit;
   margin-bottom: 32px;
   aspect-ratio: 21/9;
   min-height: 240px;
-  -webkit-tap-highlight-color: rgba(200,255,61,0.15);
-  touch-action: manipulation;
   z-index: 1;
+  will-change: transform;
 }
 .featured:hover { transform: translate(-3px,-3px); box-shadow: var(--shadow-lg); }
+.featured:active { transform: scale(0.98); box-shadow: var(--shadow-sm); transition-duration: 0.08s; }
 
 .featuredImage {
   position: absolute; inset: 0;
@@ -127,12 +127,11 @@
   box-shadow: var(--shadow-sm);
   text-decoration: none;
   color: inherit;
-  -webkit-tap-highlight-color: rgba(200,255,61,0.15);
-  touch-action: manipulation;
   position: relative;
   z-index: 1;
 }
 .newsCard:hover { transform: translate(-3px,-3px); box-shadow: var(--shadow-md); }
+.newsCard:active { transform: scale(0.97); transition-duration: 0.06s; }
 
 .newsImg {
   position: relative;

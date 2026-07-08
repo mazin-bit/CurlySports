@@ -1,6 +1,7 @@
 'use client';
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useAuth } from './AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import Icon from './ui/Icon';
 
 type Mode = 'login' | 'signup' | 'forgot';
@@ -32,6 +33,7 @@ const labelStyle: React.CSSProperties = {
 
 /* ── OTP verification screen (mobile) ───────────────────────── */
 function OtpVerifyScreen() {
+  const { t } = useLanguage();
   const { verificationEmail, verifyOtp, resendOtp, cancelVerification } = useAuth();
   const [otp, setOtp] = useState<string[]>(['', '', '', '', '', '']);
   const [verifying, setVerifying] = useState(false);
@@ -43,7 +45,7 @@ function OtpVerifyScreen() {
   useEffect(() => {
     setTimeLeft(600);
     const interval = setInterval(() => {
-      setTimeLeft(t => { if (t <= 1) { clearInterval(interval); return 0; } return t - 1; });
+      setTimeLeft(prev => { if (prev <= 1) { clearInterval(interval); return 0; } return prev - 1; });
     }, 1000);
     return () => clearInterval(interval);
   }, []);
@@ -78,7 +80,7 @@ function OtpVerifyScreen() {
     setVerifying(true); setOtpError(null);
     try { await verifyOtp(code); }
     catch (err: unknown) {
-      setOtpError(err instanceof Error ? err.message : 'Verification failed.');
+      setOtpError(err instanceof Error ? err.message : t('auth.verificationFailed'));
       setOtp(['', '', '', '', '', '']); otpRefs.current[0]?.focus();
     } finally { setVerifying(false); }
   };
@@ -86,7 +88,7 @@ function OtpVerifyScreen() {
   const handleResend = async () => {
     setResending(true); setOtpError(null);
     try { await resendOtp(); setOtp(['', '', '', '', '', '']); otpRefs.current[0]?.focus(); setTimeLeft(600); }
-    catch (err: unknown) { setOtpError(err instanceof Error ? err.message : 'Failed to resend.'); }
+    catch (err: unknown) { setOtpError(err instanceof Error ? err.message : t('auth.failedToResend')); }
     finally { setResending(false); }
   };
 
@@ -103,12 +105,12 @@ function OtpVerifyScreen() {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/curly-guy.png" alt="" style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }} />
         </div>
-        <div style={{ fontFamily: 'var(--mono)', fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--orange)' }}>verify email</div>
+        <div style={{ fontFamily: 'var(--mono)', fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--orange)' }}>{t('auth.verifyEmailTitle')}</div>
         <h1 style={{ fontFamily: 'var(--display)', fontWeight: 800, fontSize: 28, letterSpacing: '-0.03em', color: 'var(--ink)', margin: '6px 0 8px', lineHeight: 1.1 }}>
-          Enter your code.
+          {t('auth.enterYourCode')}
         </h1>
         <p style={{ fontSize: 14, color: 'var(--text-dim)', margin: 0, lineHeight: 1.5 }}>
-          We sent a 6-digit code to <strong style={{ color: 'var(--ink)' }}>{verificationEmail}</strong>.
+          {t('auth.weSentCode')}<strong style={{ color: 'var(--ink)' }}>{verificationEmail}</strong>.
         </p>
       </div>
 
@@ -129,7 +131,7 @@ function OtpVerifyScreen() {
       </div>
 
       <div style={{ textAlign: 'center', fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 700, color: 'var(--text-mute)', letterSpacing: '0.06em', marginBottom: 16 }}>
-        {timeLeft > 0 ? <>Code expires in <span style={{ color: 'var(--orange)' }}>{fmt(timeLeft)}</span></> : <span style={{ color: 'var(--coral)' }}>Code expired</span>}
+        {timeLeft > 0 ? <>{t('auth.codeExpiresIn')}<span style={{ color: 'var(--orange)' }}>{fmt(timeLeft)}</span></> : <span style={{ color: 'var(--coral)' }}>{t('auth.codeExpired')}</span>}
       </div>
 
       {otpError && (
@@ -150,7 +152,7 @@ function OtpVerifyScreen() {
           boxShadow: (verifying || otp.join('').length < 6) ? 'none' : '3px 3px 0 var(--accent)', transition: 'all .12s',
         }}
       >
-        {verifying ? 'Verifying...' : 'Verify Code'}
+        {verifying ? t('auth.verifying') : t('auth.verifyCode')}
       </button>
 
       {/* Resend */}
@@ -159,13 +161,13 @@ function OtpVerifyScreen() {
           <Icon name="bell" size={16} />
         </div>
         <p style={{ fontSize: 13, color: 'var(--text-dim)', margin: 0, lineHeight: 1.5 }}>
-          Didn&apos;t get the code? Check spam, or{' '}
+          {t('auth.didntGetCode')}{' '}
           <button
             onClick={handleResend}
             disabled={resending}
             style={{ background: 'none', border: 'none', padding: 0, color: 'var(--orange)', fontFamily: 'var(--body)', fontSize: 13, fontWeight: 700, textDecoration: 'underline', cursor: 'pointer' }}
           >
-            {resending ? 'sending...' : 'resend code'}
+            {resending ? t('auth.sending') : t('auth.resendCodeAction')}
           </button>.
         </p>
       </div>
@@ -175,7 +177,7 @@ function OtpVerifyScreen() {
           onClick={cancelVerification}
           style={{ background: 'none', border: 'none', fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 700, color: 'var(--text-mute)', cursor: 'pointer', letterSpacing: '0.06em', textTransform: 'uppercase' }}
         >
-          Back to sign in
+          {t('auth.backToSignIn')}
         </button>
       </div>
 
@@ -188,6 +190,7 @@ function OtpVerifyScreen() {
 }
 
 export default function LoginScreen() {
+  const { t } = useLanguage();
   const [mode, setMode] = useState<Mode>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -261,7 +264,7 @@ export default function LoginScreen() {
       if (!res.ok) throw new Error(json.error ?? 'Failed to send reset link.');
       setForgotSent(true);
     } catch (err: unknown) {
-      setForgotError(err instanceof Error ? err.message : 'Something went wrong.');
+      setForgotError(err instanceof Error ? err.message : t('auth.somethingWentWrong'));
     } finally {
       setSubmitting(false);
     }
@@ -281,10 +284,10 @@ export default function LoginScreen() {
           </div>
           <div style={{ fontFamily: 'var(--mono)', fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--orange)' }}>curlysports.com</div>
           <h1 style={{ fontFamily: 'var(--display)', fontWeight: 800, fontSize: 28, letterSpacing: '-0.03em', color: 'var(--ink)', margin: '6px 0 8px', lineHeight: 1.1 }}>
-            Check your inbox.
+            {t('auth.checkInbox')}
           </h1>
           <p style={{ fontSize: 14, color: 'var(--text-dim)', margin: 0, lineHeight: 1.5 }}>
-            We sent a password reset link to <strong style={{ color: 'var(--ink)' }}>{email}</strong>. Click it to set a new password.
+            {t('auth.weSentResetLink')}<strong style={{ color: 'var(--ink)' }}>{email}</strong>{t('auth.clickToSetNewPassword')}
           </p>
         </div>
 
@@ -293,14 +296,14 @@ export default function LoginScreen() {
             <Icon name="bell" size={18} />
           </div>
           <div>
-            <div style={{ fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 700, color: 'var(--ink)', letterSpacing: '0.04em', marginBottom: 4 }}>DIDN'T GET IT?</div>
+            <div style={{ fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 700, color: 'var(--ink)', letterSpacing: '0.04em', marginBottom: 4 }}>{t('auth.didntGetIt')}</div>
             <p style={{ fontSize: 13, color: 'var(--text-dim)', margin: 0, lineHeight: 1.5 }}>
-              Check your spam folder, or{' '}
+              {t('auth.checkSpamOr')}{' '}
               <button
                 onClick={() => { setForgotSent(false); setEmail(''); }}
                 style={{ background: 'none', border: 'none', padding: 0, color: 'var(--orange)', fontFamily: 'var(--body)', fontSize: 13, fontWeight: 700, textDecoration: 'underline', cursor: 'pointer' }}
               >
-                try again
+                {t('auth.tryAgain')}
               </button>.
             </p>
           </div>
@@ -311,7 +314,7 @@ export default function LoginScreen() {
             onClick={() => switchMode('login')}
             style={{ width: '100%', padding: '14px 0', background: 'var(--ink)', border: '2px solid var(--ink)', borderRadius: 12, fontFamily: 'var(--mono)', fontSize: 13, fontWeight: 700, letterSpacing: '0.04em', color: 'var(--accent)', cursor: 'pointer', boxShadow: '3px 3px 0 var(--accent)' }}
           >
-            Back to sign in
+            {t('auth.backToSignIn')}
           </button>
         </div>
 
@@ -334,21 +337,21 @@ export default function LoginScreen() {
           </div>
           <div style={{ fontFamily: 'var(--mono)', fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--orange)' }}>curlysports.com</div>
           <h1 style={{ fontFamily: 'var(--display)', fontWeight: 800, fontSize: 28, letterSpacing: '-0.03em', color: 'var(--ink)', margin: '6px 0 8px', lineHeight: 1.1 }}>
-            Reset your password.
+            {t('auth.resetYourPassword')}
           </h1>
           <p style={{ fontSize: 14, color: 'var(--text-dim)', margin: 0, lineHeight: 1.5 }}>
-            Enter your email and we'll send you a link to set a new password.
+            {t('auth.enterEmailForReset')}
           </p>
         </div>
 
         <form onSubmit={handleForgot} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           <div>
-            <label style={labelStyle}>Email</label>
+            <label style={labelStyle}>{t('auth.email')}</label>
             <input
               type="email"
               value={email}
               onChange={e => setEmail(e.target.value)}
-              placeholder="you@example.com"
+              placeholder={t('auth.emailPlaceholder')}
               required
               autoComplete="email"
               style={inputStyle}
@@ -367,7 +370,7 @@ export default function LoginScreen() {
             disabled={submitting}
             style={{ marginTop: 2, padding: '14px 0', background: submitting ? 'var(--surface-3)' : 'var(--ink)', border: '2px solid var(--ink)', borderRadius: 12, fontFamily: 'var(--mono)', fontSize: 13, fontWeight: 700, letterSpacing: '0.04em', color: submitting ? 'var(--text-mute)' : 'var(--accent)', cursor: submitting ? 'not-allowed' : 'pointer', boxShadow: submitting ? 'none' : '3px 3px 0 var(--accent)', transition: 'all .12s' }}
           >
-            {submitting ? 'Sending…' : 'Send reset link →'}
+            {submitting ? t('auth.sendingEllipsis') : t('auth.sendResetLinkArrow')}
           </button>
         </form>
 
@@ -376,7 +379,7 @@ export default function LoginScreen() {
             onClick={() => switchMode('login')}
             style={{ background: 'none', border: 'none', fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 700, color: 'var(--text-mute)', cursor: 'pointer', letterSpacing: '0.06em', textTransform: 'uppercase' }}
           >
-            ← Back to sign in
+            {t('auth.backToSignInArrow')}
           </button>
         </div>
 
@@ -399,10 +402,10 @@ export default function LoginScreen() {
         </div>
         <div style={{ fontFamily: 'var(--mono)', fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--orange)' }}>curlysports.com</div>
         <h1 style={{ fontFamily: 'var(--display)', fontWeight: 800, fontSize: 30, letterSpacing: '-0.03em', color: 'var(--ink)', margin: '6px 0 6px', lineHeight: 1.1 }}>
-          {mode === 'login' ? 'Welcome back.' : 'Join the debate.'}
+          {mode === 'login' ? t('auth.welcomeBack') : t('auth.joinTheDebate')}
         </h1>
         <p style={{ fontSize: 14, color: 'var(--text-dim)', margin: 0, lineHeight: 1.5 }}>
-          {mode === 'login' ? 'Sign in to your Curly account.' : 'Create an account and start debating.'}
+          {mode === 'login' ? t('auth.signInToAccount') : t('auth.createAccountAndStart')}
         </p>
       </div>
 
@@ -422,7 +425,7 @@ export default function LoginScreen() {
               cursor: 'pointer', transition: 'all .14s',
             }}
           >
-            {m === 'login' ? 'Sign In' : 'Sign Up'}
+            {m === 'login' ? t('auth.signIn') : t('auth.signUp')}
           </button>
         ))}
       </div>
@@ -431,11 +434,11 @@ export default function LoginScreen() {
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
         {mode === 'signup' && (
           <div>
-            <label style={labelStyle}>Username</label>
+            <label style={labelStyle}>{t('auth.username')}</label>
             <input
               value={username}
               onChange={e => { setUsername(e.target.value); checkUsername(e.target.value); }}
-              placeholder="your_handle"
+              placeholder={t('auth.yourHandle')}
               required
               minLength={3}
               maxLength={30}
@@ -444,32 +447,32 @@ export default function LoginScreen() {
             />
             <div style={{ fontFamily: 'var(--mono)', fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', marginTop: 6, minHeight: 16 }}>
               {usernameStatus === 'checking' && (
-                <span style={{ color: 'var(--text-mute)' }}>Checking...</span>
+                <span style={{ color: 'var(--text-mute)' }}>{t('auth.checking')}</span>
               )}
               {usernameStatus === 'available' && (
                 <span style={{ color: '#22c55e', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                  <Icon name="check" size={11} /> Available
+                  <Icon name="check" size={11} /> {t('auth.available')}
                 </span>
               )}
               {usernameStatus === 'taken' && (
                 <span style={{ color: 'var(--coral)', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                  <Icon name="close" size={11} /> Username taken
+                  <Icon name="close" size={11} /> {t('auth.usernameTaken')}
                 </span>
               )}
               {usernameStatus === 'invalid' && (
-                <span style={{ color: 'var(--coral)' }}>Letters, numbers, underscores, dots, hyphens only</span>
+                <span style={{ color: 'var(--coral)' }}>{t('auth.usernameRules')}</span>
               )}
             </div>
           </div>
         )}
 
         <div>
-          <label style={labelStyle}>Email</label>
+          <label style={labelStyle}>{t('auth.email')}</label>
           <input
             type="email"
             value={email}
             onChange={e => setEmail(e.target.value)}
-            placeholder="you@example.com"
+            placeholder={t('auth.emailPlaceholder')}
             required
             autoComplete="email"
             style={inputStyle}
@@ -478,14 +481,14 @@ export default function LoginScreen() {
 
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-            <label style={{ ...labelStyle, marginBottom: 0 }}>Password</label>
+            <label style={{ ...labelStyle, marginBottom: 0 }}>{t('auth.password')}</label>
             {mode === 'login' && (
               <button
                 type="button"
                 onClick={() => switchMode('forgot')}
                 style={{ background: 'none', border: 'none', padding: 0, fontFamily: 'var(--mono)', fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', color: 'var(--orange)', cursor: 'pointer', textTransform: 'uppercase' }}
               >
-                Forgot?
+                {t('auth.forgot')}
               </button>
             )}
           </div>
@@ -493,7 +496,7 @@ export default function LoginScreen() {
             type="password"
             value={password}
             onChange={e => setPassword(e.target.value)}
-            placeholder={mode === 'signup' ? '8+ characters' : '••••••••'}
+            placeholder={mode === 'signup' ? t('auth.eightPlusChars') : t('auth.passwordPlaceholder')}
             required
             minLength={mode === 'signup' ? 8 : 1}
             autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
@@ -524,7 +527,7 @@ export default function LoginScreen() {
             transition: 'all .12s',
           }}
         >
-          {submitting ? 'Please wait…' : mode === 'login' ? 'Sign In →' : 'Create Account →'}
+          {submitting ? t('auth.pleaseWait') : mode === 'login' ? t('auth.signInArrow') : t('auth.createAccountArrow')}
         </button>
       </form>
 

@@ -6,6 +6,7 @@ import Link from "next/link";
 import styles from "./players.module.css";
 import { PersonStanding, Search, Globe } from "lucide-react";
 import { useActiveSport } from "@/contexts/SportContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { FOOTBALL_LEAGUES, OTHER_LEAGUES } from "@curly/shared";
 
 const ESPN = "https://site.api.espn.com/apis/site/v2/sports";
@@ -183,6 +184,7 @@ function GlobalPlayerCard({ player, sport }: { player: Player; sport: string }) 
 
 export default function PlayersPage() {
   const { activeSport } = useActiveSport();
+  const { t } = useLanguage();
 
   const getLeagues = (sport: string) =>
     sport === "football" ? FOOTBALL_LEAGUES : (OTHER_LEAGUES[sport] ?? FOOTBALL_LEAGUES);
@@ -291,19 +293,19 @@ export default function PlayersPage() {
   const selectedLeague = leagues.find((l) => l.id === selectedLeagueId);
 
   return (
-    <AppShell active="players" title="Players"
-      subtitle={isGlobalSearch ? "Global Search · All Leagues" : `${selectedLeague?.name ?? "Football"} · ${loading ? "Loading…" : `${players.length} players`}`}>
+    <AppShell active="players" title={t("players.title")}
+      subtitle={isGlobalSearch ? t("players.globalSearch") : `${selectedLeague?.name ?? "Football"} · ${loading ? t("common.loading") : `${players.length} ${t("players.players")}`}`}>
       <div className="stack">
 
         {/* Search — global when football */}
         <div className={styles.searchRow}>
           {isGlobalSearch
-            ? <Globe size={15} style={{ color: "var(--orange)", flexShrink: 0, marginRight: 10 }} />
-            : <Search size={15} style={{ color: "var(--text-mute)", flexShrink: 0, marginRight: 10 }} />
+            ? <Globe size={15} style={{ color: "var(--orange)", flexShrink: 0, marginInlineEnd: 10 }} />
+            : <Search size={15} style={{ color: "var(--text-mute)", flexShrink: 0, marginInlineEnd: 10 }} />
           }
           <input
             type="text"
-            placeholder={activeSport === "basketball" ? "Search any player (LeBron, Curry, Durant…)" : "Search any player across all leagues (Messi, Yamal, Ronaldo…)"}
+            placeholder={activeSport === "basketball" ? t("players.searchPlaceholderBasketball") : t("players.searchPlaceholder")}
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             className={styles.searchInput}
@@ -311,7 +313,7 @@ export default function PlayersPage() {
           />
           {search && (
             <button onClick={() => { setSearch(""); setGlobalResults([]); }}
-              style={{ marginLeft: 8, background: "none", border: "none", cursor: "pointer", color: "var(--text-mute)", fontSize: 18 }}>
+              style={{ marginInlineStart: 8, background: "none", border: "none", cursor: "pointer", color: "var(--text-mute)", fontSize: 18 }}>
               ×
             </button>
           )}
@@ -323,10 +325,10 @@ export default function PlayersPage() {
             <div className="sec-head">
               <div className="title">
                 <Globe size={17} className="title-icon" strokeWidth={2} />
-                Search <span className="accent">Results</span>
+                {t("players.search")} <span className="accent">{t("players.results")}</span>
               </div>
               <span style={{ fontSize: 12, color: "var(--text-mute)", fontFamily: "var(--mono)" }}>
-                {globalLoading ? "Searching all leagues…" : `${globalResults.length} players found`}
+                {globalLoading ? t("players.searchingAllLeagues") : `${globalResults.length} ${t("players.playersFound")}`}
               </span>
             </div>
             {globalLoading ? (
@@ -337,7 +339,7 @@ export default function PlayersPage() {
               </div>
             ) : globalResults.length === 0 ? (
               <div style={{ textAlign: "center", padding: "48px 20px", color: "var(--text-mute)", fontSize: 14 }}>
-                No players found for &quot;{search}&quot;. Try a different name.
+                {t("players.noPlayersFoundFor").replace("{query}", search)}
               </div>
             ) : (
               <div className={styles.playersGrid}>
@@ -367,7 +369,7 @@ export default function PlayersPage() {
           <div className={styles.filterRow}>
             <button className={`chip${posFilter === "All" ? " active" : ""}`}
               onClick={() => { setPosFilter("All"); setPage(1); }}>
-              All Positions
+              {t("players.allPositions")}
             </button>
             {positions.slice(0, 12).map((p) => (
               <button key={p} className={`chip${posFilter === p ? " active" : ""}`}
@@ -382,10 +384,10 @@ export default function PlayersPage() {
           <div className="sec-head">
             <div className="title">
               <PersonStanding size={17} className="title-icon" strokeWidth={2} />
-              Player <span className="accent">Directory</span>
+              {t("players.playerDirectory")} <span className="accent">{t("players.directoryAccent")}</span>
             </div>
             <span style={{ fontSize: 12, color: "var(--text-mute)", fontFamily: "var(--mono)" }}>
-              {loading ? "Loading…" : `${filtered.length.toLocaleString()} players`}
+              {loading ? t("players.loading") : `${filtered.length.toLocaleString()} ${t("players.players")}`}
             </span>
           </div>
 
@@ -397,7 +399,7 @@ export default function PlayersPage() {
             </div>
           ) : filtered.length === 0 ? (
             <div style={{ textAlign: "center", padding: "48px 20px", color: "var(--text-mute)", fontSize: 14 }}>
-              {players.length === 0 ? "No player data available for this league." : "No players match your search."}
+              {players.length === 0 ? t("players.noPlayerData") : t("players.noPlayersMatch")}
             </div>
           ) : (
             <>
@@ -413,7 +415,7 @@ export default function PlayersPage() {
                       background: "var(--ink)", color: "var(--bg)", border: "2px solid var(--ink)",
                       borderRadius: "var(--r-lg)", cursor: "pointer", fontFamily: "var(--display)",
                     }}>
-                    Load More ({(filtered.length - visible.length).toLocaleString()} remaining)
+                    {t("players.loadMore")} ({(filtered.length - visible.length).toLocaleString()} {t("players.remaining")})
                   </button>
                 </div>
               )}

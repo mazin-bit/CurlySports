@@ -10,33 +10,38 @@ import {
 } from "lucide-react";
 import { useMatchStream } from "@/hooks/useMatchStream";
 import type { MatchDetail } from "@/hooks/useMatchStream";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { formatNumber, localizeDigits } from "@/lib/locale-utils";
+import { translateTeamName } from "@/lib/team-names";
+import { translateLeagueName } from "@/lib/league-names";
+import type { Locale } from "@/lib/i18n";
 
 /* ─── Event classification ──────────────────────────────── */
 type EvtKind = "goal" | "own_goal" | "penalty" | "yellow" | "red" | "sub" | "period" | "other";
 
 function classifyEvt(evt: MatchDetail["keyEvents"][number]): EvtKind {
-  const t = (evt.type ?? "").toLowerCase();
-  if (evt.isRedCard   || t.includes("red card"))   return "red";
-  if (evt.isYellowCard|| t.includes("yellow card")) return "yellow";
-  if (evt.isSubstitution || t.includes("substitut")) return "sub";
-  if (evt.isShootout  || t.includes("shootout") || t.includes("penalty kick")) return "penalty";
-  if (t.includes("own goal")) return "own_goal";
-  if (t.includes("goal") || t.includes("score"))   return "goal";
+  const typ = (evt.type ?? "").toLowerCase();
+  if (evt.isRedCard   || typ.includes("red card"))   return "red";
+  if (evt.isYellowCard|| typ.includes("yellow card")) return "yellow";
+  if (evt.isSubstitution || typ.includes("substitut")) return "sub";
+  if (evt.isShootout  || typ.includes("shootout") || typ.includes("penalty kick")) return "penalty";
+  if (typ.includes("own goal")) return "own_goal";
+  if (typ.includes("goal") || typ.includes("score"))   return "goal";
   if (
-    t.includes("kick off") || t.includes("kickoff") ||
-    t.includes("half") || t.includes("start 2nd") ||
-    t.includes("full time") || t.includes("end regular") ||
-    t.includes("period") || t.includes("end of")
+    typ.includes("kick off") || typ.includes("kickoff") ||
+    typ.includes("half") || typ.includes("start 2nd") ||
+    typ.includes("full time") || typ.includes("end regular") ||
+    typ.includes("period") || typ.includes("end of")
   ) return "period";
   return "other";
 }
 
 /* ─── Period divider ─────────────────────────────────────── */
-function PeriodRow({ evt }: { evt: MatchDetail["keyEvents"][number] }) {
-  const t = (evt.type ?? "").toLowerCase();
-  const isFull = t.includes("full time") || t.includes("end regular") || t.includes("end of");
-  const isKick = t.includes("kick") || t.includes("start");
-  const label = isFull ? "Full Time" : isKick && !t.includes("2nd") && !t.includes("half") ? "Kick Off" : evt.type ?? "";
+function PeriodRow({ evt, translate }: { evt: MatchDetail["keyEvents"][number]; translate: (key: string, fallback?: string) => string }) {
+  const typ = (evt.type ?? "").toLowerCase();
+  const isFull = typ.includes("full time") || typ.includes("end regular") || typ.includes("end of");
+  const isKick = typ.includes("kick") || typ.includes("start");
+  const label = isFull ? translate("matchStatus.fullTime") : isKick && !typ.includes("2nd") && !typ.includes("half") ? translate("match.kickOff") : evt.type ?? "";
 
   return (
     <div className={styles.periodRow}>
@@ -65,7 +70,8 @@ function EvtIcon({ kind }: { kind: EvtKind }) {
 /* ─── Extract clean text from ESPN verbose descriptions ──── */
 function extractEvtText(
   evt: MatchDetail["keyEvents"][number],
-  kind: EvtKind
+  kind: EvtKind,
+  translate: (key: string, fallback?: string) => string,
 ): { primary: string; secondary?: string } {
   const raw = evt.text ?? "";
 
@@ -81,7 +87,7 @@ function extractEvtText(
     const m = raw.match(/\.\s+(.+?)\s+replaces\s+(.+?)(?:\s+because|\s+due|\s+with|\.?\s*$)/i);
     if (m) return { primary: `↑ ${m[1].trim()}`, secondary: `↓ ${m[2].trim()}` };
     if (evt.playerName) return { primary: `↑ ${evt.playerName}` };
-    return { primary: "Substitution" };
+    return { primary: translate("match.substitution") };
   }
 
   if (kind === "yellow" || kind === "red") {
@@ -99,13 +105,15 @@ function EventRow({
   evt,
   isHome,
   kind,
+  translate,
 }: {
   evt: MatchDetail["keyEvents"][number];
   isHome: boolean;
   kind: EvtKind;
+  translate: (key: string, fallback?: string) => string;
 }) {
-  const { primary, secondary } = extractEvtText(evt, kind);
-  const subLabel = kind === "own_goal" ? "Own Goal" : kind === "penalty" ? "Penalty" : undefined;
+  const { primary, secondary } = extractEvtText(evt, kind, translate);
+  const subLabel = kind === "own_goal" ? translate("match.ownGoal") : kind === "penalty" ? translate("match.penalty") : undefined;
 
   const cell = (
     <div className={`${styles.evtCell} ${
@@ -149,28 +157,30 @@ const SPORT_PREVIEW_STATS: Record<string, string[]> = {
   racing:     ["Laps Led", "Pit Stops", "Fastest Lap", "Avg Speed", "Cautions", "Lead Changes"],
 };
 
-const SPORT_START_LABEL: Record<string, string> = {
-  football:   "Kick Off",
-  basketball: "Tip Off",
-  cricket:    "First Ball",
-  hockey:     "Puck Drop",
-  baseball:   "First Pitch",
-  tennis:     "Match Start",
-  racing:     "Race Start",
+/* ─── i18n keys for sport start labels ───────────────────── */
+const SPORT_START_LABEL_KEY: Record<string, string> = {
+  football:   "match.kickOff",
+  basketball: "match.tipOff",
+  cricket:    "match.firstBall",
+  hockey:     "match.puckDrop",
+  baseball:   "match.firstPitch",
+  tennis:     "match.matchStart",
+  racing:     "match.raceStart",
 };
 
-const SPORT_SCHEDULED_SUB: Record<string, string> = {
-  football:   "Match events and statistics will appear here at kick off",
-  basketball: "Game stats and play-by-play will appear at tip off",
-  cricket:    "Innings, wickets and overs will appear when play begins",
-  hockey:     "Game stats will appear at puck drop",
-  baseball:   "Game stats will appear at first pitch",
-  tennis:     "Match stats will appear when play begins",
-  racing:     "Race data will appear when the race starts",
+/* ─── i18n keys for scheduled sub-text ───────────────────── */
+const SPORT_SCHEDULED_SUB_KEY: Record<string, string> = {
+  football:   "match.scheduledFootball",
+  basketball: "match.scheduledBasketball",
+  cricket:    "match.scheduledCricket",
+  hockey:     "match.scheduledHockey",
+  baseball:   "match.scheduledBaseball",
+  tennis:     "match.scheduledTennis",
+  racing:     "match.scheduledRacing",
 };
 
 /* ─── Stat bar ───────────────────────────────────────────── */
-function StatBar({ label, home, away }: { label: string; home: string; away: string }) {
+function StatBar({ label, home, away, localeCode }: { label: string; home: string; away: string; localeCode: Locale }) {
   const h = parseFloat(home) || 0;
   const a = parseFloat(away) || 0;
   const total = h + a;
@@ -178,11 +188,11 @@ function StatBar({ label, home, away }: { label: string; home: string; away: str
   const aPct = 100 - hPct;
 
   const fmt = (v: string) => {
-    if (v.endsWith("%")) return v;
+    if (v.endsWith("%")) return localizeDigits(v, localeCode);
     const n = parseFloat(v);
-    if (!isNaN(n) && n > 0 && n < 1) return `${(n * 100).toFixed(0)}%`;
-    if (label.toLowerCase().includes("pct") || label.toLowerCase().includes("possession")) return `${v}%`;
-    return v;
+    if (!isNaN(n) && n > 0 && n < 1) return localizeDigits(`${(n * 100).toFixed(0)}%`, localeCode);
+    if (label.toLowerCase().includes("pct") || label.toLowerCase().includes("possession")) return localizeDigits(`${v}%`, localeCode);
+    return localizeDigits(v, localeCode);
   };
 
   const fmtLabel = (key: string) => {
@@ -235,12 +245,13 @@ export default function MatchPage() {
   const eventId = params.id as string;
   const league = searchParams.get("league") ?? "eng.1";
   const sport = searchParams.get("sport") ?? "football";
+  const { t, locale } = useLanguage();
 
   const { data: match, isConnected, isLoading, error } = useMatchStream(eventId, sport, league);
 
   if (isLoading) {
     return (
-      <AppShell active="live-scores" title="Match" subtitle="Loading…">
+      <AppShell active="live-scores" title={t("match.match")} subtitle={t("match.loading")}>
         <div className={styles.loadingWrap}>
           {[...Array(3)].map((_, i) => (
             <div key={i} className="skeleton-row" style={{ height: 80, borderRadius: 12 }} />
@@ -252,12 +263,12 @@ export default function MatchPage() {
 
   if (error || !match) {
     return (
-      <AppShell active="live-scores" title="Match" subtitle="Error">
+      <AppShell active="live-scores" title={t("match.match")} subtitle={t("match.error")}>
         <div style={{ textAlign: "center", padding: "48px 20px", color: "var(--text-mute)" }}>
           <AlertCircle size={40} strokeWidth={1.5} style={{ marginBottom: 12, color: "var(--text-mute)" }} />
-          <p>Match data not available.</p>
+          <p>{t("match.matchDataNotAvailable")}</p>
           <Link href="/live-scores" className={styles.backBtn} style={{ display: "inline-flex", marginTop: 16 }}>
-            <ArrowLeft size={14} /> Back to Scores
+            <ArrowLeft size={14} /> {t("match.backToScores")}
           </Link>
         </div>
       </AppShell>
@@ -269,27 +280,32 @@ export default function MatchPage() {
   const isFinished = statusStr.includes("FINAL") || statusStr.includes("FULL_TIME") || statusStr.includes("STATUS_FINAL");
   const isScheduled = !isLive && !isFinished;
 
-  const homeStats = match.stats.find((t) => t.teamId === match.homeTeam.id) ?? match.stats[0];
-  const awayStats = match.stats.find((t) => t.teamId === match.awayTeam.id) ?? match.stats[1];
+  const homeStats = match.stats.find((s) => s.teamId === match.homeTeam.id) ?? match.stats[0];
+  const awayStats = match.stats.find((s) => s.teamId === match.awayTeam.id) ?? match.stats[1];
   const hasStats = (isLive || isFinished) && (homeStats?.stats.length ?? 0) > 0;
 
   const homeRoster = match.rosters.find((r) => r.teamId === match.homeTeam.id) ?? match.rosters[0];
   const awayRoster = match.rosters.find((r) => r.teamId === match.awayTeam.id) ?? match.rosters[1];
   const hasLineups = (homeRoster?.players.length ?? 0) > 0 || (awayRoster?.players.length ?? 0) > 0;
 
+  const homeName = translateTeamName(match.homeTeam.name ?? "", locale);
+  const awayName = translateTeamName(match.awayTeam.name ?? "", locale);
+
   const titleSuffix = isLive
-    ? (match.clock ? `${match.clock}'` : "LIVE")
-    : isFinished ? "Full Time"
-    : match.statusDisplay ?? "Upcoming";
+    ? (match.clock ? `${match.clock}'` : t("matchStatus.live"))
+    : isFinished ? t("matchStatus.fullTime")
+    : match.statusDisplay ?? t("matchStatus.upcoming");
 
   const previewStats = SPORT_PREVIEW_STATS[sport] ?? SPORT_PREVIEW_STATS.football;
-  const startLabel = SPORT_START_LABEL[sport] ?? "Kick Off";
-  const scheduledSub = SPORT_SCHEDULED_SUB[sport] ?? SPORT_SCHEDULED_SUB.football;
+  const startLabelKey = SPORT_START_LABEL_KEY[sport] ?? "match.kickOff";
+  const startLabel = t(startLabelKey);
+  const scheduledSubKey = SPORT_SCHEDULED_SUB_KEY[sport] ?? "match.scheduledFootball";
+  const scheduledSub = t(scheduledSubKey);
 
   return (
     <AppShell
       active="live-scores"
-      title={`${match.homeTeam.name ?? "Home"} vs ${match.awayTeam.name ?? "Away"}`}
+      title={`${homeName || t("match.home")} ${t("matchStatus.vs")} ${awayName || t("match.away")}`}
       subtitle={`${match.venue ? match.venue + " · " : ""}${titleSuffix}`}
     >
       <div className="stack-sm">
@@ -297,7 +313,7 @@ export default function MatchPage() {
         {/* Back + connection */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <Link href="/live-scores" className={styles.backBtn}>
-            <ArrowLeft size={14} /> All Matches
+            <ArrowLeft size={14} /> {t("match.allMatches")}
           </Link>
           <span style={{
             fontSize: 11, fontFamily: "var(--mono)",
@@ -306,7 +322,7 @@ export default function MatchPage() {
             background: isConnected ? "var(--ink)" : "transparent",
             padding: "3px 8px", borderRadius: 10,
           }}>
-            <Wifi size={11} /> {isConnected ? "live stream" : "reconnecting…"}
+            <Wifi size={11} /> {isConnected ? t("match.liveStream") : t("match.reconnecting")}
           </span>
         </div>
 
@@ -317,7 +333,7 @@ export default function MatchPage() {
               {isLive && (
                 <span className={styles.liveDot} />
               )}
-              {match.venue ?? "Match"}
+              {match.venue ?? t("match.match")}
             </span>
           </div>
 
@@ -325,9 +341,9 @@ export default function MatchPage() {
             <div className={styles.teamBlock}>
               {match.homeTeam.logo && (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={match.homeTeam.logo} alt={match.homeTeam.name} width={72} height={72} className={styles.teamCrest} />
+                <img src={match.homeTeam.logo} alt={homeName} width={72} height={72} className={styles.teamCrest} />
               )}
-              <span className={styles.teamName}>{match.homeTeam.name}</span>
+              <span className={styles.teamName}>{homeName}</span>
               {match.homeTeam.record && <span className={styles.teamRecord}>{match.homeTeam.record}</span>}
             </div>
 
@@ -340,7 +356,7 @@ export default function MatchPage() {
                     <span className={styles.scoreNumDash}>–</span>
                   </div>
                   <div className={`${styles.statusPill} ${styles.statusSch}`}>
-                    {match.statusDisplay ?? "Scheduled"}
+                    {match.statusDisplay ?? t("matchStatus.scheduled")}
                   </div>
                 </>
               ) : (
@@ -351,7 +367,7 @@ export default function MatchPage() {
                     <span className={styles.scoreNum}>{match.awayTeam.score ?? (isFinished ? "0" : "–")}</span>
                   </div>
                   <div className={`${styles.statusPill} ${isLive ? styles.statusLive : styles.statusFt}`}>
-                    {isLive ? (match.clock ? `${match.clock}'` : "LIVE") : "Full Time"}
+                    {isLive ? (match.clock ? `${match.clock}'` : t("matchStatus.live")) : t("matchStatus.fullTime")}
                   </div>
                 </>
               )}
@@ -360,9 +376,9 @@ export default function MatchPage() {
             <div className={`${styles.teamBlock} ${styles.teamBlockAway}`}>
               {match.awayTeam.logo && (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={match.awayTeam.logo} alt={match.awayTeam.name} width={72} height={72} className={styles.teamCrest} />
+                <img src={match.awayTeam.logo} alt={awayName} width={72} height={72} className={styles.teamCrest} />
               )}
-              <span className={styles.teamName}>{match.awayTeam.name}</span>
+              <span className={styles.teamName}>{awayName}</span>
               {match.awayTeam.record && <span className={styles.teamRecord}>{match.awayTeam.record}</span>}
             </div>
           </div>
@@ -370,7 +386,7 @@ export default function MatchPage() {
           {match.attendance && (
             <div className={styles.venueRow}>
               <MapPin size={11} />
-              Attendance: {match.attendance.toLocaleString()}
+              {t("match.attendance")}: {formatNumber(match.attendance, locale)}
             </div>
           )}
         </div>
@@ -380,15 +396,15 @@ export default function MatchPage() {
           <>
             <div className={styles.kickoffBlock}>
               <span className={styles.kickoffLabel}>
-                <Calendar size={12} style={{ verticalAlign: "middle", marginRight: 4 }} />
+                <Calendar size={12} style={{ verticalAlign: "middle", marginInlineEnd: 4 }} />
                 {startLabel}
               </span>
-              <div className={styles.kickoffTime}>{match.statusDisplay ?? "Time TBC"}</div>
+              <div className={styles.kickoffTime}>{match.statusDisplay ?? t("match.timeTBC")}</div>
               <div className={styles.kickoffSub}>{scheduledSub}</div>
             </div>
 
             <div className={styles.naSection}>
-              <h3 className={styles.naSectionTitle}>{sport === "basketball" ? "Game Stats" : sport === "cricket" ? "Innings Stats" : "Match Statistics"}</h3>
+              <h3 className={styles.naSectionTitle}>{sport === "basketball" ? t("match.gameStats") : sport === "cricket" ? t("match.inningsStats") : t("match.statistics")}</h3>
               <div className={styles.naGrid}>
                 {previewStats.map((stat) => (
                   <div key={stat} className={styles.naCell}>
@@ -401,9 +417,9 @@ export default function MatchPage() {
 
             {!hasLineups && (
               <div className={styles.naSection}>
-                <h3 className={styles.naSectionTitle}>{sport === "basketball" ? "Rosters" : sport === "cricket" ? "Playing XI" : "Line-ups"}</h3>
+                <h3 className={styles.naSectionTitle}>{sport === "basketball" ? t("match.rosters") : sport === "cricket" ? t("match.playingXI") : t("match.lineUps")}</h3>
                 <div className={styles.naContent}>
-                  <span>{sport === "basketball" ? "Starting lineups will be available at tip off" : sport === "cricket" ? "Playing XI will be confirmed before the match" : "Line-ups will be confirmed closer to kick off"}</span>
+                  <span>{sport === "basketball" ? t("match.lineupsBasketball") : sport === "cricket" ? t("match.lineupsCricket") : t("match.lineupsFootball")}</span>
                 </div>
               </div>
             )}
@@ -415,11 +431,11 @@ export default function MatchPage() {
           <div className={styles.section}>
             {/* Team name header row */}
             <div className={styles.evtTeamHeader}>
-              <span>{match.homeTeam.name}</span>
+              <span>{homeName}</span>
               <span className={styles.sectionTitle} style={{ border: "none", padding: 0 }}>
-                {sport === "basketball" ? "Play-by-Play" : sport === "cricket" ? "Fall of Wickets" : "Match Events"}
+                {sport === "basketball" ? t("match.playByPlay") : sport === "cricket" ? t("match.fallOfWickets") : t("match.matchEvents")}
               </span>
-              <span style={{ textAlign: "right" }}>{match.awayTeam.name}</span>
+              <span style={{ textAlign: "right" }}>{awayName}</span>
             </div>
 
             <div className={styles.timeline}>
@@ -433,7 +449,7 @@ export default function MatchPage() {
                 const effectiveAway = !isPeriod && isAwayEvt;
 
                 if (isPeriod) {
-                  return <PeriodRow key={evt.id ?? idx} evt={evt} />;
+                  return <PeriodRow key={evt.id ?? idx} evt={evt} translate={t} />;
                 }
 
                 return (
@@ -442,6 +458,7 @@ export default function MatchPage() {
                     evt={evt}
                     kind={kind}
                     isHome={effectiveHome && !effectiveAway}
+                    translate={t}
                   />
                 );
               })}
@@ -453,11 +470,11 @@ export default function MatchPage() {
         {hasStats && homeStats && awayStats && (
           <div className={styles.section}>
             <h3 className={styles.sectionTitle}>
-              {sport === "basketball" ? "Game Statistics" : sport === "cricket" ? "Innings Statistics" : "Match Statistics"}
+              {sport === "basketball" ? t("match.gameStatistics") : sport === "cricket" ? t("match.inningsStatistics") : t("match.statistics")}
             </h3>
             <div className={styles.statTeamRow}>
-              <span>{match.homeTeam.name}</span>
-              <span>{match.awayTeam.name}</span>
+              <span>{homeName}</span>
+              <span>{awayName}</span>
             </div>
             <div className={styles.statsGrid}>
               {homeStats.stats.map((s, idx) => {
@@ -468,6 +485,7 @@ export default function MatchPage() {
                     label={s.name ?? ""}
                     home={s.value ?? "0"}
                     away={awayStat?.value ?? "0"}
+                    localeCode={locale}
                   />
                 );
               })}
@@ -479,7 +497,7 @@ export default function MatchPage() {
         {hasLineups && (
           <div className={styles.section}>
             <h3 className={styles.sectionTitle}>
-              {sport === "basketball" ? "Rosters" : sport === "cricket" ? "Playing XI" : isScheduled ? "Expected Line-ups" : "Line-ups"}
+              {sport === "basketball" ? t("match.rosters") : sport === "cricket" ? t("match.playingXI") : isScheduled ? t("match.expectedLineUps") : t("match.lineUps")}
             </h3>
             <div className={styles.lineupsGrid}>
               {homeRoster && (
@@ -489,7 +507,7 @@ export default function MatchPage() {
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={homeRoster.teamLogo} alt="" width={20} height={20} style={{ objectFit: "contain" }} />
                     )}
-                    <span>{homeRoster.teamName}</span>
+                    <span>{translateTeamName(homeRoster.teamName ?? "", locale)}</span>
                     {homeRoster.formation && sport === "football" && <span className={styles.formation}>{homeRoster.formation}</span>}
                   </div>
                   <div className={styles.playerList}>
@@ -507,7 +525,7 @@ export default function MatchPage() {
                     ))}
                     {homeRoster.players.filter((p) => !p.starter).length > 0 && (
                       <>
-                        <div className={styles.subsDivider}>{sport === "basketball" ? "Bench" : sport === "cricket" ? "Reserves" : "Substitutes"}</div>
+                        <div className={styles.subsDivider}>{sport === "basketball" ? t("match.bench") : sport === "cricket" ? t("match.reserves") : t("match.substitutes")}</div>
                         {homeRoster.players.filter((p) => !p.starter).map((p) => (
                           <div key={p.id ?? p.name} className={styles.playerRow}>
                             <span className={styles.plPos}>{p.position}</span>
@@ -526,7 +544,7 @@ export default function MatchPage() {
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={awayRoster.teamLogo} alt="" width={20} height={20} style={{ objectFit: "contain" }} />
                     )}
-                    <span>{awayRoster.teamName}</span>
+                    <span>{translateTeamName(awayRoster.teamName ?? "", locale)}</span>
                     {awayRoster.formation && sport === "football" && <span className={styles.formation}>{awayRoster.formation}</span>}
                   </div>
                   <div className={styles.playerList}>
@@ -544,7 +562,7 @@ export default function MatchPage() {
                     ))}
                     {awayRoster.players.filter((p) => !p.starter).length > 0 && (
                       <>
-                        <div className={styles.subsDivider}>{sport === "basketball" ? "Bench" : sport === "cricket" ? "Reserves" : "Substitutes"}</div>
+                        <div className={styles.subsDivider}>{sport === "basketball" ? t("match.bench") : sport === "cricket" ? t("match.reserves") : t("match.substitutes")}</div>
                         {awayRoster.players.filter((p) => !p.starter).map((p) => (
                           <div key={p.id ?? p.name} className={styles.playerRow}>
                             <span className={styles.plPos}>{p.position}</span>

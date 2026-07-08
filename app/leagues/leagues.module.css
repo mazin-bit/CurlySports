@@ -22,6 +22,7 @@
   transition: all 0.15s;
 }
 .sportPill:hover { border-color: var(--ink); color: var(--ink); }
+.sportPill:active { transform: scale(0.93); opacity: 0.8; transition-duration: 0.06s; }
 .sportPillActive {
   background: var(--ink); border-color: var(--ink); color: var(--bg);
 }
@@ -73,14 +74,16 @@
   gap: 6px; padding: 12px 8px 10px;
   background: var(--surface); border: 2px solid var(--border-2);
   border-radius: 12px; cursor: pointer;
-  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+  transition: border-color 0.2s cubic-bezier(.25,.46,.45,.94), background 0.2s, box-shadow 0.2s cubic-bezier(.25,.46,.45,.94), transform 0.2s cubic-bezier(.25,.46,.45,.94);
   text-align: center; position: relative;
+  will-change: transform;
 }
 .leagueCard:hover {
   border-color: var(--ink);
   background: var(--surface-2);
   box-shadow: var(--shadow-sm);
 }
+.leagueCard:active { transform: scale(0.95); transition-duration: 0.08s; }
 .leagueCardActive {
   border-color: var(--accent) !important;
   background: color-mix(in srgb, var(--accent) 5%, var(--surface)) !important;
@@ -130,6 +133,7 @@
   border-radius: var(--r-lg);
   overflow: hidden;
   box-shadow: var(--shadow-md);
+  animation: tabFadeIn 0.3s cubic-bezier(.25,.46,.45,.94) both;
 }
 
 .detailHeader {
@@ -163,6 +167,15 @@
 }
 .teamCount { font-family: var(--mono); font-size: 11px; color: var(--text-mute); }
 
+/* ── Tab content fade-in animation ─────────────────── */
+@keyframes tabFadeIn {
+  0%   { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+.tabContent {
+  animation: tabFadeIn 0.25s cubic-bezier(.25,.46,.45,.94) both;
+}
+
 .noData {
   padding: 40px 24px; text-align: center;
   font-family: var(--mono); font-size: 12px; color: var(--text-mute);
@@ -193,6 +206,7 @@
   white-space: nowrap; flex-shrink: 0;
 }
 .compTab:hover { color: var(--ink); }
+.compTab:active { opacity: 0.7; transition-duration: 0.06s; }
 .compTabActive { color: var(--ink) !important; border-bottom-color: var(--accent) !important; }
 
 /* ── Single standings table ────────────────────────────────── */
@@ -246,6 +260,7 @@
   cursor: pointer; transition: all 0.15s;
 }
 .showMoreBtn:hover { background: var(--surface); color: var(--ink); }
+.showMoreBtn:active { opacity: 0.7; transition-duration: 0.06s; }
 
 /* ── Groups grid ───────────────────────────────────────────── */
 
@@ -307,13 +322,17 @@
   border-radius: 6px; color: var(--text-dim); cursor: pointer; transition: all 0.15s;
 }
 .roundTab:hover { border-color: var(--ink); color: var(--ink); }
+.roundTab:active { transform: scale(0.93); opacity: 0.8; transition-duration: 0.06s; }
 .roundTabActive {
   background: var(--ink) !important; border-color: var(--ink) !important;
   color: var(--bg) !important;
 }
 
 /* Round section */
-.roundSection { display: flex; flex-direction: column; gap: 8px; }
+.roundSection {
+  display: flex; flex-direction: column; gap: 8px;
+  animation: tabFadeIn 0.22s cubic-bezier(.25,.46,.45,.94) both;
+}
 .roundHeader {
   display: flex; align-items: center; justify-content: space-between; padding: 4px 0;
 }
@@ -396,6 +415,12 @@
 .knockoutLoser .knockoutScore { color: var(--text-mute) !important; }
 .knockoutScoreWin { color: var(--ink) !important; }
 
+.cricketResult {
+  padding: 6px 10px; font-family: var(--mono); font-size: 10px;
+  color: var(--accent); text-align: center; border-top: 1px solid var(--border-2);
+  background: var(--surface); letter-spacing: 0.02em; font-weight: 600;
+}
+
 .aggRow {
   padding: 5px 10px; font-family: var(--mono); font-size: 9px; color: var(--text-mute);
   text-align: center; border-top: 1px solid var(--border-2);
@@ -416,3 +441,15 @@
   .groupsGrid { grid-template-columns: 1fr; }
   .roundMatches { grid-template-columns: 1fr; }
 }
+
+/* ── RTL overrides ── */
+:global([dir="rtl"]) .seasonCaret { right: auto; left: 8px; }
+:global([dir="rtl"]) .seasonSelect { padding: 6px 10px 6px 28px; }
+:global([dir="rtl"]) .topZone { border-left: none; border-right: 3px solid var(--accent); }
+:global([dir="rtl"]) .colStat { text-align: left; }
+:global([dir="rtl"]) .groupCard { border-right: none; border-left: 1.5px solid var(--border-2); }
+:global([dir="rtl"]) .groupCard:nth-child(even):last-child { border-left: none; }
+:global([dir="rtl"]) .knockoutScore { text-align: left; }
+:global([dir="rtl"]) .liveIndicator { right: auto; left: 8px; }
+:global([dir="rtl"]) .phLabel { right: auto; left: 8px; }
+:global([dir="rtl"]) .legBadge { right: auto; left: 8px; }

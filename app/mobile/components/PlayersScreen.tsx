@@ -1,6 +1,7 @@
 'use client';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import useSWR from 'swr';
+import { useLanguage } from '@/contexts/LanguageContext';
 import Topbar from './ui/Topbar';
 import SportSelector from './ui/SportSelector';
 import Chip from './ui/Chip';
@@ -67,6 +68,7 @@ const SPORT_LEAGUES: Record<string, { id: string; label: string }[]> = {
 };
 
 export default function PlayersScreen({ sport, setSport, onSearch, onBell, onOpenPlayer, unread }: PlayersProps) {
+  const { t } = useLanguage();
   const [q, setQ] = useState('');
   const [debouncedQ, setDebouncedQ] = useState('');
   const [leagueId, setLeagueId] = useState<string | undefined>(undefined);
@@ -119,8 +121,8 @@ export default function PlayersScreen({ sport, setSport, onSearch, onBell, onOpe
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--bg)' }}>
       <Topbar
-        title="Players"
-        subtitle={isSearching ? `${players.length} results` : `Browse · ${leagues.find(l => l.id === activeLeague)?.label ?? 'Select league'}`}
+        title={t('players.title')}
+        subtitle={isSearching ? `${players.length} ${t('players.results')}` : `${t('players.browseByTeam').split(' · ')[0]} · ${leagues.find(l => l.id === activeLeague)?.label ?? 'Select league'}`}
         onSearch={onSearch}
         onBell={onBell}
         hasNotification={unread > 0}
@@ -140,7 +142,7 @@ export default function PlayersScreen({ sport, setSport, onSearch, onBell, onOpe
               type="search"
               value={q}
               onChange={e => { setQ(e.target.value); setPage(0); }}
-              placeholder="Search players by name…"
+              placeholder={t('players.searchPlaceholder')}
               style={{ flex: 1, border: 'none', background: 'transparent', outline: 'none', fontSize: 14, color: 'var(--ink)', fontFamily: 'var(--body)' }}
             />
             {q && (
@@ -174,8 +176,8 @@ export default function PlayersScreen({ sport, setSport, onSearch, onBell, onOpe
         {isSearching && !searchLoading && players.length === 0 && (
           <div style={{ textAlign: 'center', padding: '48px 20px' }}>
             <Icon name="user" size={32} style={{ margin: '0 auto 12px', color: 'var(--text-mute)' }} />
-            <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--ink)' }}>No players found</div>
-            <div style={{ fontSize: 13, color: 'var(--text-mute)', marginTop: 4 }}>Try a different name or sport.</div>
+            <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--ink)' }}>{t('players.noPlayersFound')}</div>
+            <div style={{ fontSize: 13, color: 'var(--text-mute)', marginTop: 4 }}>{t('players.tryDifferentName')}</div>
           </div>
         )}
         {isSearching && visiblePlayers.map(p => (
@@ -183,7 +185,7 @@ export default function PlayersScreen({ sport, setSport, onSearch, onBell, onOpe
         ))}
         {isSearching && hasMore && (
           <button onClick={() => setPage(prev => prev + 1)} style={{ width: '100%', padding: '12px 0', background: 'var(--surface)', border: '2px solid var(--ink)', borderRadius: 12, fontFamily: 'var(--mono)', fontWeight: 700, fontSize: 12, color: 'var(--ink)', cursor: 'pointer', letterSpacing: '0.05em' }}>
-            LOAD MORE ({players.length - visiblePlayers.length} remaining)
+            {t('common.loadMoreUpper')} ({players.length - visiblePlayers.length} {t('players.remaining')})
           </button>
         )}
 
@@ -197,13 +199,13 @@ export default function PlayersScreen({ sport, setSport, onSearch, onBell, onOpe
             ) : teams.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '48px 20px' }}>
                 <Icon name="user" size={32} style={{ margin: '0 auto 12px', color: 'var(--text-mute)' }} />
-                <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--ink)' }}>No teams found</div>
-                <div style={{ fontSize: 13, color: 'var(--text-mute)', marginTop: 4 }}>Try a different league.</div>
+                <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--ink)' }}>{t('teams.noTeamsFound')}</div>
+                <div style={{ fontSize: 13, color: 'var(--text-mute)', marginTop: 4 }}>{t('players.tryDifferentName', 'Try a different league.')}</div>
               </div>
             ) : (
               <>
                 <div style={{ fontFamily: 'var(--mono)', fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-mute)', marginBottom: 4 }}>
-                  Browse by team · tap to search squad
+                  {t('players.browseByTeam')}
                 </div>
                 {teams.map(t => (
                   <TeamBrowseRow
@@ -252,7 +254,7 @@ function PlayerPhoto({ name, espnSrc, sport = 'football' }: { name: string; espn
 
 function PlayerRow({ player, onOpen, sport }: { player: PlayerResult; onOpen: () => void; sport?: string }) {
   return (
-    <button onClick={onOpen} style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', padding: '12px 14px', background: 'var(--surface)', border: '2px solid var(--ink)', borderRadius: 12, boxShadow: 'var(--shadow-sm)', cursor: 'pointer', textAlign: 'left' }}>
+    <button onClick={onOpen} style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', padding: '12px 14px', background: 'var(--surface)', border: '2px solid var(--ink)', borderRadius: 12, boxShadow: 'var(--shadow-sm)', cursor: 'pointer', textAlign: 'start' }}>
       <PlayerPhoto name={player.name} espnSrc={player.headshot} sport={sport} />
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontWeight: 700, fontSize: 13.5, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{player.name}</div>
@@ -269,8 +271,9 @@ function PlayerRow({ player, onOpen, sport }: { player: PlayerResult; onOpen: ()
 }
 
 function TeamBrowseRow({ team, onSearch }: { team: RealTeam; onSearch: () => void }) {
+  const { t } = useLanguage();
   return (
-    <button onClick={onSearch} style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', padding: '11px 14px', background: 'var(--surface)', border: '2px solid var(--ink)', borderRadius: 12, boxShadow: 'var(--shadow-sm)', cursor: 'pointer', textAlign: 'left' }}>
+    <button onClick={onSearch} style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', padding: '11px 14px', background: 'var(--surface)', border: '2px solid var(--ink)', borderRadius: 12, boxShadow: 'var(--shadow-sm)', cursor: 'pointer', textAlign: 'start' }}>
       <div style={{ width: 36, height: 36, borderRadius: 9, overflow: 'hidden', border: '2px solid var(--ink)', flexShrink: 0, background: 'var(--surface-3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         {team.logo ? (
           /* eslint-disable-next-line @next/next/no-img-element */
@@ -285,7 +288,7 @@ function TeamBrowseRow({ team, onSearch }: { team: RealTeam; onSearch: () => voi
         <div style={{ fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--text-mute)', marginTop: 2 }}>{team.leagueName}</div>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--orange)', fontWeight: 700 }}>
-        Search squad <Icon name="search" size={12} />
+        {t('teams.browseSquads', 'Search squad')} <Icon name="search" size={12} />
       </div>
     </button>
   );

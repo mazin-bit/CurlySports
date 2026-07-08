@@ -67,7 +67,7 @@ export default function PlayerScreen({ playerId, playerLeagueId, onBack, onOpenM
           <Icon name="chevron-left" size={18} />
         </button>
         <div style={{ fontFamily: 'var(--display)', fontWeight: 800, fontSize: 18, color: 'var(--ink)' }}>Player</div>
-        <button onClick={toggleFav} disabled={saving} style={{ marginLeft: 'auto', width: 38, height: 38, background: isSaved ? 'var(--coral)' : 'var(--surface)', border: `2px solid ${isSaved ? 'var(--coral)' : 'var(--ink)'}`, borderRadius: 11, display: 'grid', placeItems: 'center', color: isSaved ? '#fff' : 'var(--ink)', cursor: saving ? 'default' : 'pointer', opacity: saving ? 0.6 : 1 }}><Icon name="heart" size={17} style={{ fill: isSaved ? 'currentColor' : 'none' }} /></button>
+        <button onClick={toggleFav} disabled={saving} style={{ marginInlineStart: 'auto', width: 38, height: 38, background: isSaved ? 'var(--coral)' : 'var(--surface)', border: `2px solid ${isSaved ? 'var(--coral)' : 'var(--ink)'}`, borderRadius: 11, display: 'grid', placeItems: 'center', color: isSaved ? '#fff' : 'var(--ink)', cursor: saving ? 'default' : 'pointer', opacity: saving ? 0.6 : 1 }}><Icon name="heart" size={17} style={{ fill: isSaved ? 'currentColor' : 'none' }} /></button>
       </header>
 
       <div className="cs-scroll" style={{ flex: 1, overflow: 'auto', padding: '14px 14px 24px', display: 'flex', flexDirection: 'column', gap: 16 }}>

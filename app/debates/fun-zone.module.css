@@ -4,7 +4,8 @@
   padding: 14px 18px;
   background: var(--surface); border: 2px solid var(--ink); border-radius: var(--r-lg);
   cursor: pointer; box-shadow: var(--shadow-sm);
-  transition: box-shadow 0.15s, transform 0.15s;
+  transition: box-shadow 0.2s cubic-bezier(.25,.46,.45,.94), transform 0.2s cubic-bezier(.25,.46,.45,.94);
+  will-change: transform;
 }
 .composeTrigger:hover { box-shadow: var(--shadow-md); transform: translate(-1px,-1px); }
 .composeTriggerAvatar {
@@ -410,3 +411,11 @@
   .actionBtn { padding: 5px 9px; font-size: 10px; }
   .commentInput { gap: 6px; }
 }
+
+/* ── RTL overrides ── */
+:global([dir="rtl"]) .deleteBtn { margin-left: 0 !important; margin-right: auto !important; }
+:global([dir="rtl"]) .pollOpt { text-align: right; }
+:global([dir="rtl"]) .pollFill { left: auto; right: 0; }
+:global([dir="rtl"]) .debateOpt { text-align: right; }
+:global([dir="rtl"]) .debateFill { left: auto; right: 0; }
+:global([dir="rtl"]) .imageRemove { right: auto; left: 8px; }

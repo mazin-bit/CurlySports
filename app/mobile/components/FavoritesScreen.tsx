@@ -1,6 +1,7 @@
 'use client';
 import React, { useState, useEffect, useRef } from 'react';
 import useSWR from 'swr';
+import { useLanguage } from '@/contexts/LanguageContext';
 import Topbar from './ui/Topbar';
 import Card from './ui/Card';
 import Chip from './ui/Chip';
@@ -59,6 +60,7 @@ function timeAgo(iso: string): string {
 
 // ─── Add Modal ────────────────────────────────────────────────────────────────
 function AddModal({ type, existingIds, onClose, onAdded }: { type: 'team' | 'player'; existingIds: Set<string>; onClose: () => void; onAdded: () => void }) {
+  const { t } = useLanguage();
   const [query, setQuery] = useState('');
   const [sport, setSport] = useState('football');
   const [results, setResults] = useState<Record<string, unknown>[]>([]);
@@ -106,7 +108,7 @@ function AddModal({ type, existingIds, onClose, onAdded }: { type: 'team' | 'pla
       <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)' }} />
       <div style={{ position: 'relative', background: 'var(--bg)', borderRadius: '20px 20px 0 0', border: '2.5px solid var(--ink)', borderBottom: 'none', maxHeight: '80vh', display: 'flex', flexDirection: 'column', animation: 'cs-slideUp 0.22s var(--ease-pop)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px 10px', borderBottom: '1px solid var(--border-3)', flexShrink: 0 }}>
-          <div style={{ fontFamily: 'var(--display)', fontWeight: 800, fontSize: 16, color: 'var(--ink)' }}>Add {type === 'team' ? 'Team' : 'Player'}</div>
+          <div style={{ fontFamily: 'var(--display)', fontWeight: 800, fontSize: 16, color: 'var(--ink)' }}>{type === 'team' ? t('favorites.addTeam') : t('favorites.addPlayer')}</div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-mute)' }}><Icon name="close" size={18} /></button>
         </div>
 
@@ -124,19 +126,19 @@ function AddModal({ type, existingIds, onClose, onAdded }: { type: 'team' | 'pla
               autoFocus
               value={query}
               onChange={e => setQuery(e.target.value)}
-              placeholder={type === 'team' ? 'Search teams…' : 'Search players (min 2 chars)…'}
+              placeholder={type === 'team' ? t('favorites.searchTeams') : t('favorites.searchPlayersMinChars')}
               style={{ flex: 1, border: 'none', background: 'transparent', outline: 'none', fontSize: 13, color: 'var(--ink)', fontFamily: 'var(--body)' }}
             />
           </div>
         </div>
 
         <div style={{ flex: 1, overflowY: 'auto', padding: '8px 16px 24px' }}>
-          {loading && <div style={{ textAlign: 'center', padding: '24px 0', fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text-mute)' }}>Searching…</div>}
+          {loading && <div style={{ textAlign: 'center', padding: '24px 0', fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text-mute)' }}>{t('favorites.searching')}</div>}
           {!loading && query.trim().length >= 2 && results.length === 0 && (
-            <div style={{ textAlign: 'center', padding: '24px 0', fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text-mute)' }}>No results</div>
+            <div style={{ textAlign: 'center', padding: '24px 0', fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text-mute)' }}>{t('common.noResults')}</div>
           )}
           {!loading && query.trim().length < 2 && (
-            <div style={{ textAlign: 'center', padding: '24px 0', fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text-mute)' }}>Type to search…</div>
+            <div style={{ textAlign: 'center', padding: '24px 0', fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text-mute)' }}>{t('favorites.typeToSearch')}</div>
           )}
           {results.map(item => {
             const id = item.id as string;
@@ -162,7 +164,7 @@ function AddModal({ type, existingIds, onClose, onAdded }: { type: 'team' | 'pla
                 </div>
                 <div style={{ flexShrink: 0 }}>
                   {adding === id ? (
-                    <span style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text-mute)' }}>Adding…</span>
+                    <span style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text-mute)' }}>{t('favorites.adding')}</span>
                   ) : isAdded ? (
                     <span style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--teal)' }}>✓</span>
                   ) : (
@@ -182,6 +184,7 @@ function AddModal({ type, existingIds, onClose, onAdded }: { type: 'team' | 'pla
 
 // ─── Main ──────────────────────────────────────────────────────────────────────
 export default function FavoritesScreen({ onSearch, onBell, onOpenPlayer, unread }: FavoritesProps) {
+  const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState<'teams' | 'players'>('teams');
   const [showAdd, setShowAdd] = useState<'team' | 'player' | null>(null);
 
@@ -207,8 +210,8 @@ export default function FavoritesScreen({ onSearch, onBell, onOpenPlayer, unread
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--bg)' }}>
       <Topbar
-        title="Favourites"
-        subtitle="Your saved teams & players"
+        title={t('favorites.title')}
+        subtitle={t('favorites.subtitle')}
         logoSrc="/curly-guy.png"
         onSearch={onSearch}
         onBell={onBell}
@@ -219,10 +222,10 @@ export default function FavoritesScreen({ onSearch, onBell, onOpenPlayer, unread
         {/* Tabs */}
         <div style={{ display: 'flex', gap: 8 }}>
           <Chip active={activeTab === 'teams'} onClick={() => setActiveTab('teams')}>
-            Teams {favTeams.length > 0 ? `(${favTeams.length})` : ''}
+            {t('favorites.teams')} {favTeams.length > 0 ? `(${favTeams.length})` : ''}
           </Chip>
           <Chip active={activeTab === 'players'} onClick={() => setActiveTab('players')}>
-            Players {favPlayers.length > 0 ? `(${favPlayers.length})` : ''}
+            {t('favorites.players')} {favPlayers.length > 0 ? `(${favPlayers.length})` : ''}
           </Chip>
         </div>
 
@@ -237,13 +240,13 @@ export default function FavoritesScreen({ onSearch, onBell, onOpenPlayer, unread
           <>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div style={{ fontFamily: 'var(--display)', fontWeight: 800, fontSize: 18, color: 'var(--ink)' }}>
-                Favourite <span style={{ color: 'var(--orange)' }}>Teams</span>
+                {t('favorites.favouriteTeams')} <span style={{ color: 'var(--orange)' }}>{t('favorites.teamsAccent')}</span>
               </div>
               <button
                 onClick={() => setShowAdd('team')}
                 style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', background: 'var(--ink)', color: 'var(--accent)', border: '2px solid var(--ink)', borderRadius: 9, fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}
               >
-                <Icon name="plus" size={13} /> Add team
+                <Icon name="plus" size={13} />{t('favorites.addTeamLabel')}
               </button>
             </div>
 
@@ -251,8 +254,8 @@ export default function FavoritesScreen({ onSearch, onBell, onOpenPlayer, unread
               <Card>
                 <div style={{ textAlign: 'center', padding: '24px 0' }}>
                   <Icon name="heart" size={32} style={{ color: 'var(--text-mute)', margin: '0 auto 10px' }} />
-                  <div style={{ fontFamily: 'var(--display)', fontWeight: 700, fontSize: 16, color: 'var(--ink)', marginBottom: 6 }}>No favourite teams</div>
-                  <div style={{ fontSize: 12.5, color: 'var(--text-dim)' }}>Tap &ldquo;Add team&rdquo; to start following your clubs</div>
+                  <div style={{ fontFamily: 'var(--display)', fontWeight: 700, fontSize: 16, color: 'var(--ink)', marginBottom: 6 }}>{t('favorites.noFavouriteTeams')}</div>
+                  <div style={{ fontSize: 12.5, color: 'var(--text-dim)' }}>{t('favorites.tapAddTeam')}</div>
                 </div>
               </Card>
             ) : (
@@ -281,13 +284,13 @@ export default function FavoritesScreen({ onSearch, onBell, onOpenPlayer, unread
           <>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div style={{ fontFamily: 'var(--display)', fontWeight: 800, fontSize: 18, color: 'var(--ink)' }}>
-                Favourite <span style={{ color: 'var(--orange)' }}>Players</span>
+                {t('favorites.favouritePlayers')} <span style={{ color: 'var(--orange)' }}>{t('favorites.playersAccent')}</span>
               </div>
               <button
                 onClick={() => setShowAdd('player')}
                 style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', background: 'var(--ink)', color: 'var(--accent)', border: '2px solid var(--ink)', borderRadius: 9, fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}
               >
-                <Icon name="plus" size={13} /> Add player
+                <Icon name="plus" size={13} />{t('favorites.addPlayerLabel')}
               </button>
             </div>
 
@@ -295,8 +298,8 @@ export default function FavoritesScreen({ onSearch, onBell, onOpenPlayer, unread
               <Card>
                 <div style={{ textAlign: 'center', padding: '24px 0' }}>
                   <Icon name="user" size={32} style={{ color: 'var(--text-mute)', margin: '0 auto 10px' }} />
-                  <div style={{ fontFamily: 'var(--display)', fontWeight: 700, fontSize: 16, color: 'var(--ink)', marginBottom: 6 }}>No favourite players</div>
-                  <div style={{ fontSize: 12.5, color: 'var(--text-dim)' }}>Tap &ldquo;Add player&rdquo; to follow athletes</div>
+                  <div style={{ fontFamily: 'var(--display)', fontWeight: 700, fontSize: 16, color: 'var(--ink)', marginBottom: 6 }}>{t('favorites.noFavouritePlayers')}</div>
+                  <div style={{ fontSize: 12.5, color: 'var(--text-dim)' }}>{t('favorites.tapAddPlayer')}</div>
                 </div>
               </Card>
             ) : (

@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import styles from "./login.module.css";
 import { Mail, Eye, EyeOff, Check, X, Loader2 } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 type Mode = "login" | "signup" | "forgot";
 
@@ -57,6 +58,7 @@ function OtpScreen({
   onBack: () => void;
   onVerified: () => void;
 }) {
+  const { t } = useLanguage();
   const [otp, setOtp] = useState<string[]>(["", "", "", "", "", ""]);
   const [verifying, setVerifying] = useState(false);
   const [otpError, setOtpError] = useState<string | null>(null);
@@ -68,9 +70,9 @@ function OtpScreen({
   useEffect(() => {
     setTimeLeft(600);
     const interval = setInterval(() => {
-      setTimeLeft((t) => {
-        if (t <= 1) { clearInterval(interval); return 0; }
-        return t - 1;
+      setTimeLeft((prev) => {
+        if (prev <= 1) { clearInterval(interval); return 0; }
+        return prev - 1;
       });
     }, 1000);
     return () => clearInterval(interval);
@@ -122,11 +124,11 @@ function OtpScreen({
         body: JSON.stringify({ email, otp: code }),
       });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? "Verification failed.");
+      if (!res.ok) throw new Error(json.error ?? t("auth.verificationFailed"));
       setOtpSuccess(true);
       setTimeout(onVerified, 1500);
     } catch (err: unknown) {
-      setOtpError(err instanceof Error ? err.message : "Verification failed.");
+      setOtpError(err instanceof Error ? err.message : t("auth.verificationFailed"));
       setOtp(["", "", "", "", "", ""]);
       otpRefs.current[0]?.focus();
     } finally {
@@ -145,12 +147,12 @@ function OtpScreen({
         body: JSON.stringify({ email }),
       });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? "Failed to resend.");
+      if (!res.ok) throw new Error(json.error ?? t("auth.failedToResend"));
       setOtp(["", "", "", "", "", ""]);
       otpRefs.current[0]?.focus();
       setTimeLeft(600);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Failed to resend.");
+      setError(err instanceof Error ? err.message : t("auth.failedToResend"));
     } finally {
       setResending(false);
     }
@@ -159,9 +161,9 @@ function OtpScreen({
   if (otpSuccess) {
     return (
       <div className={styles.formSide}>
-        <div className={styles.formTag}>verified</div>
-        <h1 className={styles.formTitle}>You&apos;re <em>in.</em></h1>
-        <p className={styles.formSub}>Email verified successfully. Redirecting to your dashboard...</p>
+        <div className={styles.formTag}>{t("auth.verified")}</div>
+        <h1 className={styles.formTitle}>{t("auth.youreIn")}</h1>
+        <p className={styles.formSub}>{t("auth.emailVerifiedRedirecting")}</p>
       </div>
     );
   }
@@ -175,10 +177,10 @@ function OtpScreen({
         </div>
         <span>curly<span className={styles.dot}>.</span>sports</span>
       </a>
-      <div className={styles.formTag}>verify email</div>
-      <h1 className={styles.formTitle}>Enter your<br /><em>code.</em></h1>
+      <div className={styles.formTag}>{t("auth.verifyEmailTitle")}</div>
+      <h1 className={styles.formTitle}>{t("auth.enterYourCodeWeb")}</h1>
       <p className={styles.formSub}>
-        We sent a 6-digit code to <strong>{email}</strong>. Enter it below to verify your account.
+        {t("auth.weSentCodeWeb").replace("{email}", email)}
       </p>
 
       <div className={styles.otpGroup}>
@@ -201,7 +203,7 @@ function OtpScreen({
       </div>
 
       <div className={styles.otpTimer}>
-        {timeLeft > 0 ? <>Code expires in <strong>{formatTimer(timeLeft)}</strong></> : <strong>Code expired</strong>}
+        {timeLeft > 0 ? <>{t("auth.codeExpiresIn")}<strong>{formatTimer(timeLeft)}</strong></> : <strong>{t("auth.codeExpired")}</strong>}
       </div>
 
       {(otpError || error) && <div className={styles.errorBanner}>{otpError || error}</div>}
@@ -211,14 +213,14 @@ function OtpScreen({
         onClick={handleVerify}
         disabled={verifying || otp.join("").length < 6}
       >
-        {verifying ? "Verifying..." : "Verify code"}
+        {verifying ? t("auth.verifying") : t("auth.verifyCode")}
       </button>
 
       <div className={styles.emailSentBox}>
         <div className={styles.emailSentIcon}><Mail size={24} strokeWidth={1.5} /></div>
-        <p>Didn&apos;t get the code? Check your spam folder, or{" "}
+        <p>{t("auth.didntGetCode")}{" "}
           <button className={styles.inlineLink} onClick={handleResend} disabled={resending}>
-            {resending ? "sending..." : "resend code"}
+            {resending ? t("auth.sending") : t("auth.resendCodeAction")}
           </button>.
         </p>
       </div>
@@ -228,13 +230,14 @@ function OtpScreen({
         style={{ marginTop: "1rem", background: "transparent", color: "#0c0a1d", boxShadow: "none" }}
         onClick={onBack}
       >
-        Back to login
+        {t("auth.backToLogin")}
       </button>
     </div>
   );
 }
 
 export default function LoginPage() {
+  const { t } = useLanguage();
   const [mode, setMode] = useState<Mode>("login");
   const [email, setEmail]       = useState("");
   const [password, setPassword] = useState("");
@@ -292,20 +295,20 @@ export default function LoginPage() {
             setNeedsVerification(true);
             return;
           }
-          throw new Error(json.error ?? "Login failed.");
+          throw new Error(json.error ?? t("auth.loginFailed"));
         }
         router.push("/dashboard");
         router.refresh();
 
       } else if (mode === "signup") {
-        if (!username.trim()) throw new Error("Please pick a username.");
+        if (!username.trim()) throw new Error(t("auth.pickUsernameError"));
         const res = await fetch("/api/auth/signup", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email, password, username: username.trim() }),
         });
         const json = await res.json();
-        if (!res.ok) throw new Error(json.error ?? "Signup failed.");
+        if (!res.ok) throw new Error(json.error ?? t("auth.signupFailed"));
         if (json.needsVerification) {
           setVerificationEmail(email);
           setNeedsVerification(true);
@@ -321,11 +324,11 @@ export default function LoginPage() {
           body: JSON.stringify({ email }),
         });
         const json = await res.json();
-        if (!res.ok) throw new Error(json.error ?? "Failed to send reset link.");
+        if (!res.ok) throw new Error(json.error ?? t("auth.failedToSendReset"));
         setEmailSent(true);
       }
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Something went wrong");
+      setError(err instanceof Error ? err.message : t("auth.somethingWentWrong"));
     } finally {
       setLoading(false);
     }
@@ -333,7 +336,7 @@ export default function LoginPage() {
 
   function handleGoogle() {
     if (!GOOGLE_CLIENT_ID) {
-      setError("Google login is not configured.");
+      setError(t("auth.googleLoginNotConfigured"));
       return;
     }
     const origin = window.location.origin.replace("://0.0.0.0", "://localhost");
@@ -379,21 +382,21 @@ export default function LoginPage() {
             </div>
             <span>curly<span className={styles.dot}>.</span>sports</span>
           </a>
-          <div className={styles.formTag}>check inbox</div>
+          <div className={styles.formTag}>{t("auth.checkInboxTag")}</div>
           <h1 className={styles.formTitle}>
-            <>Reset<br />link <em>sent.</em></>
+            {t("auth.resetLinkSent")}
           </h1>
           <p className={styles.formSub}>
-            {`We sent a password reset link to ${email}. Check your inbox (and spam).`}
+            {t("auth.weSentResetLinkWeb").replace("{email}", email)}
           </p>
           <div className={styles.emailSentBox}>
             <div className={styles.emailSentIcon}><Mail size={24} strokeWidth={1.5} /></div>
-            <p>Didn&apos;t get it? Check your spam folder, or{" "}
+            <p>{t("auth.didntGetItWeb")}{" "}
               <button
                 className={styles.inlineLink}
                 onClick={() => { setEmailSent(false); setError(null); }}
               >
-                try again
+                {t("auth.tryAgain")}
               </button>.
             </p>
           </div>
@@ -402,7 +405,7 @@ export default function LoginPage() {
             style={{ marginTop: "2rem" }}
             onClick={() => switchMode("login")}
           >
-            Back to login
+            {t("auth.backToLogin")}
           </button>
         </div>
       </div>
@@ -423,25 +426,21 @@ export default function LoginPage() {
           <span>curly<span className={styles.dot}>.</span>sports</span>
         </a>
         <div className={styles.formTag}>
-          {mode === "login" ? "welcome back" : mode === "signup" ? "join curly" : "reset password"}
+          {mode === "login" ? t("auth.welcomeBackTag") : mode === "signup" ? t("auth.joinCurlyTag") : t("auth.resetPasswordTag")}
         </div>
 
         <h1 className={styles.formTitle}>
-          {mode === "login" ? (
-            <>Argue<br />with <em>actual</em><br />data.</>
-          ) : mode === "signup" ? (
-            <>Make an<br />account.<br /><em>Get loud.</em></>
-          ) : (
-            <>Forgot<br />your <em>password?</em></>
-          )}
+          {mode === "login" ? t("auth.argueWithData")
+            : mode === "signup" ? t("auth.makeAnAccount")
+            : t("auth.forgotYourPassword")}
         </h1>
 
         <p className={styles.formSub}>
           {mode === "login"
-            ? "Log in to see your personal dashboard, jump back into open debates, and check on your saved teams."
+            ? t("auth.loginSubtitle")
             : mode === "signup"
-            ? "Free forever. Pick your sports, follow your teams, and join fans who actually like sports analytics."
-            : "Enter your email and we'll send you a link to reset your password."}
+            ? t("auth.signupSubtitle")
+            : t("auth.forgotSubtitle")}
         </p>
 
         {mode !== "forgot" && (
@@ -450,12 +449,12 @@ export default function LoginPage() {
               type="button"
               className={mode === "login" ? styles.toggleActive : ""}
               onClick={() => switchMode("login")}
-            >Log in</button>
+            >{t("auth.login")}</button>
             <button
               type="button"
               className={mode === "signup" ? styles.toggleActive : ""}
               onClick={() => switchMode("signup")}
-            >Sign up</button>
+            >{t("auth.signup")}</button>
           </div>
         )}
 
@@ -466,11 +465,11 @@ export default function LoginPage() {
         <form onSubmit={handleSubmit}>
           {mode === "signup" && (
             <div className={styles.field}>
-              <label htmlFor="username">Pick a username</label>
+              <label htmlFor="username">{t("auth.pickUsername")}</label>
               <input
                 id="username"
                 type="text"
-                placeholder="e.g. footynerd_03"
+                placeholder={t("auth.usernamePlaceholder")}
                 value={username}
                 onChange={(e) => { setUsername(e.target.value); checkUsername(e.target.value); }}
                 required
@@ -478,33 +477,33 @@ export default function LoginPage() {
               <div className={styles.fieldHelper}>
                 {usernameStatus === "checking" && (
                   <span style={{ display: "inline-flex", alignItems: "center", gap: 4, color: "#999" }}>
-                    <Loader2 size={12} style={{ animation: "spin 1s linear infinite" }} /> Checking...
+                    <Loader2 size={12} style={{ animation: "spin 1s linear infinite" }} /> {t("auth.checking")}
                   </span>
                 )}
                 {usernameStatus === "available" && (
                   <span style={{ display: "inline-flex", alignItems: "center", gap: 4, color: "#22c55e" }}>
-                    <Check size={12} /> Available
+                    <Check size={12} /> {t("auth.available")}
                   </span>
                 )}
                 {usernameStatus === "taken" && (
                   <span style={{ display: "inline-flex", alignItems: "center", gap: 4, color: "#ef4444" }}>
-                    <X size={12} /> Username taken
+                    <X size={12} /> {t("auth.usernameTaken")}
                   </span>
                 )}
                 {usernameStatus === "invalid" && (
-                  <span style={{ color: "#ef4444" }}>Letters, numbers, underscores, dots, hyphens only</span>
+                  <span style={{ color: "#ef4444" }}>{t("auth.usernameRules")}</span>
                 )}
-                {usernameStatus === "idle" && "This is what everyone sees when you debate. Choose wisely."}
+                {usernameStatus === "idle" && t("auth.usernameHint")}
               </div>
             </div>
           )}
 
           <div className={styles.field}>
-            <label htmlFor="email">Email</label>
+            <label htmlFor="email">{t("auth.email")}</label>
             <input
               id="email"
               type="email"
-              placeholder="you@example.com"
+              placeholder={t("auth.emailPlaceholder")}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -515,14 +514,14 @@ export default function LoginPage() {
           {mode !== "forgot" && (
             <div className={styles.field}>
               <div className={styles.fieldRow}>
-                <label htmlFor="password">Password</label>
+                <label htmlFor="password">{t("auth.password")}</label>
                 {mode === "login" && (
                   <button
                     type="button"
                     className={styles.forgot}
                     onClick={() => switchMode("forgot")}
                   >
-                    Forgot password?
+                    {t("auth.forgotPassword")}
                   </button>
                 )}
               </div>
@@ -530,7 +529,7 @@ export default function LoginPage() {
                 <input
                   id="password"
                   type={showPassword ? "text" : "password"}
-                  placeholder="••••••••••••"
+                  placeholder={t("auth.passwordPlaceholder")}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -541,25 +540,25 @@ export default function LoginPage() {
                   type="button"
                   className={styles.eyeToggle}
                   onClick={() => setShowPassword((v) => !v)}
-                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  aria-label={showPassword ? t("auth.hidePassword") : t("auth.showPassword")}
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
               {mode === "signup" && (
-                <div className={styles.fieldHelper}>At least 8 characters.</div>
+                <div className={styles.fieldHelper}>{t("auth.atLeast8Chars")}</div>
               )}
             </div>
           )}
 
           <button className={styles.btnPrimary} type="submit" disabled={loading}>
-            {loading ? "Please wait…" : mode === "login" ? "Log in →" : mode === "signup" ? "Create my account →" : "Send reset link →"}
+            {loading ? t("auth.pleaseWait") : mode === "login" ? t("auth.logInArrow") : mode === "signup" ? t("auth.createMyAccountArrow") : t("auth.sendResetLinkArrowWeb")}
           </button>
         </form>
 
         {mode !== "forgot" && (
           <>
-            <div className={styles.divider}>or continue with</div>
+            <div className={styles.divider}>{t("auth.orContinueWith")}</div>
 
             <div className={styles.socialRow}>
               <button
@@ -574,7 +573,7 @@ export default function LoginPage() {
                   <path fill="#FBBC05" d="M5.85 14.1c-.22-.66-.35-1.36-.35-2.1s.13-1.44.35-2.1V7.07H2.18a10.99 10.99 0 0 0 0 9.87l3.67-2.84z"/>
                   <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1A11 11 0 0 0 2.18 7.07l3.67 2.84C6.71 7.31 9.14 5.38 12 5.38z"/>
                 </svg>
-                Google
+                {t("auth.google")}
               </button>
             </div>
           </>
@@ -582,30 +581,28 @@ export default function LoginPage() {
 
         <p className={styles.below}>
           {mode === "login" ? (
-            <>New to Curly?{" "}
+            <>{t("auth.newToCurly")}
               <a href="#" onClick={(e) => { e.preventDefault(); switchMode("signup"); }}>
-                Make an account →
+                {t("auth.makeAnAccountLink")}
               </a>
             </>
           ) : mode === "signup" ? (
-            <>Already on Curly?{" "}
+            <>{t("auth.alreadyOnCurly")}
               <a href="#" onClick={(e) => { e.preventDefault(); switchMode("login"); }}>
-                Log in →
+                {t("auth.logInLink")}
               </a>
             </>
           ) : (
-            <>Remember it?{" "}
+            <>{t("auth.rememberIt")}
               <a href="#" onClick={(e) => { e.preventDefault(); switchMode("login"); }}>
-                Back to login →
+                {t("auth.backToLoginLink")}
               </a>
             </>
           )}
         </p>
 
         <p className={styles.terms}>
-          By continuing you agree to our slightly-too-long{" "}
-          <a href="/terms">Terms</a> and our actually-readable{" "}
-          <a href="/privacy">Privacy Policy</a>. Curly never sells your data — he&#39;s 14, he doesn&apos;t even know how.
+          {t("auth.termsText")}
         </p>
       </div>
     </div>

@@ -13,7 +13,13 @@
   cursor: pointer; transition: all 0.15s;
 }
 .tab:hover { color: var(--ink); }
+.tab:active { transform: scale(0.95); transition-duration: 0.08s; }
 .tabActive { background: var(--ink) !important; color: var(--accent) !important; }
+
+/* Tab content fade-in */
+.tabPanel {
+  animation: g-fadeSlideIn 0.25s cubic-bezier(.25,.46,.45,.94) both;
+}
 .tabCount {
   font-family: var(--mono); font-size: 10px; font-weight: 700;
   background: var(--accent); color: var(--ink);
@@ -76,8 +82,9 @@
   background: var(--surface); border: 2px solid var(--ink);
   border-radius: var(--r-lg); padding: 18px;
   display: flex; flex-direction: column; gap: 8px;
-  cursor: default; transition: transform 0.15s, box-shadow 0.15s;
+  cursor: default; transition: transform 0.2s cubic-bezier(.25,.46,.45,.94), box-shadow 0.2s cubic-bezier(.25,.46,.45,.94);
   box-shadow: var(--shadow-sm);
+  will-change: transform;
 }
 .favTeamCard:hover { transform: translate(-2px,-2px); box-shadow: var(--shadow-md); }
 
@@ -105,7 +112,8 @@
 .favPlayerRow {
   background: var(--surface); border: 2px solid var(--ink); border-radius: var(--r-md);
   padding: 12px 16px; display: flex; align-items: center; gap: 12px;
-  transition: transform 0.15s, box-shadow 0.15s; box-shadow: var(--shadow-sm);
+  transition: transform 0.2s cubic-bezier(.25,.46,.45,.94), box-shadow 0.2s cubic-bezier(.25,.46,.45,.94); box-shadow: var(--shadow-sm);
+  will-change: transform;
 }
 .favPlayerRow:hover { transform: translate(-2px,-2px); box-shadow: var(--shadow-md); }
 
@@ -268,4 +276,22 @@
   .favPlayerRow { padding: 10px 12px; gap: 8px; }
   .notifRow { padding: 10px 12px; gap: 8px; }
   .notifTime { font-size: 10px; }
+}
+
+/* ── RTL overrides ── */
+:global([dir="rtl"]) .srRow {
+  text-align: right;
+}
+
+:global([dir="rtl"]) .searchIcon {
+  left: auto;
+  right: 10px;
+}
+
+:global([dir="rtl"]) .searchInput {
+  padding: 9px 32px 9px 12px;
+}
+
+:global([dir="rtl"]) .ftTopRight {
+  align-items: flex-start;
 }

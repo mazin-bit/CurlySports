@@ -759,7 +759,7 @@ function DebatesTab({ adminToken }: { adminToken: string }) {
                     </div>
                     <div className={styles.flagDesc} style={{ marginTop: 2 }}>
                       <strong>{d.optionA}</strong> · {d.votesA} vs <strong>{d.optionB}</strong> · {d.votesB}
-                      {d.sport && <span style={{ marginLeft: 8, opacity: 0.6 }}>{d.sport}</span>}
+                      {d.sport && <span style={{ marginInlineStart: 8, opacity: 0.6 }}>{d.sport}</span>}
                     </div>
                   </div>
                   <div style={{ display: "flex", gap: 6, flexShrink: 0, alignItems: "center" }}>

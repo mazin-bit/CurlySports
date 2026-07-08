@@ -741,3 +741,22 @@
   .kickoffTime { font-size: 18px; }
   .naGrid { grid-template-columns: 1fr; }
 }
+
+/* ── RTL overrides ── */
+:global([dir="rtl"]) .evtSideHome { justify-content: flex-start; }
+:global([dir="rtl"]) .evtSideAway { justify-content: flex-end; }
+:global([dir="rtl"]) .statVal { text-align: left; }
+:global([dir="rtl"]) .statValAway { text-align: right; }
+:global([dir="rtl"]) .lineupCol { border-right: none; border-left: 1.5px solid var(--border-2); }
+:global([dir="rtl"]) .lineupCol:last-child { border-left: none; }
+:global([dir="rtl"]) .formation { margin-left: 0; margin-right: auto; }
+:global([dir="rtl"]) .periodClock { margin-left: 0; margin-right: 2px; }
+:global([dir="rtl"]) .scoreNums,
+:global([dir="rtl"]) .scoreNum,
+:global([dir="rtl"]) .scoreCenter { direction: ltr; }
+:global([dir="rtl"]) .statusPill { direction: ltr; }
+:global([dir="rtl"]) .statBarH { border-radius: 0 4px 4px 0; }
+:global([dir="rtl"]) .statBarA { border-radius: 4px 0 0 4px; }
+@media (max-width: 640px) {
+  :global([dir="rtl"]) .lineupCol { border-left: none; border-bottom: 1.5px solid var(--border-2); }
+}

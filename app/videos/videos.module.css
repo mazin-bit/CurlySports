@@ -293,3 +293,7 @@
 @media (max-width: 480px) {
   .itemThumb { width: 72px; }
 }
+
+/* ── RTL overrides ── */
+:global([dir="rtl"]) .playlistItem { text-align: right; }
+:global([dir="rtl"]) .playlistItemActive { border-left: none; border-right: 3px solid var(--accent); padding-left: 12px; padding-right: 9px; }

@@ -7,17 +7,24 @@ import Topbar from "./Topbar";
 import BottomNav from "./BottomNav";
 import MobileMenu from "./MobileMenu";
 import MaintenanceGuard from "./MaintenanceGuard";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface AppShellProps {
   active: string;
   title: string;
+  titleKey?: string;
   subtitle?: string;
+  subtitleKey?: string;
   children: React.ReactNode;
 }
 
-export default function AppShell({ active, title, subtitle, children }: AppShellProps) {
+export default function AppShell({ active, title, titleKey, subtitle, subtitleKey, children }: AppShellProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const pathname = usePathname();
+  const { t } = useLanguage();
+
+  const resolvedTitle = titleKey ? t(titleKey) : title;
+  const resolvedSubtitle = subtitleKey ? t(subtitleKey) : subtitle;
 
   return (
     <MaintenanceGuard>
@@ -25,7 +32,7 @@ export default function AppShell({ active, title, subtitle, children }: AppShell
       <div className="app-shell">
         <Sidebar active={active} />
         <div className="app-main">
-          <Topbar title={title} subtitle={subtitle} />
+          <Topbar title={resolvedTitle} subtitle={resolvedSubtitle} />
           <div key={pathname} className="app-content page-enter">{children}</div>
           <BottomNav active={active} onMenuOpen={() => setMenuOpen(true)} />
         </div>

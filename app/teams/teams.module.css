@@ -14,15 +14,17 @@
   border-radius: var(--r-lg);
   overflow: hidden;
   cursor: pointer;
-  transition: transform 0.15s, box-shadow 0.15s;
+  transition: transform 0.2s cubic-bezier(.25,.46,.45,.94), box-shadow 0.2s cubic-bezier(.25,.46,.45,.94);
   box-shadow: var(--shadow-sm);
   text-decoration: none;
   display: flex; flex-direction: column;
+  will-change: transform;
 }
 .teamCard:hover {
   transform: translate(-3px, -3px);
   box-shadow: var(--shadow-md);
 }
+.teamCard:active { transform: scale(0.96); box-shadow: var(--shadow-sm); transition-duration: 0.08s; }
 
 .teamBanner {
   height: 100px;
@@ -41,6 +43,7 @@
   transition: all 0.15s; backdrop-filter: blur(4px);
 }
 .favBtn:hover { border-color: var(--orange); color: var(--orange); }
+.favBtn:active { transform: scale(0.85); transition-duration: 0.06s; }
 .faved { color: var(--orange) !important; border-color: var(--orange) !important; }
 
 .teamBody { padding: 14px; flex: 1; }
@@ -50,4 +53,10 @@
 
 @media (max-width: 480px) {
   .teamsGrid { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* ── RTL overrides ── */
+:global([dir="rtl"]) .favBtn {
+  right: auto;
+  left: 8px;
 }

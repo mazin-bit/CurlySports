@@ -487,53 +487,96 @@ const CRICINFO_SERIES_MAP: Record<string, {
   leagueName: string;
   series: { slug: string; seriesId: number; season: string }[];
 }> = {
+  // ── IPL (ESPNcricinfo fallback — S3 API is primary for current season) ──────
+  "ipl": {
+    leagueName: "Indian Premier League",
+    series: [
+      { slug: "ipl-2026",                            seriesId: 1510719, season: "2026" },
+      { slug: "ipl-2025",                            seriesId: 1449924, season: "2025" },
+      { slug: "indian-premier-league-2024",           seriesId: 1410320, season: "2024" },
+      { slug: "indian-premier-league-2023",           seriesId: 1345038, season: "2023" },
+      { slug: "indian-premier-league-2022",           seriesId: 1298423, season: "2022" },
+    ],
+  },
   // ── Top T20 leagues ──────────────────────────────────────────────────────────
   "psl": {
     leagueName: "Pakistan Super League",
     series: [
-      { slug: "pakistan-super-league-2025",         seriesId: 1434269, season: "2025" },
-      { slug: "pakistan-super-league-2023-24",      seriesId: 1412744, season: "2024" },
+      { slug: "pakistan-super-league-2025",            seriesId: 1434269, season: "2025" },
+      { slug: "pakistan-super-league-2023-24",         seriesId: 1412744, season: "2024" },
+      { slug: "pakistan-super-league-2022-23",         seriesId: 1332128, season: "2023" },
     ],
   },
   "big.bash": {
     leagueName: "Big Bash League",
     series: [
-      { slug: "big-bash-league-2024-25",            seriesId: 1443056, season: "2025" },
-      { slug: "big-bash-league-2023-24",            seriesId: 1386092, season: "2024" },
+      { slug: "big-bash-league-2024-25",              seriesId: 1443056, season: "2025" },
+      { slug: "big-bash-league-2023-24",              seriesId: 1386092, season: "2024" },
+      { slug: "big-bash-league-2022-23",              seriesId: 1324623, season: "2023" },
     ],
   },
   "cplt20": {
     leagueName: "Caribbean Premier League",
     series: [
-      { slug: "caribbean-premier-league-2025",      seriesId: 1468498, season: "2025" },
-      { slug: "caribbean-premier-league-2024",      seriesId: 1428674, season: "2024" },
+      { slug: "caribbean-premier-league-2025",        seriesId: 1468498, season: "2025" },
+      { slug: "caribbean-premier-league-2024",        seriesId: 1428674, season: "2024" },
+      { slug: "caribbean-premier-league-2023",        seriesId: 1369538, season: "2023" },
+      { slug: "caribbean-premier-league-2022",        seriesId: 1320379, season: "2022" },
     ],
   },
   "sa.domestic": {
     leagueName: "SA20",
     series: [
-      { slug: "sa20-2025-26",                       seriesId: 1494252, season: "2026" },
-      { slug: "sa20-2024-25",                       seriesId: 1437327, season: "2025" },
-      { slug: "sa20-2023-24",                       seriesId: 1392651, season: "2024" },
+      { slug: "sa20-2025-26",                         seriesId: 1494252, season: "2026" },
+      { slug: "sa20-2024-25",                         seriesId: 1437327, season: "2025" },
+      { slug: "sa20-2023-24",                         seriesId: 1392651, season: "2024" },
+      { slug: "sa20-2022-23",                         seriesId: 1335268, season: "2023" },
     ],
   },
   "ilt20": {
     leagueName: "International League T20",
     series: [
-      { slug: "international-league-t20-2025-26",   seriesId: 1501317, season: "2026" },
+      { slug: "international-league-t20-2025-26",     seriesId: 1501317, season: "2026" },
+      { slug: "international-league-t20-2024-25",     seriesId: 1462172, season: "2025" },
+      { slug: "international-league-t20-2023-24",     seriesId: 1406886, season: "2024" },
+      { slug: "international-league-t20-2022-23",     seriesId: 1326657, season: "2023" },
+    ],
+  },
+  "mlc": {
+    leagueName: "Major League Cricket",
+    series: [
+      { slug: "major-league-cricket-2025",            seriesId: 1481991, season: "2025" },
+      { slug: "major-league-cricket-2024",            seriesId: 1432722, season: "2024" },
+      { slug: "major-league-cricket-2023",            seriesId: 1357742, season: "2023" },
+    ],
+  },
+  "bpl": {
+    leagueName: "Bangladesh Premier League",
+    series: [
+      { slug: "bangladesh-premier-league-2024-25",    seriesId: 1459492, season: "2025" },
+      { slug: "bangladesh-premier-league-2023-24",    seriesId: 1412272, season: "2024" },
+      { slug: "bangladesh-premier-league-2022-23",    seriesId: 1346160, season: "2023" },
+    ],
+  },
+  "lpl": {
+    leagueName: "Lanka Premier League",
+    series: [
+      { slug: "lanka-premier-league-2024",            seriesId: 1421415, season: "2024" },
+      { slug: "lanka-premier-league-2023",            seriesId: 1382875, season: "2023" },
     ],
   },
   // ── ICC Events ───────────────────────────────────────────────────────────────
   "icc.t20wc": {
     leagueName: "ICC Men's T20 World Cup",
     series: [
-      { slug: "icc-men-s-t20-world-cup-2025-26",    seriesId: 1502138, season: "2026" },
+      { slug: "icc-men-s-t20-world-cup-2025-26",      seriesId: 1502138, season: "2025" },
+      { slug: "icc-men-s-t20-world-cup-2024",          seriesId: 1411166, season: "2024" },
     ],
   },
   "icc.champions": {
     leagueName: "ICC Champions Trophy",
     series: [
-      { slug: "icc-champions-trophy-2024-25",       seriesId: 1459031, season: "2025" },
+      { slug: "icc-champions-trophy-2024-25",         seriesId: 1459031, season: "2025" },
     ],
   },
 };
@@ -657,8 +700,8 @@ async function fetchFromCricinfoHtml(leagueId: string, season?: string): Promise
   const cfg = CRICINFO_SERIES_MAP[leagueId];
   if (!cfg) return null;
 
-  // Pick the entry that matches the requested season, or fall back to the first (latest)
-  const pick = (season ? cfg.series.find(s => s.season === season) : undefined) ?? cfg.series[0];
+  // Pick the entry that matches the requested season exactly; only fall back to latest when no season specified
+  const pick = season ? cfg.series.find(s => s.season === season) : cfg.series[0];
   if (!pick) return null;
 
   const cacheKey = `cricinfo:html:${leagueId}:${pick.season}`;

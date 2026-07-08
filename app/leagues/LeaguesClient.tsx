@@ -9,6 +9,10 @@ import {
 import { useSingleStandings } from "@/hooks/useStandings";
 import { useBracket } from "@/hooks/useBracket";
 import { useActiveSport, SPORT_CONFIGS } from "@/contexts/SportContext";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { formatDate, localizeDigits } from "@/lib/locale-utils";
+import { translateTeamName } from "@/lib/team-names";
+import { translateLeagueName } from "@/lib/league-names";
 import type { StandingEntry, LeagueStandings } from "@/hooks/useStandings";
 import type { BracketRound, BracketMatch } from "@/hooks/useBracket";
 import { LEAGUE_META } from "@curly/shared";
@@ -44,6 +48,9 @@ const CUP_LEAGUES = new Set([
   "concacaf.champions",
   // Cricket ICC tournaments
   "icc.t20wc", "icc.wc", "icc.champions",
+  // Cricket T20 domestic leagues
+  "ipl", "psl", "big.bash", "cplt20", "sa.domestic",
+  "ilt20", "mlc", "bpl", "lpl",
 ]);
 
 // Competitions with multi-group format
@@ -85,8 +92,9 @@ const LEAGUE_GROUPS: Record<string, { title: string; ids: string[] }[]> = {
     },
   ],
   cricket: [
-    { title: "ICC Events",   ids: ["icc.t20wc", "icc.champions"] },
-    { title: "T20 Leagues",  ids: ["ipl", "psl", "big.bash", "sa.domestic", "cplt20"] },
+    { title: "ICC Events",       ids: ["icc.t20wc", "icc.champions"] },
+    { title: "Premier Leagues",  ids: ["ipl", "psl", "big.bash", "sa.domestic", "cplt20"] },
+    { title: "More T20 Leagues", ids: ["mlc", "ilt20", "bpl", "lpl"] },
   ],
   basketball: [
     { title: "NBA & WNBA", ids: ["nba", "wnba"] },
@@ -115,9 +123,10 @@ function buildSeasons(): string[] {
 const SEASONS = buildSeasons();
 
 function SeasonSelector({ value, onChange }: { value: string; onChange: (s: string) => void }) {
+  const { t } = useLanguage();
   return (
     <div className={styles.seasonWrap}>
-      <label className={styles.seasonLabel}>Season</label>
+      <label className={styles.seasonLabel}>{t("standings.season")}</label>
       <div className={styles.seasonSelectWrap}>
         <select
           className={styles.seasonSelect}
@@ -141,6 +150,7 @@ function LeagueCard({
 }: {
   leagueId: string; isSelected: boolean; onSelect: () => void;
 }) {
+  const { t, locale } = useLanguage();
   const meta = LEAGUE_META[leagueId];
   if (!meta) return null;
 
@@ -151,7 +161,7 @@ function LeagueCard({
     <button
       className={`${styles.leagueCard} ${isSelected ? styles.leagueCardActive : ""}`}
       onClick={onSelect}
-      title={`${meta.name} · ${meta.country}`}
+      title={`${translateLeagueName(meta.name, locale)} · ${meta.country}`}
     >
       <div
         className={styles.cardIconWrap}
@@ -159,11 +169,11 @@ function LeagueCard({
       >
         <LeagueFlag flag={meta.flag} size={22} />
       </div>
-      <span className={styles.cardName}>{meta.name}</span>
+      <span className={styles.cardName}>{translateLeagueName(meta.name, locale)}</span>
       <span className={styles.cardSub}>{meta.country}</span>
       {(isCup || isGroup) && (
         <span className={styles.cardBadge} style={{ background: meta.color + "33", color: meta.color }}>
-          {isGroup ? "GROUPS" : "CUP"}
+          {isGroup ? t("standings.groupsLabel") : t("standings.cup")}
         </span>
       )}
     </button>
@@ -173,28 +183,30 @@ function LeagueCard({
 // ─── Table components ──────────────────────────────────────────────────────────
 
 function TableHeader({ isFootball, hasCricketNRR }: { isFootball: boolean; hasCricketNRR: boolean }) {
+  const { t } = useLanguage();
   return (
     <div className={styles.tableHeaderRow}>
-      <span className={styles.colRank}>#</span>
-      <span className={styles.colTeam}>Team</span>
-      <span className={styles.colStat}>P</span>
-      <span className={styles.colStat}>W</span>
-      {isFootball && <span className={`${styles.colStat} ${styles.hideMobile}`}>D</span>}
-      <span className={`${styles.colStat} ${styles.hideMobile}`}>L</span>
-      {isFootball && <span className={`${styles.colStat} ${styles.hideSm}`}>GD</span>}
-      {hasCricketNRR && <span className={`${styles.colStat} ${styles.hideMobile}`}>NRR</span>}
-      <span className={`${styles.colStat} ${styles.accentCol}`}>Pts</span>
+      <span className={styles.colRank}>{t("standings.hash")}</span>
+      <span className={styles.colTeam}>{t("standings.team")}</span>
+      <span className={styles.colStat}>{t("standings.p")}</span>
+      <span className={styles.colStat}>{t("standings.w")}</span>
+      {isFootball && <span className={`${styles.colStat} ${styles.hideMobile}`}>{t("standings.d")}</span>}
+      <span className={`${styles.colStat} ${styles.hideMobile}`}>{t("standings.l")}</span>
+      {isFootball && <span className={`${styles.colStat} ${styles.hideSm}`}>{t("standings.gd")}</span>}
+      {hasCricketNRR && <span className={`${styles.colStat} ${styles.hideMobile}`}>{t("standings.nrr")}</span>}
+      <span className={`${styles.colStat} ${styles.accentCol}`}>{t("standings.pts")}</span>
     </div>
   );
 }
 
 function TableRow({ row, idx, isFootball, hasCricketNRR }: { row: StandingEntry; idx: number; isFootball: boolean; hasCricketNRR: boolean }) {
+  const { t, locale } = useLanguage();
   const nrr = row.netRunRate;
   const nrrColor = nrr != null && nrr > 0 ? "var(--teal)" : nrr != null && nrr < 0 ? "var(--coral)" : undefined;
   return (
     <div className={`${styles.tableRow}${idx < 4 ? " " + styles.topZone : ""}`}>
       <span className={styles.colRank} style={{ color: idx < 4 ? "var(--orange)" : "var(--text-mute)" }}>
-        {row.rank || idx + 1}
+        {localizeDigits(String(row.rank || idx + 1), locale)}
       </span>
       <div className={styles.colTeam}>
         {row.teamLogo ? (
@@ -206,28 +218,28 @@ function TableRow({ row, idx, isFootball, hasCricketNRR }: { row: StandingEntry;
             {row.teamAbbr.slice(0, 3)}
           </div>
         )}
-        <span className={styles.teamNameCell}>{row.teamName}</span>
-        {row.note === "Q" && <span className={styles.qualBadge}>Q</span>}
+        <span className={styles.teamNameCell}>{translateTeamName(row.teamName, locale)}</span>
+        {row.note === "Q" && <span className={styles.qualBadge}>{t("standings.q")}</span>}
       </div>
-      <span className={styles.colStat}>{row.gamesPlayed}</span>
-      <span className={styles.colStat}>{row.wins}</span>
-      {isFootball && <span className={`${styles.colStat} ${styles.hideMobile}`}>{row.draws}</span>}
-      <span className={`${styles.colStat} ${styles.hideMobile}`}>{row.losses}</span>
+      <span className={styles.colStat}>{localizeDigits(String(row.gamesPlayed), locale)}</span>
+      <span className={styles.colStat}>{localizeDigits(String(row.wins), locale)}</span>
+      {isFootball && <span className={`${styles.colStat} ${styles.hideMobile}`}>{localizeDigits(String(row.draws), locale)}</span>}
+      <span className={`${styles.colStat} ${styles.hideMobile}`}>{localizeDigits(String(row.losses), locale)}</span>
       {isFootball && (
         <span
           className={`${styles.colStat} ${styles.hideSm}`}
           style={{ color: row.goalDiff > 0 ? "var(--teal)" : row.goalDiff < 0 ? "var(--coral)" : undefined }}
         >
-          {row.goalDiff > 0 ? `+${row.goalDiff}` : row.goalDiff}
+          {localizeDigits(row.goalDiff > 0 ? `+${row.goalDiff}` : String(row.goalDiff), locale)}
         </span>
       )}
       {hasCricketNRR && (
         <span className={`${styles.colStat} ${styles.hideMobile}`} style={{ color: nrrColor, fontVariantNumeric: "tabular-nums" }}>
-          {nrr != null ? (nrr >= 0 ? `+${nrr.toFixed(3)}` : nrr.toFixed(3)) : "–"}
+          {nrr != null ? localizeDigits(nrr >= 0 ? `+${nrr.toFixed(3)}` : nrr.toFixed(3), locale) : "–"}
         </span>
       )}
       <span className={`${styles.colStat} ${styles.accentCol}`} style={{ fontWeight: 700, color: "var(--ink)" }}>
-        {row.points}
+        {localizeDigits(String(row.points), locale)}
       </span>
     </div>
   );
@@ -236,6 +248,7 @@ function TableRow({ row, idx, isFootball, hasCricketNRR }: { row: StandingEntry;
 function SingleTable({ standings, expanded, onToggle }: {
   standings: LeagueStandings; expanded: boolean; onToggle: () => void;
 }) {
+  const { locale } = useLanguage();
   const hasCricketNRR = standings.entries.some(e => typeof e.netRunRate === "number");
   const isFootball = !hasCricketNRR && standings.entries.some(e => e.draws > 0);
   const displayRows = expanded ? standings.entries : standings.entries.slice(0, 8);
@@ -249,7 +262,7 @@ function SingleTable({ standings, expanded, onToggle }: {
         <button className={styles.showMoreBtn} onClick={onToggle}>
           {expanded
             ? <><ChevronUp size={14} /> Show less</>
-            : <><ChevronDown size={14} /> Show all {standings.entries.length} teams</>}
+            : <><ChevronDown size={14} /> Show all {localizeDigits(String(standings.entries.length), locale)} teams</>}
         </button>
       )}
     </div>
@@ -278,22 +291,24 @@ function GroupsGrid({ standings }: { standings: LeagueStandings }) {
 // ─── Knockout bracket components ───────────────────────────────────────────────
 
 function KnockoutMatchCard({ match }: { match: BracketMatch }) {
+  const { t, locale } = useLanguage();
   const isFinished = match.status.includes("FINAL") || match.status.includes("STATUS_FULL_TIME") || match.status.includes("FT");
   const isLive = match.status.includes("IN_PROGRESS") || match.status.includes("HALFTIME");
   const hasScore = match.home.score !== null && match.away.score !== null;
+  const isCricketResult = !hasScore && isFinished && match.statusDisplay && match.statusDisplay !== "TBD";
   const homeWin = match.home.winner;
   const awayWin = match.away.winner;
   const isPlaceholder = match.isPlaceholder;
 
   const dateStr = !isFinished && !isLive && !isPlaceholder
-    ? new Date(match.scheduledAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" })
+    ? formatDate(new Date(match.scheduledAt), locale, { day: "numeric", month: "short" })
     : null;
 
   return (
     <div className={`${styles.knockoutCard} ${isLive ? styles.knockoutCardLive : ""} ${isPlaceholder ? styles.knockoutCardPh : ""}`}>
-      {isLive && <div className={styles.liveIndicator}>LIVE</div>}
+      {isLive && <div className={styles.liveIndicator}>{t("matchStatus.live")}</div>}
       {dateStr && <div className={styles.matchDate}>{dateStr}</div>}
-      {isPlaceholder && <div className={styles.phLabel}>TBD</div>}
+      {isPlaceholder && <div className={styles.phLabel}>{t("matchStatus.tbd")}</div>}
 
       {/* Home team */}
       <div className={`${styles.knockoutTeam} ${homeWin ? styles.knockoutWinner : ""} ${awayWin && isFinished ? styles.knockoutLoser : ""}`}>
@@ -302,15 +317,17 @@ function KnockoutMatchCard({ match }: { match: BracketMatch }) {
             // eslint-disable-next-line @next/next/no-img-element
             <img src={match.home.logo} alt={match.home.shortName} className={styles.knockoutLogo} />
           ) : (
-            <div className={styles.knockoutLogoPh}>?</div>
+            <div className={styles.knockoutLogoPh}>{match.home.shortName?.charAt(0) ?? "?"}</div>
           )}
           <span className={`${styles.knockoutTeamName} ${match.home.isPlaceholder ? styles.knockoutTeamPh : ""}`}>
-            {match.home.name}
+            {translateTeamName(match.home.name, locale)}
           </span>
         </div>
-        <span className={`${styles.knockoutScore} ${homeWin ? styles.knockoutScoreWin : ""}`}>
-          {hasScore ? match.home.score : "–"}
-        </span>
+        {!isCricketResult && (
+          <span className={`${styles.knockoutScore} ${homeWin ? styles.knockoutScoreWin : ""}`}>
+            {hasScore ? match.home.score : "–"}
+          </span>
+        )}
       </div>
 
       {/* Away team */}
@@ -320,30 +337,38 @@ function KnockoutMatchCard({ match }: { match: BracketMatch }) {
             // eslint-disable-next-line @next/next/no-img-element
             <img src={match.away.logo} alt={match.away.shortName} className={styles.knockoutLogo} />
           ) : (
-            <div className={styles.knockoutLogoPh}>?</div>
+            <div className={styles.knockoutLogoPh}>{match.away.shortName?.charAt(0) ?? "?"}</div>
           )}
           <span className={`${styles.knockoutTeamName} ${match.away.isPlaceholder ? styles.knockoutTeamPh : ""}`}>
-            {match.away.name}
+            {translateTeamName(match.away.name, locale)}
           </span>
         </div>
-        <span className={`${styles.knockoutScore} ${awayWin ? styles.knockoutScoreWin : ""}`}>
-          {hasScore ? match.away.score : "–"}
-        </span>
+        {!isCricketResult && (
+          <span className={`${styles.knockoutScore} ${awayWin ? styles.knockoutScoreWin : ""}`}>
+            {hasScore ? match.away.score : "–"}
+          </span>
+        )}
       </div>
+
+      {/* Cricket result text (when no numeric scores) */}
+      {isCricketResult && (
+        <div className={styles.cricketResult}>{match.statusDisplay}</div>
+      )}
 
       {(match.home.aggScore !== null && match.home.aggScore !== undefined) && (
         <div className={styles.aggRow}>
-          Agg: {match.home.aggScore} – {match.away.aggScore}
+          {t("standings.agg")} {match.home.aggScore} – {match.away.aggScore}
         </div>
       )}
       {match.leg != null && (
-        <div className={styles.legBadge}>{match.leg === 1 ? "1st Leg" : "2nd Leg"}</div>
+        <div className={styles.legBadge}>{match.leg === 1 ? t("standings.firstLeg") : t("standings.secondLeg")}</div>
       )}
     </div>
   );
 }
 
 function KnockoutBracket({ rounds, isLoading }: { rounds: BracketRound[]; isLoading: boolean }) {
+  const { t, locale } = useLanguage();
   const [activeRound, setActiveRound] = useState<string | null>(null);
 
   if (isLoading) {
@@ -359,7 +384,7 @@ function KnockoutBracket({ rounds, isLoading }: { rounds: BracketRound[]; isLoad
   if (rounds.length === 0) {
     return (
       <div className={styles.bracketEmpty}>
-        Knockout bracket not yet available for this competition.
+        {t("standings.knockoutNotAvailable")}
       </div>
     );
   }
@@ -372,7 +397,7 @@ function KnockoutBracket({ rounds, isLoading }: { rounds: BracketRound[]; isLoad
       {hasPlaceholder && (
         <div className={styles.phBanner}>
           <Info size={13} />
-          These are projected matchups based on group pairings. Teams update once the knockout stage is drawn.
+          {t("standings.projectedNote")}
         </div>
       )}
       <div className={styles.roundTabs}>
@@ -380,7 +405,7 @@ function KnockoutBracket({ rounds, isLoading }: { rounds: BracketRound[]; isLoad
           className={`${styles.roundTab} ${!activeRound ? styles.roundTabActive : ""}`}
           onClick={() => setActiveRound(null)}
         >
-          All
+          {t("standings.all")}
         </button>
         {rounds.map(r => (
           <button
@@ -398,8 +423,8 @@ function KnockoutBracket({ rounds, isLoading }: { rounds: BracketRound[]; isLoad
           <div className={styles.roundHeader}>
             <span className={styles.roundName}>{round.name}</span>
             <span className={styles.roundCount}>
-              {round.matches.length} match{round.matches.length !== 1 ? "es" : ""}
-              {round.isPlaceholder && " · projected"}
+              {localizeDigits(String(round.matches.length), locale)} {round.matches.length !== 1 ? t("liveScores.matchCount") : t("liveScores.match")}
+              {round.isPlaceholder && ` · ${t("standings.projected")}`}
             </span>
           </div>
           <div className={styles.roundMatches}>
@@ -416,6 +441,7 @@ function KnockoutBracket({ rounds, isLoading }: { rounds: BracketRound[]; isLoad
 // ─── Competition detail panel ──────────────────────────────────────────────────
 
 function CompetitionDetail({ leagueId, season }: { leagueId: string; season: string }) {
+  const { t, locale } = useLanguage();
   const meta = LEAGUE_META[leagueId];
   const isCup = CUP_LEAGUES.has(leagueId);
   const isGroupComp = GROUP_STAGE_LEAGUES.has(leagueId);
@@ -424,7 +450,9 @@ function CompetitionDetail({ leagueId, season }: { leagueId: string; season: str
   const hasGroups = standings?.hasGroups && (standings.groups?.length ?? 0) > 0;
   const hasTable = !hasGroups && (standings?.entries?.length ?? 0) > 0;
 
-  const defaultTab = isGroupComp ? "groups" : isCup ? "bracket" : "table";
+  // T20 domestic leagues have both a league table AND playoff bracket — show table first
+  const isT20League = isCup && !isGroupComp && !leagueId.startsWith("uefa.") && !leagueId.startsWith("fifa.") && !leagueId.startsWith("con") && !leagueId.startsWith("caf.") && !leagueId.startsWith("afc.") && !leagueId.startsWith("icc.");
+  const defaultTab = isGroupComp ? "groups" : isT20League ? "table" : isCup ? "bracket" : "table";
   const [activeTab, setActiveTab] = useState<"table" | "groups" | "bracket">(defaultTab);
   const [tableExpanded, setTableExpanded] = useState(false);
 
@@ -434,14 +462,14 @@ function CompetitionDetail({ leagueId, season }: { leagueId: string; season: str
   );
 
   const borderColor = meta?.color ?? "var(--accent)";
-  const displayName = standings?.leagueName ?? meta?.name ?? leagueId;
+  const displayName = translateLeagueName(standings?.leagueName ?? meta?.name ?? leagueId, locale);
   const displaySeason = standings?.season ?? season;
   const logo = standings?.leagueLogo;
 
   return (
     <div className={styles.detailPanel} style={{ "--detail-color": borderColor } as React.CSSProperties}>
       {/* Header */}
-      <div className={styles.detailHeader} style={{ borderLeft: `4px solid ${borderColor}` }}>
+      <div className={styles.detailHeader} style={{ borderInlineStart: `4px solid ${borderColor}` }}>
         <div className={styles.detailHeaderLeft}>
           {logo ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -453,15 +481,15 @@ function CompetitionDetail({ leagueId, season }: { leagueId: string; season: str
           )}
           <div>
             <h3 className={styles.detailName}>{displayName}</h3>
-            <span className={styles.detailSub}>{meta?.country ?? "International"} · {displaySeason}</span>
+            <span className={styles.detailSub}>{meta?.country ?? t("standings.international")} · {displaySeason}</span>
           </div>
         </div>
         <div className={styles.detailMeta}>
           {hasGroups && standings?.groups && (
-            <span className={styles.groupBadge}>{standings.groups.length} groups</span>
+            <span className={styles.groupBadge}>{localizeDigits(String(standings.groups.length), locale)} {t("standings.groupsCount")}</span>
           )}
           {hasTable && (
-            <span className={styles.teamCount}>{standings!.entries.length} teams</span>
+            <span className={styles.teamCount}>{localizeDigits(String(standings!.entries.length), locale)} {t("standings.teamsCount")}</span>
           )}
         </div>
       </div>
@@ -474,7 +502,7 @@ function CompetitionDetail({ leagueId, season }: { leagueId: string; season: str
               className={`${styles.compTab} ${activeTab === "groups" ? styles.compTabActive : ""}`}
               onClick={() => setActiveTab("groups")}
             >
-              <Layers size={12} /> Groups
+              <Layers size={12} /> {t("standings.groups")}
             </button>
           )}
           {hasTable && (
@@ -482,7 +510,7 @@ function CompetitionDetail({ leagueId, season }: { leagueId: string; season: str
               className={`${styles.compTab} ${activeTab === "table" ? styles.compTabActive : ""}`}
               onClick={() => setActiveTab("table")}
             >
-              <Layers size={12} /> League Table
+              <Layers size={12} /> {t("standings.leagueTable")}
             </button>
           )}
           {isCup && (
@@ -490,32 +518,34 @@ function CompetitionDetail({ leagueId, season }: { leagueId: string; season: str
               className={`${styles.compTab} ${activeTab === "bracket" ? styles.compTabActive : ""}`}
               onClick={() => setActiveTab("bracket")}
             >
-              <GitBranch size={12} /> Knockout
+              <GitBranch size={12} /> {t("standings.knockout")}
             </button>
           )}
         </div>
       )}
 
-      {/* Content */}
-      {isLoading && activeTab !== "bracket" ? (
-        <div className={styles.detailLoading}>
-          {[1,2,3,4,5].map(i => (
-            <div key={i} className="skeleton-row" style={{ height: 44, borderRadius: 6, margin: "0 16px 6px" }} />
-          ))}
-        </div>
-      ) : activeTab === "groups" && hasGroups ? (
-        <GroupsGrid standings={standings!} />
-      ) : activeTab === "bracket" ? (
-        <KnockoutBracket rounds={rounds} isLoading={bracketLoading} />
-      ) : standings ? (
-        <SingleTable
-          standings={standings}
-          expanded={tableExpanded}
-          onToggle={() => setTableExpanded(x => !x)}
-        />
-      ) : (
-        <div className={styles.noData}>No standings data available for this season.</div>
-      )}
+      {/* Content — key forces re-mount for fade animation */}
+      <div key={activeTab} className={styles.tabContent}>
+        {isLoading && activeTab !== "bracket" ? (
+          <div className={styles.detailLoading}>
+            {[1,2,3,4,5].map(i => (
+              <div key={i} className="skeleton-row" style={{ height: 44, borderRadius: 6, margin: "0 16px 6px" }} />
+            ))}
+          </div>
+        ) : activeTab === "groups" && hasGroups ? (
+          <GroupsGrid standings={standings!} />
+        ) : activeTab === "bracket" ? (
+          <KnockoutBracket rounds={rounds} isLoading={bracketLoading} />
+        ) : standings ? (
+          <SingleTable
+            standings={standings}
+            expanded={tableExpanded}
+            onToggle={() => setTableExpanded(x => !x)}
+          />
+        ) : (
+          <div className={styles.noData}>{t("standings.noStandingsForSeason")}</div>
+        )}
+      </div>
     </div>
   );
 }
@@ -523,6 +553,7 @@ function CompetitionDetail({ leagueId, season }: { leagueId: string; season: str
 // ─── Page ──────────────────────────────────────────────────────────────────────
 
 export default function LeaguesPage() {
+  const { t } = useLanguage();
   const { activeSport, activeSportConfig, setActiveSport } = useActiveSport();
   const [season, setSeason] = useState(SEASONS[0]); // defaults to current year
   const [selectedLeague, setSelectedLeague] = useState<string | null>(null);
@@ -536,7 +567,7 @@ export default function LeaguesPage() {
   const sportPills = SPORT_CONFIGS.filter(s => LEAGUE_GROUPS[s.slug] && !s.comingSoon);
 
   return (
-    <AppShell active="leagues" title="Leagues" subtitle={`${activeSportConfig.label} standings`}>
+    <AppShell active="leagues" title={t("nav.leagues")} subtitle={`${activeSportConfig.label} ${t("standings.standingsAccent").toLowerCase()}`}>
       <div className="stack">
         {/* Sport selector pills — especially useful on mobile */}
         <div className={styles.sportPills}>
@@ -555,7 +586,7 @@ export default function LeaguesPage() {
         <div className="sec-head">
           <div className="title">
             <Trophy size={17} className="title-icon" strokeWidth={2} />
-            League <span className="accent">Standings</span>
+            {t("standings.leagueStandings")} <span className="accent">{t("standings.standingsAccent")}</span>
           </div>
           <SeasonSelector
             value={season}
@@ -592,7 +623,7 @@ export default function LeaguesPage() {
         ) : (
           <div className={styles.emptyPrompt}>
             <Trophy size={32} strokeWidth={1.5} style={{ color: "var(--text-mute)", marginBottom: 10 }} />
-            <p>Select a competition above to view standings, groups, or knockout bracket</p>
+            <p>{t("standings.selectCompetition")}</p>
           </div>
         )}
       </div>

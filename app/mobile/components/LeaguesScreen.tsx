@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useSingleStandings } from '@/hooks/useStandings';
 import { useBracket } from '@/hooks/useBracket';
 import type { BracketRound } from '@/hooks/useBracket';
+import { useLanguage } from '@/contexts/LanguageContext';
 import Topbar from './ui/Topbar';
 import Card from './ui/Card';
 import Chip from './ui/Chip';
@@ -75,6 +76,7 @@ interface LeaguesProps {
 }
 
 export default function LeaguesScreen({ sport, setSport, onSearch, onBell, onOpenPlayer, unread }: LeaguesProps) {
+  const { t } = useLanguage();
   const [leagueIdx, setLeagueIdx] = useState(0);
   const [season, setSeason] = useState<string>(DEFAULT_SEASON);
   const [showSeasonPicker, setShowSeasonPicker] = useState(false);
@@ -101,7 +103,7 @@ export default function LeaguesScreen({ sport, setSport, onSearch, onBell, onOpe
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--bg)' }}>
       <Topbar
-        title="Leagues"
+        title={t('nav.leagues')}
         subtitle={selected.label}
         logoSrc="/curly-guy.png"
         onSearch={onSearch}
@@ -121,7 +123,7 @@ export default function LeaguesScreen({ sport, setSport, onSearch, onBell, onOpe
 
         {/* Season selector */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div style={{ fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--text-mute)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Season</div>
+          <div style={{ fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--text-mute)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{t('standings.season')}</div>
           <div style={{ display: 'flex', gap: 6 }}>
             {SEASONS.map(s => (
               <button
@@ -136,20 +138,20 @@ export default function LeaguesScreen({ sport, setSport, onSearch, onBell, onOpe
         {/* Table / Bracket tab switcher */}
         {hasBracket && (
           <div style={{ display: 'flex', gap: 6, background: 'var(--surface-2)', border: '2px solid var(--ink)', borderRadius: 12, padding: 4, boxShadow: 'var(--shadow-sm)' }}>
-            <button onClick={() => setActiveTab('table')} style={{ flex: 1, padding: '8px 0', borderRadius: 8, border: 'none', cursor: 'pointer', fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', background: activeTab === 'table' ? 'var(--ink)' : 'transparent', color: activeTab === 'table' ? 'var(--accent)' : 'var(--text-mute)' }}>Table</button>
-            <button onClick={() => setActiveTab('bracket')} style={{ flex: 1, padding: '8px 0', borderRadius: 8, border: 'none', cursor: 'pointer', fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', background: activeTab === 'bracket' ? 'var(--ink)' : 'transparent', color: activeTab === 'bracket' ? 'var(--accent)' : 'var(--text-mute)' }}>Bracket</button>
+            <button onClick={() => setActiveTab('table')} style={{ flex: 1, padding: '8px 0', borderRadius: 8, border: 'none', cursor: 'pointer', fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', background: activeTab === 'table' ? 'var(--ink)' : 'transparent', color: activeTab === 'table' ? 'var(--accent)' : 'var(--text-mute)' }}>{t('standings.table')}</button>
+            <button onClick={() => setActiveTab('bracket')} style={{ flex: 1, padding: '8px 0', borderRadius: 8, border: 'none', cursor: 'pointer', fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', background: activeTab === 'bracket' ? 'var(--ink)' : 'transparent', color: activeTab === 'bracket' ? 'var(--accent)' : 'var(--text-mute)' }}>{t('standings.bracket')}</button>
           </div>
         )}
 
         {/* Bracket view */}
         {activeTab === 'bracket' && hasBracket && (
           bracketLoading ? (
-            <Card subtitle="Knockout" title={selected.label}>
+            <Card subtitle={t('standings.knockout')} title={selected.label}>
               <SkeletonList count={4}>{i => <SkeletonTableRow style={{ '--i': i } as React.CSSProperties} />}</SkeletonList>
             </Card>
           ) : (
             rounds.map((round: BracketRound) => (
-              <Card key={round.name} subtitle="Knockout" title={round.shortName || round.name}>
+              <Card key={round.name} subtitle={t('standings.knockout')} title={round.shortName || round.name}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                   {round.matches.map(m => (
                     <div key={m.id} style={{ background: 'var(--surface-2)', borderRadius: 10, border: '1.5px solid var(--border-2)', overflow: 'hidden' }}>
@@ -168,10 +170,10 @@ export default function LeaguesScreen({ sport, setSport, onSearch, onBell, onOpe
                       {/* Match meta */}
                       {(m.statusDisplay || m.leg) && (
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 12px 7px', borderTop: '1px solid var(--border-3)' }}>
-                          {m.leg && <span style={{ fontFamily: 'var(--mono)', fontSize: 9, color: 'var(--text-mute)', background: 'var(--surface-3)', border: '1px solid var(--border-2)', borderRadius: 4, padding: '1px 5px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Leg {m.leg}</span>}
+                          {m.leg && <span style={{ fontFamily: 'var(--mono)', fontSize: 9, color: 'var(--text-mute)', background: 'var(--surface-3)', border: '1px solid var(--border-2)', borderRadius: 4, padding: '1px 5px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{t('standings.leg')}{m.leg}</span>}
                           <span style={{ fontFamily: 'var(--mono)', fontSize: 9.5, color: 'var(--text-mute)' }}>{m.statusDisplay}</span>
                           {m.home.aggScore !== null && m.home.aggScore !== undefined && (
-                            <span style={{ marginLeft: 'auto', fontFamily: 'var(--mono)', fontSize: 9, color: 'var(--orange)', fontWeight: 700 }}>Agg: {m.home.aggScore}–{m.away.aggScore}</span>
+                            <span style={{ marginInlineStart: 'auto', fontFamily: 'var(--mono)', fontSize: 9, color: 'var(--orange)', fontWeight: 700 }}>{t('standings.agg')} {m.home.aggScore}–{m.away.aggScore}</span>
                           )}
                         </div>
                       )}
@@ -191,10 +193,10 @@ export default function LeaguesScreen({ sport, setSport, onSearch, onBell, onOpe
           const TableHeader = () => (
             <div style={{ display: 'flex', fontFamily: 'var(--mono)', fontSize: 9, color: 'var(--text-mute)', textTransform: 'uppercase', letterSpacing: '0.06em', padding: '0 0 8px', borderBottom: '1px solid var(--border-3)' }}>
               <span style={{ width: 20 }}>#</span>
-              <span style={{ flex: 1 }}>Club</span>
-              <span style={{ width: 78, textAlign: 'center' }}>Form</span>
-              <span style={{ width: 30, textAlign: 'center' }}>GD</span>
-              <span style={{ width: 28, textAlign: 'right' }}>Pts</span>
+              <span style={{ flex: 1 }}>{t('standings.club')}</span>
+              <span style={{ width: 78, textAlign: 'center' }}>{t('standings.form')}</span>
+              <span style={{ width: 30, textAlign: 'center' }}>{t('standings.gd')}</span>
+              <span style={{ width: 28, textAlign: 'right' }}>{t('standings.pts')}</span>
             </div>
           );
 
@@ -228,9 +230,9 @@ export default function LeaguesScreen({ sport, setSport, onSearch, onBell, onOpe
 
           const FormLegend = () => (
             <div style={{ display: 'flex', gap: 14, marginTop: 12, fontFamily: 'var(--mono)', fontSize: 9, color: 'var(--text-mute)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><span style={{ width: 9, height: 9, borderRadius: 2, background: 'var(--accent)', border: '1px solid var(--ink)', display: 'inline-block' }} /> Win</span>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><span style={{ width: 9, height: 9, borderRadius: 2, background: 'var(--surface-3)', border: '1px solid var(--ink)', display: 'inline-block' }} /> Draw</span>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><span style={{ width: 9, height: 9, borderRadius: 2, background: 'var(--coral)', border: '1px solid var(--ink)', display: 'inline-block' }} /> Loss</span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><span style={{ width: 9, height: 9, borderRadius: 2, background: 'var(--accent)', border: '1px solid var(--ink)', display: 'inline-block' }} /> {t('standings.win')}</span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><span style={{ width: 9, height: 9, borderRadius: 2, background: 'var(--surface-3)', border: '1px solid var(--ink)', display: 'inline-block' }} /> {t('standings.draw')}</span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><span style={{ width: 9, height: 9, borderRadius: 2, background: 'var(--coral)', border: '1px solid var(--ink)', display: 'inline-block' }} /> {t('standings.loss')}</span>
             </div>
           );
 
@@ -238,7 +240,7 @@ export default function LeaguesScreen({ sport, setSport, onSearch, onBell, onOpe
             return (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                 {groups.map(g => (
-                  <Card key={g.groupName} subtitle="Standings" title={g.groupName}>
+                  <Card key={g.groupName} subtitle={t('standings.title')} title={g.groupName}>
                     <TableHeader />
                     {g.entries.map(entry => <TeamRow key={entry.teamId} entry={entry} />)}
                     <FormLegend />
@@ -249,7 +251,7 @@ export default function LeaguesScreen({ sport, setSport, onSearch, onBell, onOpe
           }
 
           return (
-            <Card subtitle="Standings" title={selected.label}>
+            <Card subtitle={t('standings.title')} title={selected.label}>
               <TableHeader />
               {isLoading && (
                 <SkeletonList count={8}>{i => <SkeletonTableRow style={{ '--i': i } as React.CSSProperties} />}</SkeletonList>
@@ -257,7 +259,7 @@ export default function LeaguesScreen({ sport, setSport, onSearch, onBell, onOpe
               {!isLoading && table.length > 0 && table.map(entry => <TeamRow key={entry.teamId} entry={entry} />)}
               {!isLoading && table.length === 0 && (
                 <div style={{ padding: '24px 0', textAlign: 'center', fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text-mute)' }}>
-                  No standings data available
+                  {t('standings.noData')}
                 </div>
               )}
               <FormLegend />

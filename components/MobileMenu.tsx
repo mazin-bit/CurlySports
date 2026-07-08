@@ -6,25 +6,26 @@ import { X, ChevronDown } from "lucide-react";
 
 import { Ico } from "./Icons";
 import { useActiveSport, SPORT_CONFIGS } from "@/contexts/SportContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const NAV_MAIN = [
-  { key: "home",    label: "Home",        icon: "i-home",   href: "/dashboard",   feature: null,         count: null },
-  { key: "live",    label: "Live Scores", icon: "i-live",   href: "/live-scores", feature: "liveScores", count: null },
-  { key: "teams",   label: "Teams",       icon: "i-team",   href: "/teams",       feature: "teams",      count: null },
-  { key: "players", label: "Players",     icon: "i-user",   href: "/players",     feature: "players",    count: null },
-  { key: "leagues", label: "Leagues",     icon: "i-trophy", href: "/leagues",     feature: "leagues",    count: null },
+  { key: "home",    tKey: "nav.home",       icon: "i-home",   href: "/dashboard",   feature: null,         countKey: null },
+  { key: "live",    tKey: "nav.liveScores", icon: "i-live",   href: "/live-scores", feature: "liveScores", countKey: null },
+  { key: "teams",   tKey: "nav.teams",      icon: "i-team",   href: "/teams",       feature: "teams",      countKey: null },
+  { key: "players", tKey: "nav.players",    icon: "i-user",   href: "/players",     feature: "players",    countKey: null },
+  { key: "leagues", tKey: "nav.leagues",    icon: "i-trophy", href: "/leagues",     feature: "leagues",    countKey: null },
 ];
 const NAV_CONTENT = [
-  { key: "news",   label: "News",   icon: "i-news",  href: "/news",   feature: "news",  count: "NEW" },
-  { key: "videos", label: "Videos", icon: "i-video", href: "/videos", feature: null,    count: null  },
+  { key: "news",   tKey: "nav.news",   icon: "i-news",  href: "/news",   feature: "news",  countKey: "common.new" },
+  { key: "videos", tKey: "nav.videos", icon: "i-video", href: "/videos", feature: null,    countKey: null  },
 ];
 const NAV_COMMUNITY = [
-  { key: "funzone",   label: "Debates",    icon: "i-spark", href: "/debates",   feature: "funZone",   count: "HOT" },
-  { key: "minigames", label: "Mini Games", icon: "i-game",  href: "/mini-games", feature: "miniGames", count: null  },
+  { key: "funzone",   tKey: "nav.debates",   icon: "i-spark", href: "/debates",    feature: "funZone",   countKey: "common.hot" },
+  { key: "minigames", tKey: "nav.miniGames", icon: "i-game",  href: "/mini-games", feature: "miniGames", countKey: null  },
 ];
 const NAV_PERSONAL = [
-  { key: "favorites",     label: "Favorites",     icon: "i-heart", href: "/favorites",     feature: "favorites", count: null },
-  { key: "notifications", label: "Notifications", icon: "i-bell",  href: "/notifications", feature: null,        count: null },
+  { key: "favorites",     tKey: "nav.favorites",     icon: "i-heart", href: "/favorites",     feature: "favorites", countKey: null },
+  { key: "notifications", tKey: "nav.notifications", icon: "i-bell",  href: "/notifications", feature: null,        countKey: null },
 ];
 
 const SPORT_FLAG_KEY: Record<string, string> = {
@@ -45,6 +46,7 @@ interface MobileMenuProps {
 export default function MobileMenu({ active, onClose }: MobileMenuProps) {
   const router = useRouter();
   const { activeSport, activeSportConfig, setActiveSport } = useActiveSport();
+  const { t } = useLanguage();
   const [profile, setProfile] = useState<{ name: string; email: string; initials: string } | null>(null);
   const [enabledSports, setEnabledSports] = useState<Set<string>>(new Set());
   const [enabledFeatures, setEnabledFeatures] = useState<Set<string>>(new Set());
@@ -90,15 +92,15 @@ export default function MobileMenu({ active, onClose }: MobileMenuProps) {
     return items.filter((item) => !item.feature || enabledFeatures.size === 0 || enabledFeatures.has(item.feature));
   }
 
-  type NavItem = { key: string; label: string; icon: string; href: string; feature: string | null; count: string | null };
+  type NavItem = { key: string; tKey: string; icon: string; href: string; feature: string | null; countKey: string | null };
 
   function NavRow({ item }: { item: NavItem }) {
     const isActive = active === item.key;
     return (
       <Link href={item.href} className={`mn-item${isActive ? " mn-item-active" : ""}`} onClick={onClose}>
         <span className="mn-ico"><Ico id={item.icon} /></span>
-        <span className="mn-label">{item.label}</span>
-        {item.count && <span className="mn-badge">{item.count}</span>}
+        <span className="mn-label">{t(item.tKey)}</span>
+        {item.countKey && <span className="mn-badge">{t(item.countKey)}</span>}
       </Link>
     );
   }
@@ -112,8 +114,8 @@ export default function MobileMenu({ active, onClose }: MobileMenuProps) {
 
         {/* Header */}
         <div className="mn-header">
-          <span className="mn-header-title">Menu</span>
-          <button className="mn-close" onClick={onClose} aria-label="Close menu">
+          <span className="mn-header-title">{t("menu.title")}</span>
+          <button className="mn-close" onClick={onClose} aria-label={t("menu.close")}>
             <X size={18} strokeWidth={2.5} />
           </button>
         </div>
@@ -140,7 +142,7 @@ export default function MobileMenu({ active, onClose }: MobileMenuProps) {
                 size={14}
                 strokeWidth={2.5}
                 style={{
-                  marginLeft: "auto",
+                  marginInlineStart: "auto",
                   color: "var(--text-mute)",
                   transform: sportOpen ? "rotate(180deg)" : "none",
                   transition: "transform 0.2s",
@@ -171,14 +173,14 @@ export default function MobileMenu({ active, onClose }: MobileMenuProps) {
                     {s.label}
                     {s.comingSoon && (
                       <span style={{
-                        marginLeft: "auto", fontSize: 8, fontWeight: 800, fontFamily: "var(--mono)",
+                        marginInlineStart: "auto", fontSize: 8, fontWeight: 800, fontFamily: "var(--mono)",
                         color: "var(--text-mute)", background: "var(--surface-2)",
                         padding: "2px 5px", borderRadius: 3, letterSpacing: "0.04em",
                         textTransform: "uppercase", flexShrink: 0,
                       }}>Soon</span>
                     )}
                     {!s.comingSoon && activeSport === s.slug && (
-                      <span style={{ marginLeft: "auto", width: 6, height: 6, borderRadius: "50%", background: "var(--accent)", flexShrink: 0 }} />
+                      <span style={{ marginInlineStart: "auto", width: 6, height: 6, borderRadius: "50%", background: "var(--accent)", flexShrink: 0 }} />
                     )}
                   </button>
                 ))}
@@ -187,16 +189,16 @@ export default function MobileMenu({ active, onClose }: MobileMenuProps) {
           </div>
 
           {/* Navigation */}
-          <div className="mn-section-label">App</div>
+          <div className="mn-section-label">{t("navSection.app")}</div>
           {filterByFeature(NAV_MAIN).map((item) => <NavRow key={item.key} item={item} />)}
 
-          <div className="mn-section-label">Content</div>
+          <div className="mn-section-label">{t("navSection.content")}</div>
           {filterByFeature(NAV_CONTENT).map((item) => <NavRow key={item.key} item={item} />)}
 
-          <div className="mn-section-label">Community</div>
+          <div className="mn-section-label">{t("navSection.community")}</div>
           {filterByFeature(NAV_COMMUNITY).map((item) => <NavRow key={item.key} item={item} />)}
 
-          <div className="mn-section-label">Personal</div>
+          <div className="mn-section-label">{t("navSection.personal")}</div>
           {filterByFeature(NAV_PERSONAL).map((item) => <NavRow key={item.key} item={item} />)}
         </div>
 
@@ -213,7 +215,7 @@ export default function MobileMenu({ active, onClose }: MobileMenuProps) {
           )}
           <button className="mn-logout-btn" onClick={handleLogout}>
             <Ico id="i-logout" />
-            Log out
+            {t("common.logOut")}
           </button>
         </div>
       </div>

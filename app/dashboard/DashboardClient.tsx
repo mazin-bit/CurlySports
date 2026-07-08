@@ -11,6 +11,10 @@ import { useStandings, useSingleStandings } from "@/hooks/useStandings";
 import { useBracket } from "@/hooks/useBracket";
 import type { BracketRound, BracketMatch } from "@/hooks/useBracket";
 import { useActiveSport } from "@/contexts/SportContext";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { formatDate, formatTime, formatNumber, localizeDigits } from "@/lib/locale-utils";
+import { translateTeamName } from "@/lib/team-names";
+import { translateLeagueName } from "@/lib/league-names";
 import type { NormalizedMatch, NormalizedNews } from "@/lib/types";
 import type { StandingEntry, GroupStandings } from "@/hooks/useStandings";
 
@@ -23,14 +27,14 @@ function toDateKey(d: Date) {
   );
 }
 
-function timeSince(iso: string): string {
+function timeSince(iso: string, t: (k: string) => string, locale: import("@/lib/i18n").Locale = "en"): string {
   const diff = Date.now() - new Date(iso).getTime();
   const mins = Math.floor(diff / 60_000);
-  if (mins < 1) return "just now";
-  if (mins < 60) return `${mins}m ago`;
+  if (mins < 1) return t("time.justNow");
+  if (mins < 60) return t("time.minsAgo").replace("{n}", localizeDigits(String(mins), locale));
   const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  return `${Math.floor(hrs / 24)}d ago`;
+  if (hrs < 24) return t("time.hoursAgo").replace("{n}", localizeDigits(String(hrs), locale));
+  return t("time.daysAgo").replace("{n}", localizeDigits(String(Math.floor(hrs / 24)), locale));
 }
 
 /* ── Team Crest ──────────────────────────────────────────────── */
@@ -45,39 +49,41 @@ function TeamCrest({ logoUrl, name, size = 32 }: { logoUrl?: string | null; name
 
 /* ── Hero Match Card (featured live / big match) ─────────────── */
 function HeroMatchCard({ m }: { m: NormalizedMatch }) {
+  const { t, locale } = useLanguage();
   const isLive = m.status === "LIVE" || m.status === "HALF_TIME";
   const homeWins = m.homeScore !== null && m.awayScore !== null && m.homeScore > m.awayScore;
   const awayWins = m.homeScore !== null && m.awayScore !== null && m.awayScore > m.homeScore;
   const href = `/matches/${m.id}?sport=${m.sport}&league=${m.league.id}`;
   let statusLabel = m.statusDisplay;
-  if (m.status === "HALF_TIME") statusLabel = "Half Time";
-  if (m.status === "FINISHED") statusLabel = "Full Time";
+  if (m.status === "HALF_TIME") statusLabel = t("matchStatus.halfTime");
+  if (m.status === "FINISHED") statusLabel = t("matchStatus.fullTime");
+  if (m.status === "SCHEDULED") statusLabel = t("matchStatus.scheduled");
 
   return (
     <Link href={href} style={{ textDecoration: "none", color: "inherit" }}>
       <div className={`${styles.heroCard}${isLive ? " " + styles.heroLive : ""}`}>
         <div className={styles.heroHeader}>
-          <span className={styles.leagueBadge}>{m.league.name}</span>
+          <span className={styles.leagueBadge}>{translateLeagueName(m.league.name, locale)}</span>
           {isLive ? (
-            <span className={styles.liveBadge}><span className={styles.liveDot} />LIVE · {statusLabel}</span>
+            <span className={styles.liveBadge}><span className={styles.liveDot} />{t("matchStatus.live")} · {statusLabel}</span>
           ) : (
             <span className={styles.leagueBadge} style={{ color: "var(--text-mute)" }}>
-              {m.status === "FINISHED" ? "Full Time" : new Date(m.scheduledAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}
+              {m.status === "FINISHED" ? t("matchStatus.fullTime") : formatTime(new Date(m.scheduledAt), locale)}
             </span>
           )}
         </div>
         <div className={styles.heroTeams}>
           <div className={styles.heroTeam}>
             <TeamCrest logoUrl={m.homeTeam.logoUrl} name={m.homeTeam.shortName} size={48} />
-            <span className={`${styles.heroName}${homeWins ? " " + styles.winner : ""}`}>{m.homeTeam.name}</span>
+            <span className={`${styles.heroName}${homeWins ? " " + styles.winner : ""}`}>{translateTeamName(m.homeTeam.name, locale)}</span>
           </div>
           <div className={styles.heroScore}>
             <span className={`${styles.heroNum}${homeWins ? " " + styles.winning : ""}`}>{m.homeScore ?? (isLive ? "0" : "-")}</span>
-            <span className={styles.heroVs}>{isLive ? "·" : "vs"}</span>
+            <span className={styles.heroVs}>{isLive ? "·" : t("matchStatus.vs")}</span>
             <span className={`${styles.heroNum}${awayWins ? " " + styles.winning : ""}`}>{m.awayScore ?? (isLive ? "0" : "-")}</span>
           </div>
           <div className={`${styles.heroTeam} ${styles.heroTeamAway}`}>
-            <span className={`${styles.heroName}${awayWins ? " " + styles.winner : ""}`}>{m.awayTeam.name}</span>
+            <span className={`${styles.heroName}${awayWins ? " " + styles.winner : ""}`}>{translateTeamName(m.awayTeam.name, locale)}</span>
             <TeamCrest logoUrl={m.awayTeam.logoUrl} name={m.awayTeam.shortName} size={48} />
           </div>
         </div>
@@ -88,43 +94,45 @@ function HeroMatchCard({ m }: { m: NormalizedMatch }) {
 
 /* ── Match Card ──────────────────────────────────────────────── */
 function MatchCard({ m }: { m: NormalizedMatch }) {
+  const { t, locale } = useLanguage();
   const isLive = m.status === "LIVE" || m.status === "HALF_TIME";
   const homeWins = m.homeScore !== null && m.awayScore !== null && m.homeScore > m.awayScore;
   const awayWins = m.homeScore !== null && m.awayScore !== null && m.awayScore > m.homeScore;
   let statusLabel = m.statusDisplay;
-  if (m.status === "HALF_TIME") statusLabel = "HT";
-  if (m.status === "FINISHED") statusLabel = "FT";
+  if (m.status === "HALF_TIME") statusLabel = t("matchStatus.ht");
+  if (m.status === "FINISHED") statusLabel = t("matchStatus.ft");
+  if (m.status === "SCHEDULED") statusLabel = t("matchStatus.scheduled");
   const href = `/matches/${m.id}?sport=${m.sport}&league=${m.league.id}`;
 
   return (
     <Link href={href} style={{ textDecoration: "none", color: "inherit" }}>
       <div className={`${styles.matchCard}${isLive ? " " + styles.liveCard : ""}`}>
         <div className={styles.matchHeader}>
-          <span className={styles.leagueBadge}>{m.league.shortName}</span>
+          <span className={styles.leagueBadge}>{translateLeagueName(m.league.shortName, locale)}</span>
           {isLive ? (
             <span className={styles.liveBadge}><span className={styles.liveDot} />{statusLabel}</span>
           ) : (
             <span className={styles.leagueBadge} style={{ color: "var(--text-mute)" }}>
-              {m.status === "FINISHED" ? "FT" : new Date(m.scheduledAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}
+              {m.status === "FINISHED" ? t("matchStatus.ft") : formatTime(new Date(m.scheduledAt), locale)}
             </span>
           )}
         </div>
         <div className={styles.matchTeams}>
           <div className={styles.teamRow}>
             <TeamCrest logoUrl={m.homeTeam.logoUrl} name={m.homeTeam.shortName} size={32} />
-            <span className={`${styles.teamName}${homeWins ? " " + styles.winner : ""}`}>{m.homeTeam.name}</span>
+            <span className={`${styles.teamName}${homeWins ? " " + styles.winner : ""}`}>{translateTeamName(m.homeTeam.name, locale)}</span>
             <span className={`${styles.score}${homeWins ? " " + styles.winning : ""}`}>{m.homeScore ?? "-"}</span>
           </div>
           <div className={styles.teamRow}>
             <TeamCrest logoUrl={m.awayTeam.logoUrl} name={m.awayTeam.shortName} size={32} />
-            <span className={`${styles.teamName}${awayWins ? " " + styles.winner : ""}`}>{m.awayTeam.name}</span>
+            <span className={`${styles.teamName}${awayWins ? " " + styles.winner : ""}`}>{translateTeamName(m.awayTeam.name, locale)}</span>
             <span className={`${styles.score}${awayWins ? " " + styles.winning : ""}`}>{m.awayScore ?? "-"}</span>
           </div>
         </div>
         <div className={styles.matchFooter}>
           <span className={styles.matchTime}>{statusLabel}</span>
           <span>·</span>
-          <span>{m.league.name}</span>
+          <span>{translateLeagueName(m.league.name, locale)}</span>
         </div>
       </div>
     </Link>
@@ -150,12 +158,13 @@ function NewsCardImg({ article }: { article: NormalizedNews }) {
 }
 
 function NewsCard({ n }: { n: NormalizedNews }) {
+  const { t, locale } = useLanguage();
   return (
     <a href={n.url ?? "#"} target="_blank" rel="noopener noreferrer" className={styles.newsCard}>
       <div className={styles.newsImage}><NewsCardImg article={n} /></div>
       <div className={styles.newsContent}>
         <h3 className={styles.newsTitle}>{n.title}</h3>
-        <p className={styles.newsMeta}>{timeSince(n.publishedAt)} · {n.source}</p>
+        <p className={styles.newsMeta}>{timeSince(n.publishedAt, t, locale)} · {n.source}</p>
       </div>
     </a>
   );
@@ -163,25 +172,26 @@ function NewsCard({ n }: { n: NormalizedNews }) {
 
 /* ── Standings Table ─────────────────────────────────────────── */
 function StandingsTable({ entries, leagueName, max = 8 }: { entries: StandingEntry[]; leagueName: string; max?: number }) {
+  const { t, locale } = useLanguage();
   const rows = entries.slice(0, max);
   const isFootball = entries.some((e) => e.draws > 0);
 
   return (
     <div className={styles.tableWrap}>
       <div className={styles.tableHead}>
-        <span className={styles.tableTitle}>{leagueName}</span>
+        <span className={styles.tableTitle}>{translateLeagueName(leagueName, locale)}</span>
         <div className={styles.tableCols}>
-          <span>P</span><span>W</span>
-          {isFootball && <span className={styles.hideXs}>D</span>}
-          <span className={styles.hideXs}>L</span>
-          {isFootball && <span className={styles.hideSm}>GD</span>}
-          <span style={{ color: "var(--orange)", fontWeight: 700 }}>Pts</span>
+          <span>{t("standings.p")}</span><span>{t("standings.w")}</span>
+          {isFootball && <span className={styles.hideXs}>{t("standings.d")}</span>}
+          <span className={styles.hideXs}>{t("standings.l")}</span>
+          {isFootball && <span className={styles.hideSm}>{t("standings.gd")}</span>}
+          <span style={{ color: "var(--orange)", fontWeight: 700 }}>{t("standings.pts")}</span>
         </div>
       </div>
       {rows.map((row, idx) => (
         <div key={row.teamId || idx} className={styles.tableRow}>
           <span className={styles.tablePos} style={{ color: idx < 4 ? "var(--orange)" : "var(--text-mute)" }}>
-            {row.rank || idx + 1}
+            {localizeDigits(String(row.rank || idx + 1), locale)}
           </span>
           <div className={styles.tableTeam}>
             {row.teamLogo ? (
@@ -190,18 +200,18 @@ function StandingsTable({ entries, leagueName, max = 8 }: { entries: StandingEnt
             ) : (
               <div className="crest" style={{ width: 22, height: 22, fontSize: 8 }}>{row.teamAbbr.slice(0, 3)}</div>
             )}
-            <span>{row.teamName}</span>
+            <span>{translateTeamName(row.teamName, locale)}</span>
           </div>
-          <span className={styles.tableStat}>{row.gamesPlayed}</span>
-          <span className={styles.tableStat}>{row.wins}</span>
-          {isFootball && <span className={`${styles.tableStat} ${styles.hideXs}`}>{row.draws}</span>}
-          <span className={`${styles.tableStat} ${styles.hideXs}`}>{row.losses}</span>
+          <span className={styles.tableStat}>{localizeDigits(String(row.gamesPlayed), locale)}</span>
+          <span className={styles.tableStat}>{localizeDigits(String(row.wins), locale)}</span>
+          {isFootball && <span className={`${styles.tableStat} ${styles.hideXs}`}>{localizeDigits(String(row.draws), locale)}</span>}
+          <span className={`${styles.tableStat} ${styles.hideXs}`}>{localizeDigits(String(row.losses), locale)}</span>
           {isFootball && (
             <span className={`${styles.tableStat} ${styles.hideSm}`} style={{ color: row.goalDiff > 0 ? "var(--teal)" : row.goalDiff < 0 ? "var(--coral)" : undefined }}>
-              {row.goalDiff > 0 ? `+${row.goalDiff}` : row.goalDiff}
+              {localizeDigits(row.goalDiff > 0 ? `+${row.goalDiff}` : String(row.goalDiff), locale)}
             </span>
           )}
-          <span className={styles.tableStat} style={{ color: "var(--ink)", fontWeight: 700 }}>{row.points}</span>
+          <span className={styles.tableStat} style={{ color: "var(--ink)", fontWeight: 700 }}>{localizeDigits(String(row.points), locale)}</span>
         </div>
       ))}
     </div>
@@ -210,26 +220,27 @@ function StandingsTable({ entries, leagueName, max = 8 }: { entries: StandingEnt
 
 /* ── World Cup Groups Grid ──────────────────────────────────── */
 function WorldCupGroupsGrid({ groups, leagueName }: { groups: GroupStandings[]; leagueName: string }) {
+  const { t, locale } = useLanguage();
   return (
     <div>
       <div className={styles.wcHeader}>
-        <span className={styles.wcTitle}>{leagueName} — Group Stage</span>
+        <span className={styles.wcTitle}>{translateLeagueName(leagueName, locale)} — {t("dashboard.groupStage")}</span>
       </div>
       <div className={styles.wcGroupsGrid}>
         {groups.map((g) => (
           <div key={g.groupName} className={styles.wcGroupCard}>
             <div className={styles.wcGroupTitle}>{g.groupName}</div>
             <div className={styles.wcGroupHead}>
-              <span className={styles.wcColTeam}>Team</span>
-              <span className={styles.wcColStat}>P</span>
-              <span className={styles.wcColStat}>W</span>
-              <span className={styles.wcColStat}>L</span>
-              <span className={styles.wcColStatPts}>Pts</span>
+              <span className={styles.wcColTeam}>{t("standings.team")}</span>
+              <span className={styles.wcColStat}>{t("standings.p")}</span>
+              <span className={styles.wcColStat}>{t("standings.w")}</span>
+              <span className={styles.wcColStat}>{t("standings.l")}</span>
+              <span className={styles.wcColStatPts}>{t("standings.pts")}</span>
             </div>
             {g.entries.slice(0, 4).map((row, idx) => (
               <div key={row.teamId || idx} className={styles.wcTeamRow}>
                 <span className={styles.wcRank} style={{ color: idx < 2 ? "var(--accent)" : "var(--text-mute)" }}>
-                  {row.rank || idx + 1}
+                  {localizeDigits(String(row.rank || idx + 1), locale)}
                 </span>
                 <div className={styles.wcTeamInfo}>
                   {row.teamLogo ? (
@@ -238,12 +249,12 @@ function WorldCupGroupsGrid({ groups, leagueName }: { groups: GroupStandings[]; 
                   ) : (
                     <div className="crest" style={{ width: 20, height: 20, fontSize: 7 }}>{row.teamAbbr.slice(0, 3)}</div>
                   )}
-                  <span className={styles.wcTeamName}>{row.teamAbbr}</span>
+                  <span className={styles.wcTeamName}>{translateTeamName(row.teamAbbr, locale)}</span>
                 </div>
-                <span className={styles.wcStat}>{row.gamesPlayed}</span>
-                <span className={styles.wcStat}>{row.wins}</span>
-                <span className={styles.wcStat}>{row.losses}</span>
-                <span className={styles.wcStatPts}>{row.points}</span>
+                <span className={styles.wcStat}>{localizeDigits(String(row.gamesPlayed), locale)}</span>
+                <span className={styles.wcStat}>{localizeDigits(String(row.wins), locale)}</span>
+                <span className={styles.wcStat}>{localizeDigits(String(row.losses), locale)}</span>
+                <span className={styles.wcStatPts}>{localizeDigits(String(row.points), locale)}</span>
               </div>
             ))}
           </div>
@@ -298,11 +309,12 @@ function DashKnockoutMatch({ match }: { match: BracketMatch }) {
 }
 
 function DashKnockoutBracket({ rounds, leagueName }: { rounds: BracketRound[]; leagueName: string }) {
+  const { t } = useLanguage();
   if (rounds.length === 0) return null;
 
   return (
     <div className={styles.koSection}>
-      <div className={styles.koSectionTitle}>Knockout Stage</div>
+      <div className={styles.koSectionTitle}>{t("dashboard.knockoutStage")}</div>
       {rounds.map((round) => (
         <div key={round.name} className={styles.koRound}>
           <div className={styles.koRoundName}>{round.name}</div>
@@ -341,7 +353,7 @@ function useUpcomingMatches(sport: string, todayKey: string, skip: boolean) {
           const groups = data.groups ?? [];
           const matches: NormalizedMatch[] = groups.flatMap((g: { matches: NormalizedMatch[] }) => g.matches);
           if (matches.length > 0 && !cancelled) {
-            const label = d === 1 ? "Tomorrow" : candidate.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "short" });
+            const label = d === 1 ? "__tomorrow__" : candidate.toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "short" });
             setUpcoming({ matches, dateLabel: label });
             return;
           }
@@ -360,11 +372,12 @@ function useUpcomingMatches(sport: string, todayKey: string, skip: boolean) {
 /* ── Main Dashboard Client ───────────────────────────────────── */
 export default function DashboardClient() {
   const { activeSport, activeSportConfig } = useActiveSport();
+  const { t, locale } = useLanguage();
 
   const now = new Date();
   now.setHours(0, 0, 0, 0);
   const todayKey = toDateKey(now);
-  const todayLabel = now.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
+  const todayLabel = formatDate(now, locale);
 
   const { groups, liveCount, isConnected: scoresConnected } = useScoresStream(activeSport, todayKey);
   const scoresLoading = !scoresConnected && groups.length === 0;
@@ -408,25 +421,25 @@ export default function DashboardClient() {
           <div>
             <div className="title">
               <Zap size={17} className="title-icon" strokeWidth={2} />
-              {activeSportConfig.icon} Today&apos;s <span className="accent">Matches</span>
+              {activeSportConfig.icon} {t("dashboard.todaysMatches")} <span className="accent">{t("dashboard.matches")}</span>
             </div>
             <div className="sub">
               {scoresValidating && !scoresLoading
-                ? "● Syncing..."
+                ? t("dashboard.syncing")
                 : liveCount > 0
-                ? `${liveCount} live now · ${todayLabel}`
+                ? `${formatNumber(liveCount, locale)} ${t("dashboard.liveNow")} · ${todayLabel}`
                 : todayLabel}
             </div>
           </div>
-          <Link href="/live-scores" className={styles.viewAll}>View all →</Link>
+          <Link href="/live-scores" className={styles.viewAll}>{t("common.viewAll")}</Link>
         </div>
 
         {/* Live Now Banner */}
         {!scoresLoading && liveCount > 0 && (
           <div className={styles.liveBanner}>
             <Radio size={14} strokeWidth={2} className={styles.liveBannerIcon} />
-            <strong>{liveCount} {activeSportConfig.label} {liveCount === 1 ? "match" : "matches"} happening right now</strong>
-            <Link href="/live-scores" className={styles.liveBannerLink}>Watch live →</Link>
+            <strong>{(liveCount === 1 ? t("dashboard.matchHappening") : t("dashboard.matchesHappening")).replace("{count}", formatNumber(liveCount, locale)).replace("{sport}", t("sport." + activeSport, activeSportConfig.label))}</strong>
+            <Link href="/live-scores" className={styles.liveBannerLink}>{t("dashboard.watchLive")}</Link>
           </div>
         )}
 
@@ -452,7 +465,7 @@ export default function DashboardClient() {
         ) : upcomingData ? (
           <>
             <p style={{ fontSize: 12, color: "var(--text-mute)", marginBottom: 10, fontFamily: "var(--mono)" }}>
-              No matches today · Next up: <strong style={{ color: "var(--ink)" }}>{upcomingData.dateLabel}</strong>
+              {t("dashboard.noMatchesNextUp")}<strong style={{ color: "var(--ink)" }}>{upcomingData.dateLabel === "__tomorrow__" ? t("time.tomorrow") : upcomingData.dateLabel}</strong>
             </p>
             <div className={styles.matchGrid}>
               {upcomingData.matches.slice(0, 9).map((m) => <MatchCard key={m.id} m={m} />)}
@@ -461,13 +474,13 @@ export default function DashboardClient() {
         ) : (
           <div className={styles.emptyState}>
             <span style={{ fontSize: 32 }}>{activeSportConfig.icon}</span>
-            <p>No {activeSportConfig.label} matches today.</p>
-            <p style={{ fontSize: 12, color: "var(--text-mute)" }}>Check live scores for other dates →</p>
+            <p>{t("dashboard.noSportMatchesToday").replace("{sport}", activeSportConfig.label)}</p>
+            <p style={{ fontSize: 12, color: "var(--text-mute)" }}>{t("dashboard.checkLiveScores")}</p>
           </div>
         )}
       </section>
 
-      <AdSlot size="banner" label="Sponsored" />
+      <AdSlot size="banner" label={t("common.sponsored")} />
 
       {/* Latest News */}
       <section className="section">
@@ -475,10 +488,10 @@ export default function DashboardClient() {
           <div>
             <div className="title">
               <Newspaper size={17} className="title-icon" strokeWidth={2} />
-              {activeSportConfig.icon} Latest <span className="accent">News</span>
+              {activeSportConfig.icon} {t("dashboard.latestNews")} <span className="accent">{t("dashboard.newsAccent")}</span>
             </div>
           </div>
-          <Link href="/news" className={styles.viewAll}>View all →</Link>
+          <Link href="/news" className={styles.viewAll}>{t("common.viewAll")}</Link>
         </div>
 
         {newsLoading ? (
@@ -501,12 +514,12 @@ export default function DashboardClient() {
             <div>
               <div className="title">
                 <Trophy size={17} className="title-icon" strokeWidth={2} />
-                {activeSportConfig.icon} FIFA World Cup <span className="accent">Standings</span>
+                {activeSportConfig.icon} {t("dashboard.worldCupStandings")} <span className="accent">{t("dashboard.standingsLabel")}</span>
               </div>
               <div className="sub">{wcStandings?.season}</div>
             </div>
             <Link href="/leagues" className={styles.viewAll}>
-              Full table <ChevronRight size={13} strokeWidth={2.5} />
+              {t("dashboard.fullTable")} <ChevronRight size={13} strokeWidth={2.5} />
             </Link>
           </div>
 
@@ -538,12 +551,12 @@ export default function DashboardClient() {
             <div>
               <div className="title">
                 <Trophy size={17} className="title-icon" strokeWidth={2} />
-                {activeSportConfig.icon} <span className="accent">Standings</span>
+                {activeSportConfig.icon} <span className="accent">{t("dashboard.standingsLabel")}</span>
               </div>
               <div className="sub">{featuredStandings?.season}</div>
             </div>
             <Link href="/leagues" className={styles.viewAll}>
-              Full table <ChevronRight size={13} strokeWidth={2.5} />
+              {t("dashboard.fullTable")} <ChevronRight size={13} strokeWidth={2.5} />
             </Link>
           </div>
 

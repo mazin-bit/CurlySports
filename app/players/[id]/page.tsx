@@ -11,6 +11,9 @@ import {
   CircleDot, AlertTriangle, Swords, AlertCircle,
 } from "lucide-react";
 import type { PlayerDetail } from "@/app/api/espn/player/route";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { formatDate, localizeDigits } from "@/lib/locale-utils";
+import { translateTeamName } from "@/lib/team-names";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
@@ -18,12 +21,7 @@ function initials(name: string) {
   return name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
 }
 
-function formatDOB(dob: string | null): string {
-  if (!dob) return "";
-  const d = new Date(dob);
-  if (isNaN(d.getTime())) return dob;
-  return d.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
-}
+// formatDOB is now handled inline using formatDate from locale-utils
 
 function calcAge(dob: string | null): number | null {
   if (!dob) return null;
@@ -32,26 +30,46 @@ function calcAge(dob: string | null): number | null {
   return Math.floor((Date.now() - d.getTime()) / (365.25 * 24 * 60 * 60 * 1000));
 }
 
-// Map stat names to icons + friendly labels
-const STAT_META: Record<string, { icon: React.ReactNode; label: string }> = {
-  goals:           { icon: <Target size={14} />,       label: "Goals" },
-  assists:         { icon: <Star size={14} />,          label: "Assists" },
-  saves:           { icon: <Shield size={14} />,        label: "Saves" },
-  cleanSheets:     { icon: <Shield size={14} />,        label: "Clean Sheets" },
-  appearances:     { icon: <Activity size={14} />,      label: "Apps" },
-  gamesPlayed:     { icon: <Activity size={14} />,      label: "Games" },
-  minutesPlayed:   { icon: <Timer size={14} />,         label: "Minutes" },
-  yellowCards:     { icon: <AlertTriangle size={14} />, label: "Yellow" },
-  redCards:        { icon: <Swords size={14} />,        label: "Red" },
-  shots:           { icon: <CircleDot size={14} />,     label: "Shots" },
-  shotsOnTarget:   { icon: <Target size={14} />,        label: "On Target" },
-  points:          { icon: <Trophy size={14} />,        label: "Points" },
-  rebounds:        { icon: <Activity size={14} />,      label: "Rebounds" },
-  touchdowns:      { icon: <Star size={14} />,          label: "TDs" },
+// Map stat names to icons + translation keys
+const STAT_ICONS: Record<string, React.ReactNode> = {
+  goals:           <Target size={14} />,
+  assists:         <Star size={14} />,
+  saves:           <Shield size={14} />,
+  cleanSheets:     <Shield size={14} />,
+  appearances:     <Activity size={14} />,
+  gamesPlayed:     <Activity size={14} />,
+  minutesPlayed:   <Timer size={14} />,
+  yellowCards:     <AlertTriangle size={14} />,
+  redCards:        <Swords size={14} />,
+  shots:           <CircleDot size={14} />,
+  shotsOnTarget:   <Target size={14} />,
+  points:          <Trophy size={14} />,
+  rebounds:        <Activity size={14} />,
+  touchdowns:      <Star size={14} />,
 };
 
-function getStatMeta(stat: { name: string; displayName: string }) {
-  return STAT_META[stat.name] ?? { icon: <Star size={14} />, label: stat.displayName };
+const STAT_LABEL_KEYS: Record<string, string> = {
+  goals:         "sportStat.goals",
+  assists:       "sportStat.assists",
+  saves:         "sportStat.saves",
+  cleanSheets:   "sportStat.cleanSheets",
+  appearances:   "sportStat.appearances",
+  gamesPlayed:   "sportStat.gamesPlayed",
+  minutesPlayed: "sportStat.minutesPlayed",
+  yellowCards:   "sportStat.yellowCards",
+  redCards:      "sportStat.redCards",
+  shots:         "sportStat.shots",
+  shotsOnTarget: "sportStat.shotsOnTarget",
+  points:        "sportStat.points",
+  rebounds:      "sportStat.rebounds",
+  touchdowns:    "sportStat.touchdowns",
+};
+
+function getStatMeta(stat: { name: string; displayName: string }, t: (key: string) => string) {
+  const icon = STAT_ICONS[stat.name] ?? <Star size={14} />;
+  const labelKey = STAT_LABEL_KEYS[stat.name];
+  const label = labelKey ? t(labelKey) : stat.displayName;
+  return { icon, label };
 }
 
 // Position-based accent colours
@@ -65,6 +83,7 @@ function posColor(posAbbr: string): string {
 }
 
 export default function PlayerPage() {
+  const { t, locale } = useLanguage();
   const params = useParams();
   const searchParams = useSearchParams();
   const athleteId = params.id as string;
@@ -78,7 +97,7 @@ export default function PlayerPage() {
 
   if (isLoading) {
     return (
-      <AppShell active="players" title="Player" subtitle="Loading…">
+      <AppShell active="players" title={t("playerProfile.title")} subtitle={t("playerProfile.loading")}>
         <div className="stack-sm">
           <div className="skeleton-row" style={{ height: 200, borderRadius: 16 }} />
           <div className="skeleton-row" style={{ height: 120, borderRadius: 12 }} />
@@ -90,12 +109,12 @@ export default function PlayerPage() {
 
   if (error || !player || (player as { error?: string }).error) {
     return (
-      <AppShell active="players" title="Player" subtitle="Not found">
+      <AppShell active="players" title={t("playerProfile.title")} subtitle={t("playerProfile.notFound")}>
         <div style={{ textAlign: "center", padding: "48px 20px", color: "var(--text-mute)" }}>
           <AlertCircle size={40} strokeWidth={1.5} style={{ marginBottom: 12, color: "var(--text-mute)" }} />
-          <p>Player data not available.</p>
+          <p>{t("playerProfile.notAvailable")}</p>
           <Link href="/players" className={styles.backBtn} style={{ display: "inline-flex", marginTop: 16 }}>
-            <ArrowLeft size={14} /> Back to Players
+            <ArrowLeft size={14} /> {t("playerProfile.backToPlayers")}
           </Link>
         </div>
       </AppShell>
@@ -113,7 +132,7 @@ export default function PlayerPage() {
 
         {/* Back */}
         <Link href="/players" className={styles.backBtn}>
-          <ArrowLeft size={14} /> All Players
+          <ArrowLeft size={14} /> {t("playerProfile.allPlayers")}
         </Link>
 
         {/* ── Hero Card ─────────────────────────────────── */}
@@ -197,8 +216,8 @@ export default function PlayerPage() {
         <div className={styles.section}>
           <div className={styles.sectionHead}>
             <span className={styles.sectionTitle}>
-              <Activity size={13} style={{ marginRight: 5 }} />
-              Season Stats
+              <Activity size={13} style={{ marginInlineEnd: 5 }} />
+              {t("playerProfile.seasonStats")}
             </span>
             {player.statsSeason && (
               <span className={styles.sectionSub}>{player.statsSeason}</span>
@@ -208,10 +227,10 @@ export default function PlayerPage() {
           {hasStats ? (
             <div className={styles.statsGrid}>
               {topStats.map((s) => {
-                const meta = getStatMeta(s);
+                const meta = getStatMeta(s, t);
                 return (
                   <div key={s.name} className={styles.statCard}>
-                    <span className={styles.statValue}>{s.displayValue || s.value}</span>
+                    <span className={styles.statValue}>{localizeDigits(String(s.displayValue || s.value), locale)}</span>
                     <span className={styles.statIcon}>{meta.icon}</span>
                     <span className={styles.statLabel}>{meta.label || s.displayName}</span>
                   </div>
@@ -220,7 +239,7 @@ export default function PlayerPage() {
             </div>
           ) : (
             <div className={styles.emptyStats}>
-              No stats available for this season.
+              {t("playerProfile.noStatsAvailable")}
             </div>
           )}
         </div>
@@ -229,43 +248,47 @@ export default function PlayerPage() {
         <div className={styles.section}>
           <div className={styles.sectionHead}>
             <span className={styles.sectionTitle}>
-              <Shield size={13} style={{ marginRight: 5 }} />
-              Profile
+              <Shield size={13} style={{ marginInlineEnd: 5 }} />
+              {t("playerProfile.profile")}
             </span>
           </div>
           <div className={styles.profileGrid}>
             {player.position && (
-              <ProfileRow icon={<Shirt size={13} />} label="Position" value={player.position} />
+              <ProfileRow icon={<Shirt size={13} />} label={t("playerProfile.position")} value={player.position} />
             )}
             {player.nationality && (
               <ProfileRow
                 icon={player.flagUrl
                   ? <img src={player.flagUrl} alt="" width={14} height={10} style={{ objectFit: "cover", borderRadius: 1 }} />
                   : <MapPin size={13} />}
-                label="Nationality"
+                label={t("playerProfile.nationality")}
                 value={player.nationality}
               />
             )}
             {player.displayDOB && (
-              <ProfileRow icon={<Cake size={13} />} label="Date of Birth" value={formatDOB(player.displayDOB)} />
+              <ProfileRow icon={<Cake size={13} />} label={t("playerProfile.dateOfBirth")} value={(() => {
+                const d = new Date(player.displayDOB!);
+                if (isNaN(d.getTime())) return player.displayDOB!;
+                return formatDate(d, locale, { day: "numeric", month: "long", year: "numeric" });
+              })()} />
             )}
             {displayAge && (
-              <ProfileRow icon={<Cake size={13} />} label="Age" value={`${displayAge} years old`} />
+              <ProfileRow icon={<Cake size={13} />} label={t("playerProfile.age")} value={t("playerProfile.yearsOld").replace("{n}", localizeDigits(String(displayAge), locale))} />
             )}
             {player.height && (
-              <ProfileRow icon={<Ruler size={13} />} label="Height" value={player.height} />
+              <ProfileRow icon={<Ruler size={13} />} label={t("playerProfile.height")} value={player.height} />
             )}
             {player.weight && (
-              <ProfileRow icon={<Weight size={13} />} label="Weight" value={player.weight} />
+              <ProfileRow icon={<Weight size={13} />} label={t("playerProfile.weight")} value={player.weight} />
             )}
             {player.jersey && (
-              <ProfileRow icon={<Shirt size={13} />} label="Jersey" value={`#${player.jersey}`} />
+              <ProfileRow icon={<Shirt size={13} />} label={t("playerProfile.jersey")} value={`#${localizeDigits(String(player.jersey), locale)}`} />
             )}
             {player.teamName && (
-              <ProfileRow icon={<Trophy size={13} />} label="Club" value={player.teamName} />
+              <ProfileRow icon={<Trophy size={13} />} label={t("playerProfile.club")} value={translateTeamName(player.teamName, locale)} />
             )}
             {player.leagueName && (
-              <ProfileRow icon={<Star size={13} />} label="League" value={player.leagueName} />
+              <ProfileRow icon={<Star size={13} />} label={t("playerProfile.league")} value={player.leagueName} />
             )}
           </div>
         </div>

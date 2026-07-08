@@ -10,6 +10,7 @@ import {
   ChevronUp, AlertCircle, Send, Loader2, Trash2, Check, Vote,
 } from "lucide-react";
 import { useActiveSport } from "@/contexts/SportContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -69,6 +70,7 @@ function CreateDebateModal({
   onCreated: (debate: Debate) => void;
   sport: string;
 }) {
+  const { t } = useLanguage();
   const [question, setQuestion] = useState("");
   const [optionA, setOptionA] = useState("");
   const [optionB, setOptionB] = useState("");
@@ -97,9 +99,9 @@ function CreateDebateModal({
       if (!res.ok) {
         const data = await res.json();
         if (res.status === 401) {
-          setError("You must be logged in to create a debate.");
+          setError(t("debates.mustBeLoggedInCreate"));
         } else {
-          setError(data.error ?? "Failed to create debate.");
+          setError(data.error ?? t("debates.failedToCreate"));
         }
         return;
       }
@@ -115,14 +117,14 @@ function CreateDebateModal({
     <div className={styles.composeOverlay} onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className={styles.composeModal}>
         <div className={styles.composeHead}>
-          <span className={styles.composeTitle}>New Debate</span>
+          <span className={styles.composeTitle}>{t("debates.newDebate")}</span>
           <button className={styles.composeClose} onClick={onClose}><X size={15} /></button>
         </div>
 
         <div className={styles.composeBody}>
           <textarea
             className={styles.composeContentInput}
-            placeholder="Ask a debate question..."
+            placeholder={t("debates.askDebateQuestion")}
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
             rows={2}
@@ -131,11 +133,11 @@ function CreateDebateModal({
           />
 
           <div className={styles.pollSection}>
-            <div className={styles.composeOptsLabel}>Options</div>
+            <div className={styles.composeOptsLabel}>{t("debates.options")}</div>
             <div className={styles.composeOptRow}>
               <input
                 className={styles.composeOptInput}
-                placeholder="Option A (e.g. Messi)"
+                placeholder={t("debates.optionAExample")}
                 value={optionA}
                 onChange={(e) => setOptionA(e.target.value)}
                 maxLength={60}
@@ -144,7 +146,7 @@ function CreateDebateModal({
             <div className={styles.composeOptRow}>
               <input
                 className={styles.composeOptInput}
-                placeholder="Option B (e.g. Ronaldo)"
+                placeholder={t("debates.optionBExample")}
                 value={optionB}
                 onChange={(e) => setOptionB(e.target.value)}
                 maxLength={60}
@@ -158,14 +160,14 @@ function CreateDebateModal({
         <div className={styles.composeFoot}>
           <div />
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <button className={styles.composeCancelBtn} onClick={onClose}>Cancel</button>
+            <button className={styles.composeCancelBtn} onClick={onClose}>{t("common.cancel")}</button>
             <button
               className={styles.composePostBtn}
               disabled={!canSubmit || submitting}
               onClick={submit}
             >
               {submitting ? <Loader2 size={13} className={styles.spin} /> : <Vote size={13} />}
-              Create
+              {t("common.create")}
             </button>
           </div>
         </div>
@@ -174,15 +176,15 @@ function CreateDebateModal({
   );
 }
 
-function timeAgo(iso: string) {
+function timeAgo(iso: string, t: (key: string) => string) {
   const diff = Date.now() - new Date(iso).getTime();
   const s = Math.floor(diff / 1000);
-  if (s < 60) return "just now";
+  if (s < 60) return t("time.justNow");
   const m = Math.floor(s / 60);
-  if (m < 60) return `${m}m`;
+  if (m < 60) return t("time.minsAgo").replace("{n}", String(m));
   const h = Math.floor(m / 60);
-  if (h < 24) return `${h}h`;
-  return `${Math.floor(h / 24)}d`;
+  if (h < 24) return t("time.hoursAgo").replace("{n}", String(h));
+  return t("time.daysAgo").replace("{n}", String(Math.floor(h / 24)));
 }
 
 function initials(name: string) {
@@ -205,6 +207,7 @@ function ComposeModal({
   onPost: (post: Post) => void;
   sport: string;
 }) {
+  const { t } = useLanguage();
   const [content, setContent] = useState("");
   const [tag, setTag] = useState("DEBATE");
   const [hasPoll, setHasPoll] = useState(false);
@@ -257,9 +260,9 @@ function ComposeModal({
       if (!res.ok) {
         const data = await res.json();
         if (res.status === 401) {
-          setError("You must be logged in to post.");
+          setError(t("debates.mustBeLoggedIn"));
         } else {
-          setError(data.error ?? "Failed to post.");
+          setError(data.error ?? t("debates.failedToPost"));
         }
         return;
       }
@@ -275,20 +278,20 @@ function ComposeModal({
     <div className={styles.composeOverlay} onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className={styles.composeModal}>
         <div className={styles.composeHead}>
-          <span className={styles.composeTitle}>New Post</span>
+          <span className={styles.composeTitle}>{t("debates.newPost")}</span>
           <button className={styles.composeClose} onClick={onClose}><X size={15} /></button>
         </div>
 
         <div className={styles.composeBody}>
           <div className={styles.composeRow}>
             <select className={styles.composeTag} value={tag} onChange={(e) => setTag(e.target.value)}>
-              {TAGS.map((t) => <option key={t} value={t}>{t}</option>)}
+              {TAGS.map((tg) => <option key={tg} value={tg}>{tg}</option>)}
             </select>
           </div>
 
           <textarea
             className={styles.composeContentInput}
-            placeholder={`What's on your mind about ${sport}?`}
+            placeholder={t("debates.whatsOnYourMind").replace("{sport}", sport)}
             value={content}
             onChange={(e) => setContent(e.target.value)}
             rows={4}
@@ -300,7 +303,7 @@ function ComposeModal({
           {imagePreview && (
             <div className={styles.imagePreviewWrap}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={imagePreview} alt="preview" className={styles.imagePreview} />
+              <img src={imagePreview} alt={t("debates.preview")} className={styles.imagePreview} />
               <button className={styles.imageRemove} onClick={() => { setImageFile(null); setImagePreview(null); }}>
                 <X size={13} />
               </button>
@@ -310,12 +313,12 @@ function ComposeModal({
           {/* Poll section */}
           {hasPoll && (
             <div className={styles.pollSection}>
-              <div className={styles.composeOptsLabel}>Poll options</div>
+              <div className={styles.composeOptsLabel}>{t("debates.pollOptions")}</div>
               {pollOptions.map((o, i) => (
                 <div key={i} className={styles.composeOptRow}>
                   <input
                     className={styles.composeOptInput}
-                    placeholder={`Option ${i + 1}${i < 2 ? " (required)" : " (optional)"}`}
+                    placeholder={`${t("debates.option")} ${i + 1} ${i < 2 ? t("debates.required") : t("debates.optional")}`}
                     value={o}
                     onChange={(e) => setPollOptions((prev) => prev.map((v, j) => j === i ? e.target.value : v))}
                   />
@@ -328,7 +331,7 @@ function ComposeModal({
               ))}
               {pollOptions.length < 4 && (
                 <button className={styles.composeAddOpt} onClick={() => setPollOptions((prev) => [...prev, ""])}>
-                  <Plus size={12} /> Add option
+                  <Plus size={12} /> {t("debates.addOption")}
                 </button>
               )}
             </div>
@@ -344,7 +347,7 @@ function ComposeModal({
             <button
               className={`${styles.toolbarBtn}${imageFile ? " " + styles.toolbarBtnActive : ""}`}
               onClick={() => fileRef.current?.click()}
-              title="Add image"
+              title={t("debates.addImage")}
             >
               <ImageIcon size={15} />
             </button>
@@ -352,21 +355,21 @@ function ComposeModal({
             <button
               className={`${styles.toolbarBtn}${hasPoll ? " " + styles.toolbarBtnActive : ""}`}
               onClick={() => setHasPoll((v) => !v)}
-              title="Add poll"
+              title={t("debates.addPoll")}
             >
               <BarChart2 size={15} />
             </button>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <span className={styles.composeChars}>{content.length}/500</span>
-            <button className={styles.composeCancelBtn} onClick={onClose}>Cancel</button>
+            <button className={styles.composeCancelBtn} onClick={onClose}>{t("common.cancel")}</button>
             <button
               className={styles.composePostBtn}
               disabled={!canPost || submitting}
               onClick={submit}
             >
               {submitting ? <Loader2 size={13} className={styles.spin} /> : <Send size={13} />}
-              Post
+              {t("common.post")}
             </button>
           </div>
         </div>
@@ -379,6 +382,7 @@ function ComposeModal({
 // ─── Post Card ─────────────────────────────────────────────────────────────────
 
 function PostCard({ post: initialPost, currentUserId, onDelete }: { post: Post; currentUserId: string | null; onDelete: (id: string) => void }) {
+  const { t } = useLanguage();
   const [post, setPost] = useState(initialPost);
   const [expanded, setExpanded] = useState(false);
   const [comments, setComments] = useState<Comment[]>([]);
@@ -392,7 +396,7 @@ function PostCard({ post: initialPost, currentUserId, onDelete }: { post: Post; 
   const isOwner = currentUserId && post.user_id === currentUserId;
 
   const handleDelete = async () => {
-    if (!confirm("Delete this post? This cannot be undone.")) return;
+    if (!confirm(t("debates.deleteConfirm"))) return;
     setDeleting(true);
     try {
       const res = await fetch(`/api/posts/${post.id}`, { method: "DELETE" });
@@ -523,7 +527,7 @@ function PostCard({ post: initialPost, currentUserId, onDelete }: { post: Post; 
         </div>
         <div className={styles.authorInfo}>
           <span className={styles.authorName}>{post.author_name}</span>
-          <span className={styles.threadTime}><Clock size={11} strokeWidth={2} /> {timeAgo(post.created_at)}</span>
+          <span className={styles.threadTime}><Clock size={11} strokeWidth={2} /> {timeAgo(post.created_at, t)}</span>
         </div>
         <span className={styles.threadTag}>{post.tag}</span>
       </div>
@@ -534,7 +538,7 @@ function PostCard({ post: initialPost, currentUserId, onDelete }: { post: Post; 
       {/* Image */}
       {post.image_url && (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={post.image_url} alt="post image" className={styles.postImage} />
+        <img src={post.image_url} alt={t("debates.postImage")} className={styles.postImage} />
       )}
 
       {/* Poll */}
@@ -560,8 +564,8 @@ function PostCard({ post: initialPost, currentUserId, onDelete }: { post: Post; 
           })}
           <div className={styles.pollMeta}>
             <BarChart2 size={12} strokeWidth={2} />
-            {totalVotes.toLocaleString()} votes
-            {post.voted_option === null && <span> · tap to vote</span>}
+            {totalVotes.toLocaleString()} {t("debates.votes")}
+            {post.voted_option === null && <span> · {t("debates.tapToVote")}</span>}
           </div>
         </div>
       )}
@@ -581,7 +585,7 @@ function PostCard({ post: initialPost, currentUserId, onDelete }: { post: Post; 
         </button>
         <button className={`${styles.actionBtn}${showCopied ? " " + styles.actionBtnActive : ""}`} onClick={sharePost}>
           {showCopied ? <Check size={15} strokeWidth={2} /> : <Share2 size={15} strokeWidth={2} />}
-          {showCopied ? "Copied!" : "Share"}
+          {showCopied ? t("debates.copied") : t("debates.share")}
         </button>
         {isOwner && (
           <button className={`${styles.actionBtn} ${styles.deleteBtn}`} onClick={handleDelete} disabled={deleting}>
@@ -594,16 +598,16 @@ function PostCard({ post: initialPost, currentUserId, onDelete }: { post: Post; 
       {expanded && (
         <div className={styles.commentsWrap}>
           <div className={styles.commentInput}>
-            <div className={styles.avatar} style={{ background: "var(--surface-3)", width: 28, height: 28, fontSize: 10 }}>ME</div>
+            <div className={styles.avatar} style={{ background: "var(--surface-3)", width: 28, height: 28, fontSize: 10 }}>{t("debates.me")}</div>
             <input
               className={styles.commentBox}
-              placeholder="Add your take…"
+              placeholder={t("debates.addYourTake")}
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && sendComment()}
             />
             <button className={styles.sendBtn} onClick={sendComment} disabled={sendingComment}>
-              {sendingComment ? <Loader2 size={13} className={styles.spin} /> : "Post"}
+              {sendingComment ? <Loader2 size={13} className={styles.spin} /> : t("common.post")}
             </button>
           </div>
 
@@ -617,7 +621,7 @@ function PostCard({ post: initialPost, currentUserId, onDelete }: { post: Post; 
               <div className={styles.commentBody}>
                 <div className={styles.commentMeta}>
                   <span className={styles.commentAuthor}>{c.author_name}</span>
-                  <span className={styles.commentTime}>{timeAgo(c.created_at)}</span>
+                  <span className={styles.commentTime}>{timeAgo(c.created_at, t)}</span>
                 </div>
                 <p className={styles.commentText}>{c.content}</p>
                 <button
@@ -632,7 +636,7 @@ function PostCard({ post: initialPost, currentUserId, onDelete }: { post: Post; 
           ))}
 
           {commentsLoaded && comments.length === 0 && (
-            <p className={styles.noComments}>No comments yet. Be the first!</p>
+            <p className={styles.noComments}>{t("debates.noCommentsYet")}</p>
           )}
         </div>
       )}
@@ -643,6 +647,7 @@ function PostCard({ post: initialPost, currentUserId, onDelete }: { post: Post; 
 // ─── Main Page ─────────────────────────────────────────────────────────────────
 
 export default function DebatesPage() {
+  const { t } = useLanguage();
   const { activeSport, activeSportConfig } = useActiveSport();
   const [filter, setFilter] = useState<"hot" | "new">("hot");
   const [showCompose, setShowCompose] = useState(false);
@@ -697,7 +702,7 @@ export default function DebatesPage() {
     setError("");
     try {
       const res = await fetch(`/api/posts?sport=${sport}&limit=20`);
-      if (!res.ok) throw new Error("Failed to load posts");
+      if (!res.ok) throw new Error(t("debates.failedToLoad"));
       const data = await res.json();
       if (replace) {
         setPosts(data.posts ?? []);
@@ -706,11 +711,11 @@ export default function DebatesPage() {
       }
       setNextCursor(data.nextCursor);
     } catch {
-      setError("Could not load posts. Check your connection.");
+      setError(t("debates.couldNotLoad"));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     fetchPosts(activeSport);
@@ -746,16 +751,16 @@ export default function DebatesPage() {
     : [...posts].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
   return (
-    <AppShell active="funzone" title="Debates" subtitle="Post · Vote · React">
+    <AppShell active="funzone" title={t("debates.title")} titleKey="debates.title" subtitleKey="debates.subtitle">
       <div className="stack">
         {/* Compose bar */}
         <div className={styles.composeTrigger} onClick={() => setShowCompose(true)}>
-          <div className={styles.composeTriggerAvatar}>ME</div>
+          <div className={styles.composeTriggerAvatar}>{t("debates.me")}</div>
           <span className={styles.composeTriggerText}>
-            Share a hot take on {activeSportConfig.label}…
+            {t("debates.shareHotTake").replace("{sport}", activeSportConfig.label)}
           </span>
           <button className={styles.composeTriggerBtn} onClick={(e) => { e.stopPropagation(); setShowCompose(true); }}>
-            <Plus size={13} /> Post
+            <Plus size={13} /> {t("common.post")}
           </button>
         </div>
 
@@ -764,7 +769,7 @@ export default function DebatesPage() {
           <div className="sec-head" style={{ marginBottom: 0 }}>
             <div className="title">
               <Flame size={17} className="title-icon" strokeWidth={2} />
-              <span className="accent">Debates</span>
+              <span className="accent">{t("debates.title")}</span>
             </div>
           </div>
           <div className={styles.filterTabs}>
@@ -772,13 +777,13 @@ export default function DebatesPage() {
               className={`${styles.filterTab}${filter === "hot" ? " " + styles.filterTabActive : ""}`}
               onClick={() => setFilter("hot")}
             >
-              <TrendingUp size={13} strokeWidth={2} /> Hot
+              <TrendingUp size={13} strokeWidth={2} /> {t("debates.hot")}
             </button>
             <button
               className={`${styles.filterTab}${filter === "new" ? " " + styles.filterTabActive : ""}`}
               onClick={() => setFilter("new")}
             >
-              <Zap size={13} strokeWidth={2} /> New
+              <Zap size={13} strokeWidth={2} /> {t("debates.new")}
             </button>
           </div>
         </div>
@@ -788,22 +793,22 @@ export default function DebatesPage() {
         {loading ? (
           <div className={styles.feedLoading}>
             <Loader2 size={24} className={styles.spin} />
-            <span>Loading debates…</span>
+            <span>{t("debates.loadingDebates")}</span>
           </div>
         ) : error ? (
           <div className={styles.feedError}>
             <AlertCircle size={20} />
             <p>{error}</p>
             <button className={styles.feedEmptyBtn} onClick={() => fetchPosts(activeSport)}>
-              Retry
+              {t("common.retry")}
             </button>
           </div>
         ) : displayed.length === 0 ? (
           <div className={styles.feedEmpty}>
             <MessageCircle size={40} strokeWidth={1.5} style={{ color: "var(--text-mute)" }} />
-            <p>No debates yet for {activeSportConfig.label}.</p>
+            <p>{t("debates.noDebatesYet").replace("{sport}", activeSportConfig.label)}</p>
             <button className={styles.feedEmptyBtn} onClick={() => setShowCompose(true)}>
-              <Plus size={13} /> Start the first debate
+              <Plus size={13} /> {t("debates.startFirst")}
             </button>
           </div>
         ) : (
@@ -814,7 +819,7 @@ export default function DebatesPage() {
 
             {nextCursor && (
               <button className={styles.loadMoreBtn} onClick={loadMore} disabled={loadingMore}>
-                {loadingMore ? <Loader2 size={14} className={styles.spin} /> : "Load more"}
+                {loadingMore ? <Loader2 size={14} className={styles.spin} /> : t("debates.loadMore")}
               </button>
             )}
           </div>

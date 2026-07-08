@@ -10,10 +10,9 @@ import MatchRow from './ui/MatchRow';
 import SportSelector from './ui/SportSelector';
 import Icon from './ui/Icon';
 import { SkeletonScoreCard, SkeletonList } from './ui/Skeletons';
-
-const FILTERS: [string, string][] = [['all', 'All'], ['live', '● Live'], ['up', 'Upcoming'], ['ft', 'Finished']];
-const DAY_ABBR = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
-const MONTH_ABBR = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+import { useLanguage } from '@/contexts/LanguageContext';
+import { formatDate, dayAbbr, monthYearLabel, localizeDigits } from '@/lib/locale-utils';
+import { translateLeagueName } from '@/lib/league-names';
 
 function toDateKey(d: Date) {
   return String(d.getFullYear()) + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0');
@@ -36,6 +35,7 @@ interface LiveScoresProps {
 }
 
 export default function LiveScoresScreen({ sport, setSport, onOpenMatch, onSearch, onBell, unread }: LiveScoresProps) {
+  const { t, locale } = useLanguage();
   const [filter, setFilter] = useState<string>('all');
 
   // Date selection — starts at today, same data source as web CalendarStrip
@@ -74,14 +74,14 @@ export default function LiveScoresScreen({ sport, setSport, onOpenMatch, onSearc
   }
 
   const dateLabel = isToday
-    ? 'Today'
-    : selectedDate.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
+    ? t('time.today')
+    : formatDate(selectedDate, locale, { weekday: 'short', day: 'numeric', month: 'short' });
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--bg)' }}>
       <Topbar
-        title="Live Scores"
-        subtitle={isLoading ? 'Connecting…' : liveCount > 0 && isToday ? `● ${liveCount} live now` : dateLabel}
+        title={t('liveScores.title')}
+        subtitle={isLoading ? t('liveScores.connecting') : liveCount > 0 && isToday ? `● ${liveCount} ${t('liveScores.liveNow')}` : dateLabel}
         logoSrc="/curly-guy.png"
         onSearch={onSearch}
         onBell={onBell}
@@ -98,15 +98,15 @@ export default function LiveScoresScreen({ sport, setSport, onOpenMatch, onSearc
             <button
               onClick={() => { setWeekOffset(w => w - 1); setSelectedDate(d => addDays(d, -7)); }}
               style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px 8px', fontSize: 20, color: 'var(--text-dim)', lineHeight: 1 }}
-              aria-label="Previous week"
+              aria-label={t('liveScores.previousWeek')}
             >‹</button>
             <span style={{ fontFamily: 'var(--mono)', fontSize: 10, fontWeight: 700, color: 'var(--text-mute)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-              {MONTH_ABBR[selectedDate.getMonth()]} {selectedDate.getFullYear()}
+              {monthYearLabel(selectedDate, locale)}
             </span>
             <button
               onClick={() => { setWeekOffset(w => w + 1); setSelectedDate(d => addDays(d, 7)); }}
               style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px 8px', fontSize: 20, color: 'var(--text-dim)', lineHeight: 1 }}
-              aria-label="Next week"
+              aria-label={t('liveScores.nextWeek')}
             >›</button>
           </div>
           {/* Day buttons */}
@@ -128,10 +128,10 @@ export default function LiveScoresScreen({ sport, setSport, onOpenMatch, onSearc
                   }}
                 >
                   <span style={{ fontFamily: 'var(--mono)', fontSize: 8, fontWeight: 700, letterSpacing: '0.05em', color: isSel ? 'var(--accent)' : 'var(--text-mute)' }}>
-                    {DAY_ABBR[d.getDay()]}
+                    {dayAbbr(d, locale)}
                   </span>
                   <span style={{ fontFamily: 'var(--display)', fontWeight: 800, fontSize: 15, color: isSel ? 'var(--accent)' : isTod ? 'var(--ink)' : 'var(--text-dim)' }}>
-                    {d.getDate()}
+                    {localizeDigits(String(d.getDate()), locale)}
                   </span>
                   {isTod && <span style={{ width: 4, height: 4, borderRadius: '50%', background: isSel ? 'var(--accent)' : 'var(--orange)', display: 'block' }} />}
                 </button>
@@ -142,7 +142,7 @@ export default function LiveScoresScreen({ sport, setSport, onOpenMatch, onSearc
 
         {/* Status filter chips */}
         <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 2 }}>
-          {FILTERS.map(([k, label]) => (
+          {([['all', t('standings.all')], ['live', `● ${t('matchStatus.live')}`], ['up', t('matchStatus.upcoming')], ['ft', t('liveScores.completed')]] as [string, string][]).map(([k, label]) => (
             <Chip key={k} active={filter === k} live={k === 'live'} onClick={() => setFilter(k)}>{label}</Chip>
           ))}
         </div>
@@ -157,14 +157,14 @@ export default function LiveScoresScreen({ sport, setSport, onOpenMatch, onSearc
           <div style={{ padding: '40px 20px', textAlign: 'center' }}>
             <Icon name="target" size={28} style={{ margin: '0 auto 12px', color: 'var(--text-mute)' }} />
             <div style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text-mute)' }}>
-              No {filter !== 'all' ? filter + ' ' : ''}matches · {dateLabel}
+              {t('liveScores.noMatchesOnDate').replace('{sport}', filter !== 'all' ? filter + ' ' : '')} · {dateLabel}
             </div>
           </div>
         )}
 
         {!isLoading && Object.entries(byLeague).map(([leagueKey, { label, shortLabel, matches }], idx) => (
           <div key={leagueKey} className="cs-stagger" style={{ '--i': Math.min(idx, 6) } as React.CSSProperties}>
-          <Card subtitle={shortLabel} title={label}>
+          <Card subtitle={translateLeagueName(shortLabel, locale)} title={translateLeagueName(label, locale)}>
             <div style={{ borderTop: '1px solid var(--border-3)' }}>
               {matches.map(m => (
                 <div key={m.id} style={{ borderBottom: '1px solid var(--border-3)' }}>

@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import useSWR from 'swr';
 import { useDebatesList } from './api';
 import { useAuth } from './AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import Topbar from './ui/Topbar';
 import Card from './ui/Card';
 import Badge from './ui/Badge';
@@ -46,19 +47,21 @@ interface DebatesProps {
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 const fetcher = (url: string) => fetch(url).then(r => r.json());
 
-function timeAgo(iso: string): string {
+function timeAgo(iso: string, t: (key: string, fallback?: string) => string): string {
   const diff = Date.now() - new Date(iso).getTime();
   const m = Math.floor(diff / 60_000);
-  if (m < 1) return 'now';
-  if (m < 60) return `${m}m`;
+  if (m < 1) return t('time.justNow', 'just now');
+  if (m < 60) return t('time.minsAgo', `${m}m ago`).replace('{n}', String(m));
   const h = Math.floor(m / 60);
-  if (h < 24) return `${h}h`;
-  return `${Math.floor(h / 24)}d`;
+  if (h < 24) return t('time.hoursAgo', `${h}h ago`).replace('{n}', String(h));
+  const d = Math.floor(h / 24);
+  return t('time.daysAgo', `${d}d ago`).replace('{n}', String(d));
 }
 
 // ─── Comments Sheet ───────────────────────────────────────────────────────────
 function CommentsSheet({ postId, onClose }: { postId: string; onClose: () => void }) {
   const { user, profile } = useAuth();
+  const { t } = useLanguage();
   const [text, setText] = useState('');
   const [posting, setPosting] = useState(false);
 
@@ -131,7 +134,7 @@ function CommentsSheet({ postId, onClose }: { postId: string; onClose: () => voi
             <SkeletonList count={3}>{i => <SkeletonRow style={{ '--i': i } as React.CSSProperties} />}</SkeletonList>
           )}
           {!isLoading && comments.length === 0 && (
-            <div style={{ textAlign: 'center', padding: '24px 0', fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text-mute)' }}>No comments yet. Be first.</div>
+            <div style={{ textAlign: 'center', padding: '24px 0', fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text-mute)' }}>{t('debates.noCommentsYetShort', 'No comments yet. Be first.')}</div>
           )}
           {comments.map(c => {
             const AV_COLORS = ['var(--orange)', 'var(--ink)', 'var(--purple)', 'var(--sky)', 'var(--coral)'];
@@ -145,7 +148,7 @@ function CommentsSheet({ postId, onClose }: { postId: string; onClose: () => voi
                 <div style={{ flex: 1 }}>
                   <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
                     <span style={{ fontWeight: 700, fontSize: 12, color: 'var(--ink)' }}>{c.author_name}</span>
-                    <span style={{ fontFamily: 'var(--mono)', fontSize: 9.5, color: 'var(--text-mute)' }}>{timeAgo(c.created_at)}</span>
+                    <span style={{ fontFamily: 'var(--mono)', fontSize: 9.5, color: 'var(--text-mute)' }}>{timeAgo(c.created_at, t)}</span>
                   </div>
                   <div style={{ fontSize: 13, color: 'var(--text-dim)', lineHeight: 1.4, marginTop: 2 }}>{c.content}</div>
                   <span
@@ -172,7 +175,7 @@ function CommentsSheet({ postId, onClose }: { postId: string; onClose: () => voi
               value={text}
               onChange={e => setText(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); submit(); } }}
-              placeholder="Add a comment…"
+              placeholder={t('debates.addComment', 'Add a comment...')}
               style={{ flex: 1, border: '2px solid var(--border-2)', borderRadius: 10, padding: '8px 12px', fontSize: 13, background: 'var(--surface)', outline: 'none', color: 'var(--ink)', fontFamily: 'var(--body)' }}
             />
             <button
@@ -180,7 +183,7 @@ function CommentsSheet({ postId, onClose }: { postId: string; onClose: () => voi
               disabled={posting || !text.trim()}
               style={{ background: posting || !text.trim() ? 'var(--surface-3)' : 'var(--orange)', color: 'var(--paper)', border: '2px solid var(--ink)', borderRadius: 10, padding: '8px 14px', fontWeight: 700, fontSize: 13, cursor: posting || !text.trim() ? 'not-allowed' : 'pointer' }}
             >
-              {posting ? '…' : 'Send'}
+              {posting ? '...' : t('common.send', 'Send')}
             </button>
           </div>
         )}
@@ -192,6 +195,7 @@ function CommentsSheet({ postId, onClose }: { postId: string; onClose: () => voi
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function DebatesScreen({ sport, onSearch, onBell, unread }: DebatesProps) {
   const { user, profile } = useAuth();
+  const { t } = useLanguage();
   const [composerText, setComposerText] = useState('');
   const [posting, setPosting] = useState(false);
   const [postError, setPostError] = useState<string | null>(null);
@@ -342,7 +346,7 @@ export default function DebatesScreen({ sport, onSearch, onBell, unread }: Debat
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({})) as { error?: string };
-        setPostError(err.error || 'Failed to post. Try again.');
+        setPostError(err.error || t('debates.failedToPost', 'Failed to post.'));
         return;
       }
       const newPost = await res.json() as Post;
@@ -378,7 +382,7 @@ export default function DebatesScreen({ sport, onSearch, onBell, unread }: Debat
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({})) as { error?: string };
-        setDebateError(res.status === 401 ? 'You must be logged in.' : (data.error || 'Failed to create debate.'));
+        setDebateError(res.status === 401 ? t('debates.mustBeLoggedInCreate', 'You must be logged in to create a debate.') : (data.error || t('debates.failedToCreate', 'Failed to create debate.')));
         return;
       }
       setDebateQuestion('');
@@ -392,7 +396,7 @@ export default function DebatesScreen({ sport, onSearch, onBell, unread }: Debat
   };
 
   const deletePost = async (postId: string) => {
-    if (!confirm('Delete this post? This cannot be undone.')) return;
+    if (!confirm(t('debates.deleteConfirm', 'Delete this post? This cannot be undone.'))) return;
     const res = await fetch(`/api/posts/${postId}`, { method: 'DELETE' });
     if (res.ok) {
       setAllPosts(prev => prev.filter(p => p.id !== postId));
@@ -419,17 +423,17 @@ export default function DebatesScreen({ sport, onSearch, onBell, unread }: Debat
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--bg)', position: 'relative' }}>
-      <Topbar title="Debates" subtitle="Bring receipts" logoSrc="/curly-guy.png" onSearch={onSearch} onBell={onBell} hasNotification={unread > 0} />
+      <Topbar title={t('debates.title', 'Debates')} subtitle={t('debates.bringReceipts', 'Bring receipts')} logoSrc="/curly-guy.png" onSearch={onSearch} onBell={onBell} hasNotification={unread > 0} />
 
       <div className="cs-scroll" style={{ flex: 1, overflow: 'auto', padding: '14px 14px 120px', display: 'flex', flexDirection: 'column', gap: 14 }}>
 
         {/* ── Sort toggle (matches web Hot/New) ── */}
         <div style={{ display: 'flex', gap: 8 }}>
           <button onClick={() => setSort('hot')} style={{ flex: 1, padding: '8px 0', borderRadius: 10, border: '2px solid var(--ink)', fontFamily: 'var(--mono)', fontWeight: 700, fontSize: 11, cursor: 'pointer', background: sort === 'hot' ? 'var(--ink)' : 'var(--surface)', color: sort === 'hot' ? 'var(--accent)' : 'var(--ink)' }}>
-            <Icon name="flame" size={12} /> Hot
+            <Icon name="flame" size={12} /> {t('debates.hot', 'Hot')}
           </button>
           <button onClick={() => setSort('new')} style={{ flex: 1, padding: '8px 0', borderRadius: 10, border: '2px solid var(--ink)', fontFamily: 'var(--mono)', fontWeight: 700, fontSize: 11, cursor: 'pointer', background: sort === 'new' ? 'var(--ink)' : 'var(--surface)', color: sort === 'new' ? 'var(--accent)' : 'var(--ink)' }}>
-            <Icon name="bolt" size={12} /> New
+            <Icon name="bolt" size={12} /> {t('debates.new', 'New')}
           </button>
         </div>
 
@@ -443,8 +447,8 @@ export default function DebatesScreen({ sport, onSearch, onBell, unread }: Debat
         {!feedLoading && allPosts.length === 0 && (
           <Card>
             <div style={{ textAlign: 'center', padding: 24 }}>
-              <div style={{ fontFamily: 'var(--display)', fontWeight: 800, fontSize: 18, color: 'var(--ink)', marginBottom: 8 }}>No takes yet</div>
-              <div style={{ fontSize: 13, color: 'var(--text-dim)', lineHeight: 1.5 }}>Be the first to drop a take. Use the composer below.</div>
+              <div style={{ fontFamily: 'var(--display)', fontWeight: 800, fontSize: 18, color: 'var(--ink)', marginBottom: 8 }}>{t('debates.noTakesYet', 'No takes yet')}</div>
+              <div style={{ fontSize: 13, color: 'var(--text-dim)', lineHeight: 1.5 }}>{t('debates.beFirstToDrop', 'Be the first to drop a take. Use the composer below.')}</div>
             </div>
           </Card>
         )}
@@ -467,7 +471,7 @@ export default function DebatesScreen({ sport, onSearch, onBell, unread }: Debat
             disabled={loadingMore}
             style={{ width: '100%', padding: '12px 0', background: 'var(--surface)', border: '2px solid var(--ink)', borderRadius: 12, fontFamily: 'var(--mono)', fontWeight: 700, fontSize: 12, color: 'var(--ink)', cursor: loadingMore ? 'not-allowed' : 'pointer', letterSpacing: '0.05em' }}
           >
-            {loadingMore ? '…' : 'LOAD MORE'}
+            {loadingMore ? '...' : t('common.loadMoreUpper', 'LOAD MORE')}
           </button>
         )}
       </div>
@@ -495,7 +499,7 @@ export default function DebatesScreen({ sport, onSearch, onBell, unread }: Debat
               onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitPost(); } }}
               onFocus={onComposerFocus}
               onBlur={onComposerBlur}
-              placeholder="Drop your take…"
+              placeholder={t('debates.dropYourTake', 'Drop your take...')}
               style={{ flex: 1, border: 'none', background: 'transparent', outline: 'none', fontSize: 13, color: 'var(--ink)', fontFamily: 'var(--body)' }}
             />
             <button
@@ -503,7 +507,7 @@ export default function DebatesScreen({ sport, onSearch, onBell, unread }: Debat
               disabled={posting || !composerText.trim()}
               style={{ background: posting || !composerText.trim() ? 'var(--surface-3)' : 'var(--orange)', color: 'var(--paper)', border: '2px solid var(--ink)', borderRadius: 999, padding: '7px 16px', fontWeight: 700, fontSize: 13, cursor: posting || !composerText.trim() ? 'not-allowed' : 'pointer' }}
             >
-              {posting ? '…' : 'Post'}
+              {posting ? '...' : t('common.post', 'Post')}
             </button>
           </div>
         ) : (
@@ -523,7 +527,7 @@ export default function DebatesScreen({ sport, onSearch, onBell, unread }: Debat
                 }}
               >
                 <Icon name="pen" size={13} />
-                Drop your take
+                {t('debates.dropYourTake', 'Drop your take...')}
                 {/* Tail arrow pointing down */}
                 <span style={{
                   position: 'absolute', bottom: -7, right: 18,
@@ -597,7 +601,7 @@ export default function DebatesScreen({ sport, onSearch, onBell, unread }: Debat
           boxShadow: 'var(--shadow-md)', zIndex: 300,
           animation: 'cs-fadeIn 0.2s var(--ease-pop)',
         }}>
-          Copied to clipboard
+          {t('debates.copiedToClipboard', 'Copied to clipboard')}
         </div>
       )}
     </div>
@@ -607,6 +611,7 @@ export default function DebatesScreen({ sport, onSearch, onBell, unread }: Debat
 // ─── Post card ────────────────────────────────────────────────────────────────
 function PostCard({ post, onLike, onVote, onComment, onDelete, onShare }: { post: Post; onLike: () => void; onVote: (i: number) => void; onComment: () => void; onDelete?: () => void; onShare: () => void }) {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const isOwner = user && post.user_id === user.id;
   const AV_COLORS = ['var(--orange)', 'var(--ink)', 'var(--purple)', 'var(--sky)', 'var(--coral)'];
   const colorIdx  = (post.author_name?.charCodeAt(0) ?? 0) % AV_COLORS.length;
@@ -622,7 +627,7 @@ function PostCard({ post, onLike, onVote, onComment, onDelete, onShare }: { post
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{post.author_name}</div>
-          <div style={{ fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--text-mute)' }}>{timeAgo(post.created_at)} · {post.sport}</div>
+          <div style={{ fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--text-mute)' }}>{timeAgo(post.created_at, t)} · {post.sport}</div>
         </div>
         {post.tag && <Badge tone={post.tag === 'DEBATE' ? 'accent' : 'mute'}>{post.tag}</Badge>}
       </div>
@@ -672,7 +677,7 @@ function PostCard({ post, onLike, onVote, onComment, onDelete, onShare }: { post
           <Icon name="share" size={14} />
         </span>
         {isOwner && onDelete && (
-          <span onClick={onDelete} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, cursor: 'pointer', marginLeft: 'auto' }}>
+          <span onClick={onDelete} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, cursor: 'pointer', marginInlineStart: 'auto' }}>
             <Icon name="trash" size={14} />
           </span>
         )}

@@ -393,3 +393,19 @@
 .otpTimer strong {
   color: #ff5b3d;
 }
+
+/* ── RTL overrides ── */
+:global([dir="rtl"]) .stage { border-right: none; border-left: 2px solid #0c0a1d; }
+:global([dir="rtl"]) .brand { left: auto; right: 32px; }
+:global([dir="rtl"]) .passwordWrap input { padding-right: 18px; padding-left: 48px; }
+:global([dir="rtl"]) .eyeToggle { right: auto; left: 14px; }
+:global([dir="rtl"]) .sc1 { left: auto; right: 8%; }
+:global([dir="rtl"]) .sc2 { right: auto; left: 8%; text-align: left; }
+:global([dir="rtl"]) .sf1 { right: auto; left: 14%; }
+:global([dir="rtl"]) .sf2 { left: auto; right: 12%; }
+:global([dir="rtl"]) .otpGroup { direction: ltr; }
+:global([dir="rtl"]) .otpTimer { direction: ltr; }
+:global([dir="rtl"]) .ribbon { direction: ltr; }
+@media (max-width: 640px) {
+  :global([dir="rtl"]) .brand { right: 16px; left: auto; }
+}

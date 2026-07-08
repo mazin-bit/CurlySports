@@ -1,6 +1,7 @@
 'use client';
 import React, { useState } from 'react';
 import { useTeamsList, type RealTeam } from './api';
+import { useLanguage } from '@/contexts/LanguageContext';
 import Topbar from './ui/Topbar';
 import Card from './ui/Card';
 import Chip from './ui/Chip';
@@ -43,6 +44,7 @@ interface TeamsProps {
 
 // ─── Squad Sheet ──────────────────────────────────────────────────────────────
 function SquadSheet({ team, sport, onClose }: { team: RealTeam; sport: string; onClose: () => void }) {
+  const { t } = useLanguage();
   const { teams: squadTeams, isLoading } = useTeamsList(sport, team.leagueId);
   // We use /api/espn/teams which returns teams, not squad. For squad, link to player search
   return (
@@ -64,7 +66,7 @@ function SquadSheet({ team, sport, onClose }: { team: RealTeam; sport: string; o
             {team.color && (
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <div style={{ width: 14, height: 14, borderRadius: 3, background: team.color, border: '1px solid var(--border-2)' }} />
-                <span style={{ fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--text-mute)' }}>Team colour</span>
+                <span style={{ fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--text-mute)' }}>{t('teams.teamColour')}</span>
               </div>
             )}
             <div style={{ fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--text-mute)' }}>{team.leagueName} · {team.sport}</div>
@@ -72,7 +74,7 @@ function SquadSheet({ team, sport, onClose }: { team: RealTeam; sport: string; o
 
           <div style={{ textAlign: 'center', padding: '20px 0' }}>
             <Icon name="user" size={28} style={{ color: 'var(--text-mute)', margin: '0 auto 8px' }} />
-            <div style={{ fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--text-mute)' }}>Search players to see squad members</div>
+            <div style={{ fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--text-mute)' }}>{t('teams.searchPlayersToSee')}</div>
           </div>
         </div>
       </div>
@@ -82,6 +84,7 @@ function SquadSheet({ team, sport, onClose }: { team: RealTeam; sport: string; o
 
 // ─── Main ──────────────────────────────────────────────────────────────────────
 export default function TeamsScreen({ sport, setSport, onSearch, onBell, onOpenPlayer, unread }: TeamsProps) {
+  const { t } = useLanguage();
   const leagues = LEAGUES_BY_SPORT[sport] ?? [];
   const [leagueIdx, setLeagueIdx] = useState(0);
   const [selectedTeam, setSelectedTeam] = useState<RealTeam | null>(null);
@@ -97,8 +100,8 @@ export default function TeamsScreen({ sport, setSport, onSearch, onBell, onOpenP
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--bg)' }}>
       <Topbar
-        title="Teams"
-        subtitle="Browse squads"
+        title={t('teams.title')}
+        subtitle={t('teams.browseSquads')}
         logoSrc="/curly-guy.png"
         onSearch={onSearch}
         onBell={onBell}
@@ -123,7 +126,7 @@ export default function TeamsScreen({ sport, setSport, onSearch, onBell, onOpenP
           <input
             value={query}
             onChange={e => setQuery(e.target.value)}
-            placeholder="Search teams…"
+            placeholder={t('teams.searchPlaceholder')}
             style={{ flex: 1, border: 'none', background: 'transparent', outline: 'none', fontSize: 13, color: 'var(--ink)', fontFamily: 'var(--body)' }}
           />
           {query && (
@@ -143,13 +146,13 @@ export default function TeamsScreen({ sport, setSport, onSearch, onBell, onOpenP
           <div style={{ padding: '40px 20px', textAlign: 'center' }}>
             <Icon name="user" size={32} style={{ color: 'var(--text-mute)', margin: '0 auto 12px' }} />
             <div style={{ fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--text-mute)' }}>
-              {leagues.length === 0 ? `No team data for ${sport}` : 'No teams found'}
+              {leagues.length === 0 ? t('teams.noTeamData').replace('{sport}', sport) : t('teams.noTeamsFound')}
             </div>
           </div>
         )}
 
         {!isLoading && filtered.length > 0 && (
-          <Card subtitle={selectedLeague?.label ?? sport.toUpperCase()} title={`${filtered.length} Teams`}>
+          <Card subtitle={selectedLeague?.label ?? sport.toUpperCase()} title={`${filtered.length} ${t('teams.teamsCount')}`}>
             {filtered.map((team, i) => (
               <div
                 key={team.id}

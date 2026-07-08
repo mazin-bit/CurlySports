@@ -2,7 +2,7 @@
  * Curly Sports — Global styles + CSS variables
  * ========================================================= */
 
-@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;700;800&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;700;800&family=DM+Sans:wght@400;500;600;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap');
 
 :root {
   /* Cream / paper backgrounds */
@@ -71,6 +71,29 @@ html, body {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
+
+/* ── Mobile touch improvements ─────────────────────── */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+a, button, [role="button"], select, input, textarea,
+label, summary, [tabindex] {
+  touch-action: manipulation;
+}
+
+/* Smooth press feedback for all interactive mobile elements */
+@media (pointer: coarse) {
+  a, button, [role="button"], [tabindex], [onclick] {
+    -webkit-touch-callout: none;
+  }
+}
+
+/* ── Global tab/content fade-in animation ──────────── */
+@keyframes g-fadeSlideIn {
+  0%   { opacity: 0; transform: translateY(6px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
 body {
   background: var(--bg);
 }
@@ -164,6 +187,9 @@ input, textarea, select { font-family: inherit; }
   border-color: var(--ink);
   box-shadow: var(--shadow-sm);
   transform: translate(-1px, -1px);
+}
+@media (hover: none) {
+  .sb-item:active { transform: scale(0.97); opacity: 0.85; transition-duration: 0.08s; }
 }
 .sb-item.active {
   background: var(--accent);
@@ -406,6 +432,9 @@ button.sb-item {
   transform: translate(-2px, -2px);
   box-shadow: var(--shadow-lg);
 }
+@media (hover: none) {
+  .card:active { transform: scale(0.98); transition-duration: 0.08s; }
+}
 .card.elev { box-shadow: var(--shadow-lg); }
 .card-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
 .card-title { font-family: var(--display); font-weight: 800; font-size: 16px; letter-spacing: -0.01em; color: var(--ink); }
@@ -427,6 +456,9 @@ button.sb-item {
   transform: translate(-2px, -2px);
   box-shadow: var(--shadow-sm);
   color: var(--ink);
+}
+@media (hover: none) {
+  .chip:active { transform: scale(0.94); transition-duration: 0.08s; }
 }
 .chip.active {
   background: var(--accent);
@@ -574,10 +606,13 @@ button.sb-item {
   color: var(--text-mute); font-family: var(--mono); font-size: 9.5px;
   font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;
   cursor: pointer; padding: 4px;
-  transition: color 0.15s;
+  transition: color 0.2s ease, transform 0.2s cubic-bezier(.25,.46,.45,.94), opacity 0.2s ease;
+  will-change: transform;
 }
+.bn-item:active { transform: scale(0.88); opacity: 0.7; transition-duration: 0.08s; }
 .bn-item.active { color: var(--orange); }
-.bn-item svg { width: 22px; height: 22px; }
+.bn-item svg { width: 22px; height: 22px; transition: transform 0.2s cubic-bezier(.25,.46,.45,.94); }
+.bn-item.active svg { transform: scale(1.08); }
 
 /* ========== MOBILE MENU DRAWER ========== */
 .mn-backdrop {
@@ -663,6 +698,7 @@ button.sb-item {
 }
 .mn-sport-opt:last-child { border-bottom: none; }
 .mn-sport-opt:hover { background: var(--surface-2); }
+.mn-sport-opt:active { background: var(--surface-3); transition-duration: 0.06s; }
 .mn-sport-opt-active { background: rgba(200,255,61,0.1) !important; color: var(--ink) !important; font-weight: 700 !important; }
 
 /* Section labels */
@@ -680,6 +716,7 @@ button.sb-item {
   transition: all 0.12s; border: 1.5px solid transparent;
 }
 .mn-item:hover { background: var(--surface-3); color: var(--ink); border-color: var(--border-2); }
+.mn-item:active { transform: scale(0.97); opacity: 0.8; transition-duration: 0.06s; }
 .mn-item-active { background: var(--accent); color: var(--ink); border-color: var(--ink); font-weight: 700; box-shadow: var(--shadow-sm); }
 .mn-ico {
   width: 28px; height: 28px; border-radius: 8px;
@@ -1044,3 +1081,136 @@ button.sb-item {
   100% { opacity: 1; transform: translateY(0) scale(1); }
 }
 .page-enter { animation: fadeSlideIn 0.35s cubic-bezier(.34,1.56,.64,1) both; }
+
+/* ========== RTL (Arabic) overrides ========== */
+[dir="rtl"] {
+  --display: "IBM Plex Sans Arabic", "Bricolage Grotesque", system-ui, sans-serif;
+  --body: "IBM Plex Sans Arabic", "DM Sans", system-ui, sans-serif;
+}
+html[lang="hi"] {
+  --display: "Noto Sans Devanagari", "Bricolage Grotesque", system-ui, sans-serif;
+  --body: "Noto Sans Devanagari", "DM Sans", system-ui, sans-serif;
+}
+
+/* Grid: sidebar on right */
+[dir="rtl"] .app-shell {
+  direction: rtl;
+}
+
+/* ── Sidebar ── */
+[dir="rtl"] .sb {
+  border-right: none;
+  border-left: 2.5px solid var(--ink);
+}
+[dir="rtl"] button.sb-item {
+  text-align: right;
+}
+[dir="rtl"] .sb-logo-text {
+  direction: ltr;
+}
+
+/* ── Topbar ── */
+[dir="rtl"] .tb-search {
+  margin-left: 0;
+  margin-right: 24px;
+}
+[dir="rtl"] .tb-search input {
+  padding: 11px 42px 11px 14px;
+}
+[dir="rtl"] .tb-search .s-icon {
+  left: auto;
+  right: 13px;
+}
+[dir="rtl"] .tb-search .kbd {
+  right: auto;
+  left: 10px;
+}
+[dir="rtl"] .tb-right {
+  margin-left: 0;
+  margin-right: auto;
+}
+[dir="rtl"] .tb-icon-btn .pulse-dot {
+  right: auto;
+  left: 9px;
+}
+
+/* ── Icon utilities: swap margin-right → margin-left ── */
+[dir="rtl"] .title-icon {
+  margin-right: 0;
+  margin-left: 5px;
+}
+[dir="rtl"] .sport-dot {
+  margin-right: 0;
+  margin-left: 5px;
+}
+[dir="rtl"] .cta-live-dot {
+  margin-right: 0;
+  margin-left: 6px;
+}
+[dir="rtl"] .l-sport-pill {
+  margin-right: 0;
+  margin-left: 4px;
+}
+
+/* ── Bottom nav: keep LTR icon order ── */
+[dir="rtl"] .bottom-nav,
+[dir="rtl"] .cs-bottomnav {
+  direction: ltr;
+}
+
+/* ── Menu drawer ── */
+[dir="rtl"] .mn-label,
+[dir="rtl"] .mn-header-title {
+  text-align: right;
+}
+[dir="rtl"] .mn-sport-name {
+  text-align: right;
+}
+
+/* ── Ad slot tag ── */
+[dir="rtl"] .ad-slot__tag {
+  left: auto;
+  right: 10px;
+}
+[dir="rtl"] .ad-slot--strip .ad-slot__tag {
+  left: auto;
+  right: 20px;
+}
+
+/* ── Badges/counts keep LTR ── */
+[dir="rtl"] .count,
+[dir="rtl"] .mn-badge {
+  direction: ltr;
+}
+
+/* ── Scores & numbers keep LTR ── */
+[dir="rtl"] .status-pill,
+[dir="rtl"] .score-box {
+  direction: ltr;
+}
+
+/* ── Section heads: swap text alignment ── */
+[dir="rtl"] .sec-head {
+  text-align: right;
+}
+
+/* ===================================================================
+   MOBILE TOUCH SMOOTHNESS
+   — Smoother transitions, spring-like release, no jank
+   =================================================================== */
+
+@media (pointer: coarse) {
+  /* Use GPU compositing for all animated interactive elements */
+  a, button, [role="button"] {
+    will-change: transform;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+  }
+
+  /* Smoother release curve on cards and links (spring-back effect) */
+  .card,
+  .section a,
+  .section button {
+    transition-timing-function: cubic-bezier(.25,.46,.45,.94);
+  }
+}

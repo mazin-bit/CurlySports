@@ -15,7 +15,7 @@ export const metadata = {
 
 export default function LiveScoresPage() {
   return (
-    <AppShell active="live" title="Live Scores" subtitle="Updated every 30s">
+    <AppShell active="live" title="Live Scores" titleKey="liveScores.title" subtitleKey="liveScores.subtitle">
       <div className="stack">
         <LiveScoresClient />
       </div>

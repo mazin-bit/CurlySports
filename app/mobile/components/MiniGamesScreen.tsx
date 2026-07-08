@@ -147,7 +147,7 @@ function QuizGame({ sport, onComplete }: { sport: string; onComplete: (score: nu
           }
           return (
             <button key={i} onClick={() => pick(i)} disabled={selected !== null}
-              style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', borderRadius: 10, border: `2px solid ${border}`, background: bg, color, fontFamily: 'var(--mono)', fontSize: 12, fontWeight: 700, cursor: selected !== null ? 'default' : 'pointer', textAlign: 'left' }}
+              style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', borderRadius: 10, border: `2px solid ${border}`, background: bg, color, fontFamily: 'var(--mono)', fontSize: 12, fontWeight: 700, cursor: selected !== null ? 'default' : 'pointer', textAlign: 'start' }}
             >
               <span style={{ width: 22, height: 22, borderRadius: 5, background: 'rgba(0,0,0,0.1)', display: 'grid', placeItems: 'center', flexShrink: 0, fontSize: 11 }}>{['A','B','C','D'][i]}</span>
               {opt}
@@ -276,7 +276,7 @@ function PredictorGame({ sport }: { sport: string }) {
         <Card key={idx}>
           <div style={{ fontFamily: 'var(--mono)', fontSize: 9.5, color: 'var(--text-mute)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>{m.league}</div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ flex: 1, fontWeight: 700, fontSize: 13, color: 'var(--ink)', textAlign: 'right' }}>{m.home}</span>
+            <span style={{ flex: 1, fontWeight: 700, fontSize: 13, color: 'var(--ink)', textAlign: 'end' }}>{m.home}</span>
             <input type="number" min="0" max="20" value={preds[idx].home} onChange={e => update(idx, 'home', parseInt(e.target.value) || 0)} disabled={submitted}
               style={{ width: 44, textAlign: 'center', border: '2px solid var(--border-2)', borderRadius: 8, padding: '7px 0', fontSize: 16, fontWeight: 800, background: 'var(--surface)', color: 'var(--ink)', outline: 'none' }} />
             <span style={{ fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 700, color: 'var(--text-mute)' }}>VS</span>

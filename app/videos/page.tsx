@@ -6,6 +6,7 @@ import styles from "./videos.module.css";
 import { Play, ExternalLink, RefreshCw, Tv2, PlayCircle } from "lucide-react";
 import { useVideos } from "@/hooks/useVideos";
 import { useActiveSport } from "@/contexts/SportContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import type { VideoHighlight } from "@/app/api/espn/videos/route";
 
 function FeaturedPlayer({
@@ -15,6 +16,7 @@ function FeaturedPlayer({
   video: VideoHighlight;
   onBlocked: () => void;
 }) {
+  const { t } = useLanguage();
   // Listen for YouTube postMessage errors (101/150 = embedding blocked, 100 = not found)
   // onBlocked is stable (empty useCallback deps), so this effect won't retrigger on re-renders
   useEffect(() => {
@@ -58,7 +60,7 @@ function FeaturedPlayer({
         <div className={styles.fallbackOverlay}>
           <div className={styles.openBtn}>
             <ExternalLink size={18} strokeWidth={2} />
-            <span>Open on YouTube</span>
+            <span>{t("videos.openOnYouTube")}</span>
           </div>
         </div>
       </div>
@@ -113,6 +115,7 @@ function PlaylistItem({
 
 export default function VideosPage() {
   const { activeSport, activeSportConfig } = useActiveSport();
+  const { t } = useLanguage();
   const { videos, isLoading, isValidating } = useVideos(activeSport);
   const [featured, setFeatured] = useState<VideoHighlight | null>(null);
   const [blockedIds, setBlockedIds] = useState<Set<string>>(new Set());
@@ -161,7 +164,7 @@ export default function VideosPage() {
         <div className="sec-head">
           <div className="title">
             <Tv2 size={17} className="title-icon" strokeWidth={2} />
-            {activeSportConfig.icon} Recent <span className="accent">Highlights</span>
+            {activeSportConfig.icon} {t("videos.recentHighlights")} <span className="accent">{t("videos.highlightsAccent")}</span>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             {isValidating && !isLoading && (
@@ -178,7 +181,7 @@ export default function VideosPage() {
                 fontFamily: "var(--mono)",
               }}
             >
-              {isLoading ? "Loading…" : `${videos.length} videos`}
+              {isLoading ? t("videos.loading") : `${videos.length} ${t("videos.videosCount")}`}
             </span>
           </div>
         </div>
@@ -195,11 +198,11 @@ export default function VideosPage() {
         ) : videos.length === 0 ? (
           <div className={styles.empty}>
             <PlayCircle size={48} strokeWidth={1} style={{ color: "var(--text-mute)", marginBottom: 16 }} />
-            <p className={styles.emptyTitle}>No highlights available</p>
+            <p className={styles.emptyTitle}>{t("videos.noHighlights")}</p>
             <p className={styles.emptySub}>
-              No recent {activeSportConfig.label} match highlights found.
+              {t("videos.noRecentHighlights").replace("{sport}", activeSportConfig.label)}
               <br />
-              Check back after the next match day.
+              {t("videos.checkBack")}
             </p>
           </div>
         ) : (
@@ -221,7 +224,7 @@ export default function VideosPage() {
                       className={styles.ytOpenLink}
                     >
                       <PlayCircle size={14} strokeWidth={2} />
-                      Watch on YouTube
+                      {t("videos.watchOnYouTube")}
                       <ExternalLink size={11} strokeWidth={2} />
                     </a>
                   </div>
@@ -233,7 +236,7 @@ export default function VideosPage() {
             <div className={styles.playlist}>
               <div className={styles.playlistHeader}>
                 <Play size={12} strokeWidth={2.5} />
-                Up Next · {videos.length} videos
+                {t("videos.upNext")}{videos.length} {t("videos.videos")}
               </div>
               <div className={styles.playlistScroll}>
                 {videos.map((v, i) => (
