@@ -702,16 +702,18 @@ export default function DebatesPage() {
     setError("");
     try {
       const res = await fetch(`/api/posts?sport=${sport}&limit=20`);
-      if (!res.ok) throw new Error(t("debates.failedToLoad"));
-      const data = await res.json();
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        throw new Error(data?.error || t("debates.failedToLoad"));
+      }
       if (replace) {
         setPosts(data.posts ?? []);
       } else {
         setPosts((prev) => [...prev, ...(data.posts ?? [])]);
       }
       setNextCursor(data.nextCursor);
-    } catch {
-      setError(t("debates.couldNotLoad"));
+    } catch (e) {
+      setError((e as Error).message || t("debates.couldNotLoad"));
     } finally {
       setLoading(false);
     }
