@@ -61,8 +61,9 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ posts: enriched, nextCursor });
   } catch (err) {
-    logger.error("posts GET error", { message: (err as Error).message });
-    return NextResponse.json({ posts: [], nextCursor: null, error: "Service unavailable" }, { status: 503 });
+    const msg = (err as Error).message;
+    logger.error("posts GET error", { message: msg, stack: (err as Error).stack?.slice(0, 300) });
+    return NextResponse.json({ posts: [], nextCursor: null, error: msg || "Service unavailable" }, { status: 503 });
   }
 }
 
