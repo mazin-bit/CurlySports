@@ -11,6 +11,7 @@ import {
 import styles from "./admin.module.css";
 import { DEFAULT_FLAGS, AdminFlags } from "@/lib/featureFlags";
 
+
 /* ── helpers ───────────────────────────────────── */
 const SPORT_META: Record<string, { label: string; abbr: string; color: string }> = {
   football:   { label: "Football",   abbr: "SOC", color: "#c8ff3d" },
@@ -70,7 +71,6 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
   const [show, setShow] = useState(false);
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
-
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setErr(""); setLoading(true);

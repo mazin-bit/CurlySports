@@ -5,6 +5,7 @@ import { Eye, EyeOff } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import styles from "../login/login.module.css";
 
+
 function Stage() {
   return (
     <div className={styles.stage}>
@@ -43,7 +44,6 @@ function ResetPasswordForm() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
   const isMobile = searchParams.get("mobile") === "1";
-
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (password !== confirm) {

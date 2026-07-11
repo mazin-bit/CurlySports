@@ -4,12 +4,14 @@ import { parseBody, adminAuthSchema } from "@/lib/validation";
 import { rateLimiters } from "@/lib/rate-limit";
 import { logger } from "@/lib/logger";
 
+
 export async function POST(req: NextRequest) {
   // Rate limit: 3 attempts per minute per IP
   const limited = await rateLimiters.adminAuth(req);
   if (limited) return limited;
 
   const body = await req.json().catch(() => ({}));
+
   const parsed = parseBody(adminAuthSchema, body);
   if (!parsed.success) return parsed.response;
 

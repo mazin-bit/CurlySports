@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import "./landing.css";
 import { Activity, TrendingUp, Target, MapPin, MessageSquareMore } from "lucide-react";
@@ -35,20 +35,60 @@ const BACK_STATS: Record<string, { h4: string; stats: [string, string][] }> = {
 const MUN = [18, 22, 31, 38, 42, 35, 28, 45, 52, 38, 31, 24, 35, 48, 55, 42, 36];
 const BAY = [35, 28, 22, 18, 25, 38, 45, 32, 22, 38, 45, 52, 42, 32, 24, 38, 44];
 
+// Nav items: label → section id (order matches nav display)
+const NAV_ITEMS = [
+  { label: "Home", id: "hero" },
+  { label: "About", id: "about" },
+  { label: "Platform", id: "preview" },
+  { label: "Features", id: "different" },
+  { label: "Founder", id: "founder" },
+  { label: "Debates", id: "debates" },
+  { label: "News", id: "news" },
+  { label: "Join", id: "cta" },
+];
+// Section ids in actual page order (top → bottom) for scroll detection
+const SECTION_ORDER = ["hero", "about", "preview", "different", "founder", "debates", "news", "cta"];
+
 export default function LandingPage() {
   const rootRef = useRef<HTMLDivElement>(null);
+  const [activeSection, setActiveSection] = useState("hero");
 
-  /* Scroll reveal */
+  // Smooth scroll to section
+  const scrollTo = (e: React.MouseEvent, id: string) => {
+    e.preventDefault();
+    const section = document.getElementById(id);
+    if (section) {
+      setActiveSection(id);
+      section.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
+
+  /* Scroll reveal + active section tracking */
   useEffect(() => {
     const el = rootRef.current;
     if (!el) return;
-    const obs = new IntersectionObserver((entries) => {
+    const revealObs = new IntersectionObserver((entries) => {
       entries.forEach((e) => {
-        if (e.isIntersecting) { e.target.classList.add("in"); obs.unobserve(e.target); }
+        if (e.isIntersecting) { e.target.classList.add("in"); revealObs.unobserve(e.target); }
       });
     }, { threshold: 0.1 });
-    el.querySelectorAll(".reveal").forEach((node) => obs.observe(node));
-    return () => obs.disconnect();
+    el.querySelectorAll(".reveal").forEach((node) => revealObs.observe(node));
+
+    // Track active section on scroll
+    const onScroll = () => {
+      let current = SECTION_ORDER[0];
+      for (const id of SECTION_ORDER) {
+        const section = document.getElementById(id);
+        if (section) {
+          const rect = section.getBoundingClientRect();
+          if (rect.top <= 150) current = id;
+        }
+      }
+      setActiveSection(current);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+
+    return () => { revealObs.disconnect(); window.removeEventListener("scroll", onScroll); };
   }, []);
 
   return (
@@ -118,15 +158,13 @@ export default function LandingPage() {
             <span>curly<em style={{ color: "var(--orange)", fontStyle: "normal" }}>.</em>sports</span>
           </a>
           <div className="l-nav-links">
-            <a href="#hero" className="active">Home</a>
-            <a href="#about">About</a>
-            <a href="#founder">Founder</a>
-            <a href="#preview">Platform</a>
-            <a href="#news">News</a>
+            {NAV_ITEMS.map(({ label, id }) => (
+              <a key={id} href={`#${id}`} className={activeSection === id ? "active" : ""} onClick={(e) => scrollTo(e, id)}>{label}</a>
+            ))}
           </div>
           <div className="l-nav-cta">
             <a href="/login" className="l-btn l-btn-ghost">Log in</a>
-            <a href="/login" className="l-btn l-btn-dark">Sign up →</a>
+            <a href="/login" className="l-btn l-btn-lime">Get Started</a>
           </div>
         </div>
       </nav>
@@ -183,7 +221,11 @@ export default function LandingPage() {
             {/* CTAs */}
             <div className="l-hero-actions">
               <a href="/login" className="l-btn l-btn-orange l-btn-lg">Join free →</a>
-              <a href="/live-scores" className="l-btn l-btn-ghost l-btn-lg"><span className="cta-live-dot"></span>Watch live</a>
+              <a href="/download" className="l-btn l-btn-dark l-btn-lg">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Download App
+              </a>
+
             </div>
 
             {/* Leagues strip */}
@@ -380,7 +422,7 @@ export default function LandingPage() {
       </div>
 
       {/* ── Features ──────────────────────────────── */}
-      <div className="l-features reveal">
+      <div className="l-features reveal" id="different">
         <div className="l-section" style={{ padding: "96px 32px 120px" }}>
           <span className="l-section-tag"><span className="num">04</span> · What makes Curly different</span>
           <h2 className="l-kicker" style={{ maxWidth: 720 }}>Four things every other<br />sports site gets wrong.</h2>
@@ -444,7 +486,8 @@ export default function LandingPage() {
               </div>
               <div className="l-founder-btns">
                 <a href="#" className="l-btn l-btn-lime">Read the full story →</a>
-                <a href="#" className="l-btn l-btn-ghost" style={{ borderColor: "var(--paper)", color: "var(--paper)" }}>Follow @mazincurly</a>
+                <a href="https://x.com/curlysportsofcl" target="_blank" rel="noopener noreferrer" className="l-btn l-btn-ghost" style={{ borderColor: "var(--paper)", color: "var(--paper)" }}>Follow @curlysportsofcl</a>
+                <a href="https://www.instagram.com/curlysportsofficial/" target="_blank" rel="noopener noreferrer" className="l-btn l-btn-ghost" style={{ borderColor: "var(--paper)", color: "var(--paper)" }}>Instagram</a>
               </div>
             </div>
           </div>
@@ -452,7 +495,7 @@ export default function LandingPage() {
       </div>
 
       {/* ── Debate ────────────────────────────────── */}
-      <div className="l-debate-wrap">
+      <div className="l-debate-wrap" id="debates">
         <div className="l-debate reveal">
           <div className="l-debate-grid">
             <div>
@@ -573,7 +616,7 @@ export default function LandingPage() {
       </div>
 
       {/* ── Final CTA ─────────────────────────────── */}
-      <div className="l-cta-final reveal">
+      <div className="l-cta-final reveal" id="cta">
         <div className="l-cta-wrap">
           <svg className="l-cta-star s1" viewBox="0 0 40 40"><use href="#star" /></svg>
           <svg className="l-cta-star s2" viewBox="0 0 40 40"><use href="#star" /></svg>
@@ -636,10 +679,9 @@ export default function LandingPage() {
             <div className="l-foot-col">
               <div className="l-foot-col-head">Connect</div>
               <ul>
-                <li><a href="#">Twitter / X</a></li>
-                <li><a href="#">Instagram</a></li>
-                <li><a href="#">TikTok</a></li>
-                <li><a href="#">Discord</a></li>
+                <li><a href="https://x.com/curlysportsofcl" target="_blank" rel="noopener noreferrer">Twitter / X</a></li>
+                <li><a href="https://www.instagram.com/curlysportsofficial/" target="_blank" rel="noopener noreferrer">Instagram</a></li>
+                <li><a href="https://www.youtube.com/@curlysportsofficial" target="_blank" rel="noopener noreferrer">YouTube</a></li>
               </ul>
             </div>
           </div>

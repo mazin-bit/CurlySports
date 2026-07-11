@@ -1,5 +1,9 @@
 /* Landing page — scoped under .landing-root to prevent style bleed */
 
+html:has(.landing-root) {
+  scroll-behavior: smooth;
+}
+
 .landing-root {
   --cream: #f6ede0;
   --cream-2: #efe2ce;
@@ -47,8 +51,8 @@
 }
 .landing-root .l-nav-inner {
   max-width: 1280px; margin: 0 auto;
-  padding: 16px 32px;
-  display: flex; align-items: center; gap: 32px;
+  padding: 14px 28px;
+  display: flex; align-items: center; gap: 20px;
 }
 .landing-root .l-logo {
   display: flex; align-items: center; gap: 10px;
@@ -66,13 +70,16 @@
   display: block;
 }
 .landing-root .l-logo:hover .l-logo-mark { transform: rotate(6deg) scale(1.05); }
-.landing-root .l-nav-links { display: flex; gap: 28px; margin-left: 16px; }
-.landing-root .l-nav-links a { font-size: 15px; font-weight: 500; color: var(--ink-soft); transition: color 0.15s; position: relative; }
+.landing-root .l-nav-links { display: flex; gap: 18px; margin-left: 12px; }
+.landing-root .l-nav-links a { font-size: 13.5px; font-weight: 500; color: var(--ink-soft); transition: color 0.25s; position: relative; white-space: nowrap; }
 .landing-root .l-nav-links a:hover { color: var(--ink); }
-.landing-root .l-nav-links a.active::after {
+.landing-root .l-nav-links a.active { color: var(--ink); }
+.landing-root .l-nav-links a::after {
   content: ""; position: absolute; left: 0; right: 0; bottom: -6px;
   height: 3px; background: var(--orange); border-radius: 3px;
+  transform: scaleX(0); transition: transform 0.25s ease;
 }
+.landing-root .l-nav-links a.active::after { transform: scaleX(1); }
 .landing-root .l-nav-cta { margin-left: auto; display: flex; gap: 10px; align-items: center; }
 
 /* ===== BUTTONS ===== */

@@ -6,6 +6,7 @@ import styles from "./login.module.css";
 import { Mail, Eye, EyeOff, Check, X, Loader2 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 
+
 type Mode = "login" | "signup" | "forgot";
 
 const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ?? "";
@@ -250,7 +251,6 @@ export default function LoginPage() {
   const [verificationEmail, setVerificationEmail] = useState("");
   const [usernameStatus, setUsernameStatus] = useState<"idle" | "checking" | "available" | "taken" | "invalid">("idle");
   const usernameTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
   const router = useRouter();
 
   const checkUsername = useCallback((value: string) => {

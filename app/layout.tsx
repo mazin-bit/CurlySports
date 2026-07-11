@@ -43,8 +43,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    site: "@curlysports",
-    creator: "@curlysports",
+    site: "@curlysportsofcl",
+    creator: "@curlysportsofcl",
     title: "Curly Sports — Live Scores, Teams, Players & News",
     description:
       "Your ultimate sports hub — live scores, match details, team stats, player profiles, leagues, debates, and breaking sports news.",
@@ -105,8 +105,9 @@ export default function RootLayout({
           height: 512,
         },
         sameAs: [
-          "https://twitter.com/curlysports",
-          "https://instagram.com/curlysports",
+          "https://x.com/curlysportsofcl",
+          "https://www.instagram.com/curlysportsofficial/",
+          "https://www.youtube.com/@curlysportsofficial",
         ],
       },
     ],

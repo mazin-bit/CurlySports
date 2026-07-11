@@ -8,12 +8,14 @@ import { parseBody, signupSchema } from "@/lib/validation";
 import { rateLimiters } from "@/lib/rate-limit";
 import { logger } from "@/lib/logger";
 
+
 export async function POST(req: NextRequest) {
   try {
     const limited = await rateLimiters.auth(req);
     if (limited) return limited;
 
     const body = await req.json().catch(() => ({}));
+
     const parsed = parseBody(signupSchema, body);
     if (!parsed.success) return parsed.response;
     const { email, password, username } = parsed.data;
