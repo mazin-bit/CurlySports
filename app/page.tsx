@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import "./landing.css";
-import { Activity, TrendingUp, Target, MapPin, MessageSquareMore } from "lucide-react";
+import { Activity, TrendingUp, Target, MapPin, MessageSquareMore, Zap, Shield, Globe, Trophy } from "lucide-react";
 
 /* ── Sport card data ─────────────────────────────── */
 const SPORT_CARDS = [
@@ -44,10 +44,11 @@ const NAV_ITEMS = [
   { label: "Founder", id: "founder" },
   { label: "Debates", id: "debates" },
   { label: "News", id: "news" },
+  { label: "Download", id: "download" },
   { label: "Join", id: "cta" },
 ];
 // Section ids in actual page order (top → bottom) for scroll detection
-const SECTION_ORDER = ["hero", "about", "preview", "different", "founder", "debates", "news", "cta"];
+const SECTION_ORDER = ["hero", "about", "preview", "different", "founder", "debates", "news", "cta", "download"];
 
 export default function LandingPage() {
   const rootRef = useRef<HTMLDivElement>(null);
@@ -221,11 +222,24 @@ export default function LandingPage() {
             {/* CTAs */}
             <div className="l-hero-actions">
               <a href="/login" className="l-btn l-btn-orange l-btn-lg">Join free →</a>
-              <a href="/download" className="l-btn l-btn-dark l-btn-lg">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                Download App
+              <a
+                href="https://apps.apple.com/ae/app/curlysports/id6782400396"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="l-btn l-btn-dark l-btn-lg l-store-btn"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+                App Store
               </a>
-
+              <a
+                href="https://play.google.com/store/apps/details?id=com.curlysports.mobile&pcampaignid=web_share"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="l-btn l-btn-dark l-btn-lg l-store-btn"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M3.609 1.814L13.792 12 3.61 22.186a.996.996 0 0 1-.61-.92V2.734a1 1 0 0 1 .609-.92zm10.89 10.893l2.302 2.302-10.937 6.333 8.635-8.635zm3.199-3.199l2.302 2.302a1 1 0 0 1 0 1.38l-2.302 2.302L15.396 12l2.302-3.492zM5.864 2.658L16.8 9.99l-2.302 2.302L5.864 2.658z"/></svg>
+                Google Play
+              </a>
             </div>
 
             {/* Leagues strip */}
@@ -631,6 +645,97 @@ export default function LandingPage() {
             <a href="/login" className="l-btn l-btn-orange l-btn-lg">Create my account →</a>
             <a href="/dashboard" className="l-btn l-btn-ghost l-btn-lg">Tour the dashboard</a>
           </div>
+        </div>
+      </div>
+
+      {/* ── Download Section ──────────────────────── */}
+      <div className="l-download" id="download">
+        <div className="l-download-inner">
+          <div className="l-section-tag"><span className="l-tag-dot" /><span>DOWNLOAD</span></div>
+          <h2 className="l-kicker">
+            Your sports companion,<br />
+            <span style={{ color: "var(--ink-soft)" }}>always in your pocket.</span>
+          </h2>
+          <p className="l-lede">
+            Live scores, deep stats, 150+ leagues, and hot debates —
+            all in one beautifully crafted app you&apos;ll love.
+          </p>
+
+          {/* Store buttons */}
+          <div className="l-download-actions">
+            <a
+              href="https://apps.apple.com/ae/app/curlysports/id6782400396"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="l-btn l-btn-dark l-btn-lg l-store-btn"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+              Download for iOS
+            </a>
+            <a
+              href="https://play.google.com/store/apps/details?id=com.curlysports.mobile&pcampaignid=web_share"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="l-btn l-btn-dark l-btn-lg l-store-btn"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M3.609 1.814L13.792 12 3.61 22.186a.996.996 0 0 1-.61-.92V2.734a1 1 0 0 1 .609-.92zm10.89 10.893l2.302 2.302-10.937 6.333 8.635-8.635zm3.199-3.199l2.302 2.302a1 1 0 0 1 0 1.38l-2.302 2.302L15.396 12l2.302-3.492zM5.864 2.658L16.8 9.99l-2.302 2.302L5.864 2.658z"/></svg>
+              Download for Android
+            </a>
+          </div>
+
+          {/* App preview window */}
+          <div className="l-download-preview">
+            <div className="l-download-window">
+              <div className="l-download-window-bar">
+                <div className="l-download-dots">
+                  <span style={{ background: "var(--orange)" }} />
+                  <span style={{ background: "var(--lime)" }} />
+                  <span style={{ background: "var(--sky)" }} />
+                </div>
+                <div className="l-download-tabs">
+                  <span className="l-download-tab-active">Dashboard</span>
+                  <span className="l-download-tab">Live Scores</span>
+                  <span className="l-download-tab">Leagues</span>
+                </div>
+              </div>
+              <div className="l-download-img-wrap">
+                <Image src="/dashboard-v2.png" alt="Curly Sports Dashboard" width={1200} height={700} quality={90} className="l-download-img" />
+              </div>
+            </div>
+          </div>
+
+          {/* Features grid */}
+          <div className="l-download-features">
+            <div className="l-download-feat">
+              <div className="l-download-feat-icon"><Zap size={20} /></div>
+              <div>
+                <h3>Instant Notifications</h3>
+                <p>Goals, wickets, and buzzer-beaters the second they happen.</p>
+              </div>
+            </div>
+            <div className="l-download-feat">
+              <div className="l-download-feat-icon"><Shield size={20} /></div>
+              <div>
+                <h3>Ad-Free Experience</h3>
+                <p>Clean, fast interface with zero distracting ads.</p>
+              </div>
+            </div>
+            <div className="l-download-feat">
+              <div className="l-download-feat-icon"><Globe size={20} /></div>
+              <div>
+                <h3>150+ Leagues</h3>
+                <p>Football, cricket, NBA, F1, NFL, tennis, baseball — all in one place.</p>
+              </div>
+            </div>
+            <div className="l-download-feat">
+              <div className="l-download-feat-icon"><Trophy size={20} /></div>
+              <div>
+                <h3>Mini Games</h3>
+                <p>Predictions, trivia, and debates to compete with friends.</p>
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
 

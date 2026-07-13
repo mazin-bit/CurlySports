@@ -22,6 +22,7 @@ const SECTIONS: [string, [string, string, string, string?][]][] = [
     ['profile', 'nav.profile', 'cog'],
     ['favorites', 'nav.favorites', 'heart'],
     ['notifications', 'nav.notifications', 'bell'],
+    ['feedback', 'nav.feedback', 'message-square'],
   ]],
 ];
 

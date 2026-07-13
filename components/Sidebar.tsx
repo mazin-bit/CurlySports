@@ -31,8 +31,9 @@ const NAV_COMMUNITY = [
 ];
 
 const NAV_PERSONAL = [
-  { key: "favorites",     tKey: "nav.favorites",     icon: "i-heart", href: "/favorites",     feature: "favorites" },
-  { key: "notifications", tKey: "nav.notifications", icon: "i-bell",  href: "/notifications", feature: null },
+  { key: "favorites",     tKey: "nav.favorites",     icon: "i-heart",   href: "/favorites",     feature: "favorites" },
+  { key: "notifications", tKey: "nav.notifications", icon: "i-bell",    href: "/notifications", feature: null },
+  { key: "feedback",      tKey: "nav.feedback",       icon: "i-spark",   href: "/feedback",      feature: null },
 ];
 
 // Map sidebar sport key → flags.sports key

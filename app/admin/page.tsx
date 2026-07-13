@@ -7,6 +7,7 @@ import {
   Activity, Zap, Globe, CheckCircle2, XCircle,
   ChevronRight, AlertTriangle, BarChart2, Clock,
   Wifi, WifiOff, Users, Search, Trash2, Mail, MessageSquare, Radio,
+  Star, MessageCircle,
 } from "lucide-react";
 import styles from "./admin.module.css";
 import { DEFAULT_FLAGS, AdminFlags } from "@/lib/featureFlags";
@@ -782,6 +783,214 @@ function DebatesTab({ adminToken }: { adminToken: string }) {
   );
 }
 
+/* ── Feedback tab ──────────────────────────────── */
+interface FeedbackItem {
+  id: string; userId: string | null; email: string | null;
+  category: string; subject: string; message: string;
+  rating: number | null; status: string; createdAt: string;
+}
+
+const STATUS_COLORS: Record<string, string> = {
+  open: "#5dd9ff",
+  reviewed: "#ff8c42",
+  resolved: "#22c55e",
+  dismissed: "#ef4444",
+};
+
+const CATEGORY_LABELS: Record<string, string> = {
+  bug: "Bug Report",
+  feature: "Feature Request",
+  ui: "UI / Design",
+  performance: "Performance",
+  other: "Other",
+};
+
+function FeedbackTab({ adminToken }: { adminToken: string }) {
+  const [items, setItems] = useState<FeedbackItem[]>([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [pages, setPages] = useState(1);
+  const [loading, setLoading] = useState(true);
+  const [filterStatus, setFilterStatus] = useState("");
+  const [filterCat, setFilterCat] = useState("");
+  const [expanded, setExpanded] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<string | null>(null);
+
+  const load = useCallback(async (p: number, status?: string, category?: string) => {
+    setLoading(true);
+    const params = new URLSearchParams({ page: String(p), limit: "15" });
+    if (status) params.set("status", status);
+    if (category) params.set("category", category);
+    const res = await fetch(`/api/admin/feedback?${params}`, {
+      headers: { "x-admin-token": adminToken },
+    });
+    if (res.ok) {
+      const data = await res.json();
+      setItems(data.feedback);
+      setTotal(data.total);
+      setPages(data.pages);
+    }
+    setLoading(false);
+  }, [adminToken]);
+
+  useEffect(() => { load(page, filterStatus, filterCat); }, [page, filterStatus, filterCat, load]);
+
+  async function updateStatus(id: string, status: string) {
+    const res = await fetch("/api/admin/feedback", {
+      method: "PATCH",
+      headers: { "content-type": "application/json", "x-admin-token": adminToken },
+      body: JSON.stringify({ id, status }),
+    });
+    if (res.ok) {
+      setItems(prev => prev.map(f => f.id === id ? { ...f, status } : f));
+    }
+  }
+
+  async function deleteFeedback(id: string) {
+    if (!confirm("Delete this feedback?")) return;
+    setDeleting(id);
+    const res = await fetch(`/api/admin/feedback?id=${id}`, {
+      method: "DELETE",
+      headers: { "x-admin-token": adminToken },
+    });
+    if (res.ok) {
+      setItems(prev => prev.filter(f => f.id !== id));
+      setTotal(t => t - 1);
+    }
+    setDeleting(null);
+  }
+
+  const openCount = items.filter(f => f.status === "open").length;
+
+  return (
+    <div className={styles.tabContent}>
+      <div className={styles.tabHeader}>
+        <h2>User Feedback</h2>
+        <span className={styles.tabDesc}>{total} total feedback submission{total !== 1 ? "s" : ""}. Review, respond, and manage user reports.</span>
+      </div>
+
+      {/* Filters */}
+      <div className={styles.fbFilters}>
+        <select
+          className={styles.input}
+          value={filterStatus}
+          onChange={e => { setFilterStatus(e.target.value); setPage(1); }}
+          style={{ maxWidth: 180 }}
+        >
+          <option value="">All statuses</option>
+          <option value="open">Open</option>
+          <option value="reviewed">Reviewed</option>
+          <option value="resolved">Resolved</option>
+          <option value="dismissed">Dismissed</option>
+        </select>
+        <select
+          className={styles.input}
+          value={filterCat}
+          onChange={e => { setFilterCat(e.target.value); setPage(1); }}
+          style={{ maxWidth: 180 }}
+        >
+          <option value="">All categories</option>
+          <option value="bug">Bug Report</option>
+          <option value="feature">Feature Request</option>
+          <option value="ui">UI / Design</option>
+          <option value="performance">Performance</option>
+          <option value="other">Other</option>
+        </select>
+        <button className={styles.refreshBtn} onClick={() => load(page, filterStatus, filterCat)} title="Refresh">
+          <RefreshCw size={14} />
+        </button>
+        {openCount > 0 && (
+          <span className={styles.fbOpenBadge}>{openCount} open</span>
+        )}
+      </div>
+
+      {/* Feedback list */}
+      {loading && items.length === 0 ? (
+        <div className={styles.empty}>Loading feedback...</div>
+      ) : items.length === 0 ? (
+        <div className={styles.empty}>No feedback found.</div>
+      ) : (
+        <div className={styles.fbList}>
+          {items.map(f => (
+            <div key={f.id} className={`${styles.fbCard} ${expanded === f.id ? styles.fbCardExpanded : ""}`}>
+              <div className={styles.fbCardTop} onClick={() => setExpanded(expanded === f.id ? null : f.id)}>
+                <div className={styles.fbCardLeft}>
+                  <span className={styles.fbCatBadge} data-cat={f.category}>
+                    {CATEGORY_LABELS[f.category] || f.category}
+                  </span>
+                  <span className={styles.fbSubject}>{f.subject}</span>
+                </div>
+                <div className={styles.fbCardRight}>
+                  {f.rating && (
+                    <span className={styles.fbRating}>
+                      <Star size={11} fill="#c8ff3d" stroke="#c8ff3d" />
+                      {f.rating}
+                    </span>
+                  )}
+                  <span
+                    className={styles.fbStatusBadge}
+                    style={{ color: STATUS_COLORS[f.status] || "#888", borderColor: (STATUS_COLORS[f.status] || "#888") + "44" }}
+                  >
+                    {f.status}
+                  </span>
+                  <span className={styles.fbDate}>
+                    {new Date(f.createdAt).toLocaleDateString()}
+                  </span>
+                  <ChevronRight size={14} className={`${styles.fbChevron} ${expanded === f.id ? styles.fbChevronOpen : ""}`} />
+                </div>
+              </div>
+
+              {expanded === f.id && (
+                <div className={styles.fbExpanded}>
+                  <div className={styles.fbMessage}>{f.message}</div>
+                  <div className={styles.fbMeta}>
+                    {f.email && (
+                      <span className={styles.fbMetaItem}><Mail size={11} /> {f.email}</span>
+                    )}
+                    {f.userId && (
+                      <span className={styles.fbMetaItem}><Users size={11} /> {f.userId.slice(0, 8)}...</span>
+                    )}
+                    <span className={styles.fbMetaItem}><Clock size={11} /> {new Date(f.createdAt).toLocaleString()}</span>
+                  </div>
+                  <div className={styles.fbActions}>
+                    <select
+                      className={styles.input}
+                      value={f.status}
+                      onChange={e => updateStatus(f.id, e.target.value)}
+                      style={{ maxWidth: 150, padding: "6px 10px", fontSize: 12 }}
+                    >
+                      <option value="open">Open</option>
+                      <option value="reviewed">Reviewed</option>
+                      <option value="resolved">Resolved</option>
+                      <option value="dismissed">Dismissed</option>
+                    </select>
+                    <button
+                      className={styles.userDeleteBtn}
+                      onClick={() => deleteFeedback(f.id)}
+                      disabled={deleting === f.id}
+                      title="Delete feedback"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {pages > 1 && (
+        <div className={styles.usersPagination}>
+          <button className={styles.btnGhost} disabled={page <= 1} onClick={() => setPage(p => p - 1)}>Previous</button>
+          <span className={styles.usersPageInfo}>Page {page} of {pages}</span>
+          <button className={styles.btnGhost} disabled={page >= pages} onClick={() => setPage(p => p + 1)}>Next</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ── Nav items ─────────────────────────────────── */
 const NAV = [
   { key: "overview",     label: "Overview",      icon: LayoutDashboard },
@@ -790,6 +999,7 @@ const NAV = [
   { key: "sports",       label: "Sports",        icon: Dumbbell },
   { key: "debates",      label: "Debates",       icon: MessageSquare },
   { key: "maintenance",  label: "Maintenance",   icon: Wrench },
+  { key: "feedback",      label: "Feedback",      icon: MessageCircle },
   { key: "notice",       label: "Site Notice",   icon: Bell },
 ];
 
@@ -924,6 +1134,7 @@ export default function AdminPage() {
           {tab === "flags"       && <FlagsTab flags={flags} onSave={saveFlags} />}
           {tab === "sports"      && <SportsTab flags={flags} onSave={saveFlags} />}
           {tab === "debates"     && <DebatesTab adminToken={token()} />}
+          {tab === "feedback"     && <FeedbackTab adminToken={token()} />}
           {tab === "maintenance" && <MaintenanceTab flags={flags} onSave={saveFlags} />}
           {tab === "notice"      && <NoticeTab flags={flags} onSave={saveFlags} />}
         </div>

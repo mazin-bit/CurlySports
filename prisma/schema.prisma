@@ -238,3 +238,17 @@ model Favorite {
   @@unique([userId, playerId])
   @@map("favorites")
 }
+
+model Feedback {
+  id        String   @id @default(cuid())
+  userId    String?
+  email     String?
+  category  String
+  subject   String
+  message   String
+  rating    Int?
+  status    String   @default("open")
+  createdAt DateTime @default(now())
+
+  @@map("feedback")
+}

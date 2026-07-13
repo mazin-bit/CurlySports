@@ -1066,6 +1066,166 @@
   color: var(--a-ink-dim);
 }
 
+/* ── Feedback tab ──────────────────────────────── */
+.fbFilters {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.fbOpenBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  background: rgba(93, 217, 255, 0.1);
+  border: 1px solid rgba(93, 217, 255, 0.25);
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--a-blue);
+}
+
+.fbList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.fbCard {
+  background: var(--a-surface);
+  border: 1px solid var(--a-border);
+  border-radius: 10px;
+  overflow: hidden;
+  transition: border-color 0.15s;
+}
+
+.fbCard:hover { border-color: var(--a-border-2); }
+
+.fbCardExpanded { border-color: rgba(200, 255, 61, 0.2); }
+
+.fbCardTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  cursor: pointer;
+  gap: 12px;
+  transition: background 0.1s;
+}
+
+.fbCardTop:hover { background: var(--a-surface-2); }
+
+.fbCardLeft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
+}
+
+.fbCatBadge {
+  display: inline-flex;
+  padding: 3px 8px;
+  border-radius: 5px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  flex-shrink: 0;
+  background: var(--a-surface-2);
+  color: var(--a-ink-dim);
+}
+
+.fbCatBadge[data-cat="bug"] { background: rgba(239, 68, 68, 0.12); color: #fca5a5; }
+.fbCatBadge[data-cat="feature"] { background: rgba(93, 217, 255, 0.12); color: var(--a-blue); }
+.fbCatBadge[data-cat="ui"] { background: rgba(200, 255, 61, 0.1); color: var(--a-accent); }
+.fbCatBadge[data-cat="performance"] { background: rgba(255, 140, 66, 0.12); color: #ff8c42; }
+
+.fbSubject {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--a-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fbCardRight {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.fbRating {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--a-accent);
+}
+
+.fbStatusBadge {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 3px 8px;
+  border: 1px solid;
+  border-radius: 5px;
+}
+
+.fbDate {
+  font-size: 11px;
+  color: var(--a-ink-mute);
+  white-space: nowrap;
+}
+
+.fbChevron {
+  color: var(--a-ink-mute);
+  transition: transform 0.2s;
+}
+
+.fbChevronOpen { transform: rotate(90deg); }
+
+.fbExpanded {
+  padding: 0 18px 16px;
+  border-top: 1px solid var(--a-border);
+}
+
+.fbMessage {
+  padding: 14px 0;
+  font-size: 13px;
+  color: var(--a-ink-dim);
+  line-height: 1.65;
+  white-space: pre-wrap;
+}
+
+.fbMeta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.fbMetaItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--a-ink-mute);
+}
+
+.fbActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 /* ── Loading splash ─────────────────────────────── */
 .splashLoad {
   min-height: 100vh;

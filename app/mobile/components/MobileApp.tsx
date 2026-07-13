@@ -21,11 +21,12 @@ import FavoritesScreen from './FavoritesScreen';
 import VideosScreen from './VideosScreen';
 import MiniGamesScreen from './MiniGamesScreen';
 import PlayersScreen from './PlayersScreen';
+import FeedbackScreen from './FeedbackScreen';
 import { hapticImpact } from '@/lib/native';
 import { Wrench } from 'lucide-react';
 
 type Tab = 'home' | 'live' | 'funzone' | 'leagues' | 'profile' | 'news' | 'teams' | 'favorites' | 'videos' | 'minigames' | 'players';
-type OverlayType = 'match' | 'player' | 'search' | 'notifications';
+type OverlayType = 'match' | 'player' | 'search' | 'notifications' | 'feedback';
 interface Overlay { type: OverlayType; data?: Match; playerId?: string; playerLeagueId?: string }
 
 interface Flags {
@@ -141,6 +142,7 @@ function AppInner() {
   const openPlayer        = (playerId?: string, leagueId?: string) => push({ type: 'player', playerId, playerLeagueId: leagueId });
   const openSearch        = () => push({ type: 'search' });
   const openNotifications = () => { setUnread(0); push({ type: 'notifications' }); };
+  const openFeedback = () => push({ type: 'feedback' });
 
   const goTab = (key: Tab) => {
     if (isFeatureOff(key)) return;
@@ -160,6 +162,7 @@ function AppInner() {
     if (tabs.includes(key as Tab)) { clearStack(); goTab(key as Tab); return; }
     if (key === 'search') { clearStack(); openSearch(); return; }
     if (key === 'notifications') { clearStack(); openNotifications(); return; }
+    if (key === 'feedback') { clearStack(); openFeedback(); return; }
     if (key === 'players') { clearStack(); openPlayer(); return; }
     goTab('home');
   };
@@ -202,6 +205,7 @@ function AppInner() {
     else if (top.type === 'player')        ov = <PlayerScreen playerId={top.playerId} playerLeagueId={top.playerLeagueId} onBack={pop} onOpenMatch={() => { pop(); goTab('live'); }} />;
     else if (top.type === 'search')        ov = <SearchScreen onBack={pop} onOpenPlayer={openPlayer} onOpenMatch={openMatch} />;
     else if (top.type === 'notifications') ov = <NotificationsScreen onBack={pop} onMarkAll={() => setUnread(0)} onOpenMatch={openMatch} onOpenPlayer={openPlayer} />;
+    else if (top.type === 'feedback') ov = <FeedbackScreen onBack={pop} />;
     return (
       <div style={{ position: 'relative', height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--bg-2)' }}>
         <div style={{ flex: 1, minHeight: 0, animation: 'cs-pushIn 0.32s var(--ease-pop) both' }}>{ov}</div>

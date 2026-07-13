@@ -44,7 +44,7 @@ export default function Topbar({ title, subtitle }: TopbarProps) {
         <button className="tb-icon-btn" title={t("common.live")} onClick={() => router.push("/live-scores")}>
           <Ico id="i-live" />
         </button>
-        <button className="tb-icon-btn" title={t("nav.notifications")}>
+        <button className="tb-icon-btn" title={t("nav.notifications")} onClick={() => router.push("/notifications")}>
           <Ico id="i-bell" />
           <span className="pulse-dot" />
         </button>
