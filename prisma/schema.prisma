@@ -9,53 +9,26 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-// ─── Enums ────────────────────────────────────────────────────────────────────
-
-enum Sport {
-  FOOTBALL
-  BASKETBALL
-  NFL
-  TENNIS
-  BASEBALL
-  F1
-  CRICKET
-  HOCKEY
-  GOLF
-  BOXING
-}
-
-enum MatchStatus {
-  SCHEDULED
-  LIVE
-  HALF_TIME
-  FINISHED
-  POSTPONED
-  CANCELLED
-}
-
-// ─── Models ───────────────────────────────────────────────────────────────────
-
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  username  String   @unique
+  id            String         @id @default(cuid())
+  email         String         @unique
+  username      String         @unique
   name          String?
   avatar        String?
-  passwordHash  String?
-  googleId      String?  @unique
-  emailVerified Boolean  @default(false)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  emailVerified Boolean        @default(false)
   favTeam       Json?
+  googleId      String?        @unique
+  passwordHash  String?
   otpHash       String?
   otpExpiresAt  DateTime?
-  otpAttempts   Int      @default(0)
+  otpAttempts   Int            @default(0)
   otpSentAt     DateTime?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  favorites     Favorite[]
-  userFavorites UserFavorite[]
-  predictions   Prediction[]
   debateVotes   DebateVote[]
+  favorites     Favorite[]
+  predictions   Prediction[]
+  userFavorites UserFavorite[]
 
   @@map("users")
 }
@@ -70,37 +43,35 @@ model League {
   logoUrl   String?
   season    String?
   createdAt DateTime @default(now())
-
-  teams   Team[]
-  matches Match[]
+  matches   Match[]
+  teams     Team[]
 
   @@map("leagues")
 }
 
 model Team {
-  id        String   @id @default(cuid())
-  espnId    String?  @unique
-  name      String
-  shortName String
-  logoUrl   String?
-  city      String?
-  country   String?
-  sport     Sport
-  leagueId  String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  league      League?    @relation(fields: [leagueId], references: [id])
-  players     Player[]
-  homeMatches Match[]    @relation("HomeTeam")
-  awayMatches Match[]    @relation("AwayTeam")
+  id          String     @id @default(cuid())
+  espnId      String?    @unique
+  name        String
+  shortName   String
+  logoUrl     String?
+  city        String?
+  country     String?
+  sport       Sport
+  leagueId    String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
   favorites   Favorite[]
+  awayMatches Match[]    @relation("AwayTeam")
+  homeMatches Match[]    @relation("HomeTeam")
+  players     Player[]
+  league      League?    @relation(fields: [leagueId], references: [id])
 
   @@map("teams")
 }
 
 model Player {
-  id          String   @id @default(cuid())
+  id          String     @id @default(cuid())
   name        String
   position    String?
   nationality String?
@@ -109,24 +80,23 @@ model Player {
   teamId      String?
   sport       Sport
   stats       Json?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  team      Team?      @relation(fields: [teamId], references: [id])
-  favorites Favorite[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  favorites   Favorite[]
+  team        Team?      @relation(fields: [teamId], references: [id])
 
   @@map("players")
 }
 
 model Match {
-  id          String      @id @default(cuid())
-  espnId      String?     @unique
+  id          String       @id @default(cuid())
+  espnId      String?      @unique
   homeTeamId  String
   awayTeamId  String
   leagueId    String?
   homeScore   Int?
   awayScore   Int?
-  status      MatchStatus @default(SCHEDULED)
+  status      MatchStatus  @default(SCHEDULED)
   sport       Sport
   scheduledAt DateTime
   startedAt   DateTime?
@@ -134,11 +104,10 @@ model Match {
   minute      Int?
   period      String?
   venue       String?
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-
-  homeTeam    Team         @relation("HomeTeam", fields: [homeTeamId], references: [id])
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
   awayTeam    Team         @relation("AwayTeam", fields: [awayTeamId], references: [id])
+  homeTeam    Team         @relation("HomeTeam", fields: [homeTeamId], references: [id])
   league      League?      @relation(fields: [leagueId], references: [id])
   predictions Prediction[]
 
@@ -163,19 +132,18 @@ model News {
 }
 
 model Debate {
-  id        String    @id @default(cuid())
+  id        String       @id @default(cuid())
   question  String
   optionA   String
   optionB   String
   sport     Sport?
-  votesA    Int       @default(0)
-  votesB    Int       @default(0)
-  isLive    Boolean   @default(true)
+  votesA    Int          @default(0)
+  votesB    Int          @default(0)
+  isLive    Boolean      @default(true)
   expiresAt DateTime?
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-
-  votes DebateVote[]
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  votes     DebateVote[]
 
   @@map("debates")
 }
@@ -184,11 +152,10 @@ model DebateVote {
   id        String   @id @default(cuid())
   debateId  String
   userId    String
-  option    String   // "A" or "B"
+  option    String
   createdAt DateTime @default(now())
-
-  debate Debate @relation(fields: [debateId], references: [id], onDelete: Cascade)
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  debate    Debate   @relation(fields: [debateId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([debateId, userId])
   @@map("debate_votes")
@@ -202,9 +169,8 @@ model Prediction {
   awayScore Int
   points    Int      @default(0)
   createdAt DateTime @default(now())
-
-  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  match Match @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  match     Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, matchId])
   @@map("predictions")
@@ -213,12 +179,11 @@ model Prediction {
 model UserFavorite {
   id        String   @id @default(cuid())
   userId    String
-  type      String   // "team" or "player"
+  type      String
   espnId    String
   data      Json     @default("{}")
   createdAt DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, type, espnId])
   @@map("user_favorites_v2")
@@ -229,10 +194,9 @@ model Favorite {
   userId   String
   teamId   String?
   playerId String?
-
-  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  team   Team?   @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  player Player? @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  player   Player? @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  team     Team?   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, teamId])
   @@unique([userId, playerId])
@@ -251,4 +215,26 @@ model Feedback {
   createdAt DateTime @default(now())
 
   @@map("feedback")
+}
+
+enum Sport {
+  FOOTBALL
+  BASKETBALL
+  NFL
+  TENNIS
+  BASEBALL
+  F1
+  CRICKET
+  HOCKEY
+  GOLF
+  BOXING
+}
+
+enum MatchStatus {
+  SCHEDULED
+  LIVE
+  HALF_TIME
+  FINISHED
+  POSTPONED
+  CANCELLED
 }
