@@ -30,6 +30,21 @@ export async function GET(req: NextRequest) {
   const status = url.searchParams.get("status") || undefined;
   const category = url.searchParams.get("category") || undefined;
 
+  // Auto-create table if it doesn't exist
+  await prisma.$executeRawUnsafe(`
+    CREATE TABLE IF NOT EXISTS feedback (
+      id TEXT PRIMARY KEY,
+      "userId" TEXT,
+      email TEXT,
+      category TEXT NOT NULL,
+      subject TEXT NOT NULL,
+      message TEXT NOT NULL,
+      rating INTEGER,
+      status TEXT NOT NULL DEFAULT 'open',
+      "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
   const conditions: string[] = [];
   if (status) conditions.push(`status = '${status}'`);
   if (category) conditions.push(`category = '${category}'`);

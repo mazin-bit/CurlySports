@@ -28,6 +28,21 @@ export async function POST(req: NextRequest) {
       userId = user?.id ?? null;
     } catch { /* not logged in */ }
 
+    // Auto-create table if it doesn't exist
+    await prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS feedback (
+        id TEXT PRIMARY KEY,
+        "userId" TEXT,
+        email TEXT,
+        category TEXT NOT NULL,
+        subject TEXT NOT NULL,
+        message TEXT NOT NULL,
+        rating INTEGER,
+        status TEXT NOT NULL DEFAULT 'open',
+        "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
     const id = `fb_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
     await prisma.$executeRaw`
       INSERT INTO feedback (id, "userId", email, category, subject, message, rating, status, "createdAt")
