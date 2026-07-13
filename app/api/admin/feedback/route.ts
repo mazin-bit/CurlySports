@@ -7,6 +7,18 @@ function checkAdmin(req: NextRequest) {
   return token === process.env.ADMIN_PASSWORD;
 }
 
+interface FeedbackRow {
+  id: string;
+  userId: string | null;
+  email: string | null;
+  category: string;
+  subject: string;
+  message: string;
+  rating: number | null;
+  status: string;
+  createdAt: Date;
+}
+
 export async function GET(req: NextRequest) {
   if (!checkAdmin(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -18,19 +30,19 @@ export async function GET(req: NextRequest) {
   const status = url.searchParams.get("status") || undefined;
   const category = url.searchParams.get("category") || undefined;
 
-  const where: Record<string, string> = {};
-  if (status) where.status = status;
-  if (category) where.category = category;
+  const conditions: string[] = [];
+  if (status) conditions.push(`status = '${status}'`);
+  if (category) conditions.push(`category = '${category}'`);
+  const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+  const offset = (page - 1) * limit;
 
-  const [feedback, total] = await Promise.all([
-    prisma.feedback.findMany({
-      where,
-      orderBy: { createdAt: "desc" },
-      skip: (page - 1) * limit,
-      take: limit,
-    }),
-    prisma.feedback.count({ where }),
-  ]);
+  const feedback = await prisma.$queryRawUnsafe<FeedbackRow[]>(
+    `SELECT * FROM feedback ${whereClause} ORDER BY "createdAt" DESC LIMIT ${limit} OFFSET ${offset}`
+  );
+  const countResult = await prisma.$queryRawUnsafe<[{ count: bigint }]>(
+    `SELECT COUNT(*) as count FROM feedback ${whereClause}`
+  );
+  const total = Number(countResult[0].count);
 
   return NextResponse.json({
     feedback,
@@ -50,12 +62,8 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "Invalid id or status" }, { status: 400 });
   }
 
-  const updated = await prisma.feedback.update({
-    where: { id },
-    data: { status },
-  });
-
-  return NextResponse.json(updated);
+  await prisma.$executeRaw`UPDATE feedback SET status = ${status} WHERE id = ${id}`;
+  return NextResponse.json({ id, status, success: true });
 }
 
 export async function DELETE(req: NextRequest) {
@@ -69,6 +77,6 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ error: "Missing id" }, { status: 400 });
   }
 
-  await prisma.feedback.delete({ where: { id } });
+  await prisma.$executeRaw`DELETE FROM feedback WHERE id = ${id}`;
   return NextResponse.json({ success: true });
 }

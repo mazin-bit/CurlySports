@@ -28,18 +28,13 @@ export async function POST(req: NextRequest) {
       userId = user?.id ?? null;
     } catch { /* not logged in */ }
 
-    const feedback = await prisma.feedback.create({
-      data: {
-        userId,
-        email: email?.trim() || null,
-        category: category.trim(),
-        subject: subject.trim(),
-        message: message.trim(),
-        rating: rating ?? null,
-      },
-    });
+    const id = `fb_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+    await prisma.$executeRaw`
+      INSERT INTO feedback (id, "userId", email, category, subject, message, rating, status, "createdAt")
+      VALUES (${id}, ${userId}, ${email?.trim() || null}, ${category.trim()}, ${subject.trim()}, ${message.trim()}, ${rating ?? null}, 'open', NOW())
+    `;
 
-    return NextResponse.json({ id: feedback.id, success: true });
+    return NextResponse.json({ id, success: true });
   } catch (err) {
     console.error("Feedback error:", err);
     const msg = err instanceof Error ? err.message : String(err);
