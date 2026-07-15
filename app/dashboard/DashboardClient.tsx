@@ -401,7 +401,9 @@ function useActiveChallenge() {
             if (vRes.ok) {
               const vData = await vRes.json();
               if (vData.userVote?.selectedTeam) {
-                setUserVote(vData.userVote.selectedTeam);
+                // Map "teamA"/"teamB" back to actual team name for display
+                const teamName = vData.userVote.selectedTeam === "teamA" ? items[0].teamA : items[0].teamB;
+                setUserVote(teamName);
               }
             }
           } catch { /* ignore - user not logged in */ }
@@ -441,11 +443,12 @@ function ChallengeCard({ challenge, userVote, onVote }: { challenge: ChallengeDa
   const handleVote = async (team: string) => {
     if (voting || userVote) return;
     setVoting(true);
+    const selectedTeam = team === challenge.teamA ? "teamA" : "teamB";
     try {
-      const res = await fetch(`/api/challenges/${challenge.id}`, {
+      const res = await fetch("/api/challenges", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ selectedTeam: team }),
+        body: JSON.stringify({ challengeId: challenge.id, selectedTeam }),
       });
       if (res.ok) onVote(team);
     } catch { /* ignore */ }

@@ -124,7 +124,17 @@ export default function ChallengesPage() {
       const res = await fetch("/api/challenges?status=active");
       if (res.ok) {
         const data = await res.json();
-        setChallenges(data.challenges ?? []);
+        // API returns teamA/teamB as strings — transform to ChallengeTeam objects
+        const mapped = (data.challenges ?? []).map((c: Record<string, unknown>) => ({
+          ...c,
+          teamA: typeof c.teamA === "string"
+            ? { id: "teamA", name: c.teamA, abbreviation: (c.teamA as string).slice(0, 3).toUpperCase(), logo: c.teamALogo ?? null }
+            : c.teamA,
+          teamB: typeof c.teamB === "string"
+            ? { id: "teamB", name: c.teamB, abbreviation: (c.teamB as string).slice(0, 3).toUpperCase(), logo: c.teamBLogo ?? null }
+            : c.teamB,
+        }));
+        setChallenges(mapped);
       }
     } catch {
       /* ignore */
@@ -162,10 +172,10 @@ export default function ChallengesPage() {
     if (votingId) return;
     setVotingId(challengeId);
     try {
-      const res = await fetch(`/api/challenges/${challengeId}/vote`, {
+      const res = await fetch("/api/challenges", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ teamId }),
+        body: JSON.stringify({ challengeId, selectedTeam: teamId }),
       });
       if (res.status === 401) {
         router.push("/login");

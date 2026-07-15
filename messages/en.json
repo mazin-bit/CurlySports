@@ -709,6 +709,7 @@
   },
   "challenges": {
     "title": "Prediction Challenge",
+    "subtitle": "Predict match outcomes, earn entries, and win mystery prizes",
     "mysteryPrize": "Mystery Prize Challenge",
     "voteNow": "Vote Now",
     "votingClosed": "Voting Closed",

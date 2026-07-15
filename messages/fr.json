@@ -709,6 +709,7 @@
   },
   "challenges": {
     "title": "Defi de prediction",
+    "subtitle": "Predisez les resultats, gagnez des entrees et remportez des prix mysteres",
     "mysteryPrize": "Defi prix mystere",
     "voteNow": "Voter maintenant",
     "votingClosed": "Vote termine",

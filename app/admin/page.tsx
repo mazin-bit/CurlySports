@@ -2629,9 +2629,10 @@ function ChallengesTab({ adminToken }: { adminToken: string }) {
 
   const deleteChallenge = async (id: string) => {
     if (!confirm("Delete this challenge? This cannot be undone.")) return;
-    await fetch(`/api/admin/challenges?id=${id}`, {
+    await fetch("/api/admin/challenges", {
       method: "DELETE",
-      headers: { Authorization: `Bearer ${adminToken}` },
+      headers: { "content-type": "application/json", Authorization: `Bearer ${adminToken}` },
+      body: JSON.stringify({ id }),
     });
     setChallenges(prev => prev.filter(c => c.id !== id));
   };
@@ -2975,7 +2976,7 @@ function ChallengesTab({ adminToken }: { adminToken: string }) {
   if (view === "settle" && selectedChallenge) {
     const sc = selectedChallenge;
     const totalVotes = (sc.votesA ?? 0) + (sc.votesB ?? 0);
-    const correctCount = settleResult === "teamA" ? sc.votesA : settleResult === "teamB" ? sc.votesB : 0;
+    const correctCount = settleResult === "teamA" ? (sc.votesA ?? 0) : settleResult === "teamB" ? (sc.votesB ?? 0) : 0;
 
     return (
       <div className={styles.tabContent}>

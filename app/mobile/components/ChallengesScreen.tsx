@@ -249,7 +249,16 @@ export default function ChallengesScreen({ sport, onOpenChallenge, onSearch, onB
 
       if (cRes.status === 'fulfilled' && cRes.value.ok) {
         const data = await cRes.value.json();
-        setChallenges(data.challenges ?? []);
+        const mapped = (data.challenges ?? []).map((c: Record<string, unknown>) => ({
+          ...c,
+          teamA: typeof c.teamA === 'string'
+            ? { id: 'teamA', name: c.teamA, shortName: (c.teamA as string).slice(0, 3).toUpperCase(), logo: c.teamALogo ?? undefined }
+            : c.teamA,
+          teamB: typeof c.teamB === 'string'
+            ? { id: 'teamB', name: c.teamB, shortName: (c.teamB as string).slice(0, 3).toUpperCase(), logo: c.teamBLogo ?? undefined }
+            : c.teamB,
+        }));
+        setChallenges(mapped);
       }
       if (sRes.status === 'fulfilled' && sRes.value.ok) {
         const data = await sRes.value.json();
@@ -272,10 +281,10 @@ export default function ChallengesScreen({ sport, onOpenChallenge, onSearch, onB
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
-      const res = await fetch('/api/challenges/vote', {
+      const res = await fetch('/api/challenges', {
         method: 'POST',
         headers,
-        body: JSON.stringify({ challengeId, vote: side }),
+        body: JSON.stringify({ challengeId, selectedTeam: side === 'A' ? 'teamA' : 'teamB' }),
       });
 
       if (res.ok) {

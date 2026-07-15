@@ -111,8 +111,16 @@ export default function ChallengeDetailScreen({ challengeId, onBack, onLeaderboa
 
       const res = await fetch(`/api/challenges/${challengeId}`, { headers });
       if (res.ok) {
-        const data = await res.json();
-        setChallenge(data);
+        const raw = await res.json();
+        const c = raw.challenge ?? raw;
+        // API returns teamA/teamB as strings — transform to ChallengeTeam objects
+        if (typeof c.teamA === 'string') {
+          c.teamA = { id: 'teamA', name: c.teamA, shortName: (c.teamA as string).slice(0, 3).toUpperCase(), logo: c.teamALogo ?? undefined };
+        }
+        if (typeof c.teamB === 'string') {
+          c.teamB = { id: 'teamB', name: c.teamB, shortName: (c.teamB as string).slice(0, 3).toUpperCase(), logo: c.teamBLogo ?? undefined };
+        }
+        setChallenge(c);
       }
     } catch { /* ignore */ }
     finally { setLoading(false); }
@@ -128,10 +136,10 @@ export default function ChallengeDetailScreen({ challengeId, onBack, onLeaderboa
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
-      const res = await fetch('/api/challenges/vote', {
+      const res = await fetch('/api/challenges', {
         method: 'POST',
         headers,
-        body: JSON.stringify({ challengeId, vote: side }),
+        body: JSON.stringify({ challengeId, selectedTeam: side === 'A' ? 'teamA' : 'teamB' }),
       });
       if (res.ok) {
         setChallenge(prev => prev ? {

@@ -65,7 +65,8 @@ function useMobileActiveChallenge() {
             if (vRes.ok) {
               const vData = await vRes.json();
               if (vData.userVote?.selectedTeam) {
-                setUserVote(vData.userVote.selectedTeam);
+                const teamName = vData.userVote.selectedTeam === 'teamA' ? items[0].teamA : items[0].teamB;
+                setUserVote(teamName);
               }
             }
           } catch { /* user not logged in */ }
@@ -331,10 +332,11 @@ export default function DashboardScreen({ sport, setSport, onOpenMatch, onOpenPl
                     key={team}
                     onClick={async () => {
                       try {
-                        const res = await fetch(`/api/challenges/${activeChallenge.id}`, {
+                        const selectedTeam = team === activeChallenge.teamA ? 'teamA' : 'teamB';
+                        const res = await fetch('/api/challenges', {
                           method: 'POST',
                           headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ selectedTeam: team }),
+                          body: JSON.stringify({ challengeId: activeChallenge.id, selectedTeam }),
                         });
                         if (res.ok) setChallengeVote(team);
                       } catch { /* ignore */ }

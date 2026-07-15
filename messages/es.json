@@ -709,6 +709,7 @@
   },
   "challenges": {
     "title": "Desafio de Prediccion",
+    "subtitle": "Predice resultados de partidos, gana entradas y gana premios misteriosos",
     "mysteryPrize": "Desafio Premio Misterioso",
     "voteNow": "Vota ahora",
     "votingClosed": "Votacion cerrada",
