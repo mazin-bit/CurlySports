@@ -19,6 +19,7 @@
     "@supabase/supabase-js": "^2.106.1",
     "@upstash/ratelimit": "^2.0.8",
     "@upstash/redis": "^1.38.0",
+    "@vercel/analytics": "^1.6.1",
     "bcryptjs": "^3.0.3",
     "bullmq": "^5.77.3",
     "ioredis": "^5.10.1",
