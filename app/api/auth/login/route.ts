@@ -147,7 +147,11 @@ export async function POST(req: NextRequest) {
 
     // Fire-and-forget session tracking — don't block login
     const ua = req.headers.get("user-agent") ?? "";
-    const platform = /CurlySports-iOS/i.test(ua) ? "ios" : /CurlySports-Android/i.test(ua) ? "android" : "web";
+    const platform = /CurlySports-iOS/i.test(ua) || (/iPhone|iPad|iPod/i.test(ua) && /Expo|ReactNative|okhttp/i.test(ua))
+      ? "ios"
+      : /CurlySports-Android/i.test(ua) || (/Android/i.test(ua) && /Expo|ReactNative|okhttp/i.test(ua))
+      ? "android"
+      : "web";
     const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? req.headers.get("x-real-ip") ?? null;
     const country = req.headers.get("x-vercel-ip-country") ?? null;
     const city = req.headers.get("x-vercel-ip-city") ?? null;

@@ -1151,8 +1151,8 @@ interface NotificationItem {
   id: string;
   title: string;
   body: string;
-  target: "all" | "ios" | "android" | "web" | "specific";
-  targetUsers?: string;
+  targetType: "all" | "ios" | "android" | "web" | "user" | "specific";
+  targetUsers?: string[];
   scheduledAt: string;
   sentAt?: string | null;
   status: "scheduled" | "sent" | "cancelled" | "failed";
@@ -1198,16 +1198,14 @@ function NotificationsTab({ adminToken }: { adminToken: string }) {
       return;
     }
     setCreating(true); setFormErr("");
-    const payload: Record<string, string> = {
-      title: form.title, body: form.body, target: form.target,
+    const payload: Record<string, unknown> = {
+      title: form.title, body: form.body, targetType: form.target,
     };
     if (form.target === "specific" && form.targetUsers) {
-      payload.targetUsers = form.targetUsers;
+      payload.targetUsers = form.targetUsers.split(",").map(s => s.trim()).filter(Boolean);
     }
     if (form.scheduledAt) {
       payload.scheduledAt = new Date(form.scheduledAt).toISOString();
-    } else {
-      payload.scheduledAt = new Date().toISOString();
     }
     const res = await fetch("/api/admin/notifications", {
       method: "POST",
@@ -1247,13 +1245,13 @@ function NotificationsTab({ adminToken }: { adminToken: string }) {
     setTotal(t => t - 1);
   };
 
-  const targetLabel = (t: string) => {
+  const targetLabel = (t?: string) => {
     if (t === "all") return "All users";
     if (t === "ios") return "iOS";
     if (t === "android") return "Android";
     if (t === "web") return "Web";
-    if (t === "specific") return "Specific users";
-    return t;
+    if (t === "user" || t === "specific") return "Specific users";
+    return t || "All users";
   };
 
   const statusBadgeClass = (s: string) => {
@@ -1377,7 +1375,7 @@ function NotificationsTab({ adminToken }: { adminToken: string }) {
                   <div className={styles.notifCardMeta}>
                     <span className={`${styles.badge} ${statusBadgeClass(n.status)}`}>{n.status}</span>
                     <span className={styles.modMetaItem}>
-                      <Target size={10} /> {targetLabel(n.target)}
+                      <Target size={10} /> {targetLabel(n.targetType)}
                     </span>
                     <span className={styles.modMetaItem}>
                       <Calendar size={10} /> {new Date(n.scheduledAt).toLocaleString()}

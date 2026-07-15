@@ -79,39 +79,56 @@ export async function POST(req: NextRequest) {
 
   await prisma.$executeRawUnsafe(ENSURE_TABLE);
 
-  const { title, body, targetType, targetUsers, scheduledAt } = await req.json();
+  const { title, body, targetType, target, targetUsers, scheduledAt } = await req.json();
 
-  if (!title || !body || !targetType || !scheduledAt) {
+  // Accept both "targetType" and "target" (client compat)
+  const resolvedTarget = targetType || target;
+
+  if (!title || !body || !resolvedTarget) {
     return NextResponse.json(
-      { error: "Missing required fields: title, body, targetType, scheduledAt" },
+      { error: "Missing required fields: title, body, targetType" },
       { status: 400 }
     );
   }
 
-  const validTargetTypes = ["all", "ios", "android", "web", "user"];
-  if (!validTargetTypes.includes(targetType)) {
+  const validTargetTypes = ["all", "ios", "android", "web", "user", "specific"];
+  if (!validTargetTypes.includes(resolvedTarget)) {
     return NextResponse.json(
       { error: `Invalid targetType. Must be one of: ${validTargetTypes.join(", ")}` },
       { status: 400 }
     );
   }
 
-  if (targetType === "user" && (!targetUsers || !Array.isArray(targetUsers) || targetUsers.length === 0)) {
+  // "specific" is an alias for "user" on the client side
+  const finalTarget = resolvedTarget === "specific" ? "user" : resolvedTarget;
+
+  if (finalTarget === "user" && (!targetUsers || (Array.isArray(targetUsers) && targetUsers.length === 0))) {
     return NextResponse.json(
-      { error: "targetUsers array is required when targetType is 'user'" },
+      { error: "targetUsers is required when targeting specific users" },
       { status: 400 }
     );
   }
 
   const id = crypto.randomUUID();
-  const usersArray = targetUsers && Array.isArray(targetUsers) ? targetUsers : [];
+  // Accept targetUsers as string (comma-separated) or array
+  let usersArray: string[] = [];
+  if (targetUsers) {
+    if (Array.isArray(targetUsers)) {
+      usersArray = targetUsers;
+    } else if (typeof targetUsers === "string") {
+      usersArray = targetUsers.split(",").map((s: string) => s.trim()).filter(Boolean);
+    }
+  }
+
+  // scheduledAt is optional — default to now (send immediately)
+  const scheduleDate = scheduledAt ? new Date(scheduledAt) : new Date();
 
   await prisma.$executeRaw`
     INSERT INTO scheduled_notifications (id, title, body, "targetType", "targetUsers", "scheduledAt", status, "createdAt", "updatedAt")
-    VALUES (${id}, ${title}, ${body}, ${targetType}, ${usersArray}, ${new Date(scheduledAt)}, 'scheduled', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+    VALUES (${id}, ${title}, ${body}, ${finalTarget}, ${usersArray}, ${scheduleDate}, 'scheduled', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
   `;
 
-  return NextResponse.json({ id, title, body, targetType, targetUsers: usersArray, scheduledAt, status: "scheduled" }, { status: 201 });
+  return NextResponse.json({ id, title, body, targetType: finalTarget, targetUsers: usersArray, scheduledAt: scheduleDate.toISOString(), status: "scheduled" }, { status: 201 });
 }
 
 // PATCH /api/admin/notifications — update notification (cancel or reschedule)

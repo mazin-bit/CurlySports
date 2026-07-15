@@ -18,8 +18,8 @@ async function ensureTables() {
 
 function detectPlatform(userAgent: string | null): string {
   if (!userAgent) return "web";
-  if (userAgent.includes("CurlySports-iOS")) return "ios";
-  if (userAgent.includes("CurlySports-Android")) return "android";
+  if (/CurlySports-iOS/i.test(userAgent) || (/iPhone|iPad|iPod/i.test(userAgent) && /Expo|ReactNative|okhttp/i.test(userAgent))) return "ios";
+  if (/CurlySports-Android/i.test(userAgent) || (/Android/i.test(userAgent) && /Expo|ReactNative|okhttp/i.test(userAgent))) return "android";
   return "web";
 }
 

@@ -36,6 +36,9 @@ interface UserRow {
   favoriteCount: number;
   predictionCount: number;
   debateVoteCount: number;
+  lastPlatform: string | null;
+  lastCountry: string | null;
+  lastCity: string | null;
 }
 
 // GET /api/admin/users — list all users (admin only)
@@ -51,6 +54,20 @@ export async function GET(req: NextRequest) {
   const offset = (page - 1) * limit;
 
   await ensureIsBannedColumn();
+
+  // Ensure user_sessions table exists for the LATERAL JOIN
+  await prisma.$executeRawUnsafe(`
+    CREATE TABLE IF NOT EXISTS user_sessions (
+      id TEXT PRIMARY KEY,
+      "userId" TEXT NOT NULL,
+      platform TEXT NOT NULL DEFAULT 'web',
+      "ipAddress" TEXT,
+      country TEXT,
+      city TEXT,
+      "userAgent" TEXT,
+      "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
 
   try {
     const searchFilter = search
@@ -72,11 +89,18 @@ export async function GET(req: NextRequest) {
                u."createdAt", u."updatedAt",
                COALESCE(fav.cnt, 0)::int as "favoriteCount",
                COALESCE(pred.cnt, 0)::int as "predictionCount",
-               COALESCE(dv.cnt, 0)::int as "debateVoteCount"
+               COALESCE(dv.cnt, 0)::int as "debateVoteCount",
+               ls.platform as "lastPlatform",
+               ls.country as "lastCountry",
+               ls.city as "lastCity"
         FROM users u
         LEFT JOIN (SELECT "userId", COUNT(*) as cnt FROM favorites GROUP BY "userId") fav ON fav."userId" = u.id
         LEFT JOIN (SELECT "userId", COUNT(*) as cnt FROM predictions GROUP BY "userId") pred ON pred."userId" = u.id
         LEFT JOIN (SELECT "userId", COUNT(*) as cnt FROM debate_votes GROUP BY "userId") dv ON dv."userId" = u.id
+        LEFT JOIN LATERAL (
+          SELECT platform, country, city FROM user_sessions
+          WHERE "userId" = u.id ORDER BY "createdAt" DESC LIMIT 1
+        ) ls ON true
         ${searchFilter}
         ORDER BY u."createdAt" DESC
         LIMIT $1 OFFSET $2
@@ -93,11 +117,18 @@ export async function GET(req: NextRequest) {
                u."createdAt", u."updatedAt",
                COALESCE(fav.cnt, 0)::int as "favoriteCount",
                COALESCE(pred.cnt, 0)::int as "predictionCount",
-               COALESCE(dv.cnt, 0)::int as "debateVoteCount"
+               COALESCE(dv.cnt, 0)::int as "debateVoteCount",
+               ls.platform as "lastPlatform",
+               ls.country as "lastCountry",
+               ls.city as "lastCity"
         FROM users u
         LEFT JOIN (SELECT "userId", COUNT(*) as cnt FROM favorites GROUP BY "userId") fav ON fav."userId" = u.id
         LEFT JOIN (SELECT "userId", COUNT(*) as cnt FROM predictions GROUP BY "userId") pred ON pred."userId" = u.id
         LEFT JOIN (SELECT "userId", COUNT(*) as cnt FROM debate_votes GROUP BY "userId") dv ON dv."userId" = u.id
+        LEFT JOIN LATERAL (
+          SELECT platform, country, city FROM user_sessions
+          WHERE "userId" = u.id ORDER BY "createdAt" DESC LIMIT 1
+        ) ls ON true
         ORDER BY u."createdAt" DESC
         LIMIT $1 OFFSET $2
       `, limit, offset);
@@ -110,24 +141,29 @@ export async function GET(req: NextRequest) {
     const total = Number(totalRows[0]?.count ?? 0);
 
     return NextResponse.json({
-      users: users.map((u) => ({
-        id: u.id,
-        email: u.email,
-        username: u.username,
-        name: u.name,
-        avatar: u.avatar,
-        emailVerified: u.emailVerified,
-        favTeam: u.favTeam,
-        isBanned: u.isBanned,
-        createdAt: u.createdAt,
-        updatedAt: u.updatedAt,
-        authMethod: u.googleId ? "google" : "email",
-        _count: {
-          favorites: Number(u.favoriteCount),
-          predictions: Number(u.predictionCount),
-          debateVotes: Number(u.debateVoteCount),
-        },
-      })),
+      users: users.map((u) => {
+        const location = [u.lastCity, u.lastCountry].filter(Boolean).join(", ");
+        return {
+          id: u.id,
+          email: u.email,
+          username: u.username,
+          name: u.name,
+          avatar: u.avatar,
+          emailVerified: u.emailVerified,
+          favTeam: u.favTeam,
+          isBanned: u.isBanned,
+          createdAt: u.createdAt,
+          updatedAt: u.updatedAt,
+          authMethod: u.googleId ? "google" : "email",
+          platform: u.lastPlatform || undefined,
+          lastLoginLocation: location || undefined,
+          _count: {
+            favorites: Number(u.favoriteCount),
+            predictions: Number(u.predictionCount),
+            debateVotes: Number(u.debateVoteCount),
+          },
+        };
+      }),
       total,
       page,
       pages: Math.ceil(total / limit),

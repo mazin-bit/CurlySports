@@ -47,6 +47,22 @@ async function ensureTables() {
       "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
     )
   `);
+
+  // Backfill: create a session record for each user who doesn't have one yet
+  // so historical users show up in analytics from day 1
+  await prisma.$executeRawUnsafe(`
+    INSERT INTO user_sessions (id, "userId", platform, "createdAt")
+    SELECT
+      'backfill-' || u.id,
+      u.id,
+      'web',
+      u."createdAt"
+    FROM users u
+    WHERE NOT EXISTS (
+      SELECT 1 FROM user_sessions s WHERE s."userId" = u.id
+    )
+    ON CONFLICT (id) DO NOTHING
+  `);
 }
 
 interface CountRow {

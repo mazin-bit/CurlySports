@@ -104,7 +104,11 @@ export async function GET(request: NextRequest) {
 
     // Fire-and-forget session tracking — don't block OAuth callback
     const ua = request.headers.get("user-agent") ?? "";
-    const platform = /CurlySports-iOS/i.test(ua) ? "ios" : /CurlySports-Android/i.test(ua) ? "android" : "web";
+    const platform = /CurlySports-iOS/i.test(ua) || (/iPhone|iPad|iPod/i.test(ua) && /Expo|ReactNative|okhttp/i.test(ua))
+      ? "ios"
+      : /CurlySports-Android/i.test(ua) || (/Android/i.test(ua) && /Expo|ReactNative|okhttp/i.test(ua))
+      ? "android"
+      : "web";
     const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? request.headers.get("x-real-ip") ?? null;
     const country = request.headers.get("x-vercel-ip-country") ?? null;
     const city = request.headers.get("x-vercel-ip-city") ?? null;

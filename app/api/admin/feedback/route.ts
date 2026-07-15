@@ -46,16 +46,28 @@ export async function GET(req: NextRequest) {
   `);
 
   const conditions: string[] = [];
-  if (status) conditions.push(`status = '${status}'`);
-  if (category) conditions.push(`category = '${category}'`);
+  const params: unknown[] = [];
+  let paramIndex = 1;
+  if (status) {
+    conditions.push(`status = $${paramIndex++}`);
+    params.push(status);
+  }
+  if (category) {
+    conditions.push(`category = $${paramIndex++}`);
+    params.push(category);
+  }
   const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
   const offset = (page - 1) * limit;
 
   const feedback = await prisma.$queryRawUnsafe<FeedbackRow[]>(
-    `SELECT * FROM feedback ${whereClause} ORDER BY "createdAt" DESC LIMIT ${limit} OFFSET ${offset}`
+    `SELECT * FROM feedback ${whereClause} ORDER BY "createdAt" DESC LIMIT $${paramIndex++} OFFSET $${paramIndex++}`,
+    ...params,
+    limit,
+    offset
   );
   const countResult = await prisma.$queryRawUnsafe<[{ count: bigint }]>(
-    `SELECT COUNT(*) as count FROM feedback ${whereClause}`
+    `SELECT COUNT(*) as count FROM feedback ${whereClause}`,
+    ...params
   );
   const total = Number(countResult[0].count);
 
