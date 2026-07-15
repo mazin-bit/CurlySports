@@ -1,5 +1,5 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 
 interface Ad {
   id: string;
@@ -14,21 +14,57 @@ const MIN_H: Record<string, number> = { banner: 90, square: 200, strip: 72, comp
 interface AdSlotProps {
   size?: 'banner' | 'square' | 'strip' | 'compact' | 'card' | 'feed' | 'match' | 'sidebar';
   label?: string;
+  interval?: number;
 }
 
-export default function AdSlot({ size = 'banner', label = 'Advertisement' }: AdSlotProps) {
-  const [ad, setAd] = useState<Ad | null>(null);
+export default function AdSlot({ size = 'banner', label = 'Advertisement', interval = 5000 }: AdSlotProps) {
+  const [ads, setAds] = useState<Ad[]>([]);
+  const [activeIdx, setActiveIdx] = useState(0);
+  const [sliding, setSliding] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setInterval>>(undefined);
+  const trackedRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
-    fetch(`/api/ads/active?slot=${size}`)
+    fetch(`/api/ads/active?slot=${size}&t=${Date.now()}`)
       .then((r) => r.json())
       .then((data) => {
-        if (data.ads?.length > 0) setAd(data.ads[0]);
+        if (data.ads?.length > 0) setAds(data.ads);
       })
       .catch(() => {});
   }, [size]);
 
-  if (!ad) return null;
+  const trackImpression = useCallback((ad: Ad) => {
+    if (trackedRef.current.has(ad.id)) return;
+    trackedRef.current.add(ad.id);
+    fetch('/api/ads/track', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adId: ad.id, type: 'impression' }),
+    }).catch(() => {});
+  }, []);
+
+  // Auto-rotate
+  useEffect(() => {
+    if (ads.length <= 1) return;
+    timerRef.current = setInterval(() => {
+      setSliding(true);
+      setTimeout(() => {
+        setActiveIdx((prev) => (prev + 1) % ads.length);
+        setSliding(false);
+      }, 400);
+    }, interval);
+    return () => clearInterval(timerRef.current);
+  }, [ads.length, interval]);
+
+  useEffect(() => {
+    if (ads[activeIdx]) trackImpression(ads[activeIdx]);
+  }, [activeIdx, ads, trackImpression]);
+
+  if (ads.length === 0) return null;
+
+  const ad = ads[activeIdx];
+  const compact = size === 'compact';
+  const strip = size === 'strip';
 
   const handleClick = () => {
     fetch('/api/ads/track', {
@@ -39,12 +75,9 @@ export default function AdSlot({ size = 'banner', label = 'Advertisement' }: AdS
     window.open(ad.linkUrl, '_blank', 'noopener');
   };
 
-  const compact = size === 'compact';
-  const strip = size === 'strip';
-
   return (
     <div
-      style={{ position: 'relative', width: '100%', cursor: 'pointer' }}
+      style={{ position: 'relative', width: '100%', cursor: 'pointer', overflow: 'hidden' }}
       aria-label="Sponsored content"
       onClick={handleClick}
     >
@@ -57,6 +90,9 @@ export default function AdSlot({ size = 'banner', label = 'Advertisement' }: AdS
         minHeight: MIN_H[size],
         overflow: 'hidden',
         position: 'relative',
+        transform: sliding ? 'translateX(-100%)' : 'translateX(0)',
+        opacity: sliding ? 0 : 1,
+        transition: sliding ? 'transform 0.4s ease-in-out, opacity 0.3s ease-in-out' : 'none',
       }}>
         <span style={{
           position: 'absolute', top: compact ? 5 : 8, left: compact ? 7 : 10, zIndex: 2,
@@ -86,6 +122,33 @@ export default function AdSlot({ size = 'banner', label = 'Advertisement' }: AdS
           </div>
         )}
       </div>
+
+      {/* Dot indicators */}
+      {ads.length > 1 && (
+        <div style={{
+          display: 'flex', justifyContent: 'center', gap: 6,
+          padding: '6px 0', position: 'absolute', bottom: 6,
+          left: 0, right: 0,
+        }}>
+          {ads.map((_, i) => (
+            <span
+              key={i}
+              onClick={(e) => {
+                e.stopPropagation();
+                clearInterval(timerRef.current);
+                setActiveIdx(i);
+              }}
+              style={{
+                width: i === activeIdx ? 16 : 6, height: 6,
+                borderRadius: 3,
+                background: i === activeIdx ? 'var(--accent)' : 'rgba(255,255,255,0.3)',
+                transition: 'all 0.3s ease',
+                cursor: 'pointer',
+              }}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

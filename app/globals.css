@@ -907,6 +907,33 @@ button.sb-item {
   color: var(--accent);
 }
 
+/* Carousel dot indicators */
+.ad-slot__dots {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 0;
+  position: absolute;
+  bottom: 6px;
+  left: 0;
+  right: 0;
+  z-index: 2;
+}
+.ad-slot__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(255,255,255,0.3);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+  padding: 0;
+}
+.ad-slot__dot--active {
+  width: 16px;
+  background: var(--accent);
+}
+
 /* Compact — sidebar top, thin horizontal */
 .ad-slot--compact .ad-slot__inner {
   background: var(--bg-3);

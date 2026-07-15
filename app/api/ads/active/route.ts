@@ -45,7 +45,7 @@ export async function GET(req: NextRequest) {
     const dbSlots = slotMap[slot] || [slot];
 
     const now = new Date();
-    // Try exact slot match first, then fallback to any active ad
+    // Return ALL active ads for this slot (carousel support)
     let ads: any[] = await prisma.$queryRawUnsafe(
       `SELECT id, title, "imageUrl", "linkUrl", slot
        FROM ads
@@ -53,13 +53,12 @@ export async function GET(req: NextRequest) {
          AND "startDate" <= $1
          AND "endDate" >= $1
          AND slot = ANY($2::text[])
-       ORDER BY RANDOM()
-       LIMIT 1`,
+       ORDER BY RANDOM()`,
       now,
       dbSlots
     );
 
-    // Fallback: serve any active ad if no exact slot match
+    // Fallback: serve any active ads if no exact slot match
     if (ads.length === 0) {
       ads = await prisma.$queryRawUnsafe(
         `SELECT id, title, "imageUrl", "linkUrl", slot
@@ -67,8 +66,7 @@ export async function GET(req: NextRequest) {
          WHERE "isActive" = true
            AND "startDate" <= $1
            AND "endDate" >= $1
-         ORDER BY RANDOM()
-         LIMIT 1`,
+         ORDER BY RANDOM()`,
         now
       );
     }
@@ -77,7 +75,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ ads: [] });
     }
 
-    // Track impression
+    // Track impression for the first ad (subsequent impressions tracked client-side)
     await prisma.$executeRawUnsafe(
       `UPDATE ads SET impressions = impressions + 1, "updatedAt" = CURRENT_TIMESTAMP WHERE id = $1`,
       ads[0].id
