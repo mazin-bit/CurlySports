@@ -11,6 +11,7 @@ import TeamCrest from './ui/TeamCrest';
 import Icon from './ui/Icon';
 import SportSelector from './ui/SportSelector';
 import { SkeletonTableRow, SkeletonList } from './ui/Skeletons';
+import AdSlot from './ui/AdSlot';
 
 const LEAGUES: { id: string; label: string; sport: string; group?: string }[] = [
   // Football — International (first!)
@@ -134,6 +135,8 @@ export default function LeaguesScreen({ sport, setSport, onSearch, onBell, onOpe
             ))}
           </div>
         </div>
+
+        <AdSlot size="banner" />
 
         {/* Table / Bracket tab switcher */}
         {hasBracket && (

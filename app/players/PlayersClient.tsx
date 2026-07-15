@@ -8,6 +8,7 @@ import { PersonStanding, Search, Globe } from "lucide-react";
 import { useActiveSport } from "@/contexts/SportContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { FOOTBALL_LEAGUES, OTHER_LEAGUES } from "@curly/shared";
+import AdSlot from "@/components/AdSlot";
 
 const ESPN = "https://site.api.espn.com/apis/site/v2/sports";
 const PAGE_SIZE = 80;
@@ -318,6 +319,8 @@ export default function PlayersPage() {
             </button>
           )}
         </div>
+
+        <AdSlot size="banner" />
 
         {/* Global search results */}
         {isGlobalSearch ? (

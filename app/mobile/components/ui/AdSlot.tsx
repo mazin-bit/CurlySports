@@ -9,10 +9,10 @@ interface Ad {
   slot: string;
 }
 
-const MIN_H: Record<string, number> = { banner: 90, square: 200, strip: 72, compact: 62, card: 180 };
+const MIN_H: Record<string, number> = { banner: 90, square: 200, strip: 72, compact: 62, card: 180, feed: 80, match: 90, sidebar: 200 };
 
 interface AdSlotProps {
-  size?: 'banner' | 'square' | 'strip' | 'compact' | 'card';
+  size?: 'banner' | 'square' | 'strip' | 'compact' | 'card' | 'feed' | 'match' | 'sidebar';
   label?: string;
 }
 

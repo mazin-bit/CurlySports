@@ -10,6 +10,7 @@ import MatchRow from './ui/MatchRow';
 import SportSelector from './ui/SportSelector';
 import Icon from './ui/Icon';
 import { SkeletonScoreCard, SkeletonList } from './ui/Skeletons';
+import AdSlot from './ui/AdSlot';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { formatDate, dayAbbr, monthYearLabel, localizeDigits } from '@/lib/locale-utils';
 import { translateLeagueName } from '@/lib/league-names';
@@ -146,6 +147,8 @@ export default function LiveScoresScreen({ sport, setSport, onOpenMatch, onSearc
             <Chip key={k} active={filter === k} live={k === 'live'} onClick={() => setFilter(k)}>{label}</Chip>
           ))}
         </div>
+
+        <AdSlot size="banner" />
 
         {isLoading && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>

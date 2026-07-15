@@ -9,6 +9,7 @@ import Card from './ui/Card';
 import Badge from './ui/Badge';
 import Icon from './ui/Icon';
 import { SkeletonCard, SkeletonRow, SkeletonList } from './ui/Skeletons';
+import AdSlot from './ui/AdSlot';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 interface Post {
@@ -436,6 +437,8 @@ export default function DebatesScreen({ sport, onSearch, onBell, unread }: Debat
             <Icon name="bolt" size={12} /> {t('debates.new', 'New')}
           </button>
         </div>
+
+        <AdSlot size="banner" />
 
         {/* ── Posts feed ── */}
         {feedLoading && allPosts.length === 0 && (

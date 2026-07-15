@@ -9,6 +9,7 @@ import TeamCrest from './ui/TeamCrest';
 import Icon from './ui/Icon';
 import SportSelector from './ui/SportSelector';
 import { SkeletonRow, SkeletonList } from './ui/Skeletons';
+import AdSlot from './ui/AdSlot';
 
 const LEAGUES_BY_SPORT: Record<string, { id: string; label: string }[]> = {
   football: [
@@ -135,6 +136,8 @@ export default function TeamsScreen({ sport, setSport, onSearch, onBell, onOpenP
             </button>
           )}
         </div>
+
+        <AdSlot size="banner" />
 
         {isLoading && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>

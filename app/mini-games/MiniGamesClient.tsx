@@ -6,6 +6,7 @@ import styles from "./mini-games.module.css";
 import { Medal, Gamepad2, HelpCircle, Zap, RefreshCw, CheckCircle, XCircle, User, Trophy, Search, Clock, Target, Shield, CircleDot, Timer, Disc } from "lucide-react";
 import { useActiveSport } from "@/contexts/SportContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import AdSlot from "@/components/AdSlot";
 import { QUIZ_DATA } from "./quiz-data";
 import { PLAYER_GUESSES } from "./player-guess-data";
 
@@ -1119,6 +1120,7 @@ export default function MiniGamesPage() {
   return (
     <AppShell active="minigames" title="Mini Games" titleKey="miniGames.title" subtitleKey="miniGames.subtitle">
       <div className="stack">
+        <AdSlot size="banner" />
         {/* Leaderboard */}
         <section className="section">
           <div className="sec-head">

@@ -7,6 +7,7 @@ import Badge from './ui/Badge';
 import Icon from './ui/Icon';
 import SportSelector from './ui/SportSelector';
 import { SkeletonCard, SkeletonList } from './ui/Skeletons';
+import AdSlot from './ui/AdSlot';
 import { openExternal } from '@/lib/native';
 
 interface VideoHighlight {
@@ -83,9 +84,10 @@ export default function VideosScreen({ sport, setSport, onSearch, onBell, unread
 
         {!isLoading && videos.length > 0 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {videos.map(video => (
+            {videos.map((video, idx) => (
+              <React.Fragment key={video.id}>
+              {idx === 1 && <AdSlot size="card" key="ad-vid" />}
               <Card
-                key={video.id}
                 tappable
                 style={{ padding: 0, overflow: 'hidden', cursor: 'pointer' }}
                 onClick={() => openVideo(video.url)}
@@ -134,6 +136,7 @@ export default function VideosScreen({ sport, setSport, onSearch, onBell, unread
                   </div>
                 </div>
               </Card>
+              </React.Fragment>
             ))}
           </div>
         )}

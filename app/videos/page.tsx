@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import AppShell from "@/components/AppShell";
 import styles from "./videos.module.css";
 import { Play, ExternalLink, RefreshCw, Tv2, PlayCircle } from "lucide-react";
 import { useVideos } from "@/hooks/useVideos";
 import { useActiveSport } from "@/contexts/SportContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import AdSlot from "@/components/AdSlot";
 import type { VideoHighlight } from "@/app/api/espn/videos/route";
 
 function FeaturedPlayer({
@@ -240,13 +241,15 @@ export default function VideosPage() {
               </div>
               <div className={styles.playlistScroll}>
                 {videos.map((v, i) => (
-                  <PlaylistItem
-                    key={v.id}
-                    video={v}
-                    active={featured?.id === v.id}
-                    index={i}
-                    onClick={() => setFeatured(v)}
-                  />
+                  <React.Fragment key={v.id}>
+                    <PlaylistItem
+                      video={v}
+                      active={featured?.id === v.id}
+                      index={i}
+                      onClick={() => setFeatured(v)}
+                    />
+                    {i === 1 && <AdSlot size="card" />}
+                  </React.Fragment>
                 ))}
               </div>
             </div>

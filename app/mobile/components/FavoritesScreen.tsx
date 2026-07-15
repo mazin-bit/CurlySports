@@ -9,6 +9,7 @@ import TeamCrest from './ui/TeamCrest';
 import Icon from './ui/Icon';
 import Badge from './ui/Badge';
 import { SkeletonRow, SkeletonList } from './ui/Skeletons';
+import AdSlot from './ui/AdSlot';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface FavRow {
@@ -228,6 +229,8 @@ export default function FavoritesScreen({ onSearch, onBell, onOpenPlayer, unread
             {t('favorites.players')} {favPlayers.length > 0 ? `(${favPlayers.length})` : ''}
           </Chip>
         </div>
+
+        <AdSlot size="compact" />
 
         {isLoading && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>

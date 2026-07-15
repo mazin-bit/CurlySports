@@ -1428,7 +1428,7 @@ interface AdItem {
   title: string;
   imageUrl: string;
   linkUrl: string;
-  slot: "sidebar" | "feed" | "banner" | "match";
+  slot: "banner" | "compact" | "card" | "square" | "strip" | "feed" | "match" | "sidebar";
   startDate: string;
   endDate: string;
   isActive: boolean;
@@ -1566,10 +1566,14 @@ function AdsTab({ adminToken }: { adminToken: string }) {
   };
 
   const slotLabel = (s: string) => {
-    if (s === "sidebar") return "Sidebar";
-    if (s === "feed") return "Feed";
     if (s === "banner") return "Banner";
+    if (s === "compact") return "Compact";
+    if (s === "card") return "Card";
+    if (s === "square") return "Square";
+    if (s === "strip") return "Strip";
+    if (s === "feed") return "Feed";
     if (s === "match") return "Match";
+    if (s === "sidebar") return "Sidebar";
     return s;
   };
 
@@ -1634,10 +1638,14 @@ function AdsTab({ adminToken }: { adminToken: string }) {
                 value={form.slot}
                 onChange={e => setForm(f => ({ ...f, slot: e.target.value }))}
               >
-                <option value="sidebar">Sidebar</option>
-                <option value="feed">Feed</option>
-                <option value="banner">Banner</option>
-                <option value="match">Match</option>
+                <option value="banner">Banner -- Full-width banner between sections</option>
+                <option value="compact">Compact -- Small inline ad for sidebars/narrow spaces</option>
+                <option value="card">Card -- Card-style ad that matches content cards</option>
+                <option value="square">Square -- Square format for sidebars</option>
+                <option value="strip">Strip -- Thin strip ad</option>
+                <option value="feed">Feed -- In-feed native ad between content items</option>
+                <option value="match">Match -- Ad shown on match detail pages</option>
+                <option value="sidebar">Sidebar -- Sidebar-specific ad</option>
               </select>
             </div>
             <div className={styles.formGroup}>
@@ -1678,10 +1686,14 @@ function AdsTab({ adminToken }: { adminToken: string }) {
               style={{ maxWidth: 120, padding: "4px 8px", fontSize: 11 }}
             >
               <option value="">All slots</option>
-              <option value="sidebar">Sidebar</option>
-              <option value="feed">Feed</option>
               <option value="banner">Banner</option>
+              <option value="compact">Compact</option>
+              <option value="card">Card</option>
+              <option value="square">Square</option>
+              <option value="strip">Strip</option>
+              <option value="feed">Feed</option>
               <option value="match">Match</option>
+              <option value="sidebar">Sidebar</option>
             </select>
             <select
               className={styles.input}

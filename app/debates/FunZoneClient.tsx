@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { useActiveSport } from "@/contexts/SportContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import AdSlot from "@/components/AdSlot";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -790,6 +791,7 @@ export default function DebatesPage() {
           </div>
         </div>
 
+        <AdSlot size="banner" />
 
         {/* Feed */}
         {loading ? (

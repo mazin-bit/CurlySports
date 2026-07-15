@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import { Bell, BellRing, Check, Trash2, Loader, Megaphone } from "lucide-react";
 import { Ico } from "@/components/Icons";
 import { useLanguage } from "@/contexts/LanguageContext";
+import AdSlot from "@/components/AdSlot";
 
 interface Notif {
   id: string;
@@ -168,6 +169,8 @@ export default function NotificationsPage() {
             </div>
           </section>
         )}
+
+        <AdSlot size="compact" />
 
         {/* Earlier */}
         {earlierNotifs.length > 0 && (

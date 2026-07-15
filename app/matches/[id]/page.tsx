@@ -11,6 +11,7 @@ import {
 import { useMatchStream } from "@/hooks/useMatchStream";
 import type { MatchDetail } from "@/hooks/useMatchStream";
 import { useLanguage } from "@/contexts/LanguageContext";
+import AdSlot from "@/components/AdSlot";
 import { formatNumber, localizeDigits } from "@/lib/locale-utils";
 import { translateTeamName } from "@/lib/team-names";
 import { translateLeagueName } from "@/lib/league-names";
@@ -390,6 +391,8 @@ export default function MatchPage() {
             </div>
           )}
         </div>
+
+        <AdSlot size="banner" />
 
         {/* ── Scheduled match placeholder ───────────────────── */}
         {isScheduled && (

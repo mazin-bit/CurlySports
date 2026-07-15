@@ -9,6 +9,7 @@ import { useTeams } from "@/hooks/useTeams";
 import { useActiveSport } from "@/contexts/SportContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import type { EspnTeamEntry } from "@/app/api/espn/teams/route";
+import AdSlot from "@/components/AdSlot";
 
 function TeamCard({ team }: { team: EspnTeamEntry }) {
   const { t } = useLanguage();
@@ -64,6 +65,8 @@ export default function TeamsPage() {
             ))}
           </div>
         )}
+
+        <AdSlot size="banner" />
 
         <div>
           <div className="sec-head">

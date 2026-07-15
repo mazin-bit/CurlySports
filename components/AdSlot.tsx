@@ -11,7 +11,7 @@ interface Ad {
 }
 
 interface AdSlotProps {
-  size?: "banner" | "square" | "strip" | "compact" | "card";
+  size?: "banner" | "square" | "strip" | "compact" | "card" | "feed" | "match" | "sidebar";
   label?: string;
 }
 

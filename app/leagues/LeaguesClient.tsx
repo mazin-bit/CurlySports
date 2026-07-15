@@ -16,6 +16,7 @@ import { translateLeagueName } from "@/lib/league-names";
 import type { StandingEntry, LeagueStandings } from "@/hooks/useStandings";
 import type { BracketRound, BracketMatch } from "@/hooks/useBracket";
 import { LEAGUE_META } from "@curly/shared";
+import AdSlot from "@/components/AdSlot";
 
 // ─── Flag / region icon renderer ──────────────────────────────────────────────
 
@@ -582,6 +583,8 @@ export default function LeaguesPage() {
             </button>
           ))}
         </div>
+
+        <AdSlot size="banner" />
 
         <div className="sec-head">
           <div className="title">

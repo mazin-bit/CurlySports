@@ -31,13 +31,16 @@ export async function GET(req: NextRequest) {
 
     await prisma.$executeRawUnsafe(ENSURE_TABLE);
 
-    // Map AdSlot size to db slot name
+    // Map AdSlot size to db slot name(s)
     const slotMap: Record<string, string[]> = {
-      banner: ["banner", "feed"],
-      square: ["sidebar"],
-      strip: ["feed"],
-      compact: ["sidebar"],
-      card: ["feed"],
+      banner: ["banner"],
+      compact: ["compact"],
+      card: ["card"],
+      square: ["square"],
+      strip: ["strip"],
+      feed: ["feed"],
+      match: ["match"],
+      sidebar: ["sidebar"],
     };
     const dbSlots = slotMap[slot] || [slot];
 

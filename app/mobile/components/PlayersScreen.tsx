@@ -8,6 +8,7 @@ import Chip from './ui/Chip';
 import Icon from './ui/Icon';
 import Badge from './ui/Badge';
 import { SkeletonRow, SkeletonList } from './ui/Skeletons';
+import AdSlot from './ui/AdSlot';
 import type { RealTeam } from './api';
 
 const fetcher = (url: string) => fetch(url).then(r => r.json());
@@ -166,6 +167,8 @@ export default function PlayersScreen({ sport, setSport, onSearch, onBell, onOpe
       </div>
 
       <div className="cs-scroll" style={{ flex: 1, overflow: 'auto', padding: '14px 14px 96px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+
+        <AdSlot size="banner" />
 
         {/* Search results */}
         {isSearching && searchLoading && (

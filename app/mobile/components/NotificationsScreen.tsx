@@ -5,6 +5,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import type { Match } from '../data';
 import Icon from './ui/Icon';
 import { SkeletonRow, SkeletonList } from './ui/Skeletons';
+import AdSlot from './ui/AdSlot';
 
 interface MobileNotif {
   id: string;
@@ -78,6 +79,7 @@ export default function NotificationsScreen({ onBack, onMarkAll }: Notifications
           if (!group.length) return null;
           return (
             <React.Fragment key={key}>
+              {key === 'earlier' && <AdSlot size="compact" />}
               <div style={{ fontFamily: 'var(--mono)', fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-mute)', padding: '8px 2px 4px' }}>{label}</div>
               {group.map((n, i) => (
                 <button

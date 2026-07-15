@@ -9,6 +9,7 @@ import Chip from './ui/Chip';
 import Icon from './ui/Icon';
 import SportSelector from './ui/SportSelector';
 import { SkeletonNewsCard, SkeletonList } from './ui/Skeletons';
+import AdSlot from './ui/AdSlot';
 import { openExternal } from '@/lib/native';
 
 const SPORT_KEYS: Record<string, string> = {
@@ -107,7 +108,9 @@ export default function NewsScreen({ sport, setSport, onSearch, onBell, unread }
         )}
 
         {!isLoading && articles.map((article, idx) => (
-          <div key={article.id} className="cs-stagger" style={{ '--i': Math.min(idx, 8) } as React.CSSProperties}>
+          <React.Fragment key={article.id}>
+          {idx === 1 && <AdSlot size="card" key="ad-news" />}
+          <div className="cs-stagger" style={{ '--i': Math.min(idx, 8) } as React.CSSProperties}>
           <Card
             tappable
             style={{ padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column', cursor: 'pointer' }}
@@ -148,6 +151,7 @@ export default function NewsScreen({ sport, setSport, onSearch, onBell, unread }
             </div>
           </Card>
           </div>
+          </React.Fragment>
         ))}
       </div>
     </div>

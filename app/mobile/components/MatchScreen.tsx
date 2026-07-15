@@ -10,6 +10,7 @@ import StatBar from './ui/StatBar';
 import StatusPill from './ui/StatusPill';
 import TeamCrest from './ui/TeamCrest';
 import Button from './ui/Button';
+import AdSlot from './ui/AdSlot';
 
 interface MatchScreenProps {
   match?: Match;
@@ -108,6 +109,8 @@ export default function MatchScreen({ match, liveClock, onBack, onOpenPlayer }: 
           </div>
           {venue && <div style={{ textAlign: 'center', marginTop: 14, fontFamily: 'var(--mono)', fontSize: 9.5, color: 'rgba(255,253,247,0.4)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>{venue}</div>}
         </Card>
+
+        <AdSlot size="compact" />
 
         {/* Tabs */}
         <div style={{ display: 'flex', gap: 6, background: 'var(--surface-2)', border: '2px solid var(--ink)', borderRadius: 12, padding: 4, boxShadow: 'var(--shadow-sm)' }}>

@@ -7,6 +7,7 @@ import { X, Search, Bell, BellRing, BellOff, Star, Users, Plus, Heart, Loader } 
 import { SPORT_CONFIGS } from "@/contexts/SportContext";
 import type { SportSlug } from "@/contexts/SportContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import AdSlot from "@/components/AdSlot";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -375,6 +376,8 @@ export default function FavoritesPage() {
             )}
           </button>
         </div>
+
+        <AdSlot size="compact" />
 
         {/* ─── TEAMS ──────────────────────────────────────────────────────── */}
         {tab === "teams" && (

@@ -7,6 +7,7 @@ import Chip from './ui/Chip';
 import Icon from './ui/Icon';
 import SportSelector from './ui/SportSelector';
 import { SkeletonTableRow, SkeletonList } from './ui/Skeletons';
+import AdSlot from './ui/AdSlot';
 import { QUIZ_DATA } from '@/app/mini-games/quiz-data';
 import { PLAYER_GUESSES } from '@/app/mini-games/player-guess-data';
 
@@ -945,6 +946,8 @@ export default function MiniGamesScreen({ sport, setSport, onSearch, onBell, unr
 
       <div className="cs-scroll" style={{ flex: 1, overflow: 'auto', padding: '14px 14px 96px', display: 'flex', flexDirection: 'column', gap: 14 }}>
         <SportSelector active={sport} onSelect={setSport} />
+
+        <AdSlot size="banner" />
 
         {/* Leaderboard */}
         <Card subtitle="This week" title="Leaderboard">
