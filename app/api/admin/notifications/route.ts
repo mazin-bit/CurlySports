@@ -123,10 +123,21 @@ export async function POST(req: NextRequest) {
   // scheduledAt is optional — default to now (send immediately)
   const scheduleDate = scheduledAt ? new Date(scheduledAt) : new Date();
 
-  await prisma.$executeRaw`
-    INSERT INTO scheduled_notifications (id, title, body, "targetType", "targetUsers", "scheduledAt", status, "createdAt", "updatedAt")
-    VALUES (${id}, ${title}, ${body}, ${finalTarget}, ${usersArray}, ${scheduleDate}, 'scheduled', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-  `;
+  // Convert JS array to PostgreSQL array literal (Prisma $executeRaw can't handle JS arrays for TEXT[])
+  const pgArray = usersArray.length > 0
+    ? `{${usersArray.map(u => `"${u.replace(/"/g, '\\"')}"`).join(",")}}`
+    : "{}";
+
+  try {
+    await prisma.$executeRawUnsafe(
+      `INSERT INTO scheduled_notifications (id, title, body, "targetType", "targetUsers", "scheduledAt", status, "createdAt", "updatedAt")
+       VALUES ($1, $2, $3, $4, $5::text[], $6, 'scheduled', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+      id, title, body, finalTarget, pgArray, scheduleDate
+    );
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({ error: "Failed to insert notification", debug: msg }, { status: 500 });
+  }
 
   return NextResponse.json({ id, title, body, targetType: finalTarget, targetUsers: usersArray, scheduledAt: scheduleDate.toISOString(), status: "scheduled" }, { status: 201 });
 }
