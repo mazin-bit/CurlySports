@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import {
-  LayoutDashboard, Flag, Dumbbell, Wrench, Bell,
+  LayoutDashboard, Flag, Dumbbell, Wrench, Bell, Menu, X,
   LogOut, Eye, EyeOff, Shield, Save, RefreshCw,
   Activity, Zap, Globe, CheckCircle2, XCircle,
   ChevronRight, AlertTriangle, BarChart2, Clock,
@@ -2355,6 +2355,7 @@ export default function AdminPage() {
   const [tab, setTab] = useState("overview");
   const [flags, setFlags] = useState<AdminFlags>(DEFAULT_FLAGS);
   const [saveMsg, setSaveMsg] = useState("");
+  const [mobileNav, setMobileNav] = useState(false);
 
   const token = () => typeof window !== "undefined" ? localStorage.getItem("curly-admin-token") ?? "" : "";
 
@@ -2410,8 +2411,11 @@ export default function AdminPage() {
 
   return (
     <div className={styles.root}>
+      {/* Mobile overlay */}
+      {mobileNav && <div className={styles.mobileOverlay} onClick={() => setMobileNav(false)} />}
+
       {/* Sidebar */}
-      <aside className={styles.sidebar}>
+      <aside className={`${styles.sidebar} ${mobileNav ? styles.sidebarOpen : ""}`}>
         <div className={styles.sidebarLogo}>
           <Image src="/curly-guy.png" alt="Curly" width={32} height={32} />
           <div>
@@ -2428,7 +2432,7 @@ export default function AdminPage() {
                 <button
                   key={key}
                   className={`${styles.navItem} ${tab === key ? styles.navItemActive : ""}`}
-                  onClick={() => setTab(key)}
+                  onClick={() => { setTab(key); setMobileNav(false); }}
                 >
                   <Icon size={16} strokeWidth={2} />
                   <span>{label}</span>
@@ -2463,6 +2467,9 @@ export default function AdminPage() {
       <main className={styles.main}>
         <div className={styles.topbar}>
           <div className={styles.topbarLeft}>
+            <button className={styles.mobileMenuBtn} onClick={() => setMobileNav(v => !v)}>
+              {mobileNav ? <X size={20} /> : <Menu size={20} />}
+            </button>
             <div className={styles.topbarTitle}>Admin Dashboard</div>
             <div className={styles.topbarCrumb}>
               {ALL_NAV_ITEMS.find((n) => n.key === tab)?.label}

@@ -1994,7 +1994,26 @@
   color: rgba(240,241,243,0.4);
 }
 
-/* ── Responsive ────────────────────────────────────── */
+/* ── Mobile menu button (hidden on desktop) ────────── */
+.mobileMenuBtn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: 1px solid var(--a-border-2);
+  background: var(--a-surface);
+  color: var(--a-ink);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.mobileOverlay {
+  display: none;
+}
+
+/* ── Responsive: Tablet (sidebar collapsed to icons) ── */
 @media (max-width: 900px) {
   .sidebar { width: 56px; }
   .sidebarLogo > div,
@@ -2011,4 +2030,57 @@
   .logoutBtn span { display: none; }
   .tabContent { padding: 20px 16px 40px; }
   .statsRow { grid-template-columns: 1fr; }
+}
+
+/* ── Responsive: Mobile (sidebar becomes slide-out drawer) ── */
+@media (max-width: 768px) {
+  .mobileMenuBtn { display: flex; }
+
+  .mobileOverlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 999;
+    backdrop-filter: blur(2px);
+  }
+
+  .sidebar {
+    position: fixed;
+    left: -260px;
+    top: 0;
+    bottom: 0;
+    width: 250px;
+    z-index: 1000;
+    transition: left 0.25s ease;
+    box-shadow: none;
+  }
+
+  .sidebarOpen {
+    left: 0;
+    box-shadow: 8px 0 32px rgba(0,0,0,0.5);
+  }
+
+  /* Show all sidebar content when open */
+  .sidebarOpen .sidebarLogo > div,
+  .sidebarOpen .sidebarRole,
+  .sidebarOpen .sidebarStatus,
+  .sidebarOpen .navSectionLabel,
+  .sidebarOpen .navItem span,
+  .sidebarOpen .navArrow,
+  .sidebarOpen .savedPill,
+  .sidebarOpen .backLink { display: unset; }
+  .sidebarOpen .sidebarLogo { padding: 20px 18px 16px; justify-content: flex-start; }
+  .sidebarOpen .navItem { justify-content: flex-start; padding: 8px 12px; }
+  .sidebarOpen .sidebarFooter { align-items: stretch; }
+  .sidebarOpen .logoutBtn span { display: inline; }
+
+  .topbar { padding: 0 16px; }
+  .topbarTitle { font-size: 14px; }
+  .tabContent { padding: 16px 12px 32px; }
+  .statsRow { grid-template-columns: 1fr; }
+
+  /* Make cards stack better */
+  .card { padding: 14px; }
+  .cardRow { flex-direction: column; gap: 8px; }
 }

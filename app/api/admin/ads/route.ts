@@ -135,12 +135,16 @@ export async function POST(req: NextRequest) {
 
   const id = crypto.randomUUID();
 
-  await prisma.$executeRaw`
-    INSERT INTO ads (id, title, "imageUrl", "linkUrl", slot, "sponsorId", "startDate", "endDate", "isActive", impressions, clicks, "createdAt", "updatedAt")
-    VALUES (${id}, ${title}, ${imageUrl ?? null}, ${linkUrl}, ${slot}, ${sponsorId ?? null}, ${new Date(startDate)}, ${new Date(endDate)}, true, 0, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-  `;
-
-  return NextResponse.json({ id, title, slot, status: "created" }, { status: 201 });
+  try {
+    await prisma.$executeRaw`
+      INSERT INTO ads (id, title, "imageUrl", "linkUrl", slot, "sponsorId", "startDate", "endDate", "isActive", impressions, clicks, "createdAt", "updatedAt")
+      VALUES (${id}, ${title}, ${imageUrl ?? null}, ${linkUrl}, ${slot}, ${sponsorId ?? null}, ${new Date(startDate)}, ${new Date(endDate)}, true, 0, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+    `;
+    return NextResponse.json({ id, title, slot, status: "created" }, { status: 201 });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({ error: "Failed to create ad", debug: msg }, { status: 500 });
+  }
 }
 
 // PATCH /api/admin/ads — update an ad
@@ -208,12 +212,16 @@ export async function PATCH(req: NextRequest) {
   setClauses.push(`"updatedAt" = CURRENT_TIMESTAMP`);
   params.push(id);
 
-  await prisma.$executeRawUnsafe(
-    `UPDATE ads SET ${setClauses.join(", ")} WHERE id = $${paramIndex}`,
-    ...params
-  );
-
-  return NextResponse.json({ id, success: true });
+  try {
+    await prisma.$executeRawUnsafe(
+      `UPDATE ads SET ${setClauses.join(", ")} WHERE id = $${paramIndex}`,
+      ...params
+    );
+    return NextResponse.json({ id, success: true });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({ error: "Failed to update ad", debug: msg }, { status: 500 });
+  }
 }
 
 // DELETE /api/admin/ads?id=xxx — delete an ad
@@ -230,6 +238,11 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ error: "Missing id" }, { status: 400 });
   }
 
-  await prisma.$executeRaw`DELETE FROM ads WHERE id = ${id}`;
-  return NextResponse.json({ success: true });
+  try {
+    await prisma.$executeRaw`DELETE FROM ads WHERE id = ${id}`;
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({ error: "Failed to delete ad", debug: msg }, { status: 500 });
+  }
 }

@@ -11,19 +11,29 @@ function isAdmin(req: NextRequest): boolean {
   return timingSafeEqual(a, b);
 }
 
-const ENSURE_TABLE = `
-  CREATE TABLE IF NOT EXISTS scheduled_notifications (
-    id TEXT PRIMARY KEY,
-    title TEXT NOT NULL,
-    body TEXT NOT NULL,
-    "targetType" TEXT NOT NULL,
-    "targetUsers" TEXT[],
-    "scheduledAt" TIMESTAMP(3) NOT NULL,
-    status TEXT NOT NULL DEFAULT 'scheduled',
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
-  )
-`;
+async function ensureTable() {
+  await prisma.$executeRawUnsafe(`
+    CREATE TABLE IF NOT EXISTS scheduled_notifications (
+      id TEXT PRIMARY KEY,
+      title TEXT NOT NULL,
+      body TEXT NOT NULL,
+      "targetType" TEXT NOT NULL,
+      "targetUsers" TEXT[] DEFAULT '{}',
+      "scheduledAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      status TEXT NOT NULL DEFAULT 'scheduled',
+      "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+  // Add missing columns if table was created by an older version
+  await prisma.$executeRawUnsafe(`
+    DO $$ BEGIN
+      ALTER TABLE scheduled_notifications ADD COLUMN IF NOT EXISTS "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;
+      ALTER TABLE scheduled_notifications ADD COLUMN IF NOT EXISTS "targetUsers" TEXT[] DEFAULT '{}';
+    EXCEPTION WHEN others THEN NULL;
+    END $$
+  `);
+}
 
 // GET /api/admin/notifications — list scheduled notifications
 export async function GET(req: NextRequest) {
@@ -31,7 +41,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  await prisma.$executeRawUnsafe(ENSURE_TABLE);
+  await ensureTable();
 
   const { searchParams } = new URL(req.url);
   const status = searchParams.get("status");
@@ -77,7 +87,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  await prisma.$executeRawUnsafe(ENSURE_TABLE);
+  await ensureTable();
 
   const { title, body, targetType, target, targetUsers, scheduledAt } = await req.json();
 
@@ -148,7 +158,7 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  await prisma.$executeRawUnsafe(ENSURE_TABLE);
+  await ensureTable();
 
   const { id, status, scheduledAt } = await req.json();
   if (!id) {
@@ -159,26 +169,25 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "Invalid status" }, { status: 400 });
   }
 
-  if (status && scheduledAt) {
-    await prisma.$executeRaw`
-      UPDATE scheduled_notifications
-      SET status = ${status}, "scheduledAt" = ${new Date(scheduledAt)}, "updatedAt" = CURRENT_TIMESTAMP
-      WHERE id = ${id}
-    `;
-  } else if (status) {
-    await prisma.$executeRaw`
-      UPDATE scheduled_notifications
-      SET status = ${status}, "updatedAt" = CURRENT_TIMESTAMP
-      WHERE id = ${id}
-    `;
-  } else if (scheduledAt) {
-    await prisma.$executeRaw`
-      UPDATE scheduled_notifications
-      SET "scheduledAt" = ${new Date(scheduledAt)}, "updatedAt" = CURRENT_TIMESTAMP
-      WHERE id = ${id}
-    `;
-  } else {
+  const sets: string[] = [];
+  const vals: unknown[] = [];
+  let pi = 1;
+
+  if (status) { sets.push(`status = $${pi++}`); vals.push(status); }
+  if (scheduledAt) { sets.push(`"scheduledAt" = $${pi++}`); vals.push(new Date(scheduledAt)); }
+
+  if (sets.length === 0) {
     return NextResponse.json({ error: "Nothing to update" }, { status: 400 });
+  }
+
+  try {
+    await prisma.$executeRawUnsafe(
+      `UPDATE scheduled_notifications SET ${sets.join(", ")} WHERE id = $${pi}`,
+      ...vals, id
+    );
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({ error: "Failed to update", debug: msg }, { status: 500 });
   }
 
   return NextResponse.json({ id, success: true });
@@ -190,7 +199,7 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  await prisma.$executeRawUnsafe(ENSURE_TABLE);
+  await ensureTable();
 
   const { searchParams } = new URL(req.url);
   const id = searchParams.get("id");

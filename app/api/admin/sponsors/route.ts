@@ -126,12 +126,16 @@ export async function POST(req: NextRequest) {
 
   const id = crypto.randomUUID();
 
-  await prisma.$executeRaw`
-    INSERT INTO sponsors (id, name, "logoUrl", website, tier, "isActive", "createdAt", "updatedAt")
-    VALUES (${id}, ${name}, ${logoUrl ?? null}, ${website ?? null}, ${tier}, true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-  `;
-
-  return NextResponse.json({ id, name, tier, status: "created" }, { status: 201 });
+  try {
+    await prisma.$executeRaw`
+      INSERT INTO sponsors (id, name, "logoUrl", website, tier, "isActive", "createdAt", "updatedAt")
+      VALUES (${id}, ${name}, ${logoUrl ?? null}, ${website ?? null}, ${tier}, true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+    `;
+    return NextResponse.json({ id, name, tier, status: "created" }, { status: 201 });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({ error: "Failed to create sponsor", debug: msg }, { status: 500 });
+  }
 }
 
 // PATCH /api/admin/sponsors — update a sponsor
@@ -187,12 +191,16 @@ export async function PATCH(req: NextRequest) {
   setClauses.push(`"updatedAt" = CURRENT_TIMESTAMP`);
   params.push(id);
 
-  await prisma.$executeRawUnsafe(
-    `UPDATE sponsors SET ${setClauses.join(", ")} WHERE id = $${paramIndex}`,
-    ...params
-  );
-
-  return NextResponse.json({ id, success: true });
+  try {
+    await prisma.$executeRawUnsafe(
+      `UPDATE sponsors SET ${setClauses.join(", ")} WHERE id = $${paramIndex}`,
+      ...params
+    );
+    return NextResponse.json({ id, success: true });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({ error: "Failed to update sponsor", debug: msg }, { status: 500 });
+  }
 }
 
 // DELETE /api/admin/sponsors?id=xxx — delete a sponsor and unlink ads
@@ -210,11 +218,12 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ error: "Missing id" }, { status: 400 });
   }
 
-  // Unlink any ads associated with this sponsor
-  await prisma.$executeRaw`UPDATE ads SET "sponsorId" = NULL, "updatedAt" = CURRENT_TIMESTAMP WHERE "sponsorId" = ${id}`;
-
-  // Delete the sponsor
-  await prisma.$executeRaw`DELETE FROM sponsors WHERE id = ${id}`;
-
-  return NextResponse.json({ success: true });
+  try {
+    await prisma.$executeRaw`UPDATE ads SET "sponsorId" = NULL, "updatedAt" = CURRENT_TIMESTAMP WHERE "sponsorId" = ${id}`;
+    await prisma.$executeRaw`DELETE FROM sponsors WHERE id = ${id}`;
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({ error: "Failed to delete sponsor", debug: msg }, { status: 500 });
+  }
 }

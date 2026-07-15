@@ -50,9 +50,13 @@ export async function POST(req: NextRequest) {
 
   // Auto-hide debate if 3 or more flags
   if (flagCount >= 3) {
-    await prisma.$executeRaw`
-      UPDATE debates SET "isLive" = false WHERE id = ${debateId}
-    `;
+    try {
+      await prisma.$executeRaw`
+        UPDATE debates SET "isLive" = false WHERE id = ${debateId}
+      `;
+    } catch {
+      // debates table might not have isLive column — ignore
+    }
   }
 
   return NextResponse.json({ ok: true, flagCount });

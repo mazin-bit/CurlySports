@@ -100,22 +100,25 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "Invalid id or status" }, { status: 400 });
   }
 
-  if (status === "reviewed") {
-    // Mark as reviewed and auto-hidden
-    await prisma.$executeRaw`
-      UPDATE content_flags
-      SET status = ${status}, "autoHidden" = true, "updatedAt" = CURRENT_TIMESTAMP
-      WHERE id = ${id}
-    `;
-  } else {
-    await prisma.$executeRaw`
-      UPDATE content_flags
-      SET status = ${status}, "updatedAt" = CURRENT_TIMESTAMP
-      WHERE id = ${id}
-    `;
+  try {
+    if (status === "reviewed") {
+      await prisma.$executeRaw`
+        UPDATE content_flags
+        SET status = ${status}, "autoHidden" = true, "updatedAt" = CURRENT_TIMESTAMP
+        WHERE id = ${id}
+      `;
+    } else {
+      await prisma.$executeRaw`
+        UPDATE content_flags
+        SET status = ${status}, "updatedAt" = CURRENT_TIMESTAMP
+        WHERE id = ${id}
+      `;
+    }
+    return NextResponse.json({ id, status, success: true });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({ error: "Failed to update flag", debug: msg }, { status: 500 });
   }
-
-  return NextResponse.json({ id, status, success: true });
 }
 
 // DELETE /api/admin/moderation?id=xxx — delete a flag
@@ -132,6 +135,11 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ error: "Missing id" }, { status: 400 });
   }
 
-  await prisma.$executeRaw`DELETE FROM content_flags WHERE id = ${id}`;
-  return NextResponse.json({ success: true });
+  try {
+    await prisma.$executeRaw`DELETE FROM content_flags WHERE id = ${id}`;
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({ error: "Failed to delete flag", debug: msg }, { status: 500 });
+  }
 }
