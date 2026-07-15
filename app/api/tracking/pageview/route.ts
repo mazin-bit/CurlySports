@@ -1,26 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { optionalAuth } from "@/lib/auth";
-
-async function ensureTables() {
-  await prisma.$executeRawUnsafe(`
-    CREATE TABLE IF NOT EXISTS page_views (
-      id TEXT PRIMARY KEY,
-      "userId" TEXT,
-      route TEXT NOT NULL,
-      platform TEXT NOT NULL DEFAULT 'web',
-      country TEXT,
-      "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
-    )
-  `);
-}
-
-function detectPlatform(userAgent: string | null): string {
-  if (!userAgent) return "web";
-  if (/CurlySports-iOS/i.test(userAgent) || (/iPhone|iPad|iPod/i.test(userAgent) && /Expo|ReactNative|okhttp/i.test(userAgent))) return "ios";
-  if (/CurlySports-Android/i.test(userAgent) || (/Android/i.test(userAgent) && /Expo|ReactNative|okhttp/i.test(userAgent))) return "android";
-  return "web";
-}
+import { ensureTrackingTables, detectPlatform } from "@/lib/ensure-tracking-tables";
 
 export async function POST(req: NextRequest) {
   try {
@@ -31,7 +12,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "route is required" }, { status: 400 });
     }
 
-    await ensureTables();
+    await ensureTrackingTables();
 
     let userId: string | null = null;
     try {

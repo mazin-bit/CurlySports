@@ -151,6 +151,8 @@ interface AnalyticsData {
   topCountries: { country: string; count: number }[];
   dailyActive: { date: string; count: number }[];
   dailyNew: { date: string; count: number }[];
+  trackingStartDate: string | null;
+  firstUserDate: string | null;
 }
 
 function OverviewTab({ flags, adminToken }: { flags: AdminFlags; adminToken: string }) {
@@ -185,20 +187,21 @@ function OverviewTab({ flags, adminToken }: { flags: AdminFlags; adminToken: str
           icon={<Users size={20} />}
           label="Total Users"
           value={analytics?.totalUsers?.toLocaleString() ?? totalViews.toLocaleString()}
-          sub={analytics ? `${analytics.activeToday} active today` : "since deployment"}
+          sub={analytics ? `${analytics.activeToday} active today` : "all time"}
           color="#c8ff3d"
         />
         <StatCard
           icon={<TrendingUp size={20} />}
           label="New This Week"
           value={analytics?.newThisWeek?.toLocaleString() ?? "0"}
+          sub={analytics?.firstUserDate ? `since ${new Date(analytics.firstUserDate).toLocaleDateString()}` : undefined}
           color="#5dd9ff"
         />
         <StatCard
           icon={<BarChart2 size={20} />}
           label="Page Views"
           value={analytics?.totalPageViews?.toLocaleString() ?? totalViews.toLocaleString()}
-          sub="all time"
+          sub={analytics?.trackingStartDate ? `since ${new Date(analytics.trackingStartDate).toLocaleDateString()}` : "all time"}
         />
         <StatCard
           icon={flags.maintenanceMode ? <WifiOff size={20} /> : <Wifi size={20} />}
@@ -225,12 +228,14 @@ function OverviewTab({ flags, adminToken }: { flags: AdminFlags; adminToken: str
           icon={<Smartphone size={20} />}
           label="iOS Installs"
           value={analytics?.installs?.ios?.toLocaleString() ?? "0"}
+          sub={analytics?.trackingStartDate ? `since ${new Date(analytics.trackingStartDate).toLocaleDateString()}` : undefined}
           color="#5dd9ff"
         />
         <StatCard
           icon={<Smartphone size={20} />}
           label="Android Installs"
           value={analytics?.installs?.android?.toLocaleString() ?? "0"}
+          sub={analytics?.trackingStartDate ? `since ${new Date(analytics.trackingStartDate).toLocaleDateString()}` : undefined}
           color="#22c55e"
         />
       </div>
@@ -381,10 +386,10 @@ function AnalyticsTab({ adminToken }: { adminToken: string }) {
       </div>
 
       <div className={styles.statsRow}>
-        <StatCard icon={<Users size={20} />} label="Total Users" value={data.totalUsers.toLocaleString()} color="#c8ff3d" />
+        <StatCard icon={<Users size={20} />} label="Total Users" value={data.totalUsers.toLocaleString()} sub={data.firstUserDate ? `since ${new Date(data.firstUserDate).toLocaleDateString()}` : "all time"} color="#c8ff3d" />
         <StatCard icon={<Activity size={20} />} label="Active Today" value={data.activeToday.toLocaleString()} color="#22c55e" />
         <StatCard icon={<TrendingUp size={20} />} label="New This Week" value={data.newThisWeek.toLocaleString()} color="#5dd9ff" />
-        <StatCard icon={<BarChart2 size={20} />} label="Total Page Views" value={data.totalPageViews.toLocaleString()} />
+        <StatCard icon={<BarChart2 size={20} />} label="Total Page Views" value={data.totalPageViews.toLocaleString()} sub={data.trackingStartDate ? `since ${new Date(data.trackingStartDate).toLocaleDateString()}` : "tracking active"} />
       </div>
 
       {/* Daily Active Users chart */}
@@ -463,8 +468,8 @@ function AnalyticsTab({ adminToken }: { adminToken: string }) {
       <div className={styles.section}>
         <div className={styles.sectionTitle}>Install Tracking</div>
         <div className={styles.statsRow} style={{ gridTemplateColumns: "repeat(2, 1fr)" }}>
-          <StatCard icon={<Smartphone size={20} />} label="iOS Installs" value={data.installs.ios.toLocaleString()} color="#5dd9ff" />
-          <StatCard icon={<Smartphone size={20} />} label="Android Installs" value={data.installs.android.toLocaleString()} color="#22c55e" />
+          <StatCard icon={<Smartphone size={20} />} label="iOS Installs" value={data.installs.ios.toLocaleString()} sub={data.trackingStartDate ? `since ${new Date(data.trackingStartDate).toLocaleDateString()}` : "tracking active"} color="#5dd9ff" />
+          <StatCard icon={<Smartphone size={20} />} label="Android Installs" value={data.installs.android.toLocaleString()} sub={data.trackingStartDate ? `since ${new Date(data.trackingStartDate).toLocaleDateString()}` : "tracking active"} color="#22c55e" />
         </div>
       </div>
 

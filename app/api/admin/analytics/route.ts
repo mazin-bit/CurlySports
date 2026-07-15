@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { ensureTrackingTables } from "@/lib/ensure-tracking-tables";
 
 function isAdmin(req: NextRequest): boolean {
   const token = req.headers.get("x-admin-token");
@@ -9,60 +10,6 @@ function isAdmin(req: NextRequest): boolean {
   if (a.length !== b.length) return false;
   const { timingSafeEqual } = require("crypto");
   return timingSafeEqual(a, b);
-}
-
-async function ensureTables() {
-  await prisma.$executeRawUnsafe(`
-    CREATE TABLE IF NOT EXISTS user_sessions (
-      id TEXT PRIMARY KEY,
-      "userId" TEXT NOT NULL,
-      platform TEXT NOT NULL DEFAULT 'web',
-      "ipAddress" TEXT,
-      country TEXT,
-      city TEXT,
-      "userAgent" TEXT,
-      "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
-    )
-  `);
-
-  await prisma.$executeRawUnsafe(`
-    CREATE TABLE IF NOT EXISTS page_views (
-      id TEXT PRIMARY KEY,
-      "userId" TEXT,
-      route TEXT NOT NULL,
-      platform TEXT NOT NULL DEFAULT 'web',
-      country TEXT,
-      "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
-    )
-  `);
-
-  await prisma.$executeRawUnsafe(`
-    CREATE TABLE IF NOT EXISTS app_installs (
-      id TEXT PRIMARY KEY,
-      "deviceId" TEXT NOT NULL UNIQUE,
-      platform TEXT NOT NULL,
-      "appVersion" TEXT,
-      country TEXT,
-      "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
-    )
-  `);
-
-  // Backfill: create a session record for each user who doesn't have one yet
-  // so historical users show up in analytics from day 1
-  await prisma.$executeRawUnsafe(`
-    INSERT INTO user_sessions (id, "userId", platform, "createdAt")
-    SELECT
-      'backfill-' || u.id,
-      u.id,
-      'web',
-      u."createdAt"
-    FROM users u
-    WHERE NOT EXISTS (
-      SELECT 1 FROM user_sessions s WHERE s."userId" = u.id
-    )
-    ON CONFLICT (id) DO NOTHING
-  `);
 }
 
 interface CountRow {
@@ -84,13 +31,17 @@ interface DailyRow {
   count: bigint;
 }
 
+interface DateRow {
+  earliest: Date | null;
+}
+
 export async function GET(req: NextRequest) {
   if (!isAdmin(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
-    await ensureTables();
+    await ensureTrackingTables();
 
     const now = new Date();
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -107,28 +58,30 @@ export async function GET(req: NextRequest) {
       topCountriesResult,
       dailyActiveResult,
       dailyNewResult,
+      trackingStartResult,
+      firstUserResult,
     ] = await Promise.all([
-      // totalUsers
+      // totalUsers — from users table (all-time, day 1)
       prisma.$queryRaw<CountRow[]>`SELECT COUNT(*) as count FROM users`,
 
-      // activeToday
+      // activeToday — real sessions today only
       prisma.$queryRaw<CountRow[]>`
-        SELECT COUNT(*) as count FROM user_sessions
+        SELECT COUNT(DISTINCT "userId") as count FROM user_sessions
         WHERE "createdAt" >= ${todayStart}
       `,
 
-      // newThisWeek
+      // newThisWeek — from users table (real registrations)
       prisma.$queryRaw<CountRow[]>`
         SELECT COUNT(*) as count FROM users
         WHERE "createdAt" >= ${weekAgo}
       `,
 
-      // totalPageViews
+      // totalPageViews — from page_views table
       prisma.$queryRaw<CountRow[]>`SELECT COUNT(*) as count FROM page_views`,
 
-      // platformBreakdown (sessions)
+      // platformBreakdown — from real sessions only (no fake backfill)
       prisma.$queryRaw<PlatformRow[]>`
-        SELECT platform, COUNT(*) as count FROM user_sessions
+        SELECT platform, COUNT(DISTINCT "userId") as count FROM user_sessions
         GROUP BY platform
       `,
 
@@ -138,16 +91,16 @@ export async function GET(req: NextRequest) {
         GROUP BY platform
       `,
 
-      // topCountries
+      // topCountries — from real sessions with country data
       prisma.$queryRaw<CountryRow[]>`
-        SELECT country, COUNT(*) as count FROM user_sessions
+        SELECT country, COUNT(DISTINCT "userId") as count FROM user_sessions
         WHERE country IS NOT NULL
         GROUP BY country
         ORDER BY count DESC
         LIMIT 10
       `,
 
-      // dailyActive (last 14 days)
+      // dailyActive (last 14 days) — real sessions only
       prisma.$queryRaw<DailyRow[]>`
         SELECT DATE("createdAt") as date, COUNT(DISTINCT "userId") as count
         FROM user_sessions
@@ -156,13 +109,23 @@ export async function GET(req: NextRequest) {
         ORDER BY date ASC
       `,
 
-      // dailyNew (last 14 days)
+      // dailyNew (last 14 days) — from users table (real registrations)
       prisma.$queryRaw<DailyRow[]>`
         SELECT DATE("createdAt") as date, COUNT(*) as count
         FROM users
         WHERE "createdAt" >= ${fourteenDaysAgo}
         GROUP BY DATE("createdAt")
         ORDER BY date ASC
+      `,
+
+      // When tracking started (earliest session record)
+      prisma.$queryRaw<DateRow[]>`
+        SELECT MIN("createdAt") as earliest FROM user_sessions
+      `,
+
+      // When first user registered
+      prisma.$queryRaw<DateRow[]>`
+        SELECT MIN("createdAt") as earliest FROM users
       `,
     ]);
 
@@ -197,6 +160,14 @@ export async function GET(req: NextRequest) {
       count: Number(row.count),
     }));
 
+    // Tracking metadata
+    const trackingStartDate = trackingStartResult[0]?.earliest
+      ? new Date(trackingStartResult[0].earliest).toISOString()
+      : null;
+    const firstUserDate = firstUserResult[0]?.earliest
+      ? new Date(firstUserResult[0].earliest).toISOString()
+      : null;
+
     return NextResponse.json({
       totalUsers: Number(totalUsersResult[0].count),
       activeToday: Number(activeTodayResult[0].count),
@@ -207,6 +178,8 @@ export async function GET(req: NextRequest) {
       topCountries,
       dailyActive,
       dailyNew,
+      trackingStartDate,
+      firstUserDate,
     });
   } catch (err) {
     console.error("Analytics error:", err);

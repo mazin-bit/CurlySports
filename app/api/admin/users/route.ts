@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { ensureTrackingTables } from "@/lib/ensure-tracking-tables";
 
 function isAdmin(req: NextRequest): boolean {
   const token = req.headers.get("x-admin-token");
@@ -54,20 +55,7 @@ export async function GET(req: NextRequest) {
   const offset = (page - 1) * limit;
 
   await ensureIsBannedColumn();
-
-  // Ensure user_sessions table exists for the LATERAL JOIN
-  await prisma.$executeRawUnsafe(`
-    CREATE TABLE IF NOT EXISTS user_sessions (
-      id TEXT PRIMARY KEY,
-      "userId" TEXT NOT NULL,
-      platform TEXT NOT NULL DEFAULT 'web',
-      "ipAddress" TEXT,
-      country TEXT,
-      city TEXT,
-      "userAgent" TEXT,
-      "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
-    )
-  `);
+  await ensureTrackingTables();
 
   try {
     const searchFilter = search

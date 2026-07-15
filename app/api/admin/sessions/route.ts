@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { ensureTrackingTables } from "@/lib/ensure-tracking-tables";
 
 function isAdmin(req: NextRequest): boolean {
   const token = req.headers.get("x-admin-token");
@@ -9,21 +10,6 @@ function isAdmin(req: NextRequest): boolean {
   if (a.length !== b.length) return false;
   const { timingSafeEqual } = require("crypto");
   return timingSafeEqual(a, b);
-}
-
-async function ensureTables() {
-  await prisma.$executeRawUnsafe(`
-    CREATE TABLE IF NOT EXISTS user_sessions (
-      id TEXT PRIMARY KEY,
-      "userId" TEXT NOT NULL,
-      platform TEXT NOT NULL DEFAULT 'web',
-      "ipAddress" TEXT,
-      country TEXT,
-      city TEXT,
-      "userAgent" TEXT,
-      "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
-    )
-  `);
 }
 
 interface SessionRow {
@@ -47,7 +33,7 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    await ensureTables();
+    await ensureTrackingTables();
 
     const url = new URL(req.url);
     const page = Math.max(1, Number(url.searchParams.get("page")) || 1);

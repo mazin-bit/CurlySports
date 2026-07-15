@@ -1,19 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-
-async function ensureTables() {
-  await prisma.$executeRawUnsafe(`
-    CREATE TABLE IF NOT EXISTS app_installs (
-      id TEXT PRIMARY KEY,
-      "deviceId" TEXT NOT NULL UNIQUE,
-      platform TEXT NOT NULL,
-      "appVersion" TEXT,
-      country TEXT,
-      "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
-    )
-  `);
-}
+import { ensureTrackingTables } from "@/lib/ensure-tracking-tables";
 
 export async function POST(req: NextRequest) {
   try {
@@ -27,7 +14,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "platform must be 'ios' or 'android'" }, { status: 400 });
     }
 
-    await ensureTables();
+    await ensureTrackingTables();
 
     const country = req.headers.get("x-vercel-ip-country") || null;
     const id = `inst_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
