@@ -9,7 +9,7 @@ import {
   Wifi, WifiOff, Users, Search, Trash2, Mail, MessageSquare, Radio,
   Star, MessageCircle, BarChart3, Ban, Megaphone, ImagePlus,
   Building2, MapPin, Smartphone, Monitor, TrendingUp, Calendar,
-  Send, Target, DollarSign, Award, AlertOctagon,
+  Send, Target, DollarSign, Award, AlertOctagon, Upload,
 } from "lucide-react";
 import styles from "./admin.module.css";
 import { DEFAULT_FLAGS, AdminFlags } from "@/lib/featureFlags";
@@ -1447,8 +1447,11 @@ function AdsTab({ adminToken }: { adminToken: string }) {
   const [filterActive, setFilterActive] = useState("");
   const [creating, setCreating] = useState(false);
   const [formErr, setFormErr] = useState("");
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState("");
+  const [uploading, setUploading] = useState(false);
   const [form, setForm] = useState({
-    title: "", imageUrl: "", linkUrl: "", slot: "sidebar",
+    title: "", linkUrl: "", slot: "sidebar",
     startDate: "", endDate: "",
   });
 
@@ -1471,6 +1474,18 @@ function AdsTab({ adminToken }: { adminToken: string }) {
 
   useEffect(() => { load(page); }, [page, load]);
 
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      setFormErr("Image must be under 5MB");
+      return;
+    }
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
+    setFormErr("");
+  };
+
   const createAd = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.title || !form.linkUrl || !form.startDate || !form.endDate) {
@@ -1478,13 +1493,38 @@ function AdsTab({ adminToken }: { adminToken: string }) {
       return;
     }
     setCreating(true); setFormErr("");
+
+    let imageUrl = "";
+
+    // Upload image first if selected
+    if (imageFile) {
+      setUploading(true);
+      const fd = new FormData();
+      fd.append("file", imageFile);
+      const uploadRes = await fetch("/api/upload", {
+        method: "POST",
+        headers: { "x-admin-token": adminToken },
+        body: fd,
+      });
+      setUploading(false);
+      if (uploadRes.ok) {
+        const uploadData = await uploadRes.json();
+        imageUrl = uploadData.url;
+      } else {
+        const err = await uploadRes.json().catch(() => ({})) as { error?: string };
+        setFormErr(err.error ?? "Image upload failed");
+        setCreating(false);
+        return;
+      }
+    }
+
     const payload: Record<string, string | boolean> = {
       title: form.title, linkUrl: form.linkUrl,
       slot: form.slot, isActive: true,
       startDate: new Date(form.startDate).toISOString(),
       endDate: new Date(form.endDate).toISOString(),
     };
-    if (form.imageUrl) payload.imageUrl = form.imageUrl;
+    if (imageUrl) payload.imageUrl = imageUrl;
     const res = await fetch("/api/admin/ads", {
       method: "POST",
       headers: { "content-type": "application/json", "x-admin-token": adminToken },
@@ -1494,7 +1534,9 @@ function AdsTab({ adminToken }: { adminToken: string }) {
       const ad = await res.json();
       setAds(prev => [ad, ...prev]);
       setTotal(t => t + 1);
-      setForm({ title: "", imageUrl: "", linkUrl: "", slot: "sidebar", startDate: "", endDate: "" });
+      setForm({ title: "", linkUrl: "", slot: "sidebar", startDate: "", endDate: "" });
+      setImageFile(null);
+      setImagePreview("");
     } else {
       const data = await res.json().catch(() => ({})) as { error?: string };
       setFormErr(data.error ?? "Failed to create ad.");
@@ -1554,13 +1596,25 @@ function AdsTab({ adminToken }: { adminToken: string }) {
           </div>
           <div className={styles.formRow}>
             <div className={styles.formGroup}>
-              <label className={styles.formLabel}>Image URL</label>
-              <input
-                className={styles.input}
-                placeholder="https://..."
-                value={form.imageUrl}
-                onChange={e => setForm(f => ({ ...f, imageUrl: e.target.value }))}
-              />
+              <label className={styles.formLabel}>Ad Image</label>
+              <label className={styles.fileUpload}>
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  onChange={handleImageSelect}
+                  style={{ display: "none" }}
+                />
+                <Upload size={14} />
+                {imageFile ? imageFile.name : "Choose image..."}
+              </label>
+              {imagePreview && (
+                <div className={styles.imagePreviewWrap}>
+                  <img src={imagePreview} alt="Preview" className={styles.imagePreviewThumb} />
+                  <button type="button" className={styles.imagePreviewRemove} onClick={() => { setImageFile(null); setImagePreview(""); }}>
+                    <X size={12} />
+                  </button>
+                </div>
+              )}
             </div>
             <div className={styles.formGroup}>
               <label className={styles.formLabel}>Link URL</label>
@@ -1607,7 +1661,7 @@ function AdsTab({ adminToken }: { adminToken: string }) {
           </div>
           {formErr && <div className={styles.loginErr}>{formErr}</div>}
           <button className={styles.btnSave} disabled={creating} type="submit">
-            {creating ? <><RefreshCw size={14} className={styles.spin} /> Creating...</> : <><ImagePlus size={14} /> Create ad</>}
+            {creating ? <><RefreshCw size={14} className={styles.spin} /> {uploading ? "Uploading image..." : "Creating..."}</> : <><ImagePlus size={14} /> Create ad</>}
           </button>
         </form>
       </div>

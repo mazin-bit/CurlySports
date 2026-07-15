@@ -1,11 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth";
 import { supabaseAdmin } from "@/utils/supabase/admin";
+import crypto from "crypto";
 
 // POST /api/upload — upload an image to Supabase storage
 export async function POST(req: NextRequest) {
-  const auth = await requireAuth();
-  if (auth instanceof NextResponse) return auth;
+  // Allow admin token OR logged-in user
+  const adminPw = process.env.ADMIN_PASSWORD;
+  const adminToken = req.headers.get("x-admin-token") || "";
+  const isAdmin = adminPw && adminToken === adminPw;
+
+  if (!isAdmin) {
+    const auth = await requireAuth();
+    if (auth instanceof NextResponse) return auth;
+  }
 
   const fd = (await req.formData()) as unknown as globalThis.FormData;
   const file = fd.get("file") as File | null;
