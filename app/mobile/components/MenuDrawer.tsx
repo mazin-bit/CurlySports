@@ -15,6 +15,7 @@ const SECTIONS: [string, [string, string, string, string?][]][] = [
   ]],
   ['navSection.entertainment', [
     ['funzone', 'nav.debates', 'spark', 'common.hot'],
+    ['challenges', 'nav.challenges', 'trophy'],
     ['videos', 'nav.videos', 'live'],
     ['minigames', 'nav.miniGames', 'bolt'],
   ]],

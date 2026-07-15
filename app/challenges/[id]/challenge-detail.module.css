@@ -1,0 +1,842 @@
+/* ── Challenge Detail ─────────────────────────────────────────────── */
+
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* ── Challenge Header Card ───────────────────────────────────────── */
+
+.headerCard {
+  background: var(--surface);
+  border: 2px solid var(--ink);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-lg);
+}
+
+.headerTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 24px;
+  border-bottom: 1.5px solid var(--border-2);
+}
+
+.headerTitle {
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 18px;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.headerTitle svg {
+  width: 20px;
+  height: 20px;
+  color: var(--orange);
+}
+
+.statusBadge {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 5px 12px;
+  border-radius: 6px;
+  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 1.5px solid;
+}
+
+.statusActive {
+  background: rgba(200, 255, 61, 0.15);
+  color: #3d7a00;
+  border-color: #3d7a00;
+}
+.statusActive::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #3d7a00;
+  animation: pulse 1.4s infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.statusSettled {
+  background: rgba(124, 92, 255, 0.1);
+  color: var(--purple);
+  border-color: var(--purple);
+}
+
+.statusCancelled {
+  background: rgba(255, 68, 68, 0.08);
+  color: var(--coral);
+  border-color: var(--coral);
+}
+
+.headerBody {
+  padding: 28px 32px 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.matchup {
+  display: flex;
+  align-items: center;
+  gap: 36px;
+  width: 100%;
+  justify-content: center;
+}
+
+.teamSide {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  max-width: 220px;
+}
+
+.teamLogo {
+  width: 64px;
+  height: 64px;
+  border-radius: 14px;
+  border: 2px solid var(--ink);
+  object-fit: contain;
+  background: var(--surface-2);
+}
+
+.teamLogoFallback {
+  width: 64px;
+  height: 64px;
+  border-radius: 14px;
+  border: 2px solid var(--ink);
+  display: grid;
+  place-items: center;
+  font-family: var(--mono);
+  font-weight: 700;
+  font-size: 16px;
+  color: #fff;
+  background: var(--ink);
+  flex-shrink: 0;
+}
+
+.teamName {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 18px;
+  color: var(--ink);
+  text-align: center;
+  line-height: 1.2;
+}
+
+.vsText {
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 32px;
+  color: var(--accent);
+  text-shadow: 2px 2px 0 var(--ink);
+  flex-shrink: 0;
+}
+
+.matchDateTime {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-dim);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.matchDateTime svg {
+  width: 14px;
+  height: 14px;
+  color: var(--text-mute);
+}
+
+/* ── Vote Buttons ────────────────────────────────────────────────── */
+
+.voteRow {
+  display: flex;
+  gap: 14px;
+  width: 100%;
+  max-width: 460px;
+}
+
+.voteBtn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 20px;
+  background: var(--surface);
+  border: 2px solid var(--ink);
+  border-radius: 10px;
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--ink);
+  cursor: pointer;
+  transition: all 0.15s;
+  box-shadow: var(--shadow-sm);
+}
+.voteBtn:hover {
+  background: var(--accent);
+  transform: translate(-2px, -2px);
+  box-shadow: var(--shadow-md);
+}
+.voteBtn:active {
+  transform: scale(0.97);
+  transition-duration: 0.08s;
+}
+.voteBtn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.voteBtnSelected {
+  background: var(--accent);
+  color: var(--ink);
+  box-shadow: var(--shadow-md);
+  transform: translate(-2px, -2px);
+}
+
+.voteBtnDimmed {
+  opacity: 0.45;
+  cursor: default;
+  box-shadow: none;
+}
+.voteBtnDimmed:hover {
+  background: var(--surface);
+  transform: none;
+  box-shadow: none;
+}
+
+/* ── Result display (settled) ────────────────────────────────────── */
+
+.resultDisplay {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 24px;
+  background: var(--surface-2);
+  border: 2px solid var(--border-2);
+  border-radius: 10px;
+  width: 100%;
+  max-width: 400px;
+}
+
+.resultLabel {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-mute);
+}
+
+.resultWinner {
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 20px;
+  color: var(--ink);
+}
+
+/* ── Your Entry Card ─────────────────────────────────────────────── */
+
+.entryCard {
+  background: var(--surface);
+  border: 2px solid var(--ink);
+  border-radius: var(--r-lg);
+  padding: 24px;
+  box-shadow: var(--shadow-md);
+}
+
+.entryCardTitle {
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 16px;
+  color: var(--ink);
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.entryCardTitle svg {
+  width: 18px;
+  height: 18px;
+}
+
+.predictionRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--ink);
+}
+.predictionRow svg {
+  width: 18px;
+  height: 18px;
+}
+
+.predictionCorrect svg {
+  color: #3d7a00;
+}
+
+.predictionIncorrect svg {
+  color: var(--coral);
+}
+
+.entriesGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.entryItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 14px 10px;
+  background: var(--surface-2);
+  border: 1.5px solid var(--border-2);
+  border-radius: 10px;
+}
+
+.entryNum {
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 22px;
+  color: var(--ink);
+}
+
+.entryNumAccent {
+  color: var(--accent);
+  text-shadow: 1px 1px 0 var(--ink);
+  font-size: 28px;
+}
+
+.entryLabel {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-mute);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  text-align: center;
+}
+
+/* ── Winner celebration ──────────────────────────────────────────── */
+
+.winnerBanner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 16px;
+  margin-top: 16px;
+  background: rgba(200, 255, 61, 0.12);
+  border: 2px solid var(--accent);
+  border-radius: 10px;
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 18px;
+  color: var(--ink);
+  animation: winnerPulse 2s ease-in-out infinite;
+}
+.winnerBanner svg {
+  width: 24px;
+  height: 24px;
+  color: #daa520;
+}
+
+@keyframes winnerPulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(200, 255, 61, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 20px 4px rgba(200, 255, 61, 0.3);
+  }
+}
+
+/* ── Referral Section Card ───────────────────────────────────────── */
+
+.referralCard {
+  background: var(--surface);
+  border: 2px solid var(--ink);
+  border-radius: var(--r-lg);
+  padding: 24px;
+  box-shadow: var(--shadow-md);
+}
+
+.referralCardTitle {
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 16px;
+  color: var(--ink);
+  margin-bottom: 18px;
+}
+
+.codeDisplay {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px 24px;
+  background: var(--surface-2);
+  border: 2.5px dashed var(--ink);
+  border-radius: 12px;
+  margin-bottom: 16px;
+}
+
+.codeValue {
+  font-family: var(--mono);
+  font-weight: 700;
+  font-size: 24px;
+  color: var(--accent);
+  text-shadow: 1px 1px 0 var(--ink);
+  letter-spacing: 0.08em;
+}
+
+.shareRow {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.shareBtn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 11px 14px;
+  background: var(--surface);
+  border: 2px solid var(--ink);
+  border-radius: 10px;
+  font-family: var(--body);
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--ink);
+  cursor: pointer;
+  transition: all 0.15s;
+  box-shadow: var(--shadow-sm);
+  text-decoration: none;
+}
+.shareBtn:hover {
+  background: var(--accent);
+  transform: translate(-2px, -2px);
+  box-shadow: var(--shadow-md);
+}
+.shareBtn:active {
+  transform: scale(0.97);
+  transition-duration: 0.08s;
+}
+.shareBtn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.progressSection {
+  margin-top: 4px;
+}
+
+.progressLabel {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-dim);
+  margin-bottom: 8px;
+}
+
+.progressBar {
+  height: 8px;
+  background: var(--surface-3);
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid var(--border-2);
+}
+
+.progressFill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 4px;
+  transition: width 0.4s ease;
+}
+
+/* ── Leaderboard Preview ─────────────────────────────────────────── */
+
+.leaderboardCard {
+  background: var(--surface);
+  border: 2px solid var(--ink);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+}
+
+.leaderboardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 22px;
+  border-bottom: 1.5px solid var(--border-2);
+}
+
+.leaderboardTitle {
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 16px;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.leaderboardTitle svg {
+  width: 18px;
+  height: 18px;
+  color: var(--orange);
+}
+
+.viewAllLink {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--orange);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  letter-spacing: 0.04em;
+  transition: opacity 0.15s;
+}
+.viewAllLink:hover {
+  opacity: 0.7;
+  text-decoration: underline;
+}
+.viewAllLink svg {
+  width: 14px;
+  height: 14px;
+}
+
+.lbRow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 22px;
+  border-bottom: 1px solid var(--border-2);
+  transition: background 0.15s;
+}
+.lbRow:last-child {
+  border-bottom: none;
+}
+.lbRow:hover {
+  background: var(--surface-2);
+}
+
+.lbRowHighlight {
+  border-left: 3px solid var(--accent);
+  background: rgba(200, 255, 61, 0.06);
+}
+
+.lbRank {
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 16px;
+  width: 32px;
+  flex-shrink: 0;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.lbRank svg {
+  width: 18px;
+  height: 18px;
+}
+
+.rankGold svg {
+  color: #daa520;
+}
+
+.rankSilver svg {
+  color: #aaa;
+}
+
+.rankBronze svg {
+  color: #cd7f32;
+}
+
+.lbAvatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 13px;
+  color: #fff;
+  background: var(--ink);
+  flex-shrink: 0;
+  border: 2px solid var(--ink);
+  overflow: hidden;
+}
+.lbAvatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.lbName {
+  flex: 1;
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lbEntries {
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 16px;
+  color: var(--orange);
+}
+
+.lbEntriesLabel {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--text-mute);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* ── Mystery Prize Card ──────────────────────────────────────────── */
+
+.prizeCard {
+  background: var(--surface);
+  border: 2.5px dashed var(--ink);
+  border-radius: var(--r-lg);
+  padding: 28px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 0 24px rgba(200, 255, 61, 0.08);
+}
+
+.prizeIcon {
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 14px;
+  background: var(--ink);
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  color: var(--accent);
+  border: 2px solid var(--ink);
+  box-shadow: var(--shadow-sm);
+}
+.prizeIcon svg {
+  width: 24px;
+  height: 24px;
+}
+
+.prizeTitle {
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 20px;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+  margin-bottom: 8px;
+}
+
+.prizeWinners {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-dim);
+}
+
+/* ── Login Prompt ────────────────────────────────────────────────── */
+
+.loginPrompt {
+  background: var(--surface-2);
+  border: 2px dashed var(--border-2);
+  border-radius: var(--r-lg);
+  padding: 32px;
+  text-align: center;
+}
+
+.loginPromptTitle {
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 18px;
+  color: var(--ink);
+  margin-bottom: 8px;
+}
+
+.loginPromptSub {
+  font-size: 13px;
+  color: var(--text-mute);
+  margin-bottom: 16px;
+}
+
+.loginBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background: var(--ink);
+  color: var(--accent);
+  border: 2px solid var(--ink);
+  border-radius: 10px;
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.15s;
+  box-shadow: var(--shadow-sm);
+  text-decoration: none;
+}
+.loginBtn:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: var(--shadow-md);
+}
+
+/* ── Loading skeleton ────────────────────────────────────────────── */
+
+.skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.skeletonBlock {
+  border-radius: var(--r-lg);
+  background: linear-gradient(90deg, var(--surface-2) 25%, var(--surface-3) 50%, var(--surface-2) 75%);
+  background-size: 600px 100%;
+  animation: shimmer 1.4s infinite linear;
+}
+
+@keyframes shimmer {
+  0% { background-position: -600px 0; }
+  100% { background-position: 600px 0; }
+}
+
+/* ── Toast ────────────────────────────────────────────────────────── */
+
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(0);
+  background: var(--ink);
+  color: var(--accent);
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 700;
+  padding: 12px 24px;
+  border-radius: 10px;
+  border: 2px solid var(--ink);
+  box-shadow: var(--shadow-md);
+  z-index: 1000;
+  animation: toastIn 0.3s ease;
+}
+
+@keyframes toastIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+/* ── Responsive ──────────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  .headerBody {
+    padding: 20px 18px 24px;
+  }
+  .matchup {
+    gap: 20px;
+  }
+  .teamLogo,
+  .teamLogoFallback {
+    width: 52px;
+    height: 52px;
+  }
+  .teamName {
+    font-size: 15px;
+  }
+  .vsText {
+    font-size: 24px;
+  }
+  .voteRow {
+    flex-direction: column;
+    gap: 10px;
+  }
+  .shareRow {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .entriesGrid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+  .codeValue {
+    font-size: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .headerBody {
+    padding: 16px 14px 20px;
+    gap: 16px;
+  }
+  .matchup {
+    gap: 14px;
+  }
+  .teamLogo,
+  .teamLogoFallback {
+    width: 44px;
+    height: 44px;
+  }
+  .teamName {
+    font-size: 13px;
+  }
+  .vsText {
+    font-size: 20px;
+  }
+  .entryNum {
+    font-size: 18px;
+  }
+  .entryNumAccent {
+    font-size: 22px;
+  }
+  .codeValue {
+    font-size: 18px;
+  }
+  .prizeCard {
+    padding: 20px;
+  }
+}

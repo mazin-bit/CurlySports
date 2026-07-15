@@ -1,0 +1,335 @@
+/* ── Invite / Referral Landing Page — Light/Cream Theme ──────────── */
+
+.layout {
+  min-height: 100vh;
+  background: #f6ede0;
+  color: #0c0a1d;
+  font-family: var(--body);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* ── Header ──────────────────────────────────────────────────────── */
+
+.header {
+  width: 100%;
+  max-width: 560px;
+  padding: 32px 24px 0;
+  display: flex;
+  justify-content: center;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  color: #0c0a1d;
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 22px;
+  letter-spacing: -0.02em;
+}
+
+.brandMark {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 2.5px solid #0c0a1d;
+  box-shadow: 4px 4px 0 #0c0a1d;
+  transform: rotate(-6deg);
+  transition: transform 0.3s cubic-bezier(.34, 1.56, .64, 1);
+  flex-shrink: 0;
+}
+.brand:hover .brandMark {
+  transform: rotate(6deg) scale(1.08);
+}
+.brandMark img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.dot {
+  color: var(--orange, #ff5b3d);
+}
+
+/* ── Hero Section ────────────────────────────────────────────────── */
+
+.hero {
+  width: 100%;
+  max-width: 560px;
+  padding: 48px 24px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.heroHeading {
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 28px;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  color: #0c0a1d;
+}
+
+.heroSub {
+  font-size: 15px;
+  color: rgba(12, 10, 29, 0.6);
+  line-height: 1.6;
+  max-width: 420px;
+}
+
+.ctaBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 36px;
+  background: #0c0a1d;
+  color: var(--accent, #c8ff3d);
+  border: 2.5px solid #0c0a1d;
+  border-radius: 14px;
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 17px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s cubic-bezier(.34, 1.56, .64, 1);
+  box-shadow: 6px 6px 0 #0c0a1d;
+  letter-spacing: -0.01em;
+}
+.ctaBtn:hover {
+  transform: translate(-3px, -3px);
+  box-shadow: 9px 9px 0 rgba(12, 10, 29, 0.7);
+}
+.ctaBtn:active {
+  transform: scale(0.97);
+  box-shadow: 3px 3px 0 #0c0a1d;
+  transition-duration: 0.08s;
+}
+.ctaBtn svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* ── Benefits Grid ───────────────────────────────────────────────── */
+
+.benefitsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  width: 100%;
+  max-width: 560px;
+  padding: 0 24px 40px;
+}
+
+.benefitCard {
+  background: #fffdf7;
+  border: 2px solid #0c0a1d;
+  border-radius: 14px;
+  padding: 22px 16px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 4px 4px 0 #0c0a1d;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.benefitCard:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0 #0c0a1d;
+}
+
+.benefitIcon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--accent, #c8ff3d);
+  border: 2px solid #0c0a1d;
+  display: grid;
+  place-items: center;
+  color: #0c0a1d;
+  box-shadow: 2px 2px 0 #0c0a1d;
+}
+.benefitIcon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.benefitTitle {
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 14px;
+  color: #0c0a1d;
+  line-height: 1.2;
+}
+
+.benefitDesc {
+  font-size: 12px;
+  color: rgba(12, 10, 29, 0.55);
+  line-height: 1.4;
+}
+
+/* ── App Store Buttons ───────────────────────────────────────────── */
+
+.storeRow {
+  display: flex;
+  gap: 14px;
+  padding: 0 24px 48px;
+  justify-content: center;
+}
+
+.storeBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+  background: #fffdf7;
+  border: 2px solid #0c0a1d;
+  border-radius: 12px;
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 13px;
+  color: #0c0a1d;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.15s;
+  box-shadow: 3px 3px 0 #0c0a1d;
+}
+.storeBtn:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 5px 5px 0 #0c0a1d;
+  background: var(--accent, #c8ff3d);
+}
+.storeBtn:active {
+  transform: scale(0.97);
+  transition-duration: 0.08s;
+}
+.storeBtn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.storeBtnText {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  line-height: 1.2;
+}
+
+.storeBtnSmall {
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(12, 10, 29, 0.5);
+}
+
+.storeBtnName {
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 14px;
+  color: #0c0a1d;
+}
+
+/* ── Footer ──────────────────────────────────────────────────────── */
+
+.footer {
+  padding: 20px 24px 32px;
+  text-align: center;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: rgba(12, 10, 29, 0.35);
+  letter-spacing: 0.04em;
+}
+
+/* ── Decorative grid background ──────────────────────────────────── */
+
+.layout::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(12, 10, 29, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(12, 10, 29, 0.04) 1px, transparent 1px);
+  background-size: 40px 40px;
+  z-index: 0;
+}
+
+.layout > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* ── Responsive ──────────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  .hero {
+    padding: 36px 20px;
+  }
+  .heroHeading {
+    font-size: 24px;
+  }
+  .benefitsGrid {
+    grid-template-columns: 1fr;
+    max-width: 360px;
+    margin: 0 auto;
+    padding: 0 20px 32px;
+  }
+  .benefitCard {
+    flex-direction: row;
+    text-align: left;
+    padding: 16px;
+    gap: 14px;
+  }
+  .benefitIcon {
+    flex-shrink: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .header {
+    padding: 24px 16px 0;
+  }
+  .brand {
+    font-size: 19px;
+  }
+  .brandMark {
+    width: 40px;
+    height: 40px;
+  }
+  .hero {
+    padding: 28px 16px;
+    gap: 16px;
+  }
+  .heroHeading {
+    font-size: 22px;
+  }
+  .heroSub {
+    font-size: 14px;
+  }
+  .ctaBtn {
+    padding: 14px 28px;
+    font-size: 15px;
+  }
+  .storeRow {
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 0 16px 36px;
+  }
+  .storeBtn {
+    width: 100%;
+    max-width: 260px;
+    justify-content: center;
+  }
+}

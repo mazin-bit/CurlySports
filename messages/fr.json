@@ -14,7 +14,8 @@
     "more": "Plus",
     "search": "Rechercher",
     "profile": "Profil et parametres",
-    "feedback": "Commentaires"
+    "feedback": "Commentaires",
+    "challenges": "Defis"
   },
   "navSection": {
     "app": "APPLI",
@@ -705,5 +706,19 @@
     "away": "Exterieur",
     "loading": "Chargement\u2026",
     "error": "Erreur"
+  },
+  "challenges": {
+    "title": "Defi de prediction",
+    "mysteryPrize": "Defi prix mystere",
+    "voteNow": "Voter maintenant",
+    "votingClosed": "Vote termine",
+    "yourPrediction": "Votre prediction",
+    "entries": "Participations",
+    "referralCode": "Votre code de parrainage",
+    "inviteFriends": "Inviter des amis",
+    "leaderboard": "Classement",
+    "winners": "Gagnants",
+    "correct": "Correct",
+    "incorrect": "Incorrect"
   }
 }

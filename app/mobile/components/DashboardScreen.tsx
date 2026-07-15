@@ -28,10 +28,74 @@ interface DashboardProps {
   setSport: (s: string) => void;
   onOpenMatch: (m: Match) => void;
   onOpenPlayer: (playerId?: string, leagueId?: string) => void;
+  onOpenChallenge?: (challengeId: string) => void;
   onSearch: () => void;
   onBell: () => void;
   fav?: { code: string; name: string; first: string } | null;
   unread: number;
+}
+
+interface ActiveChallenge {
+  id: string;
+  title: string;
+  teamA: string;
+  teamB: string;
+  matchDate: string;
+  winnerCount: number;
+  status: string;
+  totalVotes: number;
+}
+
+function useMobileActiveChallenge() {
+  const [challenge, setChallenge] = useState<ActiveChallenge | null>(null);
+  const [userVote, setUserVote] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch('/api/challenges?status=active&limit=1');
+        if (!res.ok) return;
+        const data = await res.json();
+        const items = data.challenges ?? data;
+        if (Array.isArray(items) && items.length > 0 && !cancelled) {
+          setChallenge(items[0]);
+          try {
+            const vRes = await fetch(`/api/challenges/${items[0].id}`);
+            if (vRes.ok) {
+              const vData = await vRes.json();
+              if (vData.userVote?.selectedTeam) {
+                setUserVote(vData.userVote.selectedTeam);
+              }
+            }
+          } catch { /* user not logged in */ }
+        }
+      } catch { /* ignore */ }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  return { challenge, userVote, setUserVote };
+}
+
+function MobileChallengeCountdown({ matchDate }: { matchDate: string }) {
+  const [remaining, setRemaining] = useState('');
+
+  useEffect(() => {
+    function update() {
+      const diff = new Date(matchDate).getTime() - Date.now();
+      if (diff <= 0) { setRemaining('00:00:00'); return; }
+      const h = Math.floor(diff / 3_600_000);
+      const m = Math.floor((diff % 3_600_000) / 60_000);
+      const s = Math.floor((diff % 60_000) / 1_000);
+      setRemaining(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`);
+    }
+    update();
+    const id = setInterval(update, 1000);
+    return () => clearInterval(id);
+  }, [matchDate]);
+
+  return <span>{remaining}</span>;
 }
 
 function MiniStandingsTable({ entries, leagueName, t, locale }: { entries: StandingEntry[]; leagueName: string; t: (key: string, fallback?: string) => string; locale: import('@/lib/i18n').Locale }) {
@@ -164,9 +228,10 @@ function toDateKey(d: Date) {
   return String(d.getFullYear()) + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0');
 }
 
-export default function DashboardScreen({ sport, setSport, onOpenMatch, onOpenPlayer, onSearch, onBell, fav, unread }: DashboardProps) {
+export default function DashboardScreen({ sport, setSport, onOpenMatch, onOpenPlayer, onOpenChallenge, onSearch, onBell, fav, unread }: DashboardProps) {
   const { t, locale } = useLanguage();
   const todayKey = toDateKey(new Date());
+  const { challenge: activeChallenge, userVote: challengeVote, setUserVote: setChallengeVote } = useMobileActiveChallenge();
   const { groups, isConnected, liveCount } = useScoresStream(sport, todayKey);
   const { articles, isLoading: newsLoading } = useNews(20, sport);
 
@@ -229,6 +294,76 @@ export default function DashboardScreen({ sport, setSport, onOpenMatch, onOpenPl
       <div className="cs-scroll cs-screen-scroll" style={{ flex: 1, overflow: 'auto', display: 'flex', flexDirection: 'column', gap: 16 }}>
         <div className="cs-content-wrap" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         <SportSelector active={sport} onSelect={setSport} />
+
+        {/* Challenge card */}
+        {activeChallenge && (
+          <div
+            onClick={() => onOpenChallenge?.(activeChallenge.id)}
+            style={{
+              background: 'var(--surface)',
+              border: '2px solid var(--orange)',
+              borderRadius: 14,
+              padding: '14px 16px',
+              boxShadow: '3px 3px 0 var(--orange)',
+              cursor: 'pointer',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 8 }}>
+              <Icon name="trophy" size={13} style={{ color: 'var(--orange)' }} />
+              <span style={{ fontFamily: 'var(--mono)', fontSize: 9, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--orange)' }}>
+                {t('challenges.mysteryPrize', 'MYSTERY PRIZE CHALLENGE')}
+              </span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, fontFamily: 'var(--display)', fontWeight: 800, fontSize: 16, color: 'var(--ink)', marginBottom: 10 }}>
+              <span>{activeChallenge.teamA}</span>
+              <span style={{ fontFamily: 'var(--mono)', fontSize: 10, fontWeight: 800, color: 'var(--text-mute)', letterSpacing: '0.06em' }}>VS</span>
+              <span>{activeChallenge.teamB}</span>
+            </div>
+            {challengeVote ? (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '7px 12px', background: 'rgba(200,255,61,0.15)', border: '2px solid var(--accent)', borderRadius: 8, fontFamily: 'var(--display)', fontSize: 12, fontWeight: 700, color: 'var(--ink)' }}>
+                <Icon name="check" size={13} />
+                {t('challenges.yourPrediction', 'Your Prediction')}: {challengeVote}
+              </div>
+            ) : (
+              <div style={{ display: 'flex', gap: 8 }} onClick={(e) => e.stopPropagation()}>
+                {[activeChallenge.teamA, activeChallenge.teamB].map((team) => (
+                  <button
+                    key={team}
+                    onClick={async () => {
+                      try {
+                        const res = await fetch(`/api/challenges/${activeChallenge.id}`, {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ selectedTeam: team }),
+                        });
+                        if (res.ok) setChallengeVote(team);
+                      } catch { /* ignore */ }
+                    }}
+                    style={{
+                      flex: 1, padding: '7px 12px',
+                      fontFamily: 'var(--display)', fontSize: 12, fontWeight: 700,
+                      color: 'var(--ink)', background: 'var(--surface-2)',
+                      border: '2px solid var(--border-2)', borderRadius: 8,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {team}
+                  </button>
+                ))}
+              </div>
+            )}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 8, paddingTop: 8, borderTop: '1.5px solid var(--border-2)', fontFamily: 'var(--mono)', fontSize: 10, fontWeight: 700, color: 'var(--text-mute)' }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                <Icon name="clock" size={10} />
+                <MobileChallengeCountdown matchDate={activeChallenge.matchDate} />
+              </span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                <Icon name="gift" size={10} />
+                {activeChallenge.winnerCount} {t('challenges.winners', 'Winners')}
+              </span>
+            </div>
+          </div>
+        )}
 
         {/* Live scores */}
         <Card

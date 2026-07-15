@@ -14,7 +14,8 @@
     "more": "More",
     "search": "Search",
     "profile": "Profile & settings",
-    "feedback": "Feedback"
+    "feedback": "Feedback",
+    "challenges": "Challenges"
   },
   "navSection": {
     "app": "APP",
@@ -705,5 +706,19 @@
     "away": "Away",
     "loading": "Loading\u2026",
     "error": "Error"
+  },
+  "challenges": {
+    "title": "Prediction Challenge",
+    "mysteryPrize": "Mystery Prize Challenge",
+    "voteNow": "Vote Now",
+    "votingClosed": "Voting Closed",
+    "yourPrediction": "Your Prediction",
+    "entries": "Entries",
+    "referralCode": "Your Referral Code",
+    "inviteFriends": "Invite Friends",
+    "leaderboard": "Leaderboard",
+    "winners": "Winners",
+    "correct": "Correct",
+    "incorrect": "Incorrect"
   }
 }

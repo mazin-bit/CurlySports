@@ -25,8 +25,9 @@ const NAV_CONTENT = [
 ];
 
 const NAV_COMMUNITY = [
-  { key: "funzone",   tKey: "nav.debates",   icon: "i-spark", href: "/debates",    countKey: "common.hot", feature: "funZone" },
-  { key: "minigames", tKey: "nav.miniGames", icon: "i-game",  href: "/mini-games", countKey: null,         feature: "miniGames" },
+  { key: "funzone",    tKey: "nav.debates",    icon: "i-spark",  href: "/debates",    countKey: "common.hot", feature: "funZone" },
+  { key: "minigames",  tKey: "nav.miniGames",  icon: "i-game",   href: "/mini-games", countKey: null,         feature: "miniGames" },
+  { key: "challenges", tKey: "nav.challenges", icon: "i-trophy", href: "/challenges", countKey: null,         feature: null },
 ];
 
 const NAV_PERSONAL = [

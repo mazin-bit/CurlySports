@@ -14,7 +14,8 @@
     "more": "और",
     "search": "खोजें",
     "profile": "प्रोफाइल और सेटिंग्स",
-    "feedback": "प्रतिक्रिया"
+    "feedback": "प्रतिक्रिया",
+    "challenges": "चुनौतियाँ"
   },
   "navSection": {
     "app": "ऐप",
@@ -705,5 +706,19 @@
     "away": "अवे",
     "loading": "लोड हो रहा है\u2026",
     "error": "त्रुटि"
+  },
+  "challenges": {
+    "title": "भविष्यवाणी चुनौती",
+    "mysteryPrize": "रहस्यमय पुरस्कार चुनौती",
+    "voteNow": "अभी वोट करें",
+    "votingClosed": "मतदान बंद",
+    "yourPrediction": "आपकी भविष्यवाणी",
+    "entries": "प्रविष्टियाँ",
+    "referralCode": "आपका रेफरल कोड",
+    "inviteFriends": "दोस्तों को आमंत्रित करें",
+    "leaderboard": "लीडरबोर्ड",
+    "winners": "विजेता",
+    "correct": "सही",
+    "incorrect": "गलत"
   }
 }

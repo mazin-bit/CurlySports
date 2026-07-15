@@ -10,6 +10,7 @@ import {
   Star, MessageCircle, BarChart3, Ban, Megaphone, ImagePlus,
   Building2, MapPin, Smartphone, Monitor, TrendingUp, Calendar,
   Send, Target, DollarSign, Award, AlertOctagon, Upload, Pin,
+  Trophy, Gift, Crown, Medal, Download,
 } from "lucide-react";
 import styles from "./admin.module.css";
 import { DEFAULT_FLAGS, AdminFlags } from "@/lib/featureFlags";
@@ -2406,6 +2407,787 @@ function FeedbackTab({ adminToken }: { adminToken: string }) {
   );
 }
 
+/* ── Challenges tab ───────────────────────────── */
+interface Challenge {
+  id: string;
+  title: string;
+  description: string;
+  imageUrl?: string;
+  teamAName: string;
+  teamALogo?: string;
+  teamBName: string;
+  teamBLogo?: string;
+  sport: string;
+  matchDate: string;
+  status: "active" | "closed" | "settled" | "cancelled";
+  winnerCount: number;
+  maxReferralEntries: number;
+  prizeName?: string;
+  prizeValue?: string;
+  prizeImage?: string;
+  prizeDeliveryMethod?: string;
+  result?: "teamA" | "teamB" | "draw";
+  totalVotes: number;
+  votesA: number;
+  votesB: number;
+  totalEntries: number;
+  correctPredictions: number;
+  referralEntries: number;
+  createdAt: string;
+}
+
+interface ChallengeWinner {
+  rank: number;
+  username: string;
+  email: string;
+  entries: number;
+}
+
+interface ChallengeAnalytics {
+  totalVotes: number;
+  totalEntries: number;
+  correctPredictions: number;
+  referrals: number;
+  votesA: number;
+  votesB: number;
+  baseEntries: number;
+  referralEntries: number;
+  topReferrers: { username: string; email: string; referrals: number }[];
+}
+
+function ChallengesTab({ adminToken }: { adminToken: string }) {
+  type SubView = "list" | "create" | "edit" | "settle" | "draw" | "analytics";
+  const [view, setView] = useState<SubView>("list");
+  const [challenges, setChallenges] = useState<Challenge[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedChallenge, setSelectedChallenge] = useState<Challenge | null>(null);
+  const [formErr, setFormErr] = useState("");
+  const [creating, setCreating] = useState(false);
+
+  // Form state
+  const [form, setForm] = useState({
+    title: "", description: "", teamAName: "", teamALogo: "",
+    teamBName: "", teamBLogo: "", sport: "football",
+    matchDate: "", winnerCount: "10", maxReferralEntries: "20",
+    prizeName: "", prizeValue: "", prizeDeliveryMethod: "",
+  });
+  const [challengeImage, setChallengeImage] = useState<File | null>(null);
+  const [challengeImagePreview, setChallengeImagePreview] = useState("");
+  const [prizeImage, setPrizeImage] = useState<File | null>(null);
+  const [prizeImagePreview, setPrizeImagePreview] = useState("");
+  const [uploading, setUploading] = useState(false);
+
+  // Settle state
+  const [settleResult, setSettleResult] = useState<"teamA" | "teamB" | "draw">("teamA");
+  const [settling, setSettling] = useState(false);
+
+  // Draw state
+  const [winners, setWinners] = useState<ChallengeWinner[]>([]);
+  const [drawing, setDrawing] = useState(false);
+
+  // Analytics state
+  const [analytics, setAnalytics] = useState<ChallengeAnalytics | null>(null);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/admin/challenges", {
+        headers: { Authorization: `Bearer ${adminToken}` },
+      });
+      if (res.ok) setChallenges(await res.json());
+    } catch { /* ignore */ }
+    setLoading(false);
+  }, [adminToken]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const uploadFile = async (file: File): Promise<string | null> => {
+    const fd = new FormData();
+    fd.append("file", file);
+    const res = await fetch("/api/upload", {
+      method: "POST",
+      headers: { "x-admin-token": adminToken },
+      body: fd,
+    });
+    if (res.ok) {
+      const data = await res.json();
+      return data.url;
+    }
+    return null;
+  };
+
+  const handleChallengeImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { setFormErr("Image must be under 5MB"); return; }
+    setChallengeImage(file);
+    setChallengeImagePreview(URL.createObjectURL(file));
+    setFormErr("");
+  };
+
+  const handlePrizeImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { setFormErr("Image must be under 5MB"); return; }
+    setPrizeImage(file);
+    setPrizeImagePreview(URL.createObjectURL(file));
+    setFormErr("");
+  };
+
+  const resetForm = () => {
+    setForm({
+      title: "", description: "", teamAName: "", teamALogo: "",
+      teamBName: "", teamBLogo: "", sport: "football",
+      matchDate: "", winnerCount: "10", maxReferralEntries: "20",
+      prizeName: "", prizeValue: "", prizeDeliveryMethod: "",
+    });
+    setChallengeImage(null);
+    setChallengeImagePreview("");
+    setPrizeImage(null);
+    setPrizeImagePreview("");
+    setFormErr("");
+  };
+
+  const openEdit = (c: Challenge) => {
+    setSelectedChallenge(c);
+    setForm({
+      title: c.title, description: c.description ?? "",
+      teamAName: c.teamAName, teamALogo: c.teamALogo ?? "",
+      teamBName: c.teamBName, teamBLogo: c.teamBLogo ?? "",
+      sport: c.sport, matchDate: c.matchDate ? c.matchDate.slice(0, 16) : "",
+      winnerCount: String(c.winnerCount ?? 10),
+      maxReferralEntries: String(c.maxReferralEntries ?? 20),
+      prizeName: c.prizeName ?? "", prizeValue: c.prizeValue ?? "",
+      prizeDeliveryMethod: c.prizeDeliveryMethod ?? "",
+    });
+    setChallengeImagePreview(c.imageUrl ?? "");
+    setPrizeImagePreview(c.prizeImage ?? "");
+    setView("edit");
+  };
+
+  const submitForm = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.title || !form.teamAName || !form.teamBName || !form.matchDate) {
+      setFormErr("Title, both team names, and match date are required.");
+      return;
+    }
+    setCreating(true); setFormErr("");
+    setUploading(true);
+
+    let imageUrl = challengeImagePreview;
+    let prizeImgUrl = prizeImagePreview;
+
+    if (challengeImage) {
+      const url = await uploadFile(challengeImage);
+      if (url) imageUrl = url; else { setFormErr("Challenge image upload failed"); setCreating(false); setUploading(false); return; }
+    }
+    if (prizeImage) {
+      const url = await uploadFile(prizeImage);
+      if (url) prizeImgUrl = url; else { setFormErr("Prize image upload failed"); setCreating(false); setUploading(false); return; }
+    }
+    setUploading(false);
+
+    const payload = {
+      ...form,
+      winnerCount: parseInt(form.winnerCount) || 10,
+      maxReferralEntries: parseInt(form.maxReferralEntries) || 20,
+      matchDate: new Date(form.matchDate).toISOString(),
+      imageUrl,
+      prizeImage: prizeImgUrl,
+      ...(view === "edit" && selectedChallenge ? { id: selectedChallenge.id } : {}),
+    };
+
+    const res = await fetch("/api/admin/challenges", {
+      method: view === "edit" ? "PATCH" : "POST",
+      headers: { "content-type": "application/json", Authorization: `Bearer ${adminToken}` },
+      body: JSON.stringify(payload),
+    });
+
+    if (res.ok) {
+      await load();
+      resetForm();
+      setSelectedChallenge(null);
+      setView("list");
+    } else {
+      const data = await res.json().catch(() => ({})) as { error?: string };
+      setFormErr(data.error ?? "Failed to save challenge.");
+    }
+    setCreating(false);
+  };
+
+  const deleteChallenge = async (id: string) => {
+    if (!confirm("Delete this challenge? This cannot be undone.")) return;
+    await fetch(`/api/admin/challenges?id=${id}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${adminToken}` },
+    });
+    setChallenges(prev => prev.filter(c => c.id !== id));
+  };
+
+  const closeVoting = async (id: string) => {
+    if (!confirm("Close voting for this challenge?")) return;
+    const res = await fetch("/api/admin/challenges", {
+      method: "PATCH",
+      headers: { "content-type": "application/json", Authorization: `Bearer ${adminToken}` },
+      body: JSON.stringify({ id, status: "closed" }),
+    });
+    if (res.ok) await load();
+  };
+
+  const openSettle = (c: Challenge) => {
+    setSelectedChallenge(c);
+    setSettleResult("teamA");
+    setView("settle");
+  };
+
+  const settleChallenge = async () => {
+    if (!selectedChallenge) return;
+    setSettling(true);
+    const res = await fetch("/api/admin/challenges/settle", {
+      method: "POST",
+      headers: { "content-type": "application/json", Authorization: `Bearer ${adminToken}` },
+      body: JSON.stringify({ challengeId: selectedChallenge.id, result: settleResult }),
+    });
+    if (res.ok) {
+      await load();
+      setView("list");
+    } else {
+      const data = await res.json().catch(() => ({})) as { error?: string };
+      setFormErr(data.error ?? "Failed to settle challenge.");
+    }
+    setSettling(false);
+  };
+
+  const openDraw = (c: Challenge) => {
+    setSelectedChallenge(c);
+    setWinners([]);
+    setView("draw");
+  };
+
+  const drawWinners = async () => {
+    if (!selectedChallenge) return;
+    setDrawing(true);
+    const res = await fetch("/api/admin/challenges/draw", {
+      method: "POST",
+      headers: { "content-type": "application/json", Authorization: `Bearer ${adminToken}` },
+      body: JSON.stringify({ challengeId: selectedChallenge.id }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      setWinners(data.winners ?? []);
+    }
+    setDrawing(false);
+  };
+
+  const exportCSV = () => {
+    if (winners.length === 0) return;
+    const header = "Rank,Username,Email,Entries\n";
+    const rows = winners.map(w => `${w.rank},${w.username},${w.email},${w.entries}`).join("\n");
+    const blob = new Blob([header + rows], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `challenge-winners-${selectedChallenge?.id ?? "export"}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const openAnalytics = async (c: Challenge) => {
+    setSelectedChallenge(c);
+    setAnalytics(null);
+    setView("analytics");
+    const res = await fetch(`/api/admin/challenges/analytics?challengeId=${c.id}`, {
+      headers: { Authorization: `Bearer ${adminToken}` },
+    });
+    if (res.ok) setAnalytics(await res.json());
+  };
+
+  const statusBadge = (status: string) => {
+    const map: Record<string, string> = {
+      active: styles.chBadgeActive,
+      closed: styles.chBadgeClosed,
+      settled: styles.chBadgeSettled,
+      cancelled: styles.chBadgeCancelled,
+    };
+    return `${styles.badge} ${map[status] ?? styles.badgeMuted}`;
+  };
+
+  const SPORTS = ["football", "basketball", "nfl", "tennis", "baseball", "f1", "cricket", "hockey"];
+
+  // ── List view ──
+  if (view === "list") {
+    return (
+      <div className={styles.tabContent}>
+        <div className={styles.tabHeader}>
+          <h2>Challenges</h2>
+          <span className={styles.tabDesc}>Create and manage prediction challenges with prizes.</span>
+        </div>
+
+        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 16 }}>
+          <button className={styles.btnSave} onClick={() => { resetForm(); setSelectedChallenge(null); setView("create"); }}>
+            <Trophy size={14} /> Create Challenge
+          </button>
+        </div>
+
+        {loading ? (
+          <div className={styles.empty}><RefreshCw size={16} className={styles.spin} /> Loading challenges...</div>
+        ) : challenges.length === 0 ? (
+          <div className={styles.empty}>No challenges yet. Create your first challenge above.</div>
+        ) : (
+          <div className={styles.chTable}>
+            <div className={styles.chTableHeader}>
+              <span style={{ flex: 2 }}>Title</span>
+              <span style={{ flex: 2 }}>Teams</span>
+              <span style={{ flex: 1 }}>Match Date</span>
+              <span style={{ flex: 1 }}>Status</span>
+              <span style={{ flex: 1, textAlign: "center" }}>Votes</span>
+              <span style={{ flex: 1, textAlign: "center" }}>Entries</span>
+              <span style={{ flex: 2, textAlign: "right" }}>Actions</span>
+            </div>
+            {challenges.map(c => (
+              <div key={c.id} className={styles.chTableRow}>
+                <span style={{ flex: 2, fontWeight: 700, color: "var(--a-ink)" }}>{c.title}</span>
+                <span style={{ flex: 2, fontSize: 12, color: "var(--a-ink-dim)" }}>
+                  {c.teamAName} vs {c.teamBName}
+                </span>
+                <span style={{ flex: 1, fontSize: 12, color: "var(--a-ink-mute)" }}>
+                  {new Date(c.matchDate).toLocaleDateString()}
+                </span>
+                <span style={{ flex: 1 }}>
+                  <span className={statusBadge(c.status)}>{c.status}</span>
+                </span>
+                <span style={{ flex: 1, textAlign: "center", fontWeight: 600 }}>{c.totalVotes ?? 0}</span>
+                <span style={{ flex: 1, textAlign: "center", fontWeight: 600 }}>{c.totalEntries ?? 0}</span>
+                <span style={{ flex: 2, display: "flex", gap: 4, justifyContent: "flex-end", flexWrap: "wrap" }}>
+                  <button className={styles.btnSmall} onClick={() => openEdit(c)}>Edit</button>
+                  {c.status === "active" && (
+                    <button className={styles.btnSmall} onClick={() => closeVoting(c.id)}>Close Voting</button>
+                  )}
+                  {(c.status === "closed") && (
+                    <button className={styles.btnSmall} onClick={() => openSettle(c)}>Set Result</button>
+                  )}
+                  {c.status === "settled" && (
+                    <button className={styles.btnSmall} onClick={() => openDraw(c)}>Draw Winners</button>
+                  )}
+                  <button className={styles.btnSmall} onClick={() => openAnalytics(c)} title="Analytics">
+                    <BarChart3 size={12} />
+                  </button>
+                  <button className={styles.btnDanger} onClick={() => deleteChallenge(c.id)} style={{ padding: "4px 8px" }}>
+                    <Trash2 size={12} />
+                  </button>
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ── Create / Edit view ──
+  if (view === "create" || view === "edit") {
+    return (
+      <div className={styles.tabContent}>
+        <div className={styles.tabHeader}>
+          <h2>{view === "edit" ? "Edit Challenge" : "Create Challenge"}</h2>
+          <span className={styles.tabDesc}>
+            {view === "edit" ? "Update challenge details." : "Set up a new prediction challenge."}
+          </span>
+        </div>
+
+        <button className={styles.btnGhost} onClick={() => { resetForm(); setView("list"); }} style={{ marginBottom: 16 }}>
+          Back to list
+        </button>
+
+        <form onSubmit={submitForm} className={styles.chForm}>
+          <div className={styles.formGroup}>
+            <label className={styles.formLabel}>Title</label>
+            <input className={styles.input} placeholder="Challenge title..." value={form.title}
+              onChange={e => setForm(f => ({ ...f, title: e.target.value }))} maxLength={200} />
+          </div>
+
+          <div className={styles.formGroup}>
+            <label className={styles.formLabel}>Description</label>
+            <textarea className={`${styles.input} ${styles.textarea}`} placeholder="Describe the challenge..."
+              value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
+              rows={3} />
+          </div>
+
+          <div className={styles.formGroup}>
+            <label className={styles.formLabel}>Challenge Image</label>
+            <label className={styles.fileUpload}>
+              <Upload size={16} /> {challengeImage ? challengeImage.name : "Choose image..."}
+              <input type="file" accept="image/*" onChange={handleChallengeImageSelect} hidden />
+            </label>
+            {challengeImagePreview && (
+              <div className={styles.imagePreviewWrap}>
+                <img src={challengeImagePreview} alt="Preview" className={styles.imagePreviewThumb} />
+                <button type="button" className={styles.imagePreviewRemove}
+                  onClick={() => { setChallengeImage(null); setChallengeImagePreview(""); }}>
+                  <X size={12} />
+                </button>
+              </div>
+            )}
+          </div>
+
+          <div className={styles.formRow}>
+            <div className={styles.formGroup}>
+              <label className={styles.formLabel}>Team A Name</label>
+              <input className={styles.input} placeholder="Team A" value={form.teamAName}
+                onChange={e => setForm(f => ({ ...f, teamAName: e.target.value }))} />
+            </div>
+            <div className={styles.formGroup}>
+              <label className={styles.formLabel}>Team A Logo URL</label>
+              <input className={styles.input} placeholder="https://..." value={form.teamALogo}
+                onChange={e => setForm(f => ({ ...f, teamALogo: e.target.value }))} />
+            </div>
+          </div>
+
+          <div className={styles.formRow}>
+            <div className={styles.formGroup}>
+              <label className={styles.formLabel}>Team B Name</label>
+              <input className={styles.input} placeholder="Team B" value={form.teamBName}
+                onChange={e => setForm(f => ({ ...f, teamBName: e.target.value }))} />
+            </div>
+            <div className={styles.formGroup}>
+              <label className={styles.formLabel}>Team B Logo URL</label>
+              <input className={styles.input} placeholder="https://..." value={form.teamBLogo}
+                onChange={e => setForm(f => ({ ...f, teamBLogo: e.target.value }))} />
+            </div>
+          </div>
+
+          <div className={styles.formRow}>
+            <div className={styles.formGroup}>
+              <label className={styles.formLabel}>Sport</label>
+              <select className={styles.select} value={form.sport}
+                onChange={e => setForm(f => ({ ...f, sport: e.target.value }))}>
+                {SPORTS.map(s => (
+                  <option key={s} value={s}>{SPORT_META[s]?.label ?? s}</option>
+                ))}
+              </select>
+            </div>
+            <div className={styles.formGroup}>
+              <label className={styles.formLabel}>Match Date & Time (Voting Deadline)</label>
+              <input className={styles.input} type="datetime-local" value={form.matchDate}
+                onChange={e => setForm(f => ({ ...f, matchDate: e.target.value }))} />
+            </div>
+          </div>
+
+          <div className={styles.formRow}>
+            <div className={styles.formGroup}>
+              <label className={styles.formLabel}>Winner Count</label>
+              <input className={styles.input} type="number" min="1" value={form.winnerCount}
+                onChange={e => setForm(f => ({ ...f, winnerCount: e.target.value }))} />
+            </div>
+            <div className={styles.formGroup}>
+              <label className={styles.formLabel}>Max Referral Entries Per User</label>
+              <input className={styles.input} type="number" min="0" value={form.maxReferralEntries}
+                onChange={e => setForm(f => ({ ...f, maxReferralEntries: e.target.value }))} />
+            </div>
+          </div>
+
+          <div className={styles.chPrivateSection}>
+            <div className={styles.chPrivateLabel}><Shield size={12} /> Private (Admin Only)</div>
+
+            <div className={styles.formGroup}>
+              <label className={styles.formLabel}>Prize Name</label>
+              <input className={styles.input} placeholder="e.g. $50 Amazon Gift Card" value={form.prizeName}
+                onChange={e => setForm(f => ({ ...f, prizeName: e.target.value }))} />
+            </div>
+
+            <div className={styles.formRow}>
+              <div className={styles.formGroup}>
+                <label className={styles.formLabel}>Prize Value</label>
+                <input className={styles.input} placeholder="e.g. $50" value={form.prizeValue}
+                  onChange={e => setForm(f => ({ ...f, prizeValue: e.target.value }))} />
+              </div>
+              <div className={styles.formGroup}>
+                <label className={styles.formLabel}>Prize Delivery Method</label>
+                <input className={styles.input} placeholder="e.g. Email, DM, In-app" value={form.prizeDeliveryMethod}
+                  onChange={e => setForm(f => ({ ...f, prizeDeliveryMethod: e.target.value }))} />
+              </div>
+            </div>
+
+            <div className={styles.formGroup}>
+              <label className={styles.formLabel}>Prize Image</label>
+              <label className={styles.fileUpload}>
+                <Gift size={16} /> {prizeImage ? prizeImage.name : "Choose prize image..."}
+                <input type="file" accept="image/*" onChange={handlePrizeImageSelect} hidden />
+              </label>
+              {prizeImagePreview && (
+                <div className={styles.imagePreviewWrap}>
+                  <img src={prizeImagePreview} alt="Prize preview" className={styles.imagePreviewThumb} />
+                  <button type="button" className={styles.imagePreviewRemove}
+                    onClick={() => { setPrizeImage(null); setPrizeImagePreview(""); }}>
+                    <X size={12} />
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {formErr && <div className={styles.dangerBanner}><AlertTriangle size={14} /> {formErr}</div>}
+
+          <div style={{ display: "flex", gap: 10 }}>
+            <button className={styles.btnSave} type="submit" disabled={creating || uploading}>
+              {uploading ? "Uploading..." : creating ? "Saving..." : view === "edit" ? "Update Challenge" : "Create Challenge"}
+            </button>
+            <button type="button" className={styles.btnGhost} onClick={() => { resetForm(); setView("list"); }}>
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+    );
+  }
+
+  // ── Settle view ──
+  if (view === "settle" && selectedChallenge) {
+    const sc = selectedChallenge;
+    const totalVotes = (sc.votesA ?? 0) + (sc.votesB ?? 0);
+    const correctCount = settleResult === "teamA" ? sc.votesA : settleResult === "teamB" ? sc.votesB : 0;
+
+    return (
+      <div className={styles.tabContent}>
+        <div className={styles.tabHeader}>
+          <h2>Settle Challenge</h2>
+          <span className={styles.tabDesc}>Set the result for &ldquo;{sc.title}&rdquo;</span>
+        </div>
+
+        <button className={styles.btnGhost} onClick={() => setView("list")} style={{ marginBottom: 16 }}>
+          Back to list
+        </button>
+
+        <div className={styles.chSettleCard}>
+          <div className={styles.chSettleTeams}>
+            <div className={styles.chSettleTeam}>
+              {sc.teamALogo && <img src={sc.teamALogo} alt={sc.teamAName} className={styles.chTeamLogo} />}
+              <span className={styles.chTeamName}>{sc.teamAName}</span>
+              <span className={styles.chTeamVotes}>{sc.votesA ?? 0} votes</span>
+            </div>
+            <span className={styles.chSettleVs}>VS</span>
+            <div className={styles.chSettleTeam}>
+              {sc.teamBLogo && <img src={sc.teamBLogo} alt={sc.teamBName} className={styles.chTeamLogo} />}
+              <span className={styles.chTeamName}>{sc.teamBName}</span>
+              <span className={styles.chTeamVotes}>{sc.votesB ?? 0} votes</span>
+            </div>
+          </div>
+
+          <div className={styles.chSettleOptions}>
+            <label className={`${styles.chRadioLabel} ${settleResult === "teamA" ? styles.chRadioActive : ""}`}>
+              <input type="radio" name="result" value="teamA" checked={settleResult === "teamA"}
+                onChange={() => setSettleResult("teamA")} />
+              <Crown size={14} /> {sc.teamAName} Won
+            </label>
+            <label className={`${styles.chRadioLabel} ${settleResult === "teamB" ? styles.chRadioActive : ""}`}>
+              <input type="radio" name="result" value="teamB" checked={settleResult === "teamB"}
+                onChange={() => setSettleResult("teamB")} />
+              <Crown size={14} /> {sc.teamBName} Won
+            </label>
+            <label className={`${styles.chRadioLabel} ${settleResult === "draw" ? styles.chRadioActive : ""}`}>
+              <input type="radio" name="result" value="draw" checked={settleResult === "draw"}
+                onChange={() => setSettleResult("draw")} />
+              <Medal size={14} /> Draw
+            </label>
+          </div>
+
+          <div className={styles.chSettlePreview}>
+            {settleResult === "draw"
+              ? `All ${totalVotes} voters will receive base entries.`
+              : `${correctCount} user${correctCount !== 1 ? "s" : ""} predicted correctly out of ${totalVotes} total vote${totalVotes !== 1 ? "s" : ""}`
+            }
+          </div>
+
+          {formErr && <div className={styles.dangerBanner}><AlertTriangle size={14} /> {formErr}</div>}
+
+          <button className={styles.btnSave} onClick={settleChallenge} disabled={settling}>
+            {settling ? "Settling..." : "Settle & Calculate Entries"}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Draw Winners view ──
+  if (view === "draw" && selectedChallenge) {
+    const dc = selectedChallenge;
+
+    return (
+      <div className={styles.tabContent}>
+        <div className={styles.tabHeader}>
+          <h2>Draw Winners</h2>
+          <span className={styles.tabDesc}>Draw winners for &ldquo;{dc.title}&rdquo;</span>
+        </div>
+
+        <button className={styles.btnGhost} onClick={() => setView("list")} style={{ marginBottom: 16 }}>
+          Back to list
+        </button>
+
+        <div style={{ display: "flex", gap: 10, marginBottom: 20 }}>
+          <button className={styles.btnSave} onClick={drawWinners} disabled={drawing}>
+            <Trophy size={14} /> {drawing ? "Drawing..." : `Draw ${dc.winnerCount} Winner${dc.winnerCount !== 1 ? "s" : ""}`}
+          </button>
+        </div>
+
+        {winners.length > 0 && (
+          <>
+            <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
+              <button className={styles.btnGhost} onClick={exportCSV}>
+                <Download size={14} /> Export Winners (CSV)
+              </button>
+              <button className={styles.btnGhost} onClick={() => alert("Winner notifications will be sent via the notification system.")}>
+                <Send size={14} /> Send Winner Notification
+              </button>
+            </div>
+
+            <div className={styles.chTable}>
+              <div className={styles.chTableHeader}>
+                <span style={{ width: 50, textAlign: "center" }}>Rank</span>
+                <span style={{ flex: 2 }}>Username</span>
+                <span style={{ flex: 2 }}>Email</span>
+                <span style={{ flex: 1, textAlign: "center" }}>Entries</span>
+              </div>
+              {winners.map(w => (
+                <div key={w.rank} className={styles.chTableRow}>
+                  <span style={{ width: 50, textAlign: "center", fontWeight: 700 }}>
+                    {w.rank <= 3 ? <Crown size={14} style={{ color: w.rank === 1 ? "#fbbf24" : w.rank === 2 ? "#94a3b8" : "#d97706" }} /> : `#${w.rank}`}
+                  </span>
+                  <span style={{ flex: 2, fontWeight: 600, color: "var(--a-ink)" }}>{w.username}</span>
+                  <span style={{ flex: 2, fontSize: 12, color: "var(--a-ink-mute)" }}>{w.email}</span>
+                  <span style={{ flex: 1, textAlign: "center", fontWeight: 600, color: "var(--a-accent)" }}>{w.entries}</span>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+
+        {!drawing && winners.length === 0 && (
+          <div className={styles.empty}>Click &ldquo;Draw Winners&rdquo; to randomly select winners based on entries.</div>
+        )}
+      </div>
+    );
+  }
+
+  // ── Analytics view ──
+  if (view === "analytics" && selectedChallenge) {
+    const ac = selectedChallenge;
+    const a = analytics;
+    const totalVotes = a ? a.votesA + a.votesB : 0;
+    const pctA = totalVotes > 0 ? Math.round((a!.votesA / totalVotes) * 100) : 50;
+    const pctB = 100 - pctA;
+
+    return (
+      <div className={styles.tabContent}>
+        <div className={styles.tabHeader}>
+          <h2>Challenge Analytics</h2>
+          <span className={styles.tabDesc}>Insights for &ldquo;{ac.title}&rdquo;</span>
+        </div>
+
+        <button className={styles.btnGhost} onClick={() => setView("list")} style={{ marginBottom: 16 }}>
+          Back to list
+        </button>
+
+        {!a ? (
+          <div className={styles.empty}><RefreshCw size={16} className={styles.spin} /> Loading analytics...</div>
+        ) : (
+          <>
+            <div className={styles.statsRow}>
+              <StatCard icon={<Users size={20} />} label="Total Votes" value={a.totalVotes} color="#c8ff3d" />
+              <StatCard icon={<Target size={20} />} label="Total Entries" value={a.totalEntries} color="#5dd9ff" />
+              <StatCard icon={<Award size={20} />} label="Correct Predictions" value={a.correctPredictions} color="#22c55e" />
+              <StatCard icon={<Send size={20} />} label="Referrals" value={a.referrals} color="#ff8c42" />
+            </div>
+
+            {/* Vote split bar */}
+            <div className={styles.section}>
+              <div className={styles.sectionTitle}>Vote Split</div>
+              <div className={styles.chVoteSplitCard}>
+                <div className={styles.chVoteSplitLabels}>
+                  <span>{ac.teamAName} ({pctA}%)</span>
+                  <span>{ac.teamBName} ({pctB}%)</span>
+                </div>
+                <div className={styles.chVoteSplitTrack}>
+                  <div className={styles.chVoteSplitA} style={{ width: `${pctA}%` }} />
+                  <div className={styles.chVoteSplitB} style={{ width: `${pctB}%` }} />
+                </div>
+                <div className={styles.chVoteSplitCounts}>
+                  <span>{a.votesA} votes</span>
+                  <span>{a.votesB} votes</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Entry breakdown */}
+            <div className={styles.section}>
+              <div className={styles.sectionTitle}>Entry Breakdown</div>
+              <div className={styles.chEntryBreakdown}>
+                <div className={styles.hBarRow}>
+                  <span className={styles.hBarLabel}>Base Entries</span>
+                  <div className={styles.hBarTrack}>
+                    <div className={styles.hBarFill} style={{
+                      width: `${a.totalEntries > 0 ? Math.max(Math.round((a.baseEntries / a.totalEntries) * 100), 2) : 0}%`,
+                      background: "var(--a-accent)",
+                    }}>
+                      {a.totalEntries > 0 && Math.round((a.baseEntries / a.totalEntries) * 100) > 15 && (
+                        <span className={styles.hBarPercent}>{Math.round((a.baseEntries / a.totalEntries) * 100)}%</span>
+                      )}
+                    </div>
+                  </div>
+                  <span className={styles.hBarCount}>{a.baseEntries}</span>
+                </div>
+                <div className={styles.hBarRow}>
+                  <span className={styles.hBarLabel}>Referral Entries</span>
+                  <div className={styles.hBarTrack}>
+                    <div className={styles.hBarFill} style={{
+                      width: `${a.totalEntries > 0 ? Math.max(Math.round((a.referralEntries / a.totalEntries) * 100), 2) : 0}%`,
+                      background: "#ff8c42",
+                    }}>
+                      {a.totalEntries > 0 && Math.round((a.referralEntries / a.totalEntries) * 100) > 15 && (
+                        <span className={styles.hBarPercent}>{Math.round((a.referralEntries / a.totalEntries) * 100)}%</span>
+                      )}
+                    </div>
+                  </div>
+                  <span className={styles.hBarCount}>{a.referralEntries}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Top referrers */}
+            {a.topReferrers && a.topReferrers.length > 0 && (
+              <div className={styles.section}>
+                <div className={styles.sectionTitle}>Top Referrers</div>
+                <div className={styles.chTable}>
+                  <div className={styles.chTableHeader}>
+                    <span style={{ width: 40, textAlign: "center" }}>#</span>
+                    <span style={{ flex: 2 }}>Username</span>
+                    <span style={{ flex: 2 }}>Email</span>
+                    <span style={{ flex: 1, textAlign: "center" }}>Referrals</span>
+                  </div>
+                  {a.topReferrers.map((r, i) => (
+                    <div key={i} className={styles.chTableRow}>
+                      <span style={{ width: 40, textAlign: "center", fontWeight: 700 }}>{i + 1}</span>
+                      <span style={{ flex: 2, fontWeight: 600, color: "var(--a-ink)" }}>{r.username}</span>
+                      <span style={{ flex: 2, fontSize: 12, color: "var(--a-ink-mute)" }}>{r.email}</span>
+                      <span style={{ flex: 1, textAlign: "center", fontWeight: 600, color: "var(--a-accent)" }}>{r.referrals}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    );
+  }
+
+  // Fallback
+  return (
+    <div className={styles.tabContent}>
+      <div className={styles.empty}>Unknown view. <button className={styles.btnGhost} onClick={() => setView("list")}>Back to list</button></div>
+    </div>
+  );
+}
+
 /* ── Nav items (grouped into sections) ────────── */
 const NAV_SECTIONS = [
   {
@@ -2428,6 +3210,7 @@ const NAV_SECTIONS = [
     label: "Marketing",
     items: [
       { key: "notifications", label: "Notifications", icon: Megaphone },
+      { key: "challenges",    label: "Challenges",    icon: Trophy },
       { key: "ads",            label: "Ads",           icon: DollarSign },
       { key: "sponsors",       label: "Sponsors",      icon: Building2 },
     ],
@@ -2591,6 +3374,7 @@ export default function AdminPage() {
           {tab === "ads"            && <AdsTab adminToken={token()} />}
           {tab === "sponsors"       && <SponsorsTab adminToken={token()} />}
           {tab === "debates"        && <DebatesTab adminToken={token()} />}
+          {tab === "challenges"    && <ChallengesTab adminToken={token()} />}
           {tab === "flags"          && <FlagsTab flags={flags} onSave={saveFlags} />}
           {tab === "sports"         && <SportsTab flags={flags} onSave={saveFlags} />}
           {tab === "feedback"       && <FeedbackTab adminToken={token()} />}

@@ -14,7 +14,8 @@
     "more": "Más",
     "search": "Buscar",
     "profile": "Perfil y ajustes",
-    "feedback": "Comentarios"
+    "feedback": "Comentarios",
+    "challenges": "Desafios"
   },
   "navSection": {
     "app": "APP",
@@ -705,5 +706,19 @@
     "away": "Visitante",
     "loading": "Cargando\u2026",
     "error": "Error"
+  },
+  "challenges": {
+    "title": "Desafio de Prediccion",
+    "mysteryPrize": "Desafio Premio Misterioso",
+    "voteNow": "Vota ahora",
+    "votingClosed": "Votacion cerrada",
+    "yourPrediction": "Tu prediccion",
+    "entries": "Participaciones",
+    "referralCode": "Tu codigo de referencia",
+    "inviteFriends": "Invitar amigos",
+    "leaderboard": "Clasificacion",
+    "winners": "Ganadores",
+    "correct": "Correcto",
+    "incorrect": "Incorrecto"
   }
 }

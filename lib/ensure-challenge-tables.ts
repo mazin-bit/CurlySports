@@ -1,0 +1,145 @@
+import prisma from "@/lib/prisma";
+
+let tablesEnsured = false;
+
+/**
+ * Ensures all prediction challenge tables exist.
+ * Runs once per process lifecycle — uses CREATE TABLE IF NOT EXISTS
+ * and ALTER TABLE ADD COLUMN IF NOT EXISTS for forward-compatibility.
+ */
+export async function ensureChallengeTables() {
+  if (tablesEnsured) return;
+
+  await prisma.$executeRawUnsafe(`
+    CREATE TABLE IF NOT EXISTS prediction_challenges (
+      id TEXT PRIMARY KEY,
+      title TEXT NOT NULL,
+      description TEXT,
+      "imageUrl" TEXT,
+      "teamA" TEXT NOT NULL,
+      "teamB" TEXT NOT NULL,
+      "teamALogo" TEXT,
+      "teamBLogo" TEXT,
+      "matchId" TEXT,
+      "matchDate" TIMESTAMP(3) NOT NULL,
+      sport TEXT DEFAULT 'football',
+      "leagueId" TEXT,
+      status TEXT DEFAULT 'active',
+      result TEXT,
+      "winnerCount" INT DEFAULT 10,
+      "prizeName" TEXT,
+      "prizeValue" TEXT,
+      "prizeImage" TEXT,
+      "prizeDelivery" TEXT,
+      "totalVotes" INT DEFAULT 0,
+      "totalEntries" INT DEFAULT 0,
+      "maxReferralEntries" INT DEFAULT 20,
+      "createdAt" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP,
+      "updatedAt" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  await prisma.$executeRawUnsafe(`
+    CREATE TABLE IF NOT EXISTS challenge_votes (
+      id TEXT PRIMARY KEY,
+      "challengeId" TEXT NOT NULL,
+      "userId" TEXT NOT NULL,
+      "selectedTeam" TEXT NOT NULL,
+      "isCorrect" BOOLEAN,
+      entries INT DEFAULT 0,
+      "createdAt" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE("challengeId", "userId")
+    )
+  `);
+
+  await prisma.$executeRawUnsafe(`
+    CREATE TABLE IF NOT EXISTS referral_codes (
+      id TEXT PRIMARY KEY,
+      "userId" TEXT NOT NULL UNIQUE,
+      code TEXT NOT NULL UNIQUE,
+      "totalReferrals" INT DEFAULT 0,
+      "totalEntries" INT DEFAULT 0,
+      "createdAt" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  await prisma.$executeRawUnsafe(`
+    CREATE TABLE IF NOT EXISTS referrals (
+      id TEXT PRIMARY KEY,
+      "referrerUserId" TEXT NOT NULL,
+      "referredUserId" TEXT NOT NULL UNIQUE,
+      "referralCodeId" TEXT NOT NULL,
+      status TEXT DEFAULT 'pending',
+      ip TEXT,
+      "deviceId" TEXT,
+      "verifiedAt" TIMESTAMP(3),
+      "createdAt" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  await prisma.$executeRawUnsafe(`
+    CREATE TABLE IF NOT EXISTS challenge_entries (
+      id TEXT PRIMARY KEY,
+      "challengeId" TEXT NOT NULL,
+      "userId" TEXT NOT NULL,
+      "baseEntries" INT DEFAULT 0,
+      "referralEntries" INT DEFAULT 0,
+      "totalEntries" INT DEFAULT 0,
+      "createdAt" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP,
+      "updatedAt" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE("challengeId", "userId")
+    )
+  `);
+
+  await prisma.$executeRawUnsafe(`
+    CREATE TABLE IF NOT EXISTS challenge_winners (
+      id TEXT PRIMARY KEY,
+      "challengeId" TEXT NOT NULL,
+      "userId" TEXT NOT NULL,
+      entries INT NOT NULL,
+      "drawnAt" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP,
+      notified BOOLEAN DEFAULT false,
+      UNIQUE("challengeId", "userId")
+    )
+  `);
+
+  // Add columns to users table if they don't exist
+  const userCols = [
+    `ALTER TABLE users ADD COLUMN IF NOT EXISTS "referredBy" TEXT`,
+    `ALTER TABLE users ADD COLUMN IF NOT EXISTS "deviceId" TEXT`,
+    `ALTER TABLE users ADD COLUMN IF NOT EXISTS "signupIp" TEXT`,
+    `ALTER TABLE users ADD COLUMN IF NOT EXISTS "onboardingDone" BOOLEAN DEFAULT false`,
+  ];
+  for (const sql of userCols) {
+    try { await prisma.$executeRawUnsafe(sql); } catch { /* column may already exist */ }
+  }
+
+  // Create indexes
+  const indexes = [
+    `CREATE INDEX IF NOT EXISTS idx_challenges_status ON prediction_challenges(status)`,
+    `CREATE INDEX IF NOT EXISTS idx_challenges_matchDate ON prediction_challenges("matchDate")`,
+    `CREATE INDEX IF NOT EXISTS idx_challenge_votes_challenge ON challenge_votes("challengeId")`,
+    `CREATE INDEX IF NOT EXISTS idx_challenge_votes_user ON challenge_votes("userId")`,
+    `CREATE INDEX IF NOT EXISTS idx_referrals_referrer ON referrals("referrerUserId")`,
+    `CREATE INDEX IF NOT EXISTS idx_challenge_entries_challenge ON challenge_entries("challengeId")`,
+  ];
+  for (const sql of indexes) {
+    try { await prisma.$executeRawUnsafe(sql); } catch { /* index may already exist */ }
+  }
+
+  tablesEnsured = true;
+}
+
+/** Generate a referral code from a username */
+export function generateReferralCode(username: string): string {
+  const prefix = username.replace(/[^a-zA-Z]/g, "").toUpperCase().slice(0, 5).padEnd(3, "X");
+  const digits = String(Math.floor(Math.random() * 900) + 100);
+  return prefix + digits;
+}
+
+/** Generate a CUID-like ID */
+export function cuid(): string {
+  const ts = Date.now().toString(36);
+  const rand = Math.random().toString(36).slice(2, 10);
+  return `c${ts}${rand}`;
+}

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import AdSlot from "@/components/AdSlot";
 import styles from "./dashboard.module.css";
-import { Zap, Newspaper, Trophy, ArrowRightLeft, CircleDot, ChevronRight, Radio } from "lucide-react";
+import { Zap, Newspaper, Trophy, ArrowRightLeft, CircleDot, ChevronRight, Radio, Gift, Check, Clock } from "lucide-react";
 import { useScoresStream } from "@/hooks/useScoresStream";
 import { useNews } from "@/hooks/useNews";
 import { useStandings, useSingleStandings } from "@/hooks/useStandings";
@@ -369,6 +369,131 @@ function useUpcomingMatches(sport: string, todayKey: string, skip: boolean) {
   return upcoming;
 }
 
+/* ── Challenge Card ──────────────────────────────────────────── */
+interface ChallengeData {
+  id: string;
+  title: string;
+  teamA: string;
+  teamB: string;
+  matchDate: string;
+  winnerCount: number;
+  status: string;
+  totalVotes: number;
+}
+
+function useActiveChallenge() {
+  const [challenge, setChallenge] = useState<ChallengeData | null>(null);
+  const [userVote, setUserVote] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/challenges?status=active&limit=1");
+        if (!res.ok) return;
+        const data = await res.json();
+        const items = data.challenges ?? data;
+        if (Array.isArray(items) && items.length > 0 && !cancelled) {
+          setChallenge(items[0]);
+          // check if user already voted
+          try {
+            const vRes = await fetch(`/api/challenges/${items[0].id}`);
+            if (vRes.ok) {
+              const vData = await vRes.json();
+              if (vData.userVote?.selectedTeam) {
+                setUserVote(vData.userVote.selectedTeam);
+              }
+            }
+          } catch { /* ignore - user not logged in */ }
+        }
+      } catch { /* ignore */ }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  return { challenge, userVote, setUserVote };
+}
+
+function ChallengeCountdown({ matchDate }: { matchDate: string }) {
+  const [remaining, setRemaining] = useState("");
+
+  useEffect(() => {
+    function update() {
+      const diff = new Date(matchDate).getTime() - Date.now();
+      if (diff <= 0) { setRemaining("00:00:00"); return; }
+      const h = Math.floor(diff / 3_600_000);
+      const m = Math.floor((diff % 3_600_000) / 60_000);
+      const s = Math.floor((diff % 60_000) / 1_000);
+      setRemaining(`${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`);
+    }
+    update();
+    const id = setInterval(update, 1000);
+    return () => clearInterval(id);
+  }, [matchDate]);
+
+  return <span>{remaining}</span>;
+}
+
+function ChallengeCard({ challenge, userVote, onVote }: { challenge: ChallengeData; userVote: string | null; onVote: (team: string) => void }) {
+  const { t } = useLanguage();
+  const [voting, setVoting] = useState(false);
+
+  const handleVote = async (team: string) => {
+    if (voting || userVote) return;
+    setVoting(true);
+    try {
+      const res = await fetch(`/api/challenges/${challenge.id}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ selectedTeam: team }),
+      });
+      if (res.ok) onVote(team);
+    } catch { /* ignore */ }
+    setVoting(false);
+  };
+
+  return (
+    <Link href="/challenges" style={{ textDecoration: "none", color: "inherit" }}>
+      <div className={styles.challengeCard}>
+        <div className={styles.challengeCardBadge}>
+          <Trophy size={13} strokeWidth={2.5} />
+          {t("challenges.mysteryPrize", "MYSTERY PRIZE CHALLENGE")}
+        </div>
+        <div className={styles.challengeCardTeams}>
+          <span>{challenge.teamA}</span>
+          <span className={styles.challengeCardVs}>VS</span>
+          <span>{challenge.teamB}</span>
+        </div>
+        {userVote ? (
+          <div className={`${styles.challengeVoteBtn} ${styles.challengeVoteBtnSelected}`}>
+            <Check size={13} strokeWidth={2.5} />
+            {t("challenges.yourPrediction", "Your Prediction")}: {userVote}
+          </div>
+        ) : (
+          <div style={{ display: "flex", gap: 8 }} onClick={(e) => e.preventDefault()}>
+            <button className={styles.challengeVoteBtn} disabled={voting} onClick={() => handleVote(challenge.teamA)}>
+              {challenge.teamA}
+            </button>
+            <button className={styles.challengeVoteBtn} disabled={voting} onClick={() => handleVote(challenge.teamB)}>
+              {challenge.teamB}
+            </button>
+          </div>
+        )}
+        <div className={styles.challengeCardFooter}>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+            <Clock size={11} strokeWidth={2} />
+            <ChallengeCountdown matchDate={challenge.matchDate} />
+          </span>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+            <Gift size={11} strokeWidth={2} />
+            {challenge.winnerCount} {t("challenges.winners", "Winners")}
+          </span>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
 /* ── Main Dashboard Client ───────────────────────────────────── */
 export default function DashboardClient() {
   const { activeSport, activeSportConfig } = useActiveSport();
@@ -405,6 +530,9 @@ export default function DashboardClient() {
 
   const noMatchesToday = !scoresLoading && allMatches.length === 0;
   const upcomingData = useUpcomingMatches(activeSport, todayKey, !noMatchesToday);
+
+  // Active challenge
+  const { challenge, userVote, setUserVote } = useActiveChallenge();
 
   const featuredStandings = isFootball ? null : standings[0];
 
@@ -456,6 +584,12 @@ export default function DashboardClient() {
           <>
             {/* Hero: first live match featured */}
             {heroMatch && <HeroMatchCard m={heroMatch} />}
+            {/* Challenge card */}
+            {challenge && (
+              <div style={{ marginTop: heroMatch ? 14 : 0, marginBottom: 14 }}>
+                <ChallengeCard challenge={challenge} userVote={userVote} onVote={setUserVote} />
+              </div>
+            )}
             {gridMatches.length > 0 && (
               <div className={styles.matchGrid} style={{ marginTop: heroMatch ? 14 : 0 }}>
                 {gridMatches.slice(0, 8).map((m) => <MatchCard key={m.id} m={m} />)}

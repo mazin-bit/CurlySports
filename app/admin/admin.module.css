@@ -2056,6 +2056,254 @@
   flex-shrink: 0;
 }
 
+/* ── Challenges tab ─────────────────────────────────── */
+.chTable {
+  background: var(--a-surface);
+  border: 2px solid var(--a-border);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 3px 3px 0 rgba(200,255,61,0.15);
+}
+
+.chTableHeader {
+  display: flex;
+  align-items: center;
+  padding: 10px 18px;
+  border-bottom: 1px solid var(--a-border);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--a-ink-mute);
+  gap: 8px;
+}
+
+.chTableRow {
+  display: flex;
+  align-items: center;
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--a-border);
+  font-size: 13px;
+  gap: 8px;
+  transition: background 0.1s;
+}
+
+.chTableRow:last-child { border-bottom: none; }
+.chTableRow:hover { background: rgba(200,255,61,0.02); }
+
+/* Status badges */
+.chBadgeActive {
+  background: rgba(200,255,61,0.12);
+  border: 1px solid rgba(200,255,61,0.25);
+  color: var(--a-accent);
+}
+
+.chBadgeClosed {
+  background: rgba(255,140,66,0.12);
+  border: 1px solid rgba(255,140,66,0.25);
+  color: #ff8c42;
+}
+
+.chBadgeSettled {
+  background: rgba(168,85,247,0.12);
+  border: 1px solid rgba(168,85,247,0.25);
+  color: #c084fc;
+}
+
+.chBadgeCancelled {
+  background: rgba(239,68,68,0.12);
+  border: 1px solid rgba(239,68,68,0.25);
+  color: #fca5a5;
+}
+
+/* Challenge form */
+.chForm {
+  background: var(--a-surface);
+  border: 2px solid var(--a-border);
+  border-radius: 14px;
+  padding: 24px;
+  box-shadow: 3px 3px 0 rgba(200,255,61,0.15);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.chPrivateSection {
+  background: var(--a-surface-2);
+  border: 1px dashed rgba(200,255,61,0.2);
+  border-radius: 10px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.chPrivateLabel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--a-accent);
+  margin-bottom: 2px;
+}
+
+/* Settle card */
+.chSettleCard {
+  background: var(--a-surface);
+  border: 2px solid var(--a-border);
+  border-radius: 14px;
+  padding: 24px;
+  box-shadow: 3px 3px 0 rgba(200,255,61,0.15);
+}
+
+.chSettleTeams {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.chSettleTeam {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-width: 100px;
+}
+
+.chTeamLogo {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  object-fit: contain;
+  background: var(--a-surface-2);
+  border: 1px solid var(--a-border);
+  padding: 4px;
+}
+
+.chTeamName {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--a-ink);
+  text-align: center;
+}
+
+.chTeamVotes {
+  font-size: 11px;
+  color: var(--a-ink-mute);
+}
+
+.chSettleVs {
+  font-family: var(--a-display);
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--a-ink-mute);
+}
+
+.chSettleOptions {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.chRadioLabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--a-border-2);
+  background: transparent;
+  color: var(--a-ink-dim);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  flex: 1;
+  min-width: 140px;
+}
+
+.chRadioLabel input[type="radio"] {
+  accent-color: var(--a-accent);
+}
+
+.chRadioActive {
+  border-color: rgba(200,255,61,0.4);
+  background: rgba(200,255,61,0.06);
+  color: var(--a-accent);
+}
+
+.chSettlePreview {
+  padding: 12px 16px;
+  background: var(--a-surface-2);
+  border-radius: 10px;
+  font-size: 13px;
+  color: var(--a-ink-dim);
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+/* Vote split bar (analytics) */
+.chVoteSplitCard {
+  background: var(--a-surface);
+  border: 2px solid var(--a-border);
+  border-radius: 14px;
+  padding: 20px;
+  box-shadow: 3px 3px 0 rgba(200,255,61,0.15);
+}
+
+.chVoteSplitLabels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--a-ink-dim);
+  margin-bottom: 8px;
+}
+
+.chVoteSplitTrack {
+  display: flex;
+  height: 28px;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.chVoteSplitA {
+  background: var(--a-accent);
+  transition: width 0.5s ease;
+  min-width: 2%;
+}
+
+.chVoteSplitB {
+  background: #ff8c42;
+  transition: width 0.5s ease;
+  min-width: 2%;
+}
+
+.chVoteSplitCounts {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--a-ink-mute);
+}
+
+.chEntryBreakdown {
+  background: var(--a-surface);
+  border: 2px solid var(--a-border);
+  border-radius: 14px;
+  padding: 20px;
+  box-shadow: 3px 3px 0 rgba(200,255,61,0.15);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
 .mobileOverlay {
   display: none;
 }

@@ -14,7 +14,8 @@
     "more": "المزيد",
     "search": "بحث",
     "profile": "الملف الشخصي والإعدادات",
-    "feedback": "ملاحظات"
+    "feedback": "ملاحظات",
+    "challenges": "التحديات"
   },
   "navSection": {
     "app": "التطبيق",
@@ -705,5 +706,19 @@
     "away": "الخارج",
     "loading": "جاري التحميل\u2026",
     "error": "خطأ"
+  },
+  "challenges": {
+    "title": "تحدي التوقعات",
+    "mysteryPrize": "تحدي الجائزة الغامضة",
+    "voteNow": "صوّت الآن",
+    "votingClosed": "انتهى التصويت",
+    "yourPrediction": "توقعك",
+    "entries": "المشاركات",
+    "referralCode": "رمز الإحالة الخاص بك",
+    "inviteFriends": "ادعُ أصدقاءك",
+    "leaderboard": "لوحة المتصدرين",
+    "winners": "الفائزون",
+    "correct": "صحيح",
+    "incorrect": "خاطئ"
   }
 }

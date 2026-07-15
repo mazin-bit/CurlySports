@@ -22,12 +22,16 @@ import VideosScreen from './VideosScreen';
 import MiniGamesScreen from './MiniGamesScreen';
 import PlayersScreen from './PlayersScreen';
 import FeedbackScreen from './FeedbackScreen';
+import ChallengesScreen from './ChallengesScreen';
+import ChallengeDetailScreen from './ChallengeDetailScreen';
+import LeaderboardScreen from './LeaderboardScreen';
+import ReferralScreen from './ReferralScreen';
 import { hapticImpact } from '@/lib/native';
 import { Wrench } from 'lucide-react';
 
-type Tab = 'home' | 'live' | 'funzone' | 'leagues' | 'profile' | 'news' | 'teams' | 'favorites' | 'videos' | 'minigames' | 'players';
-type OverlayType = 'match' | 'player' | 'search' | 'notifications' | 'feedback';
-interface Overlay { type: OverlayType; data?: Match; playerId?: string; playerLeagueId?: string }
+type Tab = 'home' | 'live' | 'funzone' | 'leagues' | 'profile' | 'news' | 'teams' | 'favorites' | 'videos' | 'minigames' | 'players' | 'challenges';
+type OverlayType = 'match' | 'player' | 'search' | 'notifications' | 'feedback' | 'challenge-detail' | 'leaderboard' | 'referral';
+interface Overlay { type: OverlayType; data?: Match; playerId?: string; playerLeagueId?: string; challengeId?: string }
 
 interface Flags {
   maintenanceMode: boolean;
@@ -143,6 +147,9 @@ function AppInner() {
   const openSearch        = () => push({ type: 'search' });
   const openNotifications = () => { setUnread(0); push({ type: 'notifications' }); };
   const openFeedback = () => push({ type: 'feedback' });
+  const openChallengeDetail = (challengeId: string) => push({ type: 'challenge-detail', challengeId });
+  const openLeaderboard = (challengeId: string) => push({ type: 'leaderboard', challengeId });
+  const openReferral = () => push({ type: 'referral' });
 
   const goTab = (key: Tab) => {
     if (isFeatureOff(key)) return;
@@ -158,7 +165,7 @@ function AppInner() {
 
   const onMenuNav = (key: string) => {
     setMenuOpen(false);
-    const tabs: Tab[] = ['home', 'live', 'funzone', 'leagues', 'profile', 'news', 'teams', 'favorites', 'videos', 'minigames', 'players'];
+    const tabs: Tab[] = ['home', 'live', 'funzone', 'leagues', 'profile', 'news', 'teams', 'favorites', 'videos', 'minigames', 'players', 'challenges'];
     if (tabs.includes(key as Tab)) { clearStack(); goTab(key as Tab); return; }
     if (key === 'search') { clearStack(); openSearch(); return; }
     if (key === 'notifications') { clearStack(); openNotifications(); return; }
@@ -206,6 +213,9 @@ function AppInner() {
     else if (top.type === 'search')        ov = <SearchScreen onBack={pop} onOpenPlayer={openPlayer} onOpenMatch={openMatch} />;
     else if (top.type === 'notifications') ov = <NotificationsScreen onBack={pop} onMarkAll={() => setUnread(0)} onOpenMatch={openMatch} onOpenPlayer={openPlayer} />;
     else if (top.type === 'feedback') ov = <FeedbackScreen onBack={pop} />;
+    else if (top.type === 'challenge-detail') ov = <ChallengeDetailScreen challengeId={top.challengeId ?? ''} onBack={pop} onLeaderboard={openLeaderboard} onReferral={openReferral} />;
+    else if (top.type === 'leaderboard') ov = <LeaderboardScreen challengeId={top.challengeId ?? ''} onBack={pop} />;
+    else if (top.type === 'referral') ov = <ReferralScreen onBack={pop} />;
     return (
       <div style={{ position: 'relative', height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--bg-2)' }}>
         <div style={{ flex: 1, minHeight: 0, animation: 'cs-pushIn 0.32s var(--ease-pop) both' }}>{ov}</div>
@@ -215,7 +225,7 @@ function AppInner() {
   }
 
   let screen: React.ReactNode;
-  if      (tab === 'home')      screen = <DashboardScreen sport={sport} setSport={setSport} onOpenMatch={openMatch} onOpenPlayer={openPlayer} fav={fav} {...nav} />;
+  if      (tab === 'home')      screen = <DashboardScreen sport={sport} setSport={setSport} onOpenMatch={openMatch} onOpenPlayer={openPlayer} onOpenChallenge={openChallengeDetail} fav={fav} {...nav} />;
   else if (tab === 'live')      screen = <LiveScoresScreen sport={sport} setSport={setSport} onOpenMatch={openMatch} {...nav} />;
   else if (tab === 'funzone')   screen = <DebatesScreen sport={sport} onOpenPlayer={openPlayer} {...nav} />;
   else if (tab === 'leagues')   screen = <LeaguesScreen sport={sport} setSport={setSport} onOpenPlayer={openPlayer} {...nav} />;
@@ -226,6 +236,7 @@ function AppInner() {
   else if (tab === 'videos')    screen = <VideosScreen sport={sport} setSport={setSport} {...nav} />;
   else if (tab === 'minigames') screen = <MiniGamesScreen sport={sport} setSport={setSport} {...nav} />;
   else if (tab === 'players')   screen = <PlayersScreen sport={sport} setSport={setSport} onOpenPlayer={openPlayer} {...nav} />;
+  else if (tab === 'challenges') screen = <ChallengesScreen sport={sport} onOpenChallenge={openChallengeDetail} {...nav} />;
 
   const bottomActive = menuOpen ? 'more' : (['home', 'live', 'funzone', 'leagues'].includes(tab) ? tab : '');
 
