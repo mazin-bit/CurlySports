@@ -45,7 +45,8 @@ export async function GET(req: NextRequest) {
     const dbSlots = slotMap[slot] || [slot];
 
     const now = new Date();
-    const ads: any[] = await prisma.$queryRawUnsafe(
+    // Try exact slot match first, then fallback to any active ad
+    let ads: any[] = await prisma.$queryRawUnsafe(
       `SELECT id, title, "imageUrl", "linkUrl", slot
        FROM ads
        WHERE "isActive" = true
@@ -57,6 +58,20 @@ export async function GET(req: NextRequest) {
       now,
       dbSlots
     );
+
+    // Fallback: serve any active ad if no exact slot match
+    if (ads.length === 0) {
+      ads = await prisma.$queryRawUnsafe(
+        `SELECT id, title, "imageUrl", "linkUrl", slot
+         FROM ads
+         WHERE "isActive" = true
+           AND "startDate" <= $1
+           AND "endDate" >= $1
+         ORDER BY RANDOM()
+         LIMIT 1`,
+        now
+      );
+    }
 
     if (ads.length === 0) {
       return NextResponse.json({ ads: [] });
