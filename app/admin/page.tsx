@@ -2413,9 +2413,9 @@ interface Challenge {
   title: string;
   description: string;
   imageUrl?: string;
-  teamAName: string;
+  teamA: string;
   teamALogo?: string;
-  teamBName: string;
+  teamB: string;
   teamBLogo?: string;
   sport: string;
   matchDate: string;
@@ -2425,7 +2425,7 @@ interface Challenge {
   prizeName?: string;
   prizeValue?: string;
   prizeImage?: string;
-  prizeDeliveryMethod?: string;
+  prizeDelivery?: string;
   result?: "teamA" | "teamB" | "draw";
   totalVotes: number;
   votesA: number;
@@ -2494,7 +2494,10 @@ function ChallengesTab({ adminToken }: { adminToken: string }) {
       const res = await fetch("/api/admin/challenges", {
         headers: { Authorization: `Bearer ${adminToken}` },
       });
-      if (res.ok) setChallenges(await res.json());
+      if (res.ok) {
+        const data = await res.json();
+        setChallenges(Array.isArray(data) ? data : data.challenges || []);
+      }
     } catch { /* ignore */ }
     setLoading(false);
   }, [adminToken]);
@@ -2552,13 +2555,13 @@ function ChallengesTab({ adminToken }: { adminToken: string }) {
     setSelectedChallenge(c);
     setForm({
       title: c.title, description: c.description ?? "",
-      teamAName: c.teamAName, teamALogo: c.teamALogo ?? "",
-      teamBName: c.teamBName, teamBLogo: c.teamBLogo ?? "",
+      teamAName: c.teamA, teamALogo: c.teamALogo ?? "",
+      teamBName: c.teamB, teamBLogo: c.teamBLogo ?? "",
       sport: c.sport, matchDate: c.matchDate ? c.matchDate.slice(0, 16) : "",
       winnerCount: String(c.winnerCount ?? 10),
       maxReferralEntries: String(c.maxReferralEntries ?? 20),
       prizeName: c.prizeName ?? "", prizeValue: c.prizeValue ?? "",
-      prizeDeliveryMethod: c.prizeDeliveryMethod ?? "",
+      prizeDeliveryMethod: c.prizeDelivery ?? "",
     });
     setChallengeImagePreview(c.imageUrl ?? "");
     setPrizeImagePreview(c.prizeImage ?? "");
@@ -2588,10 +2591,19 @@ function ChallengesTab({ adminToken }: { adminToken: string }) {
     setUploading(false);
 
     const payload = {
-      ...form,
+      title: form.title,
+      description: form.description,
+      teamA: form.teamAName,
+      teamB: form.teamBName,
+      teamALogo: form.teamALogo,
+      teamBLogo: form.teamBLogo,
+      sport: form.sport,
+      matchDate: new Date(form.matchDate).toISOString(),
       winnerCount: parseInt(form.winnerCount) || 10,
       maxReferralEntries: parseInt(form.maxReferralEntries) || 20,
-      matchDate: new Date(form.matchDate).toISOString(),
+      prizeName: form.prizeName,
+      prizeValue: form.prizeValue,
+      prizeDelivery: form.prizeDeliveryMethod,
       imageUrl,
       prizeImage: prizeImgUrl,
       ...(view === "edit" && selectedChallenge ? { id: selectedChallenge.id } : {}),
@@ -2699,7 +2711,25 @@ function ChallengesTab({ adminToken }: { adminToken: string }) {
     const res = await fetch(`/api/admin/challenges/analytics?challengeId=${c.id}`, {
       headers: { Authorization: `Bearer ${adminToken}` },
     });
-    if (res.ok) setAnalytics(await res.json());
+    if (res.ok) {
+      const raw = await res.json();
+      const ch = raw.challenge;
+      setAnalytics({
+        totalVotes: raw.global?.totalVotes ?? 0,
+        totalEntries: ch?.entriesBreakdown?.totalEntries ?? 0,
+        correctPredictions: 0,
+        referrals: raw.global?.totalReferrals ?? 0,
+        votesA: ch?.votesByTeam?.teamA ?? 0,
+        votesB: ch?.votesByTeam?.teamB ?? 0,
+        baseEntries: ch?.entriesBreakdown?.baseEntries ?? 0,
+        referralEntries: ch?.entriesBreakdown?.referralEntries ?? 0,
+        topReferrers: (ch?.topReferrers ?? []).map((r: { username: string; referralCount: number }) => ({
+          username: r.username ?? "Unknown",
+          email: "",
+          referrals: r.referralCount ?? 0,
+        })),
+      });
+    }
   };
 
   const statusBadge = (status: string) => {
@@ -2748,7 +2778,7 @@ function ChallengesTab({ adminToken }: { adminToken: string }) {
               <div key={c.id} className={styles.chTableRow}>
                 <span style={{ flex: 2, fontWeight: 700, color: "var(--a-ink)" }}>{c.title}</span>
                 <span style={{ flex: 2, fontSize: 12, color: "var(--a-ink-dim)" }}>
-                  {c.teamAName} vs {c.teamBName}
+                  {c.teamA} vs {c.teamB}
                 </span>
                 <span style={{ flex: 1, fontSize: 12, color: "var(--a-ink-mute)" }}>
                   {new Date(c.matchDate).toLocaleDateString()}
@@ -2961,14 +2991,14 @@ function ChallengesTab({ adminToken }: { adminToken: string }) {
         <div className={styles.chSettleCard}>
           <div className={styles.chSettleTeams}>
             <div className={styles.chSettleTeam}>
-              {sc.teamALogo && <img src={sc.teamALogo} alt={sc.teamAName} className={styles.chTeamLogo} />}
-              <span className={styles.chTeamName}>{sc.teamAName}</span>
+              {sc.teamALogo && <img src={sc.teamALogo} alt={sc.teamA} className={styles.chTeamLogo} />}
+              <span className={styles.chTeamName}>{sc.teamA}</span>
               <span className={styles.chTeamVotes}>{sc.votesA ?? 0} votes</span>
             </div>
             <span className={styles.chSettleVs}>VS</span>
             <div className={styles.chSettleTeam}>
-              {sc.teamBLogo && <img src={sc.teamBLogo} alt={sc.teamBName} className={styles.chTeamLogo} />}
-              <span className={styles.chTeamName}>{sc.teamBName}</span>
+              {sc.teamBLogo && <img src={sc.teamBLogo} alt={sc.teamB} className={styles.chTeamLogo} />}
+              <span className={styles.chTeamName}>{sc.teamB}</span>
               <span className={styles.chTeamVotes}>{sc.votesB ?? 0} votes</span>
             </div>
           </div>
@@ -2977,12 +3007,12 @@ function ChallengesTab({ adminToken }: { adminToken: string }) {
             <label className={`${styles.chRadioLabel} ${settleResult === "teamA" ? styles.chRadioActive : ""}`}>
               <input type="radio" name="result" value="teamA" checked={settleResult === "teamA"}
                 onChange={() => setSettleResult("teamA")} />
-              <Crown size={14} /> {sc.teamAName} Won
+              <Crown size={14} /> {sc.teamA} Won
             </label>
             <label className={`${styles.chRadioLabel} ${settleResult === "teamB" ? styles.chRadioActive : ""}`}>
               <input type="radio" name="result" value="teamB" checked={settleResult === "teamB"}
                 onChange={() => setSettleResult("teamB")} />
-              <Crown size={14} /> {sc.teamBName} Won
+              <Crown size={14} /> {sc.teamB} Won
             </label>
             <label className={`${styles.chRadioLabel} ${settleResult === "draw" ? styles.chRadioActive : ""}`}>
               <input type="radio" name="result" value="draw" checked={settleResult === "draw"}
@@ -3103,8 +3133,8 @@ function ChallengesTab({ adminToken }: { adminToken: string }) {
               <div className={styles.sectionTitle}>Vote Split</div>
               <div className={styles.chVoteSplitCard}>
                 <div className={styles.chVoteSplitLabels}>
-                  <span>{ac.teamAName} ({pctA}%)</span>
-                  <span>{ac.teamBName} ({pctB}%)</span>
+                  <span>{ac.teamA} ({pctA}%)</span>
+                  <span>{ac.teamB} ({pctB}%)</span>
                 </div>
                 <div className={styles.chVoteSplitTrack}>
                   <div className={styles.chVoteSplitA} style={{ width: `${pctA}%` }} />
