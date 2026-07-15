@@ -21,13 +21,18 @@ export async function GET(req: NextRequest) {
   const live = searchParams.get("live");
 
   try {
-    const debates = await prisma.debate.findMany({
-      where: {
-        ...(live === "true" && { isLive: true }),
-      },
-      include: { _count: { select: { votes: true } } },
-      orderBy: { createdAt: "desc" },
-    });
+    // Ensure isPinned column exists
+    await prisma.$executeRawUnsafe(
+      `ALTER TABLE "debates" ADD COLUMN IF NOT EXISTS "isPinned" BOOLEAN NOT NULL DEFAULT false`
+    ).catch(() => {});
+
+    const debates = await prisma.$queryRawUnsafe(`
+      SELECT id, question, "optionA", "optionB", sport, "votesA", "votesB",
+             "isLive", "isPinned", "createdAt", "updatedAt", "expiresAt"
+      FROM debates
+      ${live === "true" ? `WHERE "isLive" = true` : ""}
+      ORDER BY "isPinned" DESC, "createdAt" DESC
+    `);
     return NextResponse.json(debates);
   } catch (err) {
     logger.error("debates fetch failed", { error: String(err) });

@@ -277,7 +277,8 @@ export default function DebatesScreen({ sport, onSearch, onBell, unread }: Debat
     : [...allPosts].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
   const { debates: realDebates, mutate: mutateDebates } = useDebatesList();
-  const liveDebate = realDebates.find(d => d.isLive) ?? realDebates[0] ?? null;
+  // Prefer pinned debate, then first live debate
+  const liveDebate = realDebates.find(d => d.isPinned && d.isLive) ?? realDebates.find(d => d.isLive) ?? realDebates[0] ?? null;
 
   const [userVote, setUserVote] = useState<'A' | 'B' | null>(null);
   const [localVotesA, setLocalVotesA] = useState<number | null>(null);

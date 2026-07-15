@@ -112,6 +112,7 @@ export interface RealDebate {
   optionB: string;
   sport: string | null;
   isLive: boolean;
+  isPinned?: boolean;
   votesA: number;
   votesB: number;
   expiresAt: string | null;

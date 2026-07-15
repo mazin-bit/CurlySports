@@ -9,7 +9,7 @@ import {
   Wifi, WifiOff, Users, Search, Trash2, Mail, MessageSquare, Radio,
   Star, MessageCircle, BarChart3, Ban, Megaphone, ImagePlus,
   Building2, MapPin, Smartphone, Monitor, TrendingUp, Calendar,
-  Send, Target, DollarSign, Award, AlertOctagon, Upload,
+  Send, Target, DollarSign, Award, AlertOctagon, Upload, Pin,
 } from "lucide-react";
 import styles from "./admin.module.css";
 import { DEFAULT_FLAGS, AdminFlags } from "@/lib/featureFlags";
@@ -2013,7 +2013,7 @@ function SponsorsTab({ adminToken }: { adminToken: string }) {
 interface RealDebate {
   id: string; question: string; optionA: string; optionB: string;
   sport?: string; votesA: number; votesB: number; isLive: boolean;
-  createdAt: string;
+  isPinned?: boolean; createdAt: string;
 }
 
 function DebatesTab({ adminToken }: { adminToken: string }) {
@@ -2064,6 +2064,15 @@ function DebatesTab({ adminToken }: { adminToken: string }) {
       body: JSON.stringify({ isLive: !current }),
     });
     if (res.ok) setDebates(prev => prev.map(d => d.id === id ? { ...d, isLive: !current } : d));
+  }
+
+  async function togglePin(id: string, current: boolean) {
+    const res = await fetch(`/api/debates/${id}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json", "x-admin-token": adminToken },
+      body: JSON.stringify({ isPinned: !current }),
+    });
+    if (res.ok) setDebates(prev => prev.map(d => d.id === id ? { ...d, isPinned: !current } : d));
   }
 
   async function deleteDebate(id: string) {
@@ -2154,6 +2163,22 @@ function DebatesTab({ adminToken }: { adminToken: string }) {
                     </div>
                   </div>
                   <div style={{ display: "flex", gap: 6, flexShrink: 0, alignItems: "center" }}>
+                    <button
+                      onClick={() => togglePin(d.id, !!d.isPinned)}
+                      style={{
+                        background: d.isPinned ? "var(--accent, #c8ff3d)" : "none",
+                        border: d.isPinned ? "none" : "1px solid rgba(255,255,255,0.15)",
+                        borderRadius: 6,
+                        cursor: "pointer",
+                        color: d.isPinned ? "#000" : "rgba(255,255,255,0.5)",
+                        padding: "4px 6px",
+                        display: "flex", alignItems: "center", gap: 4,
+                        fontSize: 11, fontWeight: 600,
+                      }}
+                      title={d.isPinned ? "Unpin debate" : "Pin debate"}
+                    >
+                      <Pin size={13} /> {d.isPinned ? "Pinned" : "Pin"}
+                    </button>
                     <Toggle on={d.isLive} onChange={() => toggleLive(d.id, d.isLive)} />
                     <button
                       onClick={() => deleteDebate(d.id)}

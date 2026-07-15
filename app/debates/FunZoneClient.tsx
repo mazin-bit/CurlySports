@@ -55,6 +55,7 @@ interface Debate {
   votesA: number;
   votesB: number;
   isLive: boolean;
+  isPinned?: boolean;
   createdAt: string;
 }
 
