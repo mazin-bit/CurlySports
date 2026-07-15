@@ -2621,8 +2621,8 @@ function ChallengesTab({ adminToken }: { adminToken: string }) {
       setSelectedChallenge(null);
       setView("list");
     } else {
-      const data = await res.json().catch(() => ({})) as { error?: string };
-      setFormErr(data.error ?? "Failed to save challenge.");
+      const data = await res.json().catch(() => ({})) as { error?: string; debug?: string };
+      setFormErr(data.debug || data.error || "Failed to save challenge.");
     }
     setCreating(false);
   };

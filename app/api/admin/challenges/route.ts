@@ -139,30 +139,30 @@ export async function POST(req: NextRequest) {
       prizeDelivery || null
     );
 
-    // Create auto-notifications
-    // 1. "New Prediction Challenge is Live!" — scheduled for now
-    const notifId1 = cuid();
-    await prisma.$executeRawUnsafe(
-      `INSERT INTO scheduled_notifications
-        (id, title, body, "targetType", "scheduledAt", status, "createdAt", "updatedAt")
-       VALUES ($1, $2, $3, 'all', CURRENT_TIMESTAMP, 'scheduled', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
-      notifId1,
-      "New Prediction Challenge is Live!",
-      `${teamA} vs ${teamB} — ${title}. Make your prediction now!`
-    );
+    // Create auto-notifications (non-blocking — don't fail challenge creation)
+    try {
+      const notifId1 = cuid();
+      await prisma.$executeRawUnsafe(
+        `INSERT INTO scheduled_notifications
+          (id, title, body, "targetType", "scheduledAt", status, "createdAt", "updatedAt")
+         VALUES ($1, $2, $3, 'all', CURRENT_TIMESTAMP, 'scheduled', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+        notifId1,
+        "New Prediction Challenge is Live!",
+        `${teamA} vs ${teamB} — ${title}. Make your prediction now!`
+      );
 
-    // 2. "Last chance to vote!" — scheduled for matchDate - 24 hours
-    const lastChanceDate = new Date(parsedMatchDate.getTime() - 24 * 60 * 60 * 1000);
-    const notifId2 = cuid();
-    await prisma.$executeRawUnsafe(
-      `INSERT INTO scheduled_notifications
-        (id, title, body, "targetType", "scheduledAt", status, "createdAt", "updatedAt")
-       VALUES ($1, $2, $3, 'all', $4, 'scheduled', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
-      notifId2,
-      "Last chance to vote!",
-      `${teamA} vs ${teamB} — Voting closes soon. Don't miss out!`,
-      lastChanceDate
-    );
+      const lastChanceDate = new Date(parsedMatchDate.getTime() - 24 * 60 * 60 * 1000);
+      const notifId2 = cuid();
+      await prisma.$executeRawUnsafe(
+        `INSERT INTO scheduled_notifications
+          (id, title, body, "targetType", "scheduledAt", status, "createdAt", "updatedAt")
+         VALUES ($1, $2, $3, 'all', $4, 'scheduled', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+        notifId2,
+        "Last chance to vote!",
+        `${teamA} vs ${teamB} — Voting closes soon. Don't miss out!`,
+        lastChanceDate
+      );
+    } catch { /* notifications are optional, don't block challenge creation */ }
 
     // Return the created challenge
     const created = await prisma.$queryRawUnsafe<ChallengeRow[]>(
