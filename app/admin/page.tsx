@@ -1431,7 +1431,7 @@ interface AdItem {
   slot: "sidebar" | "feed" | "banner" | "match";
   startDate: string;
   endDate: string;
-  active: boolean;
+  isActive: boolean;
   impressions: number;
   clicks: number;
   createdAt: string;
@@ -1473,17 +1473,18 @@ function AdsTab({ adminToken }: { adminToken: string }) {
 
   const createAd = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.title || !form.imageUrl || !form.linkUrl) {
-      setFormErr("Title, image URL, and link URL are required.");
+    if (!form.title || !form.linkUrl || !form.startDate || !form.endDate) {
+      setFormErr("Title, link URL, start date, and end date are required.");
       return;
     }
     setCreating(true); setFormErr("");
     const payload: Record<string, string | boolean> = {
-      title: form.title, imageUrl: form.imageUrl, linkUrl: form.linkUrl,
-      slot: form.slot, active: true,
+      title: form.title, linkUrl: form.linkUrl,
+      slot: form.slot, isActive: true,
+      startDate: new Date(form.startDate).toISOString(),
+      endDate: new Date(form.endDate).toISOString(),
     };
-    if (form.startDate) payload.startDate = new Date(form.startDate).toISOString();
-    if (form.endDate) payload.endDate = new Date(form.endDate).toISOString();
+    if (form.imageUrl) payload.imageUrl = form.imageUrl;
     const res = await fetch("/api/admin/ads", {
       method: "POST",
       headers: { "content-type": "application/json", "x-admin-token": adminToken },
@@ -1505,10 +1506,10 @@ function AdsTab({ adminToken }: { adminToken: string }) {
     const res = await fetch("/api/admin/ads", {
       method: "PATCH",
       headers: { "content-type": "application/json", "x-admin-token": adminToken },
-      body: JSON.stringify({ id, active: !current }),
+      body: JSON.stringify({ id, isActive: !current }),
     });
     if (res.ok) {
-      setAds(prev => prev.map(a => a.id === id ? { ...a, active: !current } : a));
+      setAds(prev => prev.map(a => a.id === id ? { ...a, isActive: !current } : a));
     }
   };
 
@@ -1663,8 +1664,8 @@ function AdsTab({ adminToken }: { adminToken: string }) {
                       <div className={styles.adCardBody}>
                         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
                           <span className={styles.adCardTitle}>{a.title}</span>
-                          <span className={`${styles.badge} ${a.active ? styles.badgeGreen : styles.badgeMuted}`}>
-                            {a.active ? "Active" : "Inactive"}
+                          <span className={`${styles.badge} ${a.isActive ? styles.badgeGreen : styles.badgeMuted}`}>
+                            {a.isActive ? "Active" : "Inactive"}
                           </span>
                           <span className={`${styles.badge} ${styles.badgeAccent}`}>{slotLabel(a.slot)}</span>
                         </div>
@@ -1681,7 +1682,7 @@ function AdsTab({ adminToken }: { adminToken: string }) {
                       </div>
                     </div>
                     <div className={styles.adCardActions}>
-                      <Toggle on={a.active} onChange={() => toggleActive(a.id, a.active)} />
+                      <Toggle on={a.isActive} onChange={() => toggleActive(a.id, a.isActive)} />
                       <button
                         className={styles.userDeleteBtn}
                         onClick={() => deleteAd(a.id)}
@@ -1716,7 +1717,7 @@ interface SponsorItem {
   logoUrl: string;
   website: string;
   tier: "gold" | "silver" | "bronze";
-  active: boolean;
+  isActive: boolean;
   adCount: number;
   createdAt: string;
 }
@@ -1760,7 +1761,7 @@ function SponsorsTab({ adminToken }: { adminToken: string }) {
     const res = await fetch("/api/admin/sponsors", {
       method: "POST",
       headers: { "content-type": "application/json", "x-admin-token": adminToken },
-      body: JSON.stringify({ ...form, active: true }),
+      body: JSON.stringify({ ...form, isActive: true }),
     });
     if (res.ok) {
       const sponsor = await res.json();
@@ -1778,10 +1779,10 @@ function SponsorsTab({ adminToken }: { adminToken: string }) {
     const res = await fetch("/api/admin/sponsors", {
       method: "PATCH",
       headers: { "content-type": "application/json", "x-admin-token": adminToken },
-      body: JSON.stringify({ id, active: !current }),
+      body: JSON.stringify({ id, isActive: !current }),
     });
     if (res.ok) {
-      setSponsors(prev => prev.map(s => s.id === id ? { ...s, active: !current } : s));
+      setSponsors(prev => prev.map(s => s.id === id ? { ...s, isActive: !current } : s));
     }
   };
 
@@ -1893,8 +1894,8 @@ function SponsorsTab({ adminToken }: { adminToken: string }) {
                     <span className={`${styles.tierBadge} ${tierBadgeClass(s.tier)}`}>
                       <Award size={9} /> {s.tier}
                     </span>
-                    <span className={`${styles.badge} ${s.active ? styles.badgeGreen : styles.badgeMuted}`}>
-                      {s.active ? "Active" : "Inactive"}
+                    <span className={`${styles.badge} ${s.isActive ? styles.badgeGreen : styles.badgeMuted}`}>
+                      {s.isActive ? "Active" : "Inactive"}
                     </span>
                   </div>
                   <div className={styles.sponsorMeta}>
@@ -1912,7 +1913,7 @@ function SponsorsTab({ adminToken }: { adminToken: string }) {
                   </div>
                 </div>
                 <div className={styles.sponsorActions}>
-                  <Toggle on={s.active} onChange={() => toggleActive(s.id, s.active)} />
+                  <Toggle on={s.isActive} onChange={() => toggleActive(s.id, s.isActive)} />
                   <button
                     className={styles.userDeleteBtn}
                     onClick={() => deleteSponsor(s.id)}
