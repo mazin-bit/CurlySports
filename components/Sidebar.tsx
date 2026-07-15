@@ -6,7 +6,6 @@ import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 
 import { Ico } from "./Icons";
-import AdSlot from "./AdSlot";
 import { useActiveSport, SPORT_CONFIGS } from "@/contexts/SportContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { LOCALES, type Locale } from "@/lib/i18n";
@@ -264,9 +263,6 @@ export default function Sidebar({ active }: { active: string }) {
         </div>
       </Link>
 
-      <div className="sb-ad-top">
-        <AdSlot size="compact" label="Ad" />
-      </div>
 
       <SportDropdown enabledSports={enabledSports} />
 
@@ -290,9 +286,6 @@ export default function Sidebar({ active }: { active: string }) {
         <SbItem key={item.key} item={item} active={active} t={t} />
       ))}
 
-      <div className="sb-ad">
-        <AdSlot size="square" label="Ad" />
-      </div>
 
       <div className="sb-profile">
         <div className="sb-profile-ava">{profile?.initials ?? "\u2026"}</div>

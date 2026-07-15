@@ -1638,14 +1638,13 @@ function AdsTab({ adminToken }: { adminToken: string }) {
                 value={form.slot}
                 onChange={e => setForm(f => ({ ...f, slot: e.target.value }))}
               >
-                <option value="banner">Banner -- Full-width banner between sections</option>
-                <option value="compact">Compact -- Small inline ad for sidebars/narrow spaces</option>
-                <option value="card">Card -- Card-style ad that matches content cards</option>
-                <option value="square">Square -- Square format for sidebars</option>
-                <option value="strip">Strip -- Thin strip ad</option>
-                <option value="feed">Feed -- In-feed native ad between content items</option>
-                <option value="match">Match -- Ad shown on match detail pages</option>
-                <option value="sidebar">Sidebar -- Sidebar-specific ad</option>
+                <option value="banner">Banner (728x90) -- Full-width leaderboard</option>
+                <option value="compact">Compact (full x 62) -- Thin horizontal bar</option>
+                <option value="card">Card (full x 180) -- Inline content card</option>
+                <option value="square">Square (300x250) -- Medium rectangle</option>
+                <option value="strip">Strip (full x 72) -- Horizontal strip</option>
+                <option value="feed">Feed (full x 120) -- In-feed native ad</option>
+                <option value="match">Match (full x 72) -- Match detail page</option>
               </select>
             </div>
             <div className={styles.formGroup}>

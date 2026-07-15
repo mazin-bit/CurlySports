@@ -461,22 +461,6 @@ export default function LandingPage() {
         </div>
       </div>
 
-      {/* ── Sponsors Strip ────────────────────────── */}
-      <div className="l-sponsors-wrap">
-        <div className="l-sponsors-inner">
-          <span className="l-sponsors-tag">Advertise with us</span>
-          <div className="l-sponsors-slots">
-            <div className="l-sponsor-slot"><span className="l-sponsor-icon">◈</span><span className="l-sponsor-name">Your Brand</span></div>
-            <div className="l-sponsor-div" />
-            <div className="l-sponsor-slot"><span className="l-sponsor-icon">◈</span><span className="l-sponsor-name">Partner</span></div>
-            <div className="l-sponsor-div" />
-            <div className="l-sponsor-slot"><span className="l-sponsor-icon">◈</span><span className="l-sponsor-name">Sponsor</span></div>
-            <div className="l-sponsor-div" />
-            <div className="l-sponsor-slot l-sponsor-cta"><a href="mailto:ads@curlysports.com">Get featured →</a></div>
-          </div>
-          <span className="l-sponsors-reach">Reach a passionate sports audience · Contact us to get featured</span>
-        </div>
-      </div>
 
       {/* ── Founder ───────────────────────────────── */}
       <div className="l-founder-wrap" id="founder">
