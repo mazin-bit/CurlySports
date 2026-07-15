@@ -19,11 +19,10 @@ interface Challenge {
   teamA: ChallengeTeam;
   teamB: ChallengeTeam;
   matchDate: string;
-  votingClosesAt: string;
   winnerCount: number;
   totalVotes: number;
-  userVote?: 'A' | 'B' | null;
-  result?: 'A' | 'B' | 'draw' | null;
+  userVote?: 'teamA' | 'teamB' | null;
+  result?: string | null;
   sport: string;
 }
 
@@ -95,9 +94,9 @@ function TeamBadge({ team }: { team: ChallengeTeam }) {
 
 /* ── ActiveChallengeCard ────────────────────────────────── */
 
-function ActiveChallengeCard({ challenge, onVote, onTap }: { challenge: Challenge; onVote: (side: 'A' | 'B') => void; onTap: () => void }) {
+function ActiveChallengeCard({ challenge, onVote, onTap }: { challenge: Challenge; onVote: (side: 'teamA' | 'teamB') => void; onTap: () => void }) {
   const hasVoted = !!challenge.userVote;
-  const votingExpired = new Date(challenge.votingClosesAt).getTime() <= Date.now();
+  const votingExpired = new Date(challenge.matchDate).getTime() <= Date.now();
 
   return (
     <div
@@ -121,8 +120,8 @@ function ActiveChallengeCard({ challenge, onVote, onTap }: { challenge: Challeng
 
       {/* Vote Buttons */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 14 }} onClick={e => e.stopPropagation()}>
-        {(['A', 'B'] as const).map(side => {
-          const team = side === 'A' ? challenge.teamA : challenge.teamB;
+        {(['teamA', 'teamB'] as const).map(side => {
+          const team = side === 'teamA' ? challenge.teamA : challenge.teamB;
           const isSelected = challenge.userVote === side;
           const isOther = hasVoted && !isSelected;
           const disabled = hasVoted || votingExpired;
@@ -146,7 +145,7 @@ function ActiveChallengeCard({ challenge, onVote, onTap }: { challenge: Challeng
               }}
             >
               {isSelected && <Icon name="check-circle" size={16} style={{ color: 'var(--ink)' }} />}
-              {team.name} {side === 'A' ? 'to Win' : 'to Win'}
+              {team.name} to Win
             </button>
           );
         })}
@@ -156,7 +155,7 @@ function ActiveChallengeCard({ challenge, onVote, onTap }: { challenge: Challeng
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <Icon name="clock" size={13} style={{ color: 'var(--text-mute)' }} />
-          <CountdownDisplay targetDate={challenge.votingClosesAt} />
+          <CountdownDisplay targetDate={challenge.matchDate} />
         </div>
       </div>
 
@@ -177,13 +176,10 @@ function ActiveChallengeCard({ challenge, onVote, onTap }: { challenge: Challeng
 /* ── PastChallengeCard ──────────────────────────────────── */
 
 function PastChallengeCard({ challenge, onTap }: { challenge: Challenge; onTap: () => void }) {
-  const userCorrect = challenge.result && challenge.userVote && (
-    (challenge.result === 'A' && challenge.userVote === 'A') ||
-    (challenge.result === 'B' && challenge.userVote === 'B')
-  );
+  const userCorrect = challenge.result && challenge.userVote && challenge.result === challenge.userVote;
   const resultLabel = challenge.result === 'draw' ? 'Draw' :
-    challenge.result === 'A' ? `${challenge.teamA.shortName} Won` :
-    challenge.result === 'B' ? `${challenge.teamB.shortName} Won` : 'Pending';
+    challenge.result === 'teamA' ? `${challenge.teamA.shortName} Won` :
+    challenge.result === 'teamB' ? `${challenge.teamB.shortName} Won` : 'Pending';
 
   return (
     <div onClick={onTap} className="cs-tap" style={{ background: 'var(--surface)', border: '2px solid var(--border-2)', borderRadius: 14, padding: 14, cursor: 'pointer' }}>
@@ -274,7 +270,7 @@ export default function ChallengesScreen({ sport, onOpenChallenge, onSearch, onB
     fetchChallenges();
   }, [fetchChallenges]);
 
-  const handleVote = async (challengeId: string, side: 'A' | 'B') => {
+  const handleVote = async (challengeId: string, side: 'teamA' | 'teamB') => {
     setVotingId(challengeId);
     try {
       const token = localStorage.getItem('cs_token');
@@ -284,12 +280,12 @@ export default function ChallengesScreen({ sport, onOpenChallenge, onSearch, onB
       const res = await fetch('/api/challenges', {
         method: 'POST',
         headers,
-        body: JSON.stringify({ challengeId, selectedTeam: side === 'A' ? 'teamA' : 'teamB' }),
+        body: JSON.stringify({ challengeId, selectedTeam: side }),
       });
 
       if (res.ok) {
         setChallenges(prev => prev.map(c => c.id === challengeId ? { ...c, userVote: side } : c));
-        setStats(prev => ({ ...prev, totalEntries: prev.totalEntries + 1, challengesJoined: prev.challengesJoined + 1 }));
+        setStats(prev => ({ ...prev, challengesJoined: prev.challengesJoined + 1 }));
       }
     } catch { /* ignore */ }
     finally { setVotingId(null); }
@@ -323,7 +319,7 @@ export default function ChallengesScreen({ sport, onOpenChallenge, onSearch, onB
               <ActiveChallengeCard
                 key={challenge.id}
                 challenge={challenge}
-                onVote={side => handleVote(challenge.id, side)}
+                onVote={(side: 'teamA' | 'teamB') => handleVote(challenge.id, side)}
                 onTap={() => onOpenChallenge(challenge.id)}
               />
             ))}

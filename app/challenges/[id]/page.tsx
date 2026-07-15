@@ -158,6 +158,22 @@ export default function ChallengeDetailPage() {
         if (typeof c.teamB === "string") {
           c.teamB = { id: "teamB", name: c.teamB, abbreviation: c.teamB.slice(0, 3).toUpperCase(), logo: c.teamBLogo ?? null };
         }
+        // Merge user-specific data from the API response into the challenge object
+        if (data.userVote) {
+          c.userVote = data.userVote.selectedTeam; // "teamA" or "teamB"
+        }
+        if (data.userEntries) {
+          c.userBaseEntries = Number(data.userEntries.baseEntries ?? 0);
+          c.userReferralEntries = Number(data.userEntries.referralEntries ?? 0);
+          c.userTotalEntries = Number(data.userEntries.totalEntries ?? 0);
+        }
+        if (data.userWon) {
+          c.userWon = true;
+        }
+        // Check if user's vote was correct (for settled challenges)
+        if (c.status === "settled" && c.result && data.userVote) {
+          c.userCorrect = data.userVote.selectedTeam === c.result;
+        }
         setChallenge(c);
       }
     } catch {
@@ -219,7 +235,7 @@ export default function ChallengeDetailPage() {
       }
       if (res.ok) {
         setChallenge((prev) =>
-          prev ? { ...prev, userVote: teamId, userBaseEntries: 1, userTotalEntries: (prev.userTotalEntries ?? 0) + 1 } : prev
+          prev ? { ...prev, userVote: teamId } : prev
         );
       }
     } catch {

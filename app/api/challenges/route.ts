@@ -165,11 +165,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Create vote
+    // Create vote (entries are 0 until challenge is settled)
     const voteId = cuid();
     await prisma.$executeRawUnsafe(
       `INSERT INTO challenge_votes (id, "challengeId", "userId", "selectedTeam", entries, "createdAt")
-       VALUES ($1, $2, $3, $4, 1, NOW())`,
+       VALUES ($1, $2, $3, $4, 0, NOW())`,
       voteId,
       challengeId,
       user.id,
@@ -182,7 +182,7 @@ export async function POST(req: NextRequest) {
       challengeId
     );
 
-    // Upsert challenge_entries (placeholder — settle route sets baseEntries=1 for correct voters)
+    // Create placeholder entries row (settle route fills in baseEntries for correct voters)
     await prisma.$executeRawUnsafe(
       `INSERT INTO challenge_entries (id, "challengeId", "userId", "baseEntries", "referralEntries", "totalEntries", "createdAt")
        VALUES ($1, $2, $3, 0, 0, 0, NOW())
@@ -192,18 +192,11 @@ export async function POST(req: NextRequest) {
       user.id
     );
 
-    // Update totalEntries on the challenge
-    await prisma.$executeRawUnsafe(
-      `UPDATE prediction_challenges SET "totalEntries" = "totalEntries" + 1, "updatedAt" = NOW() WHERE id = $1`,
-      challengeId
-    );
-
     const vote = {
       id: voteId,
       challengeId,
       userId: user.id,
       selectedTeam,
-      entries: 1,
       createdAt: new Date().toISOString(),
     };
 

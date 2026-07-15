@@ -18,14 +18,13 @@ interface ChallengeDetail {
   teamA: ChallengeTeam;
   teamB: ChallengeTeam;
   matchDate: string;
-  votingClosesAt: string;
   winnerCount: number;
   totalVotes: number;
-  userVote?: 'A' | 'B' | null;
-  result?: 'A' | 'B' | 'draw' | null;
+  userVote?: 'teamA' | 'teamB' | null;
+  result?: string | null;
   sport: string;
   userEntry?: {
-    prediction: 'A' | 'B';
+    prediction: 'teamA' | 'teamB';
     baseEntries: number;
     referralEntries: number;
     totalEntries: number;
@@ -100,7 +99,7 @@ function Toast({ message, onHide }: { message: string; onHide: () => void }) {
 export default function ChallengeDetailScreen({ challengeId, onBack, onLeaderboard, onReferral }: ChallengeDetailScreenProps) {
   const [challenge, setChallenge] = useState<ChallengeDetail | null>(null);
   const [loading, setLoading] = useState(true);
-  const [votingFor, setVotingFor] = useState<'A' | 'B' | null>(null);
+  const [votingFor, setVotingFor] = useState<'teamA' | 'teamB' | null>(null);
   const [toast, setToast] = useState('');
 
   const fetchDetail = useCallback(async () => {
@@ -120,15 +119,44 @@ export default function ChallengeDetailScreen({ challengeId, onBack, onLeaderboa
         if (typeof c.teamB === 'string') {
           c.teamB = { id: 'teamB', name: c.teamB, shortName: (c.teamB as string).slice(0, 3).toUpperCase(), logo: c.teamBLogo ?? undefined };
         }
+        // Merge user-specific data from the API response
+        if (raw.userVote) {
+          c.userVote = raw.userVote.selectedTeam as 'teamA' | 'teamB';
+          if (raw.userEntries) {
+            c.userEntry = {
+              prediction: raw.userVote.selectedTeam as 'teamA' | 'teamB',
+              baseEntries: Number(raw.userEntries.baseEntries ?? 0),
+              referralEntries: Number(raw.userEntries.referralEntries ?? 0),
+              totalEntries: Number(raw.userEntries.totalEntries ?? 0),
+            };
+          }
+        }
+        // Merge leaderboard
+        if (raw.leaderboard && Array.isArray(raw.leaderboard)) {
+          c.leaderboard = raw.leaderboard.map((e: Record<string, unknown>) => ({
+            rank: Number(e.rank ?? 0),
+            username: String(e.username ?? 'User'),
+            entries: Number(e.totalEntries ?? 0),
+            isCurrentUser: false,
+          }));
+        }
         setChallenge(c);
       }
+      // Fetch referral code separately
+      try {
+        const codeRes = await fetch('/api/referral/code', { headers });
+        if (codeRes.ok) {
+          const codeData = await codeRes.json();
+          setChallenge(prev => prev ? { ...prev, referralCode: codeData.code } : prev);
+        }
+      } catch { /* not logged in */ }
     } catch { /* ignore */ }
     finally { setLoading(false); }
   }, [challengeId]);
 
   useEffect(() => { fetchDetail(); }, [fetchDetail]);
 
-  const handleVote = async (side: 'A' | 'B') => {
+  const handleVote = async (side: 'teamA' | 'teamB') => {
     if (!challenge || challenge.userVote || votingFor) return;
     setVotingFor(side);
     try {
@@ -139,13 +167,13 @@ export default function ChallengeDetailScreen({ challengeId, onBack, onLeaderboa
       const res = await fetch('/api/challenges', {
         method: 'POST',
         headers,
-        body: JSON.stringify({ challengeId, selectedTeam: side === 'A' ? 'teamA' : 'teamB' }),
+        body: JSON.stringify({ challengeId, selectedTeam: side }),
       });
       if (res.ok) {
         setChallenge(prev => prev ? {
           ...prev,
           userVote: side,
-          userEntry: { prediction: side, baseEntries: 1, referralEntries: 0, totalEntries: 1 },
+          userEntry: { prediction: side, baseEntries: 0, referralEntries: 0, totalEntries: 0 },
         } : prev);
       }
     } catch { /* ignore */ }
@@ -200,7 +228,7 @@ export default function ChallengeDetailScreen({ challengeId, onBack, onLeaderboa
   }
 
   const hasVoted = !!challenge.userVote;
-  const votingExpired = new Date(challenge.votingClosesAt).getTime() <= Date.now();
+  const votingExpired = new Date(challenge.matchDate).getTime() <= Date.now();
   const referralLink = challenge.referralCode
     ? `${typeof window !== 'undefined' ? window.location.origin : ''}/invite?ref=${challenge.referralCode}`
     : '';
@@ -260,13 +288,13 @@ export default function ChallengeDetailScreen({ challengeId, onBack, onLeaderboa
             <div style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text-mute)', fontWeight: 600 }}>
               {new Date(challenge.matchDate).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
             </div>
-            <CountdownDisplay targetDate={challenge.votingClosesAt} />
+            <CountdownDisplay targetDate={challenge.matchDate} />
           </div>
 
           {/* Vote Buttons */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {(['A', 'B'] as const).map(side => {
-              const team = side === 'A' ? challenge.teamA : challenge.teamB;
+            {(['teamA', 'teamB'] as const).map(side => {
+              const team = side === 'teamA' ? challenge.teamA : challenge.teamB;
               const isSelected = challenge.userVote === side;
               const isOther = hasVoted && !isSelected;
               const disabled = hasVoted || votingExpired;
@@ -307,7 +335,7 @@ export default function ChallengeDetailScreen({ challengeId, onBack, onLeaderboa
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
               <Icon name="check-circle" size={16} style={{ color: 'var(--accent)' }} />
               <span style={{ fontFamily: 'var(--body)', fontSize: 13, fontWeight: 600, color: 'var(--ink)' }}>
-                Picked: {challenge.userEntry.prediction === 'A' ? challenge.teamA.name : challenge.teamB.name}
+                Picked: {challenge.userEntry.prediction === 'teamA' ? challenge.teamA.name : challenge.teamB.name}
               </span>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
