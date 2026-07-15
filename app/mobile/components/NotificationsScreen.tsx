@@ -15,6 +15,7 @@ interface MobileNotif {
   body: string;
   time: string;
   unread: boolean;
+  type?: 'admin' | 'activity';
 }
 
 interface NotificationsProps {
@@ -85,8 +86,8 @@ export default function NotificationsScreen({ onBack, onMarkAll }: Notifications
                   onClick={() => setReadIds(prev => new Set([...prev, n.id]))}
                   style={{ '--i': i, display: 'flex', gap: 12, alignItems: 'flex-start', textAlign: 'start', padding: 14, borderRadius: 12, cursor: 'pointer', background: n.unread ? 'var(--surface)' : 'var(--surface-2)', border: '2px solid var(--ink)', boxShadow: n.unread ? 'var(--shadow-sm)' : 'none', position: 'relative', width: '100%' } as React.CSSProperties}
                 >
-                  <span style={{ width: 38, height: 38, flexShrink: 0, borderRadius: 11, background: n.color, border: '2px solid var(--ink)', display: 'grid', placeItems: 'center', color: 'var(--ink)' }}>
-                    <Icon name={n.icon} size={18} />
+                  <span style={{ width: 38, height: 38, flexShrink: 0, borderRadius: 11, background: n.type === 'admin' ? 'var(--lime)' : n.color, border: '2px solid var(--ink)', display: 'grid', placeItems: 'center', color: 'var(--ink)' }}>
+                    <Icon name={n.type === 'admin' ? 'megaphone' : n.icon} size={18} />
                   </span>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>

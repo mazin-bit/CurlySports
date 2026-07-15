@@ -3,7 +3,7 @@
 import AppShell from "@/components/AppShell";
 import styles from "./notifications.module.css";
 import { useState, useEffect } from "react";
-import { Bell, BellRing, Check, Trash2, Loader } from "lucide-react";
+import { Bell, BellRing, Check, Trash2, Loader, Megaphone } from "lucide-react";
 import { Ico } from "@/components/Icons";
 import { useLanguage } from "@/contexts/LanguageContext";
 
@@ -16,6 +16,7 @@ interface Notif {
   body: string;
   time: string;
   unread: boolean;
+  type?: "admin" | "activity";
 }
 
 const ICON_MAP: Record<string, string> = {
@@ -24,6 +25,7 @@ const ICON_MAP: Record<string, string> = {
   live: "i-live",
   news: "i-news",
   flame: "i-spark",
+  megaphone: "i-spark",
 };
 
 export default function NotificationsPage() {
@@ -142,7 +144,7 @@ export default function NotificationsPage() {
                     className={styles.notifIcon}
                     style={{ background: n.color + "18", color: n.color }}
                   >
-                    <Ico id={ICON_MAP[n.icon] ?? "i-bell"} />
+                    {n.type === "admin" ? <Megaphone size={16} /> : <Ico id={ICON_MAP[n.icon] ?? "i-bell"} />}
                   </div>
                   <div className={styles.notifContent}>
                     <div className={styles.notifTitle}>{n.title}</div>
@@ -190,7 +192,7 @@ export default function NotificationsPage() {
                     className={styles.notifIcon}
                     style={{ background: n.color + "18", color: n.color }}
                   >
-                    <Ico id={ICON_MAP[n.icon] ?? "i-bell"} />
+                    {n.type === "admin" ? <Megaphone size={16} /> : <Ico id={ICON_MAP[n.icon] ?? "i-bell"} />}
                   </div>
                   <div className={styles.notifContent}>
                     <div className={styles.notifTitle}>{n.title}</div>
