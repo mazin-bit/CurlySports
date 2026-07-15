@@ -3,6 +3,7 @@ import "./globals.css";
 import { SWRProvider } from "@/components/SWRProvider";
 import { SportProvider } from "@/contexts/SportContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
+import { PageViewTracker } from "@/components/PageViewTracker";
 
 const SITE_URL = "https://curlysports.com";
 
@@ -125,6 +126,7 @@ export default function RootLayout({
             <SportProvider>{children}</SportProvider>
           </LanguageProvider>
         </SWRProvider>
+        <PageViewTracker />
       </body>
     </html>
   );

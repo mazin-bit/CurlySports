@@ -28,6 +28,13 @@ export async function POST(req: NextRequest) {
       where: { email: normalizedEmail },
     });
 
+    if (user && user.isBanned) {
+      return NextResponse.json(
+        { error: "Your account has been suspended. Contact support for assistance." },
+        { status: 403 }
+      );
+    }
+
     if (user && user.passwordHash) {
       // Existing Prisma user with password — verify normally
       const valid = await bcrypt.compare(password, user.passwordHash);
@@ -137,6 +144,19 @@ export async function POST(req: NextRequest) {
         avatar: user.avatar,
       },
     });
+
+    // Fire-and-forget session tracking — don't block login
+    const ua = req.headers.get("user-agent") ?? "";
+    const platform = /CurlySports-iOS/i.test(ua) ? "ios" : /CurlySports-Android/i.test(ua) ? "android" : "web";
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? req.headers.get("x-real-ip") ?? null;
+    const country = req.headers.get("x-vercel-ip-country") ?? null;
+    const city = req.headers.get("x-vercel-ip-city") ?? null;
+    const sessionId = `sess_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+
+    prisma.$executeRaw`
+      INSERT INTO user_sessions (id, "userId", platform, "ipAddress", country, city, "userAgent", "createdAt")
+      VALUES (${sessionId}, ${user.id}, ${platform}, ${ip}, ${country}, ${city}, ${ua.slice(0, 500)}, NOW())
+    `.catch(() => {});
 
     return setAuthCookies(response, accessToken, refreshToken);
   } catch (err) {

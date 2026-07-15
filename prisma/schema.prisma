@@ -18,6 +18,7 @@ model User {
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   emailVerified Boolean        @default(false)
+  isBanned      Boolean        @default(false)
   favTeam       Json?
   googleId      String?        @unique
   passwordHash  String?
@@ -29,8 +30,114 @@ model User {
   favorites     Favorite[]
   predictions   Prediction[]
   userFavorites UserFavorite[]
+  sessions      UserSession[]
 
   @@map("users")
+}
+
+model UserSession {
+  id        String   @id @default(cuid())
+  userId    String
+  platform  String   // "ios", "android", "web"
+  ipAddress String?
+  country   String?
+  city      String?
+  userAgent String?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_sessions")
+}
+
+model AppInstall {
+  id         String   @id @default(cuid())
+  deviceId   String   @unique
+  platform   String   // "ios", "android"
+  appVersion String?
+  country    String?
+  createdAt  DateTime @default(now())
+
+  @@map("app_installs")
+}
+
+model PageView {
+  id        String   @id @default(cuid())
+  route     String
+  userId    String?
+  sessionId String?
+  platform  String?
+  country   String?
+  createdAt DateTime @default(now())
+
+  @@index([route])
+  @@index([createdAt])
+  @@map("page_views")
+}
+
+model ContentFlag {
+  id         String   @id @default(cuid())
+  contentId  String
+  contentType String  // "debate", "comment"
+  reason     String
+  reporterId String?
+  status     String   @default("pending") // "pending", "reviewed", "dismissed"
+  autoHidden Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  @@index([contentId])
+  @@index([status])
+  @@map("content_flags")
+}
+
+model ScheduledNotification {
+  id          String   @id @default(cuid())
+  title       String
+  body        String
+  targetType  String   @default("all") // "all", "ios", "android", "web", "user"
+  targetUsers String[] @default([])
+  scheduledAt DateTime
+  sentAt      DateTime?
+  status      String   @default("scheduled") // "scheduled", "sent", "cancelled"
+  createdAt   DateTime @default(now())
+
+  @@index([status])
+  @@index([scheduledAt])
+  @@map("scheduled_notifications")
+}
+
+model Ad {
+  id          String   @id @default(cuid())
+  title       String
+  imageUrl    String?
+  linkUrl     String
+  slot        String   // "sidebar", "feed", "banner", "match"
+  sponsorId   String?
+  startDate   DateTime
+  endDate     DateTime
+  isActive    Boolean  @default(true)
+  impressions Int      @default(0)
+  clicks      Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  sponsor     Sponsor? @relation(fields: [sponsorId], references: [id])
+
+  @@index([slot])
+  @@index([isActive])
+  @@map("ads")
+}
+
+model Sponsor {
+  id        String   @id @default(cuid())
+  name      String
+  logoUrl   String?
+  website   String?
+  tier      String   @default("bronze") // "gold", "silver", "bronze"
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ads       Ad[]
+
+  @@map("sponsors")
 }
 
 model League {

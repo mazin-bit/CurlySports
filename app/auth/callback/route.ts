@@ -91,12 +91,30 @@ export async function GET(request: NextRequest) {
       });
     }
 
+    if (user.isBanned) {
+      return NextResponse.redirect(`${origin}/login?error=account_suspended`);
+    }
+
     const [accessToken, refreshToken] = await Promise.all([
       signAccessToken(user),
       signRefreshToken(user.id),
     ]);
 
     const response = NextResponse.redirect(`${origin}${safeNext}`);
+
+    // Fire-and-forget session tracking — don't block OAuth callback
+    const ua = request.headers.get("user-agent") ?? "";
+    const platform = /CurlySports-iOS/i.test(ua) ? "ios" : /CurlySports-Android/i.test(ua) ? "android" : "web";
+    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? request.headers.get("x-real-ip") ?? null;
+    const country = request.headers.get("x-vercel-ip-country") ?? null;
+    const city = request.headers.get("x-vercel-ip-city") ?? null;
+    const sessionId = `sess_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+
+    prisma.$executeRaw`
+      INSERT INTO user_sessions (id, "userId", platform, "ipAddress", country, city, "userAgent", "createdAt")
+      VALUES (${sessionId}, ${user.id}, ${platform}, ${ip}, ${country}, ${city}, ${ua.slice(0, 500)}, NOW())
+    `.catch(() => {});
+
     return setAuthCookies(response, accessToken, refreshToken);
   } catch {
     return NextResponse.redirect(`${origin}/login?error=auth_callback_failed`);

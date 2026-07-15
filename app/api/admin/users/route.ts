@@ -11,6 +11,16 @@ function isAdmin(req: NextRequest): boolean {
   return timingSafeEqual(a, b);
 }
 
+async function ensureIsBannedColumn() {
+  try {
+    await prisma.$executeRawUnsafe(`
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS "isBanned" BOOLEAN NOT NULL DEFAULT false
+    `);
+  } catch {
+    /* column may already exist */
+  }
+}
+
 // GET /api/admin/users — list all users (admin only)
 export async function GET(req: NextRequest) {
   if (!isAdmin(req)) {
@@ -33,6 +43,8 @@ export async function GET(req: NextRequest) {
       }
     : {};
 
+  await ensureIsBannedColumn();
+
   const [users, total] = await Promise.all([
     prisma.user.findMany({
       where,
@@ -45,6 +57,7 @@ export async function GET(req: NextRequest) {
         emailVerified: true,
         favTeam: true,
         googleId: true,
+        isBanned: true,
         createdAt: true,
         updatedAt: true,
         _count: { select: { favorites: true, predictions: true, debateVotes: true } },
@@ -82,4 +95,53 @@ export async function DELETE(req: NextRequest) {
 
   await prisma.user.delete({ where: { id } }).catch(() => null);
   return NextResponse.json({ ok: true });
+}
+
+// PATCH /api/admin/users — ban/unban a user (admin only)
+export async function PATCH(req: NextRequest) {
+  if (!isAdmin(req)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  try {
+    const { id, isBanned } = await req.json();
+
+    if (!id || typeof id !== "string") {
+      return NextResponse.json({ error: "User ID required" }, { status: 400 });
+    }
+    if (typeof isBanned !== "boolean") {
+      return NextResponse.json({ error: "isBanned must be a boolean" }, { status: 400 });
+    }
+
+    await ensureIsBannedColumn();
+
+    await prisma.$executeRaw`
+      UPDATE users SET "isBanned" = ${isBanned}, "updatedAt" = NOW() WHERE id = ${id}
+    `;
+
+    // Fetch updated user info
+    interface UserRow {
+      id: string;
+      email: string;
+      username: string;
+      name: string | null;
+      isBanned: boolean;
+      updatedAt: Date;
+    }
+
+    const rows = await prisma.$queryRaw<UserRow[]>`
+      SELECT id, email, username, name, "isBanned", "updatedAt"
+      FROM users WHERE id = ${id}
+    `;
+
+    if (rows.length === 0) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    return NextResponse.json({ user: rows[0], success: true });
+  } catch (err) {
+    console.error("Ban/unban error:", err);
+    const msg = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({ error: "Failed to update user", debug: msg }, { status: 500 });
+  }
 }
