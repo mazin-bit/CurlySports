@@ -321,9 +321,14 @@ export default function DashboardScreen({ sport, setSport, onOpenMatch, onOpenPl
               <span>{activeChallenge.teamB}</span>
             </div>
             {challengeVote ? (
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '7px 12px', background: 'rgba(200,255,61,0.15)', border: '2px solid var(--accent)', borderRadius: 8, fontFamily: 'var(--display)', fontSize: 12, fontWeight: 700, color: 'var(--ink)' }}>
-                <Icon name="check" size={13} />
-                {t('challenges.yourPrediction', 'Your Prediction')}: {challengeVote}
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '7px 12px', background: 'rgba(200,255,61,0.15)', border: '2px solid var(--accent)', borderRadius: 8, fontFamily: 'var(--display)', fontSize: 12, fontWeight: 700, color: 'var(--ink)' }}>
+                  <Icon name="check" size={13} />
+                  {t('challenges.yourPrediction', 'Your Prediction')}: {challengeVote}
+                </div>
+                <div style={{ marginTop: 6, fontSize: 10, color: 'var(--text-mute)', fontFamily: 'var(--body)' }}>
+                  {t('challenges.goToChallenges', 'Go to Challenges tab for entries, referrals & leaderboard')} →
+                </div>
               </div>
             ) : (
               <div style={{ display: 'flex', gap: 8 }} onClick={(e) => e.stopPropagation()}>

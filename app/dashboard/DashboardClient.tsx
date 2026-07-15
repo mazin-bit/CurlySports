@@ -468,9 +468,14 @@ function ChallengeCard({ challenge, userVote, onVote }: { challenge: ChallengeDa
           <span>{challenge.teamB}</span>
         </div>
         {userVote ? (
-          <div className={`${styles.challengeVoteBtn} ${styles.challengeVoteBtnSelected}`}>
-            <Check size={13} strokeWidth={2.5} />
-            {t("challenges.yourPrediction", "Your Prediction")}: {userVote}
+          <div style={{ textAlign: "center" }}>
+            <div className={`${styles.challengeVoteBtn} ${styles.challengeVoteBtnSelected}`}>
+              <Check size={13} strokeWidth={2.5} />
+              {t("challenges.yourPrediction", "Your Prediction")}: {userVote}
+            </div>
+            <div style={{ marginTop: 6, fontSize: 11, color: "var(--text-mute)", fontFamily: "var(--body)" }}>
+              {t("challenges.goToChallenges", "Go to Challenges tab for entries, referrals & leaderboard")} &rarr;
+            </div>
           </div>
         ) : (
           <div style={{ display: "flex", gap: 8 }} onClick={(e) => e.preventDefault()}>

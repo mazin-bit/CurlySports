@@ -182,14 +182,11 @@ export async function POST(req: NextRequest) {
       challengeId
     );
 
-    // Upsert challenge_entries (base entry for voting)
+    // Upsert challenge_entries (placeholder — settle route sets baseEntries=1 for correct voters)
     await prisma.$executeRawUnsafe(
-      `INSERT INTO challenge_entries (id, "challengeId", "userId", "baseEntries", "referralEntries", "totalEntries", "createdAt", "updatedAt")
-       VALUES ($1, $2, $3, 1, 0, 1, NOW(), NOW())
-       ON CONFLICT ("challengeId", "userId")
-       DO UPDATE SET "baseEntries" = challenge_entries."baseEntries" + 1,
-                     "totalEntries" = challenge_entries."totalEntries" + 1,
-                     "updatedAt" = NOW()`,
+      `INSERT INTO challenge_entries (id, "challengeId", "userId", "baseEntries", "referralEntries", "totalEntries", "createdAt")
+       VALUES ($1, $2, $3, 0, 0, 0, NOW())
+       ON CONFLICT ("challengeId", "userId") DO NOTHING`,
       cuid(),
       challengeId,
       user.id

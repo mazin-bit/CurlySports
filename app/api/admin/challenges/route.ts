@@ -117,8 +117,8 @@ export async function POST(req: NextRequest) {
         (id, title, description, "imageUrl", "teamA", "teamB", "teamALogo", "teamBLogo",
          "matchId", "matchDate", sport, "leagueId", status, "winnerCount",
          "maxReferralEntries", "prizeName", "prizeValue", "prizeImage", "prizeDelivery",
-         "totalVotes", "totalEntries", "createdAt", "updatedAt")
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 'active', $13, $14, $15, $16, $17, $18, 0, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+         "totalVotes", "totalEntries", "createdAt")
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 'active', $13, $14, $15, $16, $17, $18, 0, 0, CURRENT_TIMESTAMP)`,
       id,
       title,
       description || null,
@@ -144,8 +144,8 @@ export async function POST(req: NextRequest) {
       const notifId1 = cuid();
       await prisma.$executeRawUnsafe(
         `INSERT INTO scheduled_notifications
-          (id, title, body, "targetType", "scheduledAt", status, "createdAt", "updatedAt")
-         VALUES ($1, $2, $3, 'all', CURRENT_TIMESTAMP, 'scheduled', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+          (id, title, body, "targetType", "scheduledAt", status, "createdAt")
+         VALUES ($1, $2, $3, 'all', CURRENT_TIMESTAMP, 'scheduled', CURRENT_TIMESTAMP)`,
         notifId1,
         "New Prediction Challenge is Live!",
         `${teamA} vs ${teamB} — ${title}. Make your prediction now!`
@@ -155,8 +155,8 @@ export async function POST(req: NextRequest) {
       const notifId2 = cuid();
       await prisma.$executeRawUnsafe(
         `INSERT INTO scheduled_notifications
-          (id, title, body, "targetType", "scheduledAt", status, "createdAt", "updatedAt")
-         VALUES ($1, $2, $3, 'all', $4, 'scheduled', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+          (id, title, body, "targetType", "scheduledAt", status, "createdAt")
+         VALUES ($1, $2, $3, 'all', $4, 'scheduled', CURRENT_TIMESTAMP)`,
         notifId2,
         "Last chance to vote!",
         `${teamA} vs ${teamB} — Voting closes soon. Don't miss out!`,

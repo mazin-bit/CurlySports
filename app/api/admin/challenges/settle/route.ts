@@ -68,7 +68,26 @@ export async function POST(req: NextRequest) {
     }
 
     const challenge = challenges[0];
+
+    // Guard against re-settling
+    const statusCheck = await prisma.$queryRawUnsafe<{ status: string }[]>(
+      `SELECT status FROM prediction_challenges WHERE id = $1`,
+      challengeId
+    );
+    if (statusCheck.length > 0 && statusCheck[0].status === "settled") {
+      return NextResponse.json(
+        { error: "Challenge already settled" },
+        { status: 400 }
+      );
+    }
+
     const maxRefEntries = Number(challenge.maxReferralEntries);
+
+    // Clean up existing entries for this challenge (handles re-settle edge case)
+    await prisma.$executeRawUnsafe(
+      `DELETE FROM challenge_entries WHERE "challengeId" = $1`,
+      challengeId
+    );
 
     // 2. Update challenge status to 'settled' and set result
     await prisma.$executeRawUnsafe(
@@ -167,14 +186,18 @@ export async function POST(req: NextRequest) {
       ? "It's a draw!"
       : `${result === "teamA" ? challenge.teamA : challenge.teamB} wins!`;
 
-    await prisma.$executeRawUnsafe(
-      `INSERT INTO scheduled_notifications
-        (id, title, body, "targetType", "scheduledAt", status, "createdAt", "updatedAt")
-       VALUES ($1, $2, $3, 'all', CURRENT_TIMESTAMP, 'scheduled', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
-      notifId,
-      "Results are in!",
-      `${challenge.teamA} vs ${challenge.teamB} — ${resultText} ${correctCount} users predicted correctly.`
-    );
+    try {
+      await prisma.$executeRawUnsafe(
+        `INSERT INTO scheduled_notifications
+          (id, title, body, "targetType", "scheduledAt", status, "createdAt")
+         VALUES ($1, $2, $3, 'all', CURRENT_TIMESTAMP, 'scheduled', CURRENT_TIMESTAMP)`,
+        notifId,
+        "Results are in!",
+        `${challenge.teamA} vs ${challenge.teamB} — ${resultText} ${correctCount} users predicted correctly.`
+      );
+    } catch (notifErr) {
+      console.error("Failed to create settle notification:", notifErr);
+    }
 
     return NextResponse.json({
       correctCount,

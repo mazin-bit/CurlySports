@@ -1,7 +1,7 @@
 "use client";
 export const dynamic = "force-dynamic";
 import { useState, useRef, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import styles from "./login.module.css";
 import { Mail, Eye, EyeOff, Check, X, Loader2 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -252,6 +252,8 @@ export default function LoginPage() {
   const [usernameStatus, setUsernameStatus] = useState<"idle" | "checking" | "available" | "taken" | "invalid">("idle");
   const usernameTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const [referralCode] = useState(() => searchParams.get("ref") ?? "");
 
   const checkUsername = useCallback((value: string) => {
     if (usernameTimerRef.current) clearTimeout(usernameTimerRef.current);
@@ -305,7 +307,7 @@ export default function LoginPage() {
         const res = await fetch("/api/auth/signup", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password, username: username.trim() }),
+          body: JSON.stringify({ email, password, username: username.trim(), ...(referralCode && { referralCode }) }),
         });
         const json = await res.json();
         if (!res.ok) throw new Error(json.error ?? t("auth.signupFailed"));
@@ -348,7 +350,7 @@ export default function LoginPage() {
       scope: "openid email profile",
       access_type: "offline",
       prompt: "select_account",
-      state: "/dashboard",
+      state: referralCode ? `/dashboard?ref=${referralCode}` : '/dashboard',
     });
     window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
   }

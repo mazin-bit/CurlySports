@@ -15,6 +15,7 @@ function authorize(req: NextRequest): boolean {
 /* ── Interfaces ─────────────────────────────────────────────────────── */
 interface ChallengeRow {
   id: string;
+  status: string;
   winnerCount: number;
   teamA: string;
   teamB: string;
@@ -49,7 +50,7 @@ export async function POST(req: NextRequest) {
 
     // 1. Get the challenge
     const challenges = await prisma.$queryRawUnsafe<ChallengeRow[]>(
-      `SELECT id, "winnerCount", "teamA", "teamB", title
+      `SELECT id, status, "winnerCount", "teamA", "teamB", title
        FROM prediction_challenges WHERE id = $1`,
       challengeId
     );
@@ -59,6 +60,27 @@ export async function POST(req: NextRequest) {
     }
 
     const challenge = challenges[0];
+
+    // Guard: challenge must be settled before drawing
+    if (challenge.status !== "settled") {
+      return NextResponse.json(
+        { error: "Challenge must be settled before drawing winners" },
+        { status: 400 }
+      );
+    }
+
+    // Guard: prevent re-drawing if winners already exist
+    const existingWinners = await prisma.$queryRawUnsafe<{ count: bigint }[]>(
+      `SELECT COUNT(*) AS count FROM challenge_winners WHERE "challengeId" = $1`,
+      challengeId
+    );
+    if (Number(existingWinners[0].count) > 0) {
+      return NextResponse.json(
+        { error: "Winners already drawn for this challenge" },
+        { status: 400 }
+      );
+    }
+
     const winnerCount = Number(challenge.winnerCount);
 
     // 2. Get all challenge_entries with totalEntries > 0
@@ -128,15 +150,19 @@ export async function POST(req: NextRequest) {
       ? `{${selectedWinners.map(u => `"${u.replace(/"/g, '\\"')}"`).join(",")}}`
       : "{}";
 
-    await prisma.$executeRawUnsafe(
-      `INSERT INTO scheduled_notifications
-        (id, title, body, "targetType", "targetUsers", "scheduledAt", status, "createdAt", "updatedAt")
-       VALUES ($1, $2, $3, 'user', $4::text[], CURRENT_TIMESTAMP, 'scheduled', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
-      notifId,
-      "You won the prediction challenge!",
-      `Congratulations! You've been selected as a winner for "${challenge.title}" (${challenge.teamA} vs ${challenge.teamB}).`,
-      pgArray
-    );
+    try {
+      await prisma.$executeRawUnsafe(
+        `INSERT INTO scheduled_notifications
+          (id, title, body, "targetType", "targetUsers", "scheduledAt", status, "createdAt")
+         VALUES ($1, $2, $3, 'user', $4::text[], CURRENT_TIMESTAMP, 'scheduled', CURRENT_TIMESTAMP)`,
+        notifId,
+        "You won the prediction challenge!",
+        `Congratulations! You've been selected as a winner for "${challenge.title}" (${challenge.teamA} vs ${challenge.teamB}).`,
+        pgArray
+      );
+    } catch (notifErr) {
+      console.error("Failed to create draw notification:", notifErr);
+    }
 
     // 7. Fetch winner user info for the response
     const winners: { userId: string; username: string | null; email: string | null; entries: number }[] = [];
