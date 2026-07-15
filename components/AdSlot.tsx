@@ -19,12 +19,17 @@ export default function AdSlot({ size = "banner", label = "Advertisement" }: AdS
   const [ad, setAd] = useState<Ad | null>(null);
 
   useEffect(() => {
-    fetch(`/api/ads/active?slot=${size}`)
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.ads?.length > 0) setAd(data.ads[0]);
-      })
-      .catch(() => {});
+    const loadAd = () => {
+      fetch(`/api/ads/active?slot=${size}&t=${Date.now()}`)
+        .then((r) => r.json())
+        .then((data) => {
+          if (data.ads?.length > 0) setAd(data.ads[0]);
+        })
+        .catch(() => {});
+    };
+    loadAd();
+    const interval = setInterval(loadAd, 60_000); // refresh every 60s
+    return () => clearInterval(interval);
   }, [size]);
 
   if (!ad) return null;

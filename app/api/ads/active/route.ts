@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
+export const dynamic = "force-dynamic";
+
 const ENSURE_TABLE = `
   CREATE TABLE IF NOT EXISTS ads (
     id TEXT PRIMARY KEY,
@@ -63,7 +65,9 @@ export async function GET(req: NextRequest) {
       ads[0].id
     );
 
-    return NextResponse.json({ ads });
+    const res = NextResponse.json({ ads });
+    res.headers.set("Cache-Control", "no-store, max-age=0");
+    return res;
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     return NextResponse.json({ ads: [], debug: msg });

@@ -140,7 +140,20 @@ export async function POST(req: NextRequest) {
       INSERT INTO ads (id, title, "imageUrl", "linkUrl", slot, "sponsorId", "startDate", "endDate", "isActive", impressions, clicks, "createdAt", "updatedAt")
       VALUES (${id}, ${title}, ${imageUrl ?? null}, ${linkUrl}, ${slot}, ${sponsorId ?? null}, ${new Date(startDate)}, ${new Date(endDate)}, true, 0, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
     `;
-    return NextResponse.json({ id, title, slot, status: "created" }, { status: 201 });
+    return NextResponse.json({
+      id, title, slot,
+      imageUrl: imageUrl ?? null,
+      linkUrl,
+      sponsorId: sponsorId ?? null,
+      startDate: new Date(startDate).toISOString(),
+      endDate: new Date(endDate).toISOString(),
+      isActive: true,
+      impressions: 0,
+      clicks: 0,
+      ctr: 0,
+      createdAt: new Date().toISOString(),
+      sponsorName: null,
+    }, { status: 201 });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     return NextResponse.json({ error: "Failed to create ad", debug: msg }, { status: 500 });
