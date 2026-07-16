@@ -270,6 +270,7 @@ export default function ChallengesScreen({ sport, onOpenChallenge, onSearch, onB
   const [redeemCode, setRedeemCode] = useState('');
   const [redeemLoading, setRedeemLoading] = useState(false);
   const [redeemMsg, setRedeemMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [hasRedeemed, setHasRedeemed] = useState(false);
   const [toastMsg, setToastMsg] = useState('');
   const prevEntriesRef = useRef<number | null>(null);
   const fetchedRef = useRef(false);
@@ -312,6 +313,7 @@ export default function ChallengesScreen({ sport, onOpenChallenge, onSearch, onB
       if (res.ok) {
         setRedeemMsg({ type: 'success', text: data.message });
         setRedeemCode('');
+        setHasRedeemed(true);
         fetchData();
       } else {
         setRedeemMsg({ type: 'error', text: data.error || 'Failed to redeem code.' });
@@ -373,6 +375,7 @@ export default function ChallengesScreen({ sport, onOpenChallenge, onSearch, onB
             total: statsData.total ?? 0,
             totalEntries: statsData.totalEntries ?? 0,
           });
+          if (statsData.hasRedeemed) setHasRedeemed(true);
         }
       } catch { /* referral fetch failed silently */ }
     } catch { /* ignore */ }
@@ -583,7 +586,7 @@ export default function ChallengesScreen({ sport, onOpenChallenge, onSearch, onB
             {/* ───────────────────────────────────────────── */}
             {/* Redeem Referral Code                          */}
             {/* ───────────────────────────────────────────── */}
-            {isLoggedIn && (
+            {isLoggedIn && !hasRedeemed && (
               <div style={{ background: 'var(--surface)', border: '2px solid var(--border-2)', borderRadius: 14, padding: 16 }}>
                 <span style={{ fontFamily: 'var(--display)', fontWeight: 700, fontSize: 15, color: 'var(--ink)', display: 'block', marginBottom: 10 }}>
                   Have a referral code?

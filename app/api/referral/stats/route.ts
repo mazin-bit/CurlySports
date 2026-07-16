@@ -42,6 +42,13 @@ export async function GET() {
 
     const { code } = codeRows[0];
 
+    // Check if this user has already redeemed someone else's code
+    const referredByRows: { referredBy: string | null }[] = await prisma.$queryRawUnsafe(
+      `SELECT "referredBy" FROM users WHERE id = $1`,
+      user.id
+    );
+    const hasRedeemed = !!(referredByRows[0]?.referredBy);
+
     // Count verified referrals
     const verifiedResult: { count: bigint }[] = await prisma.$queryRawUnsafe(
       `SELECT COUNT(*)::int as count FROM referrals WHERE "referrerUserId" = $1 AND status = 'verified'`,
@@ -85,6 +92,7 @@ export async function GET() {
         verifiedReferrals,
         pendingReferrals,
         totalBonusEntries,
+        hasRedeemed,
       },
       { headers: { "Cache-Control": "no-store" } }
     );

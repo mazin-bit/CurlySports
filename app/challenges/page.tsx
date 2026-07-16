@@ -138,6 +138,7 @@ export default function ChallengesPage() {
   const [redeemCode, setRedeemCode] = useState("");
   const [redeemLoading, setRedeemLoading] = useState(false);
   const [redeemMsg, setRedeemMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [hasRedeemed, setHasRedeemed] = useState(false);
   const [toast, setToast] = useState<{ message: string; visible: boolean }>({ message: "", visible: false });
   const prevEntriesRef = useRef<number | null>(null);
 
@@ -187,6 +188,7 @@ export default function ChallengesPage() {
           total: statsData.total ?? 0,
           totalEntries: statsData.totalEntries ?? 0,
         });
+        if (statsData.hasRedeemed) setHasRedeemed(true);
       }
     }
 
@@ -314,6 +316,7 @@ export default function ChallengesPage() {
       if (res.ok) {
         setRedeemMsg({ type: "success", text: data.message });
         setRedeemCode("");
+        setHasRedeemed(true);
         fetchData(); // Refresh stats + leaderboard
       } else {
         setRedeemMsg({ type: "error", text: data.error || "Failed to redeem code." });
@@ -529,7 +532,7 @@ export default function ChallengesPage() {
         ) : null}
 
         {/* ── Redeem Referral Code ──────────────────────────────── */}
-        {isLoggedIn && (
+        {isLoggedIn && !hasRedeemed && (
           <div className={styles.redeemCard}>
             <div className={styles.redeemTitle}>Have a referral code?</div>
             <div className={styles.redeemRow}>
