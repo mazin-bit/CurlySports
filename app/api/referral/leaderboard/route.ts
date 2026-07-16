@@ -33,7 +33,7 @@ export async function GET() {
     await ensureChallengeTables();
 
     const auth = await optionalAuth();
-    const currentUserId = auth?.user?.id ?? null;
+    const currentUserId = auth?.id ?? null;
 
     const rows = await prisma.$queryRawUnsafe<LeaderboardRow[]>(
       `SELECT
