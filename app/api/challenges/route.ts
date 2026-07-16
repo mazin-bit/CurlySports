@@ -123,13 +123,14 @@ export async function GET(req: NextRequest) {
 /* ------------------------------------------------------------------ */
 export async function POST(req: NextRequest) {
   try {
-    await ensureChallengeTables();
-
-    const auth = await requireAuth();
+    const [, auth, body] = await Promise.all([
+      ensureChallengeTables(),
+      requireAuth(),
+      req.json(),
+    ]);
     if (auth instanceof NextResponse) return auth;
     const { user } = auth;
 
-    const body = await req.json();
     const { challengeId, selectedTeam } = body;
 
     // Validate input
@@ -189,41 +190,35 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Create vote (entries are 0 until challenge is settled)
+    // Create vote + entry + update challenge counts in parallel
     const voteId = cuid();
-    await prisma.$executeRawUnsafe(
+    const entryId = cuid();
+
+    // Insert vote
+    const insertVote = prisma.$executeRawUnsafe(
       `INSERT INTO challenge_votes (id, "challengeId", "userId", "selectedTeam", entries, "createdAt")
        VALUES ($1, $2, $3, $4, 0, NOW())`,
-      voteId,
-      challengeId,
-      user.id,
-      selectedTeam
+      voteId, challengeId, user.id, selectedTeam
     );
 
-    // Increment totalVotes on the challenge
-    await prisma.$executeRawUnsafe(
-      `UPDATE prediction_challenges SET "totalVotes" = "totalVotes" + 1, "updatedAt" = NOW() WHERE id = $1`,
-      challengeId
-    );
-
-    // Create entries row — voting gives 1 base entry (draw ticket)
-    await prisma.$executeRawUnsafe(
+    // Upsert entry row (1 base entry for voting)
+    const upsertEntry = prisma.$executeRawUnsafe(
       `INSERT INTO challenge_entries (id, "challengeId", "userId", "baseEntries", "referralEntries", "totalEntries", "createdAt", "updatedAt")
        VALUES ($1, $2, $3, 1, 0, 1, NOW(), NOW())
        ON CONFLICT ("challengeId", "userId") DO UPDATE SET
          "baseEntries" = GREATEST(challenge_entries."baseEntries", 1),
          "totalEntries" = GREATEST(challenge_entries."baseEntries", 1) + challenge_entries."referralEntries",
          "updatedAt" = NOW()`,
-      cuid(),
-      challengeId,
-      user.id
+      entryId, challengeId, user.id
     );
 
-    // Increment totalEntries on the challenge
-    await prisma.$executeRawUnsafe(
-      `UPDATE prediction_challenges SET "totalEntries" = "totalEntries" + 1, "updatedAt" = NOW() WHERE id = $1`,
+    // Increment both totalVotes and totalEntries in one query
+    const updateChallenge = prisma.$executeRawUnsafe(
+      `UPDATE prediction_challenges SET "totalVotes" = "totalVotes" + 1, "totalEntries" = "totalEntries" + 1, "updatedAt" = NOW() WHERE id = $1`,
       challengeId
     );
+
+    await Promise.all([insertVote, upsertEntry, updateChallenge]);
 
     const vote = {
       id: voteId,

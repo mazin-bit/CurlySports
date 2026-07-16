@@ -389,24 +389,18 @@ function useActiveChallenge() {
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch("/api/challenges?status=active&limit=1");
+        const res = await fetch("/api/challenges?status=active&limit=1", { credentials: "include" });
         if (!res.ok) return;
         const data = await res.json();
         const items = data.challenges ?? data;
         if (Array.isArray(items) && items.length > 0 && !cancelled) {
-          setChallenge(items[0]);
-          // check if user already voted
-          try {
-            const vRes = await fetch(`/api/challenges/${items[0].id}`);
-            if (vRes.ok) {
-              const vData = await vRes.json();
-              if (vData.userVote?.selectedTeam) {
-                // Map "teamA"/"teamB" back to actual team name for display
-                const teamName = vData.userVote.selectedTeam === "teamA" ? items[0].teamA : items[0].teamB;
-                setUserVote(teamName);
-              }
-            }
-          } catch { /* ignore - user not logged in */ }
+          const c = items[0];
+          // userVote is already included in the response ("teamA"/"teamB" or null)
+          if (c.userVote) {
+            const teamName = c.userVote === "teamA" ? c.teamA : c.teamB;
+            setUserVote(teamName);
+          }
+          setChallenge(c);
         }
       } catch { /* ignore */ }
     })();
