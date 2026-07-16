@@ -12,7 +12,6 @@
   background: var(--surface);
   border: 2px solid var(--ink);
   border-radius: var(--r-lg);
-  overflow: hidden;
   box-shadow: var(--shadow-lg);
 }
 
@@ -222,6 +221,51 @@
   background: var(--surface);
   transform: none;
   box-shadow: none;
+}
+
+/* ── Vote Tooltip ───────────────────────────────────────────────── */
+
+.voteBtnWrapper {
+  position: relative;
+  flex: 1;
+  display: flex;
+}
+
+.voteTooltip {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--ink);
+  color: var(--text-dim);
+  font-family: var(--body);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 10px 14px;
+  border-radius: 8px;
+  white-space: normal;
+  width: 240px;
+  text-align: center;
+  line-height: 1.4;
+  box-shadow: var(--shadow-md);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+  z-index: 10;
+}
+.voteTooltip::after {
+  content: "";
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-bottom-color: var(--ink);
+}
+
+.voteBtnWrapper:hover .voteTooltip,
+.voteTooltipVisible {
+  opacity: 1;
 }
 
 /* ── Result display (settled) ────────────────────────────────────── */

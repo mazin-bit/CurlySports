@@ -8,6 +8,7 @@ import { logger } from "@/lib/logger";
 import { generateOtp, hashOtp } from "@/lib/otp";
 import { sendEmail } from "@/lib/email";
 import { buildOtpEmail } from "@/lib/email-templates";
+import { verifyReferralsForUser } from "@/app/api/cron/verify-referrals/route";
 
 
 export async function POST(req: NextRequest) {
@@ -161,6 +162,10 @@ export async function POST(req: NextRequest) {
       INSERT INTO user_sessions (id, "userId", platform, "ipAddress", country, city, "userAgent", "createdAt")
       VALUES (${sessionId}, ${user.id}, ${platform}, ${ip}, ${country}, ${city}, ${ua.slice(0, 500)}, NOW())
     `.catch(() => {});
+
+    // Fire-and-forget: verify any pending referrals where this user is the referred user
+    // This triggers instant verification when a referred user logs in after email verification
+    verifyReferralsForUser(user.id).catch(() => {});
 
     return setAuthCookies(response, accessToken, refreshToken);
   } catch (err) {

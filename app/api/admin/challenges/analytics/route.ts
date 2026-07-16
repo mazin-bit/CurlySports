@@ -33,6 +33,15 @@ interface PlatformRow {
   count: bigint;
 }
 
+interface UserEntryRow {
+  userId: string;
+  username: string | null;
+  email: string | null;
+  baseEntries: number;
+  referralEntries: number;
+  totalEntries: number;
+}
+
 interface EntriesBreakdownRow {
   baseTotal: bigint;
   referralTotal: bigint;
@@ -140,6 +149,18 @@ export async function GET(req: NextRequest) {
         platformBreakdown = { web: 0, ios: 0, android: 0 };
       }
 
+      // Per-user entry breakdown (all users with entries for this challenge)
+      const userEntries = await prisma.$queryRawUnsafe<UserEntryRow[]>(
+        `SELECT ce."userId", u.username, u.email,
+                ce."baseEntries", ce."referralEntries", ce."totalEntries"
+         FROM challenge_entries ce
+         LEFT JOIN users u ON u.id = ce."userId"
+         WHERE ce."challengeId" = $1 AND ce."totalEntries" > 0
+         ORDER BY ce."totalEntries" DESC
+         LIMIT 50`,
+        challengeId
+      );
+
       challenge = {
         challengeId,
         votesByTeam,
@@ -154,6 +175,14 @@ export async function GET(req: NextRequest) {
           referralCount: Number(r.count),
         })),
         platformBreakdown,
+        userEntries: userEntries.map(u => ({
+          userId: u.userId,
+          username: u.username ?? "Unknown",
+          email: u.email ?? "",
+          baseEntries: Number(u.baseEntries),
+          referralEntries: Number(u.referralEntries),
+          totalEntries: Number(u.totalEntries),
+        })),
       };
     }
 

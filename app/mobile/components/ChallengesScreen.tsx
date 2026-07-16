@@ -1,5 +1,6 @@
 'use client';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useAuth } from './AuthContext';
 import Topbar from './ui/Topbar';
 import Icon from './ui/Icon';
 
@@ -26,10 +27,22 @@ interface Challenge {
   sport: string;
 }
 
-interface UserStats {
+interface ReferralStats {
+  code: string;
+  link: string;
+  verified: number;
+  total: number;
   totalEntries: number;
-  referrals: number;
-  challengesJoined: number;
+}
+
+interface LeaderboardEntry {
+  rank: number;
+  userId: string;
+  username: string;
+  avatar: string | null;
+  totalReferrals: number;
+  totalEntries: number;
+  isCurrentUser?: boolean;
 }
 
 interface ChallengesScreenProps {
@@ -77,15 +90,18 @@ function CountdownDisplay({ targetDate }: { targetDate: string }) {
 /* ── TeamBadge ──────────────────────────────────────────── */
 
 function TeamBadge({ team }: { team: ChallengeTeam }) {
+  const [imgError, setImgError] = useState(false);
+  const hasValidLogo = team.logo && /\.(png|jpg|jpeg|gif|svg|webp)(\?|$)/i.test(team.logo);
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, flex: 1, minWidth: 0 }}>
-      <div style={{ width: 40, height: 40, borderRadius: 10, background: 'var(--surface-2)', border: '2px solid var(--border-2)', display: 'grid', placeItems: 'center', overflow: 'hidden', flexShrink: 0 }}>
-        {team.logo
-          ? <img src={team.logo} alt="" style={{ width: 28, height: 28, objectFit: 'contain' }} />
-          : <span style={{ fontFamily: 'var(--display)', fontWeight: 800, fontSize: 14, color: 'var(--text-dim)' }}>{team.shortName.slice(0, 2)}</span>
+      <div style={{ width: 44, height: 44, borderRadius: 12, background: 'var(--ink)', border: '2px solid var(--ink)', display: 'grid', placeItems: 'center', overflow: 'hidden', flexShrink: 0 }}>
+        {hasValidLogo && !imgError
+          ? <img src={team.logo!} alt="" style={{ width: 30, height: 30, objectFit: 'contain' }} onError={() => setImgError(true)} />
+          : <span style={{ fontFamily: 'var(--display)', fontWeight: 800, fontSize: 15, color: 'var(--accent)' }}>{team.shortName.slice(0, 3)}</span>
         }
       </div>
-      <span style={{ fontFamily: 'var(--display)', fontWeight: 700, fontSize: 12, color: 'var(--ink)', textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%' }}>
+      <span style={{ fontFamily: 'var(--display)', fontWeight: 700, fontSize: 13, color: 'var(--ink)', textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%' }}>
         {team.name}
       </span>
     </div>
@@ -185,20 +201,14 @@ function PastChallengeCard({ challenge, onTap }: { challenge: Challenge; onTap: 
     <div onClick={onTap} className="cs-tap" style={{ background: 'var(--surface)', border: '2px solid var(--border-2)', borderRadius: 14, padding: 14, cursor: 'pointer' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div style={{ width: 28, height: 28, borderRadius: 8, background: 'var(--surface-2)', border: '1.5px solid var(--border-2)', display: 'grid', placeItems: 'center', overflow: 'hidden' }}>
-            {challenge.teamA.logo
-              ? <img src={challenge.teamA.logo} alt="" style={{ width: 18, height: 18, objectFit: 'contain' }} />
-              : <span style={{ fontSize: 10, fontWeight: 800, color: 'var(--text-dim)' }}>{challenge.teamA.shortName.slice(0, 2)}</span>
-            }
+          <div style={{ width: 28, height: 28, borderRadius: 8, background: 'var(--ink)', border: '1.5px solid var(--ink)', display: 'grid', placeItems: 'center', overflow: 'hidden' }}>
+            <span style={{ fontSize: 10, fontWeight: 800, color: 'var(--accent)' }}>{challenge.teamA.shortName.slice(0, 3)}</span>
           </div>
           <span style={{ fontFamily: 'var(--body)', fontSize: 13, fontWeight: 600, color: 'var(--ink)' }}>
             {challenge.teamA.shortName} vs {challenge.teamB.shortName}
           </span>
-          <div style={{ width: 28, height: 28, borderRadius: 8, background: 'var(--surface-2)', border: '1.5px solid var(--border-2)', display: 'grid', placeItems: 'center', overflow: 'hidden' }}>
-            {challenge.teamB.logo
-              ? <img src={challenge.teamB.logo} alt="" style={{ width: 18, height: 18, objectFit: 'contain' }} />
-              : <span style={{ fontSize: 10, fontWeight: 800, color: 'var(--text-dim)' }}>{challenge.teamB.shortName.slice(0, 2)}</span>
-            }
+          <div style={{ width: 28, height: 28, borderRadius: 8, background: 'var(--ink)', border: '1.5px solid var(--ink)', display: 'grid', placeItems: 'center', overflow: 'hidden' }}>
+            <span style={{ fontSize: 10, fontWeight: 800, color: 'var(--accent)' }}>{challenge.teamB.shortName.slice(0, 3)}</span>
           </div>
         </div>
       </div>
@@ -223,24 +233,107 @@ function PastChallengeCard({ challenge, onTap }: { challenge: Challenge; onTap: 
   );
 }
 
+/* ── Toast ──────────────────────────────────────────────── */
+
+function Toast({ message, onClose }: { message: string; onClose: () => void }) {
+  useEffect(() => {
+    const t = setTimeout(onClose, 6000);
+    return () => clearTimeout(t);
+  }, [onClose]);
+
+  return (
+    <div style={{
+      position: 'fixed', top: 60, left: 16, right: 16, zIndex: 9999,
+      display: 'flex', alignItems: 'center', gap: 10, padding: 14,
+      background: 'var(--ink)', border: '2px solid var(--accent)', borderRadius: 14,
+      animation: 'cs-slide-down 0.3s ease-out',
+    }}>
+      <Icon name="spark" size={18} style={{ color: 'var(--accent)', flexShrink: 0 }} />
+      <span style={{ flex: 1, fontFamily: 'var(--body)', fontSize: 13, fontWeight: 600, color: '#fff' }}>{message}</span>
+      <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}>
+        <Icon name="close" size={14} style={{ color: 'var(--text-mute)' }} />
+      </button>
+    </div>
+  );
+}
+
 /* ── Main Screen ────────────────────────────────────────── */
 
 export default function ChallengesScreen({ sport, onOpenChallenge, onSearch, onBell, unread }: ChallengesScreenProps) {
+  const { user } = useAuth();
   const [challenges, setChallenges] = useState<Challenge[]>([]);
-  const [stats, setStats] = useState<UserStats>({ totalEntries: 0, referrals: 0, challengesJoined: 0 });
+  const [referral, setReferral] = useState<ReferralStats | null>(null);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [votingId, setVotingId] = useState<string | null>(null);
+  const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [redeemCode, setRedeemCode] = useState('');
+  const [redeemLoading, setRedeemLoading] = useState(false);
+  const [redeemMsg, setRedeemMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [toastMsg, setToastMsg] = useState('');
+  const prevEntriesRef = useRef<number | null>(null);
   const fetchedRef = useRef(false);
 
-  const fetchChallenges = useCallback(async () => {
-    try {
-      const token = localStorage.getItem('cs_token');
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-      if (token) headers['Authorization'] = `Bearer ${token}`;
+  /* ── Clipboard ── */
 
-      const [cRes, sRes] = await Promise.allSettled([
-        fetch(`/api/challenges?sport=${sport}`, { headers }),
-        fetch('/api/challenges/stats', { headers }),
+  async function copyToClipboard(text: string, field: string) {
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      // fallback
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.left = '-9999px';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    }
+    setCopiedField(field);
+    setTimeout(() => setCopiedField(null), 2000);
+  }
+
+  /* ── Redeem ── */
+
+  async function handleRedeem() {
+    const trimmed = redeemCode.trim();
+    if (!trimmed || redeemLoading) return;
+    setRedeemLoading(true);
+    setRedeemMsg(null);
+    try {
+      const res = await fetch('/api/referral/redeem', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ code: trimmed }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setRedeemMsg({ type: 'success', text: data.message });
+        setRedeemCode('');
+        fetchData();
+      } else {
+        setRedeemMsg({ type: 'error', text: data.error || 'Failed to redeem code.' });
+      }
+    } catch {
+      setRedeemMsg({ type: 'error', text: 'Network error. Please try again.' });
+    } finally {
+      setRedeemLoading(false);
+    }
+  }
+
+  /* ── Data fetching ── */
+
+  const fetchData = useCallback(async () => {
+    try {
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      const opts = { headers, credentials: 'include' as const };
+
+      // Fetch challenges + leaderboard in parallel
+      const [cRes, lbRes] = await Promise.allSettled([
+        fetch(`/api/challenges?sport=${sport}`, opts),
+        fetch('/api/referral/leaderboard', opts),
       ]);
 
       if (cRes.status === 'fulfilled' && cRes.value.ok) {
@@ -256,10 +349,32 @@ export default function ChallengesScreen({ sport, onOpenChallenge, onSearch, onB
         }));
         setChallenges(mapped);
       }
-      if (sRes.status === 'fulfilled' && sRes.value.ok) {
-        const data = await sRes.value.json();
-        setStats(data);
+
+      if (lbRes.status === 'fulfilled' && lbRes.value.ok) {
+        const data = await lbRes.value.json();
+        setLeaderboard(data.entries ?? []);
       }
+
+      // Fetch referral data (cookies handle auth automatically)
+      try {
+        const [codeRes, statsRes] = await Promise.allSettled([
+          fetch('/api/referral/code', { headers, credentials: 'include' }),
+          fetch('/api/referral/stats', { headers, credentials: 'include' }),
+        ]);
+
+        if (codeRes.status === 'fulfilled' && codeRes.value.ok &&
+            statsRes.status === 'fulfilled' && statsRes.value.ok) {
+          const codeData = await codeRes.value.json();
+          const statsData = await statsRes.value.json();
+          setReferral({
+            code: codeData.code,
+            link: codeData.link || `https://curlysports.com/invite/${codeData.code}`,
+            verified: statsData.verified ?? 0,
+            total: statsData.total ?? 0,
+            totalEntries: statsData.totalEntries ?? 0,
+          });
+        }
+      } catch { /* referral fetch failed silently */ }
     } catch { /* ignore */ }
     finally { setLoading(false); }
   }, [sport]);
@@ -267,35 +382,89 @@ export default function ChallengesScreen({ sport, onOpenChallenge, onSearch, onB
   useEffect(() => {
     if (fetchedRef.current) setLoading(true);
     fetchedRef.current = true;
-    fetchChallenges();
-  }, [fetchChallenges]);
+    fetchData();
+  }, [fetchData]);
+
+  // Initialize prevEntriesRef when referral data first loads
+  useEffect(() => {
+    if (referral && prevEntriesRef.current === null) {
+      prevEntriesRef.current = referral.totalEntries;
+    }
+  }, [referral]);
+
+  // Poll for entry updates every 30 seconds
+  useEffect(() => {
+    if (!user) return;
+
+    const pollInterval = setInterval(async () => {
+      try {
+        const opts = { credentials: 'include' as const };
+
+        const [statsRes, lbRes] = await Promise.allSettled([
+          fetch('/api/referral/stats', opts),
+          fetch('/api/referral/leaderboard', opts),
+        ]);
+
+        if (lbRes.status === 'fulfilled' && lbRes.value.ok) {
+          const lbData = await lbRes.value.json();
+          setLeaderboard(lbData.entries ?? []);
+        }
+
+        if (statsRes.status === 'fulfilled' && statsRes.value.ok) {
+          const statsData = await statsRes.value.json();
+          const newEntries = statsData.totalEntries ?? 0;
+
+          if (prevEntriesRef.current !== null && newEntries > prevEntriesRef.current) {
+            const gained = newEntries - prevEntriesRef.current;
+            setToastMsg(`You earned +${gained} new entr${gained === 1 ? 'y' : 'ies'} from a referral! Total: ${newEntries}`);
+          }
+          prevEntriesRef.current = newEntries;
+
+          setReferral(prev => prev ? {
+            ...prev,
+            verified: statsData.verified ?? prev.verified,
+            total: statsData.total ?? prev.total,
+            totalEntries: newEntries,
+          } : prev);
+        }
+      } catch { /* silent */ }
+    }, 30_000);
+
+    return () => clearInterval(pollInterval);
+  }, [user]);
+
+  /* ── Vote ── */
 
   const handleVote = async (challengeId: string, side: 'teamA' | 'teamB') => {
     setVotingId(challengeId);
     try {
-      const token = localStorage.getItem('cs_token');
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-      if (token) headers['Authorization'] = `Bearer ${token}`;
-
       const res = await fetch('/api/challenges', {
         method: 'POST',
-        headers,
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ challengeId, selectedTeam: side }),
       });
 
       if (res.ok) {
         setChallenges(prev => prev.map(c => c.id === challengeId ? { ...c, userVote: side } : c));
-        setStats(prev => ({ ...prev, challengesJoined: prev.challengesJoined + 1 }));
+        // Refresh stats after voting
+        fetchData();
       }
     } catch { /* ignore */ }
     finally { setVotingId(null); }
   };
 
+  /* ── Derived ── */
+
   const activeChallenges = challenges.filter(c => c.status === 'active');
   const pastChallenges = challenges.filter(c => c.status !== 'active');
+  const isLoggedIn = !!user;
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--bg)' }}>
+      {/* Toast */}
+      {toastMsg && <Toast message={toastMsg} onClose={() => setToastMsg('')} />}
+
       <Topbar
         title="Challenges"
         subtitle="PREDICT & WIN"
@@ -332,22 +501,227 @@ export default function ChallengesScreen({ sport, onOpenChallenge, onSearch, onB
               </div>
             )}
 
-            {/* Your Stats Row */}
-            <div>
-              <div style={{ fontFamily: 'var(--mono)', fontSize: 9.5, fontWeight: 700, letterSpacing: '0.12em', color: 'var(--text-mute)', textTransform: 'uppercase', marginBottom: 10 }}>Your Stats</div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
-                {[
-                  { label: 'Total Entries', value: stats.totalEntries, icon: 'clipboard' },
-                  { label: 'Referrals', value: stats.referrals, icon: 'users' },
-                  { label: 'Challenges', value: stats.challengesJoined, icon: 'trophy' },
-                ].map(stat => (
-                  <div key={stat.label} style={{ background: 'var(--surface)', border: '2px solid var(--border-2)', borderRadius: 12, padding: '14px 10px', textAlign: 'center' }}>
-                    <Icon name={stat.icon} size={16} style={{ color: 'var(--accent)', margin: '0 auto 6px' }} />
-                    <div style={{ fontFamily: 'var(--display)', fontWeight: 800, fontSize: 22, color: 'var(--ink)', lineHeight: 1 }}>{stat.value}</div>
-                    <div style={{ fontFamily: 'var(--mono)', fontSize: 9, fontWeight: 600, color: 'var(--text-mute)', marginTop: 4, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{stat.label}</div>
+            {/* ───────────────────────────────────────────── */}
+            {/* Your Stats (authenticated)                    */}
+            {/* ───────────────────────────────────────────── */}
+            {isLoggedIn && referral && (
+              <div style={{ background: 'var(--surface)', border: '2px solid var(--border-2)', borderRadius: 14, padding: 16 }}>
+                {/* Header */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+                  <Icon name="users" size={18} style={{ color: 'var(--accent)' }} />
+                  <span style={{ fontFamily: 'var(--display)', fontWeight: 800, fontSize: 17, color: 'var(--ink)' }}>Your Stats</span>
+                </div>
+
+                {/* Total entries */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 14 }}>
+                  <span style={{ fontFamily: 'var(--display)', fontWeight: 800, fontSize: 32, color: 'var(--accent)' }}>{referral.totalEntries}</span>
+                  <span style={{ fontFamily: 'var(--mono)', fontWeight: 700, fontSize: 10, color: 'var(--text-mute)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    Total entries across all challenges
+                  </span>
+                </div>
+
+                {/* Referral Code */}
+                <span style={{ fontFamily: 'var(--mono)', fontSize: 9.5, fontWeight: 700, color: 'var(--text-mute)', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: 4 }}>
+                  Your Referral Code
+                </span>
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: 10, padding: 12,
+                  background: 'var(--surface-2)', border: '2px dashed var(--ink)', borderRadius: 10, marginBottom: 10,
+                }}>
+                  <span style={{ flex: 1, fontFamily: 'var(--mono)', fontWeight: 700, fontSize: 16, color: 'var(--ink)', letterSpacing: '0.08em' }}>
+                    {referral.code}
+                  </span>
+                  <button
+                    onClick={() => copyToClipboard(referral.code, 'code')}
+                    className="cs-tap"
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 4, padding: '6px 10px',
+                      background: 'var(--surface)', border: '2px solid var(--border-2)', borderRadius: 8,
+                      fontFamily: 'var(--body)', fontWeight: 700, fontSize: 11, color: 'var(--ink)', cursor: 'pointer',
+                    }}
+                  >
+                    <Icon name={copiedField === 'code' ? 'check' : 'copy'} size={14} style={{ color: 'var(--ink)' }} />
+                    {copiedField === 'code' ? 'Copied' : 'Copy'}
+                  </button>
+                </div>
+
+                {/* Referral Link */}
+                <div style={{ marginBottom: 8 }}>
+                  <span style={{ fontFamily: 'var(--mono)', fontSize: 9.5, fontWeight: 700, color: 'var(--text-mute)', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: 4 }}>
+                    Share Link
+                  </span>
+                  <div style={{
+                    display: 'flex', alignItems: 'center', gap: 8, padding: 10,
+                    background: 'var(--surface-2)', border: '1.5px solid var(--border-2)', borderRadius: 8,
+                  }}>
+                    <Icon name="link" size={13} style={{ color: 'var(--text-mute)', flexShrink: 0 }} />
+                    <span style={{ flex: 1, fontFamily: 'var(--body)', fontSize: 11, color: 'var(--text-dim)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {referral.link.replace(/^https?:\/\/localhost:\d+/, 'https://curlysports.com')}
+                    </span>
+                    <button
+                      onClick={() => copyToClipboard(referral.link, 'link')}
+                      className="cs-tap"
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: 4, padding: '5px 10px',
+                        background: 'var(--surface)', border: '1.5px solid var(--border-2)', borderRadius: 6,
+                        fontFamily: 'var(--body)', fontWeight: 700, fontSize: 11, color: 'var(--ink)', cursor: 'pointer', flexShrink: 0,
+                      }}
+                    >
+                      <Icon name={copiedField === 'link' ? 'check' : 'copy'} size={12} style={{ color: 'var(--ink)' }} />
+                      {copiedField === 'link' ? 'Copied' : 'Copy'}
+                    </button>
                   </div>
-                ))}
+                </div>
+
+                {/* Referral stats */}
+                <span style={{ fontFamily: 'var(--body)', fontSize: 11, fontWeight: 600, color: 'var(--text-mute)' }}>
+                  {referral.verified} verified / {referral.total} total referrals
+                </span>
               </div>
+            )}
+
+            {/* ───────────────────────────────────────────── */}
+            {/* Redeem Referral Code                          */}
+            {/* ───────────────────────────────────────────── */}
+            {isLoggedIn && (
+              <div style={{ background: 'var(--surface)', border: '2px solid var(--border-2)', borderRadius: 14, padding: 16 }}>
+                <span style={{ fontFamily: 'var(--display)', fontWeight: 700, fontSize: 15, color: 'var(--ink)', display: 'block', marginBottom: 10 }}>
+                  Have a referral code?
+                </span>
+                <div style={{ display: 'flex', gap: 8, width: '100%' }}>
+                  <input
+                    type="text"
+                    placeholder="Enter referral code"
+                    value={redeemCode}
+                    onChange={e => setRedeemCode(e.target.value.toUpperCase())}
+                    onKeyDown={e => e.key === 'Enter' && handleRedeem()}
+                    maxLength={20}
+                    style={{
+                      flex: 1, minWidth: 0, padding: '12px 14px',
+                      background: 'var(--surface-2)', border: '2px solid var(--border-2)', borderRadius: 10,
+                      fontFamily: 'var(--mono)', fontWeight: 700, fontSize: 14, color: 'var(--ink)', letterSpacing: '0.08em',
+                      outline: 'none', boxSizing: 'border-box',
+                    }}
+                  />
+                  <button
+                    onClick={handleRedeem}
+                    disabled={!redeemCode.trim() || redeemLoading}
+                    className="cs-tap"
+                    style={{
+                      padding: '12px 16px', flexShrink: 0,
+                      background: 'var(--ink)', borderRadius: 10, border: 'none',
+                      fontFamily: 'var(--display)', fontWeight: 700, fontSize: 14, color: 'var(--accent)',
+                      cursor: !redeemCode.trim() || redeemLoading ? 'default' : 'pointer',
+                      opacity: !redeemCode.trim() || redeemLoading ? 0.5 : 1,
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {redeemLoading ? '...' : 'Redeem'}
+                  </button>
+                </div>
+                {redeemMsg && (
+                  <div style={{
+                    marginTop: 10, padding: 10, borderRadius: 8, border: '1.5px solid',
+                    background: redeemMsg.type === 'success' ? 'rgba(200,255,61,0.12)' : 'rgba(255,68,68,0.08)',
+                    borderColor: redeemMsg.type === 'success' ? '#3d7a00' : '#ff4444',
+                  }}>
+                    <span style={{
+                      fontFamily: 'var(--body)', fontSize: 12, fontWeight: 600,
+                      color: redeemMsg.type === 'success' ? '#3d7a00' : '#ff4444',
+                    }}>
+                      {redeemMsg.text}
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ───────────────────────────────────────────── */}
+            {/* Referral Leaderboard                          */}
+            {/* ───────────────────────────────────────────── */}
+            <div style={{ background: 'var(--surface)', border: '2px solid var(--border-2)', borderRadius: 14, overflow: 'hidden' }}>
+              {/* Header */}
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 8, padding: 16,
+                borderBottom: '1.5px solid var(--border-2)',
+              }}>
+                <Icon name="crown" size={18} style={{ color: 'var(--accent)' }} />
+                <span style={{ fontFamily: 'var(--display)', fontWeight: 800, fontSize: 16, color: 'var(--ink)' }}>
+                  Referral Leaderboard
+                </span>
+              </div>
+
+              {leaderboard.length > 0 ? (
+                <>
+                  {/* Column headers */}
+                  <div style={{
+                    display: 'flex', alignItems: 'center', padding: '8px 14px',
+                    borderBottom: '1px solid var(--border-2)',
+                  }}>
+                    <span style={{ width: 30, fontFamily: 'var(--mono)', fontSize: 9, fontWeight: 700, color: 'var(--text-mute)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>#</span>
+                    <span style={{ flex: 1, fontFamily: 'var(--mono)', fontSize: 9, fontWeight: 700, color: 'var(--text-mute)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>User</span>
+                    <span style={{ width: 48, textAlign: 'center', fontFamily: 'var(--mono)', fontSize: 9, fontWeight: 700, color: 'var(--text-mute)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Refs</span>
+                    <span style={{ width: 44, textAlign: 'right', fontFamily: 'var(--mono)', fontSize: 9, fontWeight: 700, color: 'var(--text-mute)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Entries</span>
+                  </div>
+
+                  {/* Rows */}
+                  {leaderboard.map(entry => (
+                    <div
+                      key={entry.userId}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: 8, padding: '12px 14px',
+                        borderBottom: '1px solid var(--border)',
+                        ...(entry.isCurrentUser ? { background: 'rgba(200,255,61,0.06)', borderLeft: '3px solid var(--accent)' } : {}),
+                      }}
+                    >
+                      {/* Rank */}
+                      <div style={{ width: 22, display: 'flex', justifyContent: 'center', flexShrink: 0 }}>
+                        {entry.rank <= 3 ? (
+                          <Icon name="trophy" size={14} style={{ color: entry.rank === 1 ? '#daa520' : entry.rank === 2 ? '#aaa' : '#cd7f32' }} />
+                        ) : (
+                          <span style={{ fontFamily: 'var(--display)', fontWeight: 800, fontSize: 14, color: 'var(--ink)' }}>{entry.rank}</span>
+                        )}
+                      </div>
+
+                      {/* Avatar */}
+                      <div style={{
+                        width: 28, height: 28, borderRadius: 14,
+                        background: 'var(--ink)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0,
+                      }}>
+                        {entry.avatar ? (
+                          <img src={entry.avatar} alt="" style={{ width: 28, height: 28, borderRadius: 14, objectFit: 'cover' }} />
+                        ) : (
+                          <span style={{ fontFamily: 'var(--body)', fontWeight: 700, fontSize: 10, color: '#fff' }}>
+                            {entry.username?.slice(0, 2).toUpperCase() ?? '??'}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Username */}
+                      <span style={{ flex: 1, fontFamily: 'var(--body)', fontWeight: 600, fontSize: 13, color: 'var(--ink)', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {entry.username}
+                      </span>
+
+                      {/* Referrals */}
+                      <span style={{ width: 48, textAlign: 'center', fontFamily: 'var(--display)', fontWeight: 700, fontSize: 13, color: 'var(--text-dim)', flexShrink: 0 }}>
+                        {entry.totalReferrals}
+                      </span>
+
+                      {/* Entries */}
+                      <span style={{ width: 44, textAlign: 'right', fontFamily: 'var(--display)', fontWeight: 800, fontSize: 15, color: 'var(--accent)', flexShrink: 0 }}>
+                        {entry.totalEntries}
+                      </span>
+                    </div>
+                  ))}
+                </>
+              ) : (
+                <div style={{ padding: '24px 16px', textAlign: 'center' }}>
+                  <Icon name="users" size={32} style={{ color: 'var(--text-mute)', opacity: 0.3, margin: '0 auto 8px' }} />
+                  <span style={{ fontFamily: 'var(--body)', fontSize: 12, color: 'var(--text-mute)', display: 'block' }}>
+                    No referrals yet. Share your code to climb the leaderboard!
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* Past Challenges */}

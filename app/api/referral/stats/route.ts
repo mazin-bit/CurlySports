@@ -28,6 +28,9 @@ export async function GET() {
         {
           code: null,
           link: null,
+          verified: 0,
+          total: 0,
+          totalEntries: 0,
           totalReferrals: 0,
           verifiedReferrals: 0,
           pendingReferrals: 0,
@@ -55,19 +58,29 @@ export async function GET() {
 
     const totalReferrals = verifiedReferrals + pendingReferrals;
 
-    // Sum total bonus entries earned from referrals across all challenges
-    const bonusResult: { total: bigint | null }[] = await prisma.$queryRawUnsafe(
-      `SELECT COALESCE(SUM("referralEntries"), 0)::int as total
-       FROM challenge_entries
-       WHERE "userId" = $1 AND "referralEntries" > 0`,
-      user.id
-    );
-    const totalBonusEntries = Number(bonusResult[0]?.total ?? 0);
+    // Sum actual total entries (base + referral) across all challenges
+    const entryResult: { totalEntries: bigint | null; totalReferralEntries: bigint | null }[] =
+      await prisma.$queryRawUnsafe(
+        `SELECT COALESCE(SUM("totalEntries"), 0)::int as "totalEntries",
+                COALESCE(SUM("referralEntries"), 0)::int as "totalReferralEntries"
+         FROM challenge_entries
+         WHERE "userId" = $1`,
+        user.id
+      );
+    const actualTotalEntries = Number(entryResult[0]?.totalEntries ?? 0);
+    const totalBonusEntries = Number(entryResult[0]?.totalReferralEntries ?? 0);
+
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://curlysports.com";
 
     return NextResponse.json(
       {
         code,
-        link: `https://curlysports.com/invite/${code}`,
+        link: `${baseUrl}/invite/${code}`,
+        // Field names the frontend expects
+        verified: verifiedReferrals,
+        total: totalReferrals,
+        totalEntries: actualTotalEntries,
+        // Also provide descriptive names
         totalReferrals,
         verifiedReferrals,
         pendingReferrals,

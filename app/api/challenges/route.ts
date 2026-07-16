@@ -5,58 +5,82 @@ import { ensureChallengeTables, cuid } from "@/lib/ensure-challenge-tables";
 
 export const dynamic = "force-dynamic";
 
+// In-memory cache (faster than remote Redis for frequently-hit routes)
+const memCache = new Map<string, { data: unknown; expires: number }>();
+function memGet<T>(key: string): T | null {
+  const entry = memCache.get(key);
+  if (!entry || Date.now() > entry.expires) { memCache.delete(key); return null; }
+  return entry.data as T;
+}
+function memSet(key: string, data: unknown, ttlSec: number) {
+  memCache.set(key, { data, expires: Date.now() + ttlSec * 1000 });
+}
+
 /* ------------------------------------------------------------------ */
 /*  GET /api/challenges — List challenges                              */
 /* ------------------------------------------------------------------ */
 export async function GET(req: NextRequest) {
   try {
-    await ensureChallengeTables();
-
     const url = req.nextUrl;
     const status = url.searchParams.get("status");
     const sport = url.searchParams.get("sport");
     const limit = Math.min(Math.max(parseInt(url.searchParams.get("limit") || "20", 10), 1), 100);
     const offset = Math.max(parseInt(url.searchParams.get("offset") || "0", 10), 0);
 
-    // Build WHERE clauses
-    const conditions: string[] = [];
-    const params: unknown[] = [];
-    let paramIdx = 1;
+    // Run ensureChallengeTables + optionalAuth in parallel
+    const [, user] = await Promise.all([
+      ensureChallengeTables(),
+      optionalAuth(),
+    ]);
 
-    if (status) {
-      conditions.push(`pc.status = $${paramIdx++}`);
-      params.push(status);
+    // In-memory cache for challenge list (keyed by query params)
+    const cacheKey = `challenges:${status || "all"}:${sport || "all"}:${limit}:${offset}`;
+    let challenges: Record<string, unknown>[] | null = null;
+    let total = 0;
+
+    const cached = memGet<{ challenges: Record<string, unknown>[]; total: number }>(cacheKey);
+    if (cached) {
+      challenges = cached.challenges;
+      total = cached.total;
+    } else {
+      // Build WHERE clauses
+      const conditions: string[] = [];
+      const params: unknown[] = [];
+      let paramIdx = 1;
+
+      if (status) {
+        conditions.push(`pc.status = $${paramIdx++}`);
+        params.push(status);
+      }
+      if (sport) {
+        conditions.push(`pc.sport = $${paramIdx++}`);
+        params.push(sport);
+      }
+
+      const where = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+
+      // Combined count + select in a single query using window function
+      const rows: (Record<string, unknown> & { _total: number })[] = await prisma.$queryRawUnsafe(
+        `SELECT pc.*, COUNT(*) OVER()::int AS _total
+         FROM prediction_challenges pc
+         ${where}
+         ORDER BY
+           CASE WHEN pc.status = 'active' THEN 0 ELSE 1 END ASC,
+           pc."matchDate" ASC
+         LIMIT $${paramIdx++} OFFSET $${paramIdx++}`,
+        ...params,
+        limit,
+        offset
+      );
+
+      total = rows.length > 0 ? Number(rows[0]._total) : 0;
+      challenges = rows.map(({ _total, ...rest }) => rest);
+
+      // Cache for 15 seconds in-memory
+      memSet(cacheKey, { challenges, total }, 15);
     }
-    if (sport) {
-      conditions.push(`pc.sport = $${paramIdx++}`);
-      params.push(sport);
-    }
-
-    const where = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
-
-    // Get total count
-    const countResult: { count: bigint }[] = await prisma.$queryRawUnsafe(
-      `SELECT COUNT(*)::int as count FROM prediction_challenges pc ${where}`,
-      ...params
-    );
-    const total = Number(countResult[0]?.count ?? 0);
-
-    // Get challenges sorted: active first, then by matchDate ascending
-    const challenges: Record<string, unknown>[] = await prisma.$queryRawUnsafe(
-      `SELECT pc.*
-       FROM prediction_challenges pc
-       ${where}
-       ORDER BY
-         CASE WHEN pc.status = 'active' THEN 0 ELSE 1 END ASC,
-         pc."matchDate" ASC
-       LIMIT $${paramIdx++} OFFSET $${paramIdx++}`,
-      ...params,
-      limit,
-      offset
-    );
 
     // If user is logged in, fetch their votes for these challenges
-    const user = await optionalAuth();
     let userVotes: Record<string, string> = {};
 
     if (user && challenges.length > 0) {
@@ -182,14 +206,23 @@ export async function POST(req: NextRequest) {
       challengeId
     );
 
-    // Create placeholder entries row (settle route fills in baseEntries for correct voters)
+    // Create entries row — voting gives 1 base entry (draw ticket)
     await prisma.$executeRawUnsafe(
-      `INSERT INTO challenge_entries (id, "challengeId", "userId", "baseEntries", "referralEntries", "totalEntries", "createdAt")
-       VALUES ($1, $2, $3, 0, 0, 0, NOW())
-       ON CONFLICT ("challengeId", "userId") DO NOTHING`,
+      `INSERT INTO challenge_entries (id, "challengeId", "userId", "baseEntries", "referralEntries", "totalEntries", "createdAt", "updatedAt")
+       VALUES ($1, $2, $3, 1, 0, 1, NOW(), NOW())
+       ON CONFLICT ("challengeId", "userId") DO UPDATE SET
+         "baseEntries" = GREATEST(challenge_entries."baseEntries", 1),
+         "totalEntries" = GREATEST(challenge_entries."baseEntries", 1) + challenge_entries."referralEntries",
+         "updatedAt" = NOW()`,
       cuid(),
       challengeId,
       user.id
+    );
+
+    // Increment totalEntries on the challenge
+    await prisma.$executeRawUnsafe(
+      `UPDATE prediction_challenges SET "totalEntries" = "totalEntries" + 1, "updatedAt" = NOW() WHERE id = $1`,
+      challengeId
     );
 
     const vote = {

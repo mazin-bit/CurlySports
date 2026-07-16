@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import AppShell from "@/components/AppShell";
@@ -12,6 +12,10 @@ import {
   Clock,
   Users,
   ChevronRight,
+  Crown,
+  Medal,
+  Sparkles,
+  X,
 } from "lucide-react";
 import styles from "./challenges.module.css";
 
@@ -39,9 +43,20 @@ interface Challenge {
 
 interface ReferralStats {
   code: string;
+  link: string;
   verified: number;
   total: number;
   totalEntries: number;
+}
+
+interface LeaderboardEntry {
+  rank: number;
+  userId: string;
+  username: string;
+  avatar: string | null;
+  totalReferrals: number;
+  totalEntries: number;
+  isCurrentUser?: boolean;
 }
 
 /* ── Countdown Timer ─────────────────────────────────────────────── */
@@ -82,8 +97,9 @@ function TeamLogo({
   size?: number;
 }) {
   const [failed, setFailed] = useState(false);
+  const hasValidLogo = team.logo && /\.(png|jpg|jpeg|gif|svg|webp)(\?|$)/i.test(team.logo);
 
-  if (!team.logo || failed) {
+  if (!hasValidLogo || failed) {
     return (
       <div
         className={styles.teamLogoFallback}
@@ -97,7 +113,7 @@ function TeamLogo({
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
-      src={team.logo}
+      src={team.logo!}
       alt={team.name}
       className={styles.teamLogo}
       style={{ width: size, height: size }}
@@ -112,54 +128,76 @@ export default function ChallengesPage() {
   const router = useRouter();
   const [challenges, setChallenges] = useState<Challenge[]>([]);
   const [referral, setReferral] = useState<ReferralStats | null>(null);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [votingId, setVotingId] = useState<string | null>(null);
   const [codeCopied, setCodeCopied] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
+  const [tooltipVisible, setTooltipVisible] = useState(false);
+  const [redeemCode, setRedeemCode] = useState("");
+  const [redeemLoading, setRedeemLoading] = useState(false);
+  const [redeemMsg, setRedeemMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [toast, setToast] = useState<{ message: string; visible: boolean }>({ message: "", visible: false });
+  const prevEntriesRef = useRef<number | null>(null);
+
+  function showToast(message: string) {
+    setToast({ message, visible: true });
+    setTimeout(() => setToast({ message: "", visible: false }), 6000);
+  }
 
   const fetchData = useCallback(async () => {
     setLoading(true);
-    try {
-      const res = await fetch("/api/challenges?status=active");
-      if (res.ok) {
-        const data = await res.json();
-        // API returns teamA/teamB as strings — transform to ChallengeTeam objects
-        const mapped = (data.challenges ?? []).map((c: Record<string, unknown>) => ({
-          ...c,
-          teamA: typeof c.teamA === "string"
-            ? { id: "teamA", name: c.teamA, abbreviation: (c.teamA as string).slice(0, 3).toUpperCase(), logo: c.teamALogo ?? null }
-            : c.teamA,
-          teamB: typeof c.teamB === "string"
-            ? { id: "teamB", name: c.teamB, abbreviation: (c.teamB as string).slice(0, 3).toUpperCase(), logo: c.teamBLogo ?? null }
-            : c.teamB,
-        }));
-        setChallenges(mapped);
-      }
-    } catch {
-      /* ignore */
+
+    // Fire all independent API calls in parallel
+    const [challengesRes, codeRes, statsRes] = await Promise.allSettled([
+      fetch("/api/challenges?status=active"),
+      fetch("/api/referral/code"),
+      fetch("/api/referral/stats"),
+    ]);
+
+    // Process challenges
+    let activeId: string | null = null;
+    if (challengesRes.status === "fulfilled" && challengesRes.value.ok) {
+      const data = await challengesRes.value.json();
+      const mapped = (data.challenges ?? []).map((c: Record<string, unknown>) => ({
+        ...c,
+        teamA: typeof c.teamA === "string"
+          ? { id: "teamA", name: c.teamA, abbreviation: (c.teamA as string).slice(0, 3).toUpperCase(), logo: c.teamALogo ?? null }
+          : c.teamA,
+        teamB: typeof c.teamB === "string"
+          ? { id: "teamB", name: c.teamB, abbreviation: (c.teamB as string).slice(0, 3).toUpperCase(), logo: c.teamBLogo ?? null }
+          : c.teamB,
+      }));
+      setChallenges(mapped);
+      const active = mapped.find((ch: Challenge) => ch.status === "active");
+      if (active) activeId = active.id;
     }
 
-    try {
-      const codeRes = await fetch("/api/referral/code");
-      if (codeRes.ok) {
-        const codeData = await codeRes.json();
-        setIsLoggedIn(true);
-
-        const statsRes = await fetch("/api/referral/stats");
-        if (statsRes.ok) {
-          const statsData = await statsRes.json();
-          setReferral({
-            code: codeData.code,
-            verified: statsData.verified ?? 0,
-            total: statsData.total ?? 0,
-            totalEntries: statsData.totalEntries ?? 0,
-          });
-        }
+    // Process referral (code + stats)
+    if (codeRes.status === "fulfilled" && codeRes.value.ok) {
+      const codeData = await codeRes.value.json();
+      setIsLoggedIn(true);
+      if (statsRes.status === "fulfilled" && statsRes.value.ok) {
+        const statsData = await statsRes.value.json();
+        setReferral({
+          code: codeData.code,
+          link: statsData.link || codeData.link || `/invite/${codeData.code}`,
+          verified: statsData.verified ?? 0,
+          total: statsData.total ?? 0,
+          totalEntries: statsData.totalEntries ?? 0,
+        });
       }
-    } catch {
-      /* not logged in */
     }
+
+    // Fetch global referral leaderboard
+    try {
+      const lbRes = await fetch("/api/referral/leaderboard");
+      if (lbRes.ok) {
+        const lbData = await lbRes.json();
+        setLeaderboard(lbData.entries ?? []);
+      }
+    } catch { /* ignore */ }
 
     setLoading(false);
   }, []);
@@ -167,6 +205,60 @@ export default function ChallengesPage() {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  // Poll for entry updates every 30 seconds (silent background re-fetch)
+  useEffect(() => {
+    if (!isLoggedIn) return;
+
+    const pollInterval = setInterval(async () => {
+      try {
+        const [statsRes, lbRes] = await Promise.allSettled([
+          fetch("/api/referral/stats"),
+          fetch("/api/referral/leaderboard"),
+        ]);
+
+        // Update leaderboard silently
+        if (lbRes.status === "fulfilled" && lbRes.value.ok) {
+          const lbData = await lbRes.value.json();
+          setLeaderboard(lbData.entries ?? []);
+        }
+
+        // Check if entries increased — show toast
+        if (statsRes.status === "fulfilled" && statsRes.value.ok) {
+          const statsData = await statsRes.value.json();
+          const newEntries = statsData.totalEntries ?? 0;
+
+          if (prevEntriesRef.current !== null && newEntries > prevEntriesRef.current) {
+            const gained = newEntries - prevEntriesRef.current;
+            showToast(`You earned +${gained} new entr${gained === 1 ? "y" : "ies"} from a referral! Your total: ${newEntries}`);
+          }
+          prevEntriesRef.current = newEntries;
+
+          setReferral((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  verified: statsData.verified ?? prev.verified,
+                  total: statsData.total ?? prev.total,
+                  totalEntries: newEntries,
+                }
+              : prev
+          );
+        }
+      } catch {
+        /* silent polling — don't fail */
+      }
+    }, 30_000);
+
+    return () => clearInterval(pollInterval);
+  }, [isLoggedIn]);
+
+  // Initialize prevEntriesRef when referral data first loads
+  useEffect(() => {
+    if (referral && prevEntriesRef.current === null) {
+      prevEntriesRef.current = referral.totalEntries;
+    }
+  }, [referral]);
 
   async function handleVote(challengeId: string, teamId: string) {
     if (votingId) return;
@@ -207,6 +299,32 @@ export default function ChallengesPage() {
     });
   }
 
+  async function handleRedeemCode() {
+    const trimmed = redeemCode.trim();
+    if (!trimmed || redeemLoading) return;
+    setRedeemLoading(true);
+    setRedeemMsg(null);
+    try {
+      const res = await fetch("/api/referral/redeem", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: trimmed }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setRedeemMsg({ type: "success", text: data.message });
+        setRedeemCode("");
+        fetchData(); // Refresh stats + leaderboard
+      } else {
+        setRedeemMsg({ type: "error", text: data.error || "Failed to redeem code." });
+      }
+    } catch {
+      setRedeemMsg({ type: "error", text: "Network error. Please try again." });
+    } finally {
+      setRedeemLoading(false);
+    }
+  }
+
   const activeChallenge = challenges.find((c) => c.status === "active");
   const pastChallenges = challenges.filter((c) => c.status !== "active");
 
@@ -224,6 +342,19 @@ export default function ChallengesPage() {
 
   return (
     <AppShell active="challenges" title="Prediction Challenge" titleKey="challenges.title" subtitleKey="challenges.subtitle">
+      {/* ── Toast notification ──────────────────────────────────── */}
+      {toast.visible && (
+        <div className={styles.toast}>
+          <div className={styles.toastContent}>
+            <Sparkles size={18} className={styles.toastIcon} />
+            <span>{toast.message}</span>
+          </div>
+          <button className={styles.toastClose} onClick={() => setToast({ message: "", visible: false })}>
+            <X size={14} />
+          </button>
+        </div>
+      )}
+
       <div className={styles.page}>
         {/* ── Hero Challenge Card ──────────────────────────────────── */}
         {activeChallenge ? (
@@ -275,28 +406,39 @@ export default function ChallengesPage() {
                   )}
                   {activeChallenge.teamA.name}
                 </button>
-                <button
-                  className={`${styles.voteBtn} ${
-                    activeChallenge.userVote === activeChallenge.teamB.id
-                      ? styles.voteBtnSelected
-                      : activeChallenge.userVote
-                      ? styles.voteBtnDimmed
-                      : ""
-                  }`}
-                  onClick={() =>
-                    !activeChallenge.userVote &&
-                    handleVote(activeChallenge.id, activeChallenge.teamB.id)
-                  }
-                  disabled={
-                    !!activeChallenge.userVote ||
-                    votingId === activeChallenge.id
-                  }
+                <div
+                  className={styles.voteBtnWrapper}
+                  onMouseEnter={() => activeChallenge.userVote && setTooltipVisible(true)}
+                  onMouseLeave={() => setTooltipVisible(false)}
                 >
-                  {activeChallenge.userVote === activeChallenge.teamB.id && (
-                    <Check size={16} />
+                  <button
+                    className={`${styles.voteBtn} ${
+                      activeChallenge.userVote === activeChallenge.teamB.id
+                        ? styles.voteBtnSelected
+                        : activeChallenge.userVote
+                        ? styles.voteBtnDimmed
+                        : ""
+                    }`}
+                    onClick={() =>
+                      !activeChallenge.userVote &&
+                      handleVote(activeChallenge.id, activeChallenge.teamB.id)
+                    }
+                    disabled={
+                      !!activeChallenge.userVote ||
+                      votingId === activeChallenge.id
+                    }
+                  >
+                    {activeChallenge.userVote === activeChallenge.teamB.id && (
+                      <Check size={16} />
+                    )}
+                    {activeChallenge.teamB.name}
+                  </button>
+                  {tooltipVisible && activeChallenge.userVote && activeChallenge.userVote !== activeChallenge.teamB.id && (
+                    <div className={`${styles.voteTooltip} ${styles.voteTooltipVisible}`}>
+                      You&apos;ve already voted. Share your referral code — if someone new joins, you get an extra entry!
+                    </div>
                   )}
-                  {activeChallenge.teamB.name}
-                </button>
+                </div>
               </div>
 
               <div className={styles.winnersLine}>
@@ -350,18 +492,11 @@ export default function ChallengesPage() {
 
             <div className={styles.linkBox}>
               <span className={styles.linkText}>
-                {typeof window !== "undefined"
-                  ? `${window.location.origin}/invite/${referral.code}`
-                  : `/invite/${referral.code}`}
+                {referral.link.replace(/^https?:\/\/localhost:\d+/, 'https://curlysports.com')}
               </span>
               <button
                 className={styles.copyBtn}
-                onClick={() =>
-                  copyToClipboard(
-                    `${window.location.origin}/invite/${referral.code}`,
-                    "link"
-                  )
-                }
+                onClick={() => copyToClipboard(referral.link, "link")}
               >
                 {linkCopied ? (
                   <>
@@ -392,6 +527,114 @@ export default function ChallengesPage() {
             </Link>
           </div>
         ) : null}
+
+        {/* ── Redeem Referral Code ──────────────────────────────── */}
+        {isLoggedIn && (
+          <div className={styles.redeemCard}>
+            <div className={styles.redeemTitle}>Have a referral code?</div>
+            <div className={styles.redeemRow}>
+              <input
+                type="text"
+                className={styles.redeemInput}
+                placeholder="Enter referral code"
+                value={redeemCode}
+                onChange={(e) => setRedeemCode(e.target.value.toUpperCase())}
+                onKeyDown={(e) => e.key === "Enter" && handleRedeemCode()}
+                maxLength={20}
+              />
+              <button
+                className={styles.redeemBtn}
+                onClick={handleRedeemCode}
+                disabled={redeemLoading || !redeemCode.trim()}
+              >
+                {redeemLoading ? "Redeeming..." : "Redeem"}
+              </button>
+            </div>
+            {redeemMsg && (
+              <div
+                className={`${styles.redeemMsg} ${
+                  redeemMsg.type === "success" ? styles.redeemSuccess : styles.redeemError
+                }`}
+              >
+                {redeemMsg.text}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── Referral Leaderboard ─────────────────────────────── */}
+        <div className={styles.leaderboardCard}>
+          <div className={styles.leaderboardHeader}>
+            <div className={styles.leaderboardTitle}>
+              <Crown size={18} />
+              Referral Leaderboard
+            </div>
+          </div>
+
+          {leaderboard.length > 0 ? (
+            <>
+              <div className={styles.lbColHeaders}>
+                <span className={styles.lbColLabel} style={{ width: 36 }}>#</span>
+                <span className={styles.lbColLabel} style={{ flex: 1 }}>User</span>
+                <span className={styles.lbColLabel} style={{ width: 64, textAlign: "center" }}>Referrals</span>
+                <span className={styles.lbColLabel} style={{ width: 56, textAlign: "right" }}>Entries</span>
+              </div>
+
+              {leaderboard.map((entry) => (
+                <div
+                  key={entry.userId}
+                  className={`${styles.lbRow} ${
+                    entry.isCurrentUser ? styles.lbRowHighlight : ""
+                  }`}
+                >
+                  <div
+                    className={`${styles.lbRank} ${
+                      entry.rank === 1
+                        ? styles.rankGold
+                        : entry.rank === 2
+                        ? styles.rankSilver
+                        : entry.rank === 3
+                        ? styles.rankBronze
+                        : ""
+                    }`}
+                  >
+                    {entry.rank <= 3 ? (
+                      entry.rank === 1 ? (
+                        <Trophy size={18} />
+                      ) : (
+                        <Medal size={18} />
+                      )
+                    ) : (
+                      entry.rank
+                    )}
+                  </div>
+
+                  <div className={styles.lbAvatar}>
+                    {entry.avatar ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={entry.avatar} alt={entry.username} />
+                    ) : (
+                      entry.username.slice(0, 2).toUpperCase()
+                    )}
+                  </div>
+
+                  <div className={styles.lbName}>{entry.username}</div>
+
+                  <div className={styles.lbReferrals}>{entry.totalReferrals}</div>
+
+                  <div>
+                    <div className={styles.lbEntries}>{entry.totalEntries}</div>
+                  </div>
+                </div>
+              ))}
+            </>
+          ) : (
+            <div className={styles.lbEmpty}>
+              <Users size={32} style={{ opacity: 0.3, marginBottom: 8 }} />
+              <p>No referrals yet. Share your code to climb the leaderboard!</p>
+            </div>
+          )}
+        </div>
 
         {/* ── Past Challenges ─────────────────────────────────────── */}
         {pastChallenges.length > 0 && (

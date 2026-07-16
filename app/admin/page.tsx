@@ -2443,6 +2443,15 @@ interface ChallengeWinner {
   entries: number;
 }
 
+interface ChallengeUserEntry {
+  userId: string;
+  username: string;
+  email: string;
+  baseEntries: number;
+  referralEntries: number;
+  totalEntries: number;
+}
+
 interface ChallengeAnalytics {
   totalVotes: number;
   totalEntries: number;
@@ -2453,6 +2462,7 @@ interface ChallengeAnalytics {
   baseEntries: number;
   referralEntries: number;
   topReferrers: { username: string; email: string; referrals: number }[];
+  userEntries: ChallengeUserEntry[];
 }
 
 function ChallengesTab({ adminToken }: { adminToken: string }) {
@@ -2728,6 +2738,14 @@ function ChallengesTab({ adminToken }: { adminToken: string }) {
           username: r.username ?? "Unknown",
           email: "",
           referrals: r.referralCount ?? 0,
+        })),
+        userEntries: (ch?.userEntries ?? []).map((u: ChallengeUserEntry) => ({
+          userId: u.userId,
+          username: u.username ?? "Unknown",
+          email: u.email ?? "",
+          baseEntries: u.baseEntries ?? 0,
+          referralEntries: u.referralEntries ?? 0,
+          totalEntries: u.totalEntries ?? 0,
         })),
       });
     }
@@ -3200,6 +3218,38 @@ function ChallengesTab({ adminToken }: { adminToken: string }) {
                       <span style={{ flex: 2, fontWeight: 600, color: "var(--a-ink)" }}>{r.username}</span>
                       <span style={{ flex: 2, fontSize: 12, color: "var(--a-ink-mute)" }}>{r.email}</span>
                       <span style={{ flex: 1, textAlign: "center", fontWeight: 600, color: "var(--a-accent)" }}>{r.referrals}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Per-user entries breakdown */}
+            {a.userEntries && a.userEntries.length > 0 && (
+              <div className={styles.section}>
+                <div className={styles.sectionTitle}>User Entries Breakdown</div>
+                <div style={{ fontSize: 12, color: "var(--a-ink-mute)", marginBottom: 10 }}>
+                  Users with more entries have a higher chance of winning the mystery prize.
+                </div>
+                <div className={styles.chTable}>
+                  <div className={styles.chTableHeader}>
+                    <span style={{ width: 40, textAlign: "center" }}>#</span>
+                    <span style={{ flex: 2 }}>Username</span>
+                    <span style={{ flex: 2 }}>Email</span>
+                    <span style={{ flex: 1, textAlign: "center" }}>Base</span>
+                    <span style={{ flex: 1, textAlign: "center" }}>Referral</span>
+                    <span style={{ flex: 1, textAlign: "center" }}>Total</span>
+                  </div>
+                  {a.userEntries.map((u, i) => (
+                    <div key={u.userId} className={styles.chTableRow}>
+                      <span style={{ width: 40, textAlign: "center", fontWeight: 700 }}>
+                        {i + 1}
+                      </span>
+                      <span style={{ flex: 2, fontWeight: 600, color: "var(--a-ink)" }}>{u.username}</span>
+                      <span style={{ flex: 2, fontSize: 12, color: "var(--a-ink-mute)" }}>{u.email}</span>
+                      <span style={{ flex: 1, textAlign: "center", fontWeight: 600 }}>{u.baseEntries}</span>
+                      <span style={{ flex: 1, textAlign: "center", fontWeight: 600, color: "#ff8c42" }}>{u.referralEntries}</span>
+                      <span style={{ flex: 1, textAlign: "center", fontWeight: 700, color: "var(--a-accent)" }}>{u.totalEntries}</span>
                     </div>
                   ))}
                 </div>

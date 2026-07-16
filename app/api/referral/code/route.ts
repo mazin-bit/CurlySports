@@ -31,7 +31,7 @@ export async function GET() {
       return NextResponse.json(
         {
           code,
-          link: `https://curlysports.com/invite/${code}`,
+          link: `${process.env.NEXT_PUBLIC_APP_URL || "https://curlysports.com"}/invite/${code}`,
         },
         { headers: { "Cache-Control": "no-store" } }
       );
@@ -70,7 +70,7 @@ export async function GET() {
     return NextResponse.json(
       {
         code,
-        link: `https://curlysports.com/invite/${code}`,
+        link: `${process.env.NEXT_PUBLIC_APP_URL || "https://curlysports.com"}/invite/${code}`,
       },
       { status: 201, headers: { "Cache-Control": "no-store" } }
     );
@@ -92,7 +92,7 @@ export async function GET() {
           return NextResponse.json(
             {
               code: rows[0].code,
-              link: `https://curlysports.com/invite/${rows[0].code}`,
+              link: `${process.env.NEXT_PUBLIC_APP_URL || "https://curlysports.com"}/invite/${rows[0].code}`,
             },
             { headers: { "Cache-Control": "no-store" } }
           );

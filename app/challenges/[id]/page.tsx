@@ -138,6 +138,7 @@ export default function ChallengeDetailPage() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [votingId, setVotingId] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  const [tooltipVisible, setTooltipVisible] = useState(false);
 
   const showToast = useCallback((msg: string) => {
     setToast(msg);
@@ -373,24 +374,35 @@ export default function ChallengeDetailPage() {
                     )}
                     {challenge.teamA.name}
                   </button>
-                  <button
-                    className={`${styles.voteBtn} ${
-                      challenge.userVote === challenge.teamB.id
-                        ? styles.voteBtnSelected
-                        : challenge.userVote
-                        ? styles.voteBtnDimmed
-                        : ""
-                    }`}
-                    onClick={() =>
-                      !challenge.userVote && handleVote(challenge.teamB.id)
-                    }
-                    disabled={!!challenge.userVote || !!votingId}
+                  <div
+                    className={styles.voteBtnWrapper}
+                    onMouseEnter={() => challenge.userVote && setTooltipVisible(true)}
+                    onMouseLeave={() => setTooltipVisible(false)}
                   >
-                    {challenge.userVote === challenge.teamB.id && (
-                      <Check size={16} />
+                    <button
+                      className={`${styles.voteBtn} ${
+                        challenge.userVote === challenge.teamB.id
+                          ? styles.voteBtnSelected
+                          : challenge.userVote
+                          ? styles.voteBtnDimmed
+                          : ""
+                      }`}
+                      onClick={() =>
+                        !challenge.userVote && handleVote(challenge.teamB.id)
+                      }
+                      disabled={!!challenge.userVote || !!votingId}
+                    >
+                      {challenge.userVote === challenge.teamB.id && (
+                        <Check size={16} />
+                      )}
+                      {challenge.teamB.name}
+                    </button>
+                    {tooltipVisible && challenge.userVote && challenge.userVote !== challenge.teamB.id && (
+                      <div className={`${styles.voteTooltip} ${styles.voteTooltipVisible}`}>
+                        You&apos;ve already voted. Share your referral code — if someone new joins, you get an extra entry!
+                      </div>
                     )}
-                    {challenge.teamB.name}
-                  </button>
+                  </div>
                 </div>
                 <CountdownTimer target={challenge.matchDate} />
               </>
