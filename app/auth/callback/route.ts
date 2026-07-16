@@ -13,17 +13,23 @@ export async function GET(request: NextRequest) {
   const safeState =
     state.startsWith("/") && !state.startsWith("//") ? state : "/dashboard";
 
-  // Extract referral code from state (e.g. "/dashboard?ref=ABC123")
+  // Extract referral code and newSignup flag from state (e.g. "/dashboard?ref=ABC123")
   let referralCode: string | null = null;
+  let hasNewSignupFlag = false;
   let safeNext = safeState;
   try {
     const stateUrl = new URL(safeState, origin);
     referralCode = stateUrl.searchParams.get("ref") || null;
+    hasNewSignupFlag = stateUrl.searchParams.get("newSignup") === "1";
     // Strip ref param from redirect so it doesn't leak into the dashboard URL
     if (referralCode) {
       stateUrl.searchParams.delete("ref");
-      safeNext = stateUrl.pathname + (stateUrl.search || "");
     }
+    // Strip newSignup — we'll re-add it only for genuinely new users
+    if (hasNewSignupFlag) {
+      stateUrl.searchParams.delete("newSignup");
+    }
+    safeNext = stateUrl.pathname + (stateUrl.search || "");
   } catch {
     // state wasn't a valid relative URL, ignore
   }
@@ -79,6 +85,7 @@ export async function GET(request: NextRequest) {
     };
 
     // Upsert user in Prisma
+    let isNewGoogleUser = false;
     let user = await prisma.user.findFirst({
       where: { OR: [{ googleId: googleUser.id }, { email: googleUser.email }] },
     });
@@ -94,6 +101,7 @@ export async function GET(request: NextRequest) {
         },
       });
     } else {
+      isNewGoogleUser = true;
       const baseUsername = googleUser.email.split("@")[0];
       const username = `${baseUsername}_${Date.now().toString(36)}`;
       user = await prisma.user.create({
@@ -156,7 +164,14 @@ export async function GET(request: NextRequest) {
       signRefreshToken(user.id),
     ]);
 
-    const response = NextResponse.redirect(`${origin}${safeNext}`);
+    // Re-add newSignup flag for genuinely new users so the mobile app shows referral popup
+    let redirectPath = safeNext;
+    if (hasNewSignupFlag && isNewGoogleUser) {
+      const sep = redirectPath.includes("?") ? "&" : "?";
+      redirectPath = `${redirectPath}${sep}newSignup=1`;
+    }
+
+    const response = NextResponse.redirect(`${origin}${redirectPath}`);
 
     // Fire-and-forget session tracking — don't block OAuth callback
     const ua = request.headers.get("user-agent") ?? "";

@@ -430,7 +430,51 @@ export default function LoginScreen() {
         ))}
       </div>
 
-      {/* Form */}
+      {/* Google sign-in */}
+      <>
+        <button
+          type="button"
+          onClick={() => {
+              const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '';
+              if (!clientId) return;
+              const origin = window.location.origin.replace('://0.0.0.0', '://localhost');
+              const redirectUri = `${origin}/auth/callback`;
+              const params = new URLSearchParams({
+                client_id: clientId,
+                redirect_uri: redirectUri,
+                response_type: 'code',
+                scope: 'openid email profile',
+                access_type: 'offline',
+                prompt: 'select_account',
+                state: '/mobile?newSignup=1',
+              });
+              window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
+            }}
+            style={{
+              width: '100%', padding: '13px 0', background: 'var(--surface)', border: '2px solid var(--ink)',
+              borderRadius: 12, fontFamily: 'var(--mono)', fontSize: 12, fontWeight: 700,
+              letterSpacing: '0.04em', color: 'var(--ink)', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+            }}
+          >
+            <svg viewBox="0 0 24 24" width="18" height="18">
+              <path fill="#4285F4" d="M22.5 12.27c0-.79-.07-1.54-.2-2.27H12v4.51h5.93c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.21-4.74 3.21-8.32z"/>
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.99 7.28-2.66l-3.57-2.77c-.99.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.15-4.53H2.18v2.84A11 11 0 0 0 12 23z"/>
+              <path fill="#FBBC05" d="M5.85 14.1c-.22-.66-.35-1.36-.35-2.1s.13-1.44.35-2.1V7.07H2.18a10.99 10.99 0 0 0 0 9.87l3.67-2.84z"/>
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1A11 11 0 0 0 2.18 7.07l3.67 2.84C6.71 7.31 9.14 5.38 12 5.38z"/>
+            </svg>
+            CONTINUE WITH GOOGLE
+          </button>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '4px 0' }}>
+            <div style={{ flex: 1, height: 1, background: 'var(--ink)', opacity: 0.15 }} />
+            <span style={{ fontFamily: 'var(--mono)', fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', color: 'var(--text-mute)', textTransform: 'uppercase' }}>
+              OR USE EMAIL
+            </span>
+            <div style={{ flex: 1, height: 1, background: 'var(--ink)', opacity: 0.15 }} />
+          </div>
+      </>
+
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
         {mode === 'signup' && (
           <div>

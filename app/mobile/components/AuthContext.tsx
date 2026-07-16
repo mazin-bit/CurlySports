@@ -22,6 +22,9 @@ interface AuthContextValue {
   verificationEmail: string;
   /** True while OTP was verified and profile is being fetched */
   verifyingOtp: boolean;
+  /** True when user just completed signup (email or Google) — triggers referral popup */
+  isNewSignup: boolean;
+  clearNewSignup: () => void;
   login: (email: string, password: string) => Promise<void>;
   signup: (email: string, password: string, username: string) => Promise<void>;
   logout: () => Promise<void>;
@@ -49,6 +52,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [needsVerification, setNeedsVerification] = useState(false);
   const [verificationEmail, setVerificationEmail] = useState('');
   const [verifyingOtp, setVerifyingOtp] = useState(false);
+  const [isNewSignup, setIsNewSignup] = useState(false);
   const mountedRef = useRef(true);
 
   const fetchProfile = useCallback(async () => {
@@ -91,7 +95,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const init = async () => {
       try {
-        await fetchProfile();
+        const p = await fetchProfile();
+        // Detect Google OAuth new signup via ?newSignup=1 query param
+        if (p && typeof window !== 'undefined') {
+          const params = new URLSearchParams(window.location.search);
+          if (params.get('newSignup') === '1') {
+            setIsNewSignup(true);
+            // Clean up the URL
+            const url = new URL(window.location.href);
+            url.searchParams.delete('newSignup');
+            window.history.replaceState({}, '', url.pathname + url.search);
+          }
+        }
       } catch {
         // network error — treat as logged out
       }
@@ -144,6 +159,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (data.needsVerification) {
       setNeedsVerification(true);
       setVerificationEmail(email);
+      setIsNewSignup(true); // Mark as new signup for referral popup
       return;
     }
     await fetchProfile();
@@ -180,6 +196,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const clearAuthError = () => setAuthError(null);
+  const clearNewSignup = () => setIsNewSignup(false);
 
   const verifyOtp = async (code: string) => {
     setAuthError(null);
@@ -224,6 +241,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     <AuthContext.Provider value={{
       user, profile, isLoading, isNewUser, authError,
       needsVerification, verificationEmail, verifyingOtp,
+      isNewSignup, clearNewSignup,
       login, signup, logout, deleteAccount, setFavTeam, clearAuthError,
       verifyOtp, resendOtp, cancelVerification,
     }}>

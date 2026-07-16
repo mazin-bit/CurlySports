@@ -27,7 +27,7 @@ import ChallengeDetailScreen from './ChallengeDetailScreen';
 import LeaderboardScreen from './LeaderboardScreen';
 import ReferralScreen from './ReferralScreen';
 import { hapticImpact } from '@/lib/native';
-import { Wrench } from 'lucide-react';
+import { Wrench, Gift, ArrowRight, X } from 'lucide-react';
 
 type Tab = 'home' | 'live' | 'funzone' | 'leagues' | 'profile' | 'news' | 'teams' | 'favorites' | 'videos' | 'minigames' | 'players' | 'challenges';
 type OverlayType = 'match' | 'player' | 'search' | 'notifications' | 'feedback' | 'challenge-detail' | 'leaderboard' | 'referral';
@@ -123,8 +123,198 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
   }
 }
 
+/* ── Referral Code Survey (shown after new signup) ──────────── */
+function ReferralSurvey({ onDone }: { onDone: () => void }) {
+  const [code, setCode] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [result, setResult] = useState<{ ok: boolean; msg: string } | null>(null);
+
+  const handleRedeem = async () => {
+    const trimmed = code.trim().toUpperCase();
+    if (!trimmed) return;
+    setSubmitting(true);
+    setResult(null);
+    try {
+      const res = await fetch('/api/referral/redeem', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ code: trimmed }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setResult({ ok: true, msg: data.message || 'Referral applied successfully!' });
+        setTimeout(onDone, 1800);
+      } else {
+        setResult({ ok: false, msg: data.error || 'Invalid referral code.' });
+      }
+    } catch {
+      setResult({ ok: false, msg: 'Something went wrong. Try again.' });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div style={{
+      height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--bg)',
+      padding: '0 24px', overflowY: 'auto',
+    }}>
+      <div style={{ paddingTop: 60, paddingBottom: 24 }}>
+        {/* Skip button */}
+        <button
+          onClick={onDone}
+          style={{
+            position: 'absolute', top: 16, right: 16, background: 'var(--surface)',
+            border: '2px solid var(--ink)', borderRadius: 10, padding: '6px 14px',
+            fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 700,
+            letterSpacing: '0.06em', color: 'var(--text-mute)', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', gap: 6, textTransform: 'uppercase',
+          }}
+        >
+          SKIP <ArrowRight size={12} />
+        </button>
+
+        {/* Icon */}
+        <div style={{
+          width: 72, height: 72, background: 'var(--lime)', borderRadius: 18,
+          border: '2.5px solid var(--ink)', boxShadow: '5px 5px 0 var(--ink)',
+          transform: 'rotate(-6deg)', display: 'grid', placeItems: 'center',
+          marginBottom: 24,
+        }}>
+          <Gift size={32} style={{ color: 'var(--ink)' }} />
+        </div>
+
+        <div style={{
+          fontFamily: 'var(--mono)', fontSize: 10, fontWeight: 700,
+          letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--orange)',
+        }}>
+          WELCOME TO CURLYSPORTS
+        </div>
+        <h1 style={{
+          fontFamily: 'var(--display)', fontWeight: 800, fontSize: 26,
+          letterSpacing: '-0.03em', color: 'var(--ink)', margin: '6px 0 8px', lineHeight: 1.1,
+        }}>
+          Got a referral code?
+        </h1>
+        <p style={{ fontSize: 14, color: 'var(--text-dim)', margin: 0, lineHeight: 1.5 }}>
+          If someone invited you, enter their referral code below. You&apos;ll both get bonus entries in prediction challenges!
+        </p>
+      </div>
+
+      {/* Input */}
+      <div style={{ marginBottom: 14 }}>
+        <label style={{
+          fontFamily: 'var(--mono)', fontSize: 10, fontWeight: 700,
+          letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-mute)',
+          display: 'block', marginBottom: 6,
+        }}>
+          REFERRAL CODE
+        </label>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <input
+            value={code}
+            onChange={e => { setCode(e.target.value.toUpperCase()); setResult(null); }}
+            placeholder="e.g. CURLY1234"
+            maxLength={20}
+            autoCapitalize="characters"
+            style={{
+              flex: 1, padding: '13px 14px', background: 'var(--surface)',
+              border: '2px solid var(--ink)', borderRadius: 10,
+              fontFamily: 'var(--mono)', fontSize: 16, fontWeight: 700,
+              letterSpacing: '0.12em', color: 'var(--ink)', outline: 'none',
+              boxSizing: 'border-box',
+            }}
+          />
+          <button
+            onClick={handleRedeem}
+            disabled={submitting || !code.trim()}
+            style={{
+              padding: '13px 20px', background: (submitting || !code.trim()) ? 'var(--surface-3)' : 'var(--ink)',
+              border: '2px solid var(--ink)', borderRadius: 10,
+              fontFamily: 'var(--mono)', fontSize: 12, fontWeight: 700,
+              letterSpacing: '0.04em', color: (submitting || !code.trim()) ? 'var(--text-mute)' : 'var(--accent)',
+              cursor: (submitting || !code.trim()) ? 'not-allowed' : 'pointer',
+              boxShadow: (submitting || !code.trim()) ? 'none' : '3px 3px 0 var(--accent)',
+              flexShrink: 0,
+            }}
+          >
+            {submitting ? '...' : 'APPLY'}
+          </button>
+        </div>
+      </div>
+
+      {/* Result message */}
+      {result && (
+        <div style={{
+          display: 'flex', alignItems: 'flex-start', gap: 8,
+          background: 'var(--surface)', border: `2px solid ${result.ok ? '#22c55e' : 'var(--coral)'}`,
+          borderRadius: 10, padding: '10px 12px', marginBottom: 14,
+        }}>
+          {result.ok
+            ? <Gift size={14} style={{ flexShrink: 0, color: '#22c55e', marginTop: 1 }} />
+            : <X size={14} style={{ flexShrink: 0, color: 'var(--coral)', marginTop: 1 }} />
+          }
+          <span style={{
+            fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 700,
+            color: result.ok ? '#22c55e' : 'var(--coral)', lineHeight: 1.4,
+          }}>
+            {result.msg}
+          </span>
+        </div>
+      )}
+
+      {/* Info card */}
+      <div style={{
+        background: 'var(--surface)', border: '2px solid var(--ink)', borderRadius: 14,
+        padding: '14px 16px', display: 'flex', gap: 12, alignItems: 'flex-start',
+      }}>
+        <div style={{
+          width: 36, height: 36, background: 'var(--lime)', borderRadius: 10,
+          border: '2px solid var(--ink)', display: 'grid', placeItems: 'center', flexShrink: 0,
+        }}>
+          <Gift size={16} style={{ color: 'var(--ink)' }} />
+        </div>
+        <div>
+          <div style={{
+            fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 700,
+            color: 'var(--ink)', letterSpacing: '0.04em', marginBottom: 4,
+          }}>
+            HOW REFERRALS WORK
+          </div>
+          <p style={{ fontSize: 13, color: 'var(--text-dim)', margin: 0, lineHeight: 1.5 }}>
+            Your friend gets an extra entry in prediction challenges when you sign up with their code.
+            You&apos;ll also get your own referral code to share!
+          </p>
+        </div>
+      </div>
+
+      {/* Skip at bottom */}
+      <div style={{ flex: 1, minHeight: 32 }} />
+      <button
+        onClick={onDone}
+        style={{
+          width: '100%', padding: '14px 0', background: 'transparent',
+          border: '2px solid var(--ink)', borderRadius: 12,
+          fontFamily: 'var(--mono)', fontSize: 13, fontWeight: 700,
+          letterSpacing: '0.04em', color: 'var(--text-mute)', cursor: 'pointer',
+          marginBottom: 16,
+        }}
+      >
+        I DON&apos;T HAVE A CODE — SKIP
+      </button>
+      <div style={{
+        textAlign: 'center', fontFamily: 'var(--mono)', fontSize: 9.5,
+        color: 'var(--text-mute)', letterSpacing: '0.06em', paddingBottom: 32,
+      }}>
+        CURLYSPORTS.COM · MADE IN A BEDROOM
+      </div>
+    </div>
+  );
+}
+
 function AppInner() {
-  const { user, profile, isLoading, isNewUser, setFavTeam, verifyingOtp } = useAuth();
+  const { user, profile, isLoading, isNewUser, setFavTeam, verifyingOtp, isNewSignup, clearNewSignup } = useAuth();
   const flags = useFlags();
   const [tab, setTab] = useState<Tab>('home');
   const [sport, setSport] = useState('football');
@@ -183,6 +373,11 @@ function AppInner() {
   // 3 — Maintenance mode (after auth so admins can still log in)
   if (flags?.maintenanceMode) {
     return <MaintenanceScreen message={flags.maintenanceMessage} estimated={flags.maintenanceEstimated} />;
+  }
+
+  // 3.5 — New signup referral code survey
+  if (isNewSignup) {
+    return <ReferralSurvey onDone={clearNewSignup} />;
   }
 
   // 4 — Authenticated but no fav team → Onboarding
