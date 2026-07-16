@@ -1,6 +1,6 @@
 "use client";
 export const dynamic = "force-dynamic";
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import styles from "./login.module.css";
 import { Mail, Eye, EyeOff, Check, X, Loader2 } from "lucide-react";
@@ -238,6 +238,14 @@ function OtpScreen({
 }
 
 export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginPageContent />
+    </Suspense>
+  );
+}
+
+function LoginPageContent() {
   const { t } = useLanguage();
   const [mode, setMode] = useState<Mode>("login");
   const [email, setEmail]       = useState("");
