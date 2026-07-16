@@ -158,7 +158,7 @@ function ReferralSurvey({ onDone }: { onDone: () => void }) {
   return (
     <div style={{
       height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--bg)',
-      padding: '0 24px', overflowY: 'auto',
+      padding: '0 20px', overflowY: 'auto', boxSizing: 'border-box',
     }}>
       <div style={{ paddingTop: 60, paddingBottom: 24 }}>
         {/* Skip button */}
@@ -211,7 +211,7 @@ function ReferralSurvey({ onDone }: { onDone: () => void }) {
         }}>
           REFERRAL CODE
         </label>
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ display: 'flex', gap: 8, width: '100%', boxSizing: 'border-box' }}>
           <input
             value={code}
             onChange={e => { setCode(e.target.value.toUpperCase()); setResult(null); }}
@@ -219,10 +219,10 @@ function ReferralSurvey({ onDone }: { onDone: () => void }) {
             maxLength={20}
             autoCapitalize="characters"
             style={{
-              flex: 1, padding: '13px 14px', background: 'var(--surface)',
+              flex: 1, minWidth: 0, padding: '13px 14px', background: 'var(--surface)',
               border: '2px solid var(--ink)', borderRadius: 10,
-              fontFamily: 'var(--mono)', fontSize: 16, fontWeight: 700,
-              letterSpacing: '0.12em', color: 'var(--ink)', outline: 'none',
+              fontFamily: 'var(--mono)', fontSize: 15, fontWeight: 700,
+              letterSpacing: '0.08em', color: 'var(--ink)', outline: 'none',
               boxSizing: 'border-box',
             }}
           />
@@ -230,13 +230,13 @@ function ReferralSurvey({ onDone }: { onDone: () => void }) {
             onClick={handleRedeem}
             disabled={submitting || !code.trim()}
             style={{
-              padding: '13px 20px', background: (submitting || !code.trim()) ? 'var(--surface-3)' : 'var(--ink)',
+              padding: '13px 16px', background: (submitting || !code.trim()) ? 'var(--surface-3)' : 'var(--ink)',
               border: '2px solid var(--ink)', borderRadius: 10,
               fontFamily: 'var(--mono)', fontSize: 12, fontWeight: 700,
               letterSpacing: '0.04em', color: (submitting || !code.trim()) ? 'var(--text-mute)' : 'var(--accent)',
               cursor: (submitting || !code.trim()) ? 'not-allowed' : 'pointer',
               boxShadow: (submitting || !code.trim()) ? 'none' : '3px 3px 0 var(--accent)',
-              flexShrink: 0,
+              flexShrink: 0, whiteSpace: 'nowrap',
             }}
           >
             {submitting ? '...' : 'APPLY'}
