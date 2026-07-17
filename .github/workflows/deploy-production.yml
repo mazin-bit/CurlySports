@@ -89,44 +89,7 @@ jobs:
 
       - name: Run Prisma migrations
         if: steps.migration-env.outputs.has_direct_url == 'true'
-        run: |
-          node -e "
-            const fs = require('fs');
-            const { execFileSync } = require('child_process');
-
-            // Parse .env.migrate with proper quote stripping
-            const content = fs.readFileSync('.env.migrate', 'utf8');
-            for (const line of content.split('\n')) {
-              const m = line.match(/^([A-Z_][A-Z0-9_]*)=(.*)\$/);
-              if (!m) continue;
-              let v = m[2].trim();
-              if ((v.startsWith('\"') && v.endsWith('\"')) || (v.startsWith(\"'\") && v.endsWith(\"'\"))) {
-                v = v.slice(1, -1);
-              }
-              process.env[m[1]] = v;
-            }
-
-            // Log connection info (masked)
-            const d = process.env.DIRECT_URL || '';
-            const db = process.env.DATABASE_URL || '';
-            const mask = s => s.replace(/:([^:@]+)@/, ':***@');
-            console.log('[migrate] DIRECT_URL:', d ? mask(d) : '(empty)');
-            console.log('[migrate] DATABASE_URL:', db ? mask(db) : '(empty)');
-
-            // Run migrate status
-            console.log('--- Prisma migrate status ---');
-            try {
-              execFileSync('node', ['./node_modules/prisma/build/index.js', 'migrate', 'status'], { stdio: 'inherit', env: process.env });
-            } catch (_) {}
-
-            // Run migrate deploy
-            console.log('--- Running prisma migrate deploy ---');
-            execFileSync('node', ['./node_modules/prisma/build/index.js', 'migrate', 'deploy'], { stdio: 'inherit', env: process.env });
-            console.log('Prisma migrations applied successfully');
-          "
-        env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: node scripts/run-migrations.js
 
       - name: Run Supabase SQL migrations
         if: steps.migration-env.outputs.has_direct_url == 'true'
