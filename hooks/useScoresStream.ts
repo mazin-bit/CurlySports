@@ -87,31 +87,34 @@ export function useScoresStream(sport?: string, date?: string): StreamState & { 
     };
   }, [buildUrl]);
 
-  // Fallback: if SSE hasn't connected after 5s, fetch once via REST
+  // Immediately fetch REST data while SSE connects (parallel strategy)
   const fallbackRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     connect();
 
-    fallbackRef.current = setTimeout(async () => {
-      // Only fetch if SSE hasn't delivered data yet
-      if (esRef.current?.readyState !== EventSource.OPEN) {
-        try {
-          const params = new URLSearchParams();
-          if (sport) params.set("sport", sport);
-          const qs = params.toString();
-          const res = await fetch(`/api/espn/scoreboard${qs ? "?" + qs : ""}`);
-          if (res.ok) {
-            const data = await res.json();
-            const groups = data.groups ?? [];
-            const liveCount = groups
-              .flatMap((g: { matches: { status: string }[] }) => g.matches)
-              .filter((m: { status: string }) => m.status === "LIVE" || m.status === "HALF_TIME").length;
-            setState((prev) => prev.isConnected ? prev : { groups, updatedAt: data.updatedAt ?? new Date().toISOString(), isConnected: true, error: null, liveCount });
-          }
-        } catch { /* ignore fallback error */ }
-      }
-    }, 5000);
+    // Fire REST fetch immediately — don't wait for SSE to fail
+    (async () => {
+      try {
+        const params = new URLSearchParams();
+        if (sport) params.set("sport", sport);
+        if (date) params.set("date", date);
+        const qs = params.toString();
+        const res = await fetch(`/api/espn/scoreboard${qs ? "?" + qs : ""}`);
+        if (res.ok) {
+          const data = await res.json();
+          const groups = data.groups ?? [];
+          const liveCount = groups
+            .flatMap((g: { matches: { status: string }[] }) => g.matches)
+            .filter((m: { status: string }) => m.status === "LIVE" || m.status === "HALF_TIME").length;
+          // Only apply if SSE hasn't delivered data yet
+          setState((prev) => prev.groups.length === 0
+            ? { groups, updatedAt: data.updatedAt ?? new Date().toISOString(), isConnected: true, error: null, liveCount }
+            : prev
+          );
+        }
+      } catch { /* ignore — SSE will deliver data */ }
+    })();
 
     return () => {
       esRef.current?.close();

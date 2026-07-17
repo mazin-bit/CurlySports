@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { cacheGet, cacheSet } from "@/lib/redis";
 
 export const dynamic = "force-dynamic";
 
@@ -80,6 +81,15 @@ export async function GET(req: NextRequest) {
 
   if (!eventId) {
     return NextResponse.json({ error: "Missing event id" }, { status: 400 });
+  }
+
+  // Redis cache for match data
+  const cacheKey = `match:${eventId}:${leagueId}`;
+  const cached = await cacheGet<MatchDetail>(cacheKey);
+  if (cached) {
+    return NextResponse.json(cached, {
+      headers: { "Cache-Control": "public, max-age=10", "X-Cache": "HIT" },
+    });
   }
 
   const leaguePath = LEAGUE_PATHS[leagueId] ?? `soccer/${leagueId}`;
@@ -258,8 +268,13 @@ export async function GET(req: NextRequest) {
       updatedAt: new Date().toISOString(),
     };
 
+    // Cache: 8s for live matches, 60s for finished
+    const isLive = status === "LIVE" || status === "HALF_TIME";
+    const ttl = isLive ? 8 : 60;
+    cacheSet(cacheKey, detail, ttl).catch(() => {});
+
     return NextResponse.json(detail, {
-      headers: { "Cache-Control": "public, max-age=10" },
+      headers: { "Cache-Control": "public, max-age=10", "X-Cache": "MISS" },
     });
   } catch {
     return NextResponse.json({ error: "Failed to fetch match" }, { status: 500 });

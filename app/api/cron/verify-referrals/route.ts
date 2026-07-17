@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { ensureChallengeTables, cuid } from "@/lib/ensure-challenge-tables";
+import { ensureChallengeTables, ensureNotificationsTable, cuid } from "@/lib/ensure-challenge-tables";
 import { logger } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
@@ -125,6 +125,7 @@ export async function verifySingleReferral(referral: PendingReferralRow): Promis
     const referredName = referredUser[0]?.username || "Someone";
     const entriesGranted = activeEntries.length;
 
+    await ensureNotificationsTable();
     await prisma.$executeRawUnsafe(
       `INSERT INTO scheduled_notifications (id, title, body, "targetType", "targetUsers", "scheduledAt", status, "createdAt", "updatedAt")
        VALUES ($1, $2, $3, 'user', ARRAY[$4]::TEXT[], NOW(), 'scheduled', NOW(), NOW())`,

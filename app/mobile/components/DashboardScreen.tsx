@@ -46,34 +46,159 @@ interface ActiveChallenge {
   totalVotes: number;
 }
 
+function RedeemCodeBox() {
+  const { t } = useLanguage();
+  const [code, setCode] = useState('');
+  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error' | 'redeemed'>('idle');
+  const [message, setMessage] = useState('');
+
+  // Check on mount if user already redeemed
+  useEffect(() => {
+    fetch('/api/referral/redeem')
+      .then(r => r.json())
+      .then(d => { if (d.redeemed) setStatus('redeemed'); })
+      .catch(() => {});
+  }, []);
+
+  const handleRedeem = async () => {
+    const trimmed = code.trim();
+    if (!trimmed || status === 'redeemed') return;
+    setStatus('loading');
+    try {
+      const res = await fetch('/api/referral/redeem', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: trimmed }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setStatus('redeemed');
+        setMessage(data.message || 'Code redeemed successfully!');
+        setCode('');
+      } else if (res.status === 409) {
+        setStatus('redeemed');
+        setMessage(data.error || 'You have already used a referral code.');
+      } else {
+        setStatus('error');
+        setMessage(data.error || 'Invalid code.');
+      }
+    } catch {
+      setStatus('error');
+      setMessage('Network error. Please try again.');
+    }
+  };
+
+  if (status === 'redeemed') {
+    return (
+      <div style={{
+        background: 'var(--surface)',
+        border: '1.5px solid var(--border-2)',
+        borderRadius: 12,
+        padding: '12px 14px',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 8 }}>
+          <Icon name="ticket" size={12} style={{ color: 'var(--accent)' }} />
+          <span style={{
+            fontFamily: 'var(--mono)', fontSize: 9, fontWeight: 800,
+            letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--accent)',
+          }}>
+            {t('redeem.title', 'Redeem Code')}
+          </span>
+        </div>
+        <div style={{ marginTop: 2, fontSize: 10, fontFamily: 'var(--body)', color: 'var(--accent)', display: 'flex', alignItems: 'center', gap: 4 }}>
+          <Icon name="check-circle" size={10} /> {message || t('redeem.alreadyUsed', 'You have already redeemed a code.')}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{
+      background: 'var(--surface)',
+      border: '1.5px solid var(--border-2)',
+      borderRadius: 12,
+      padding: '12px 14px',
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 8 }}>
+        <Icon name="ticket" size={12} style={{ color: 'var(--accent)' }} />
+        <span style={{
+          fontFamily: 'var(--mono)', fontSize: 9, fontWeight: 800,
+          letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--accent)',
+        }}>
+          {t('redeem.title', 'Redeem Code')}
+        </span>
+      </div>
+      <div style={{ display: 'flex', gap: 8 }}>
+        <input
+          type="text"
+          value={code}
+          onChange={(e) => { setCode(e.target.value.toUpperCase()); if (status !== 'idle') setStatus('idle'); }}
+          placeholder={t('redeem.placeholder', 'Enter code')}
+          maxLength={20}
+          style={{
+            flex: 1, padding: '8px 10px',
+            fontFamily: 'var(--mono)', fontSize: 12, fontWeight: 600,
+            letterSpacing: '0.06em', textTransform: 'uppercase',
+            color: 'var(--ink)', background: 'var(--surface-2)',
+            border: '1.5px solid var(--border-2)', borderRadius: 8,
+            outline: 'none',
+          }}
+          onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--accent)'; }}
+          onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border-2)'; }}
+          onKeyDown={(e) => { if (e.key === 'Enter') handleRedeem(); }}
+        />
+        <button
+          onClick={handleRedeem}
+          disabled={!code.trim() || status === 'loading'}
+          style={{
+            padding: '8px 14px',
+            fontFamily: 'var(--display)', fontSize: 11, fontWeight: 700,
+            color: !code.trim() || status === 'loading' ? 'var(--text-mute)' : '#07090b',
+            background: !code.trim() || status === 'loading' ? 'var(--surface-2)' : 'var(--accent)',
+            border: '1.5px solid transparent', borderRadius: 8,
+            cursor: !code.trim() || status === 'loading' ? 'not-allowed' : 'pointer',
+            transition: 'background 0.15s, color 0.15s',
+          }}
+        >
+          {status === 'loading' ? '...' : t('redeem.apply', 'Apply')}
+        </button>
+      </div>
+      {status === 'error' && (
+        <div style={{ marginTop: 6, fontSize: 10, fontFamily: 'var(--body)', color: 'var(--orange)', display: 'flex', alignItems: 'center', gap: 4 }}>
+          <Icon name="alert-circle" size={10} /> {message}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function useMobileActiveChallenge() {
   const [challenge, setChallenge] = useState<ActiveChallenge | null>(null);
   const [userVote, setUserVote] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
+    const ctrl = new AbortController();
+    // 3s timeout to prevent blocking UI
+    const timer = setTimeout(() => ctrl.abort(), 3000);
     (async () => {
       try {
-        const res = await fetch('/api/challenges?status=active&limit=1');
+        const res = await fetch('/api/challenges?status=active&limit=1', { signal: ctrl.signal });
+        clearTimeout(timer);
         if (!res.ok) return;
         const data = await res.json();
         const items = data.challenges ?? data;
         if (Array.isArray(items) && items.length > 0 && !cancelled) {
-          setChallenge(items[0]);
-          try {
-            const vRes = await fetch(`/api/challenges/${items[0].id}`);
-            if (vRes.ok) {
-              const vData = await vRes.json();
-              if (vData.userVote?.selectedTeam) {
-                const teamName = vData.userVote.selectedTeam === 'teamA' ? items[0].teamA : items[0].teamB;
-                setUserVote(teamName);
-              }
-            }
-          } catch { /* user not logged in */ }
+          const c = items[0];
+          setChallenge(c);
+          if (c.userVote) {
+            const teamName = c.userVote === 'teamA' ? c.teamA : c.teamB;
+            setUserVote(teamName);
+          }
         }
-      } catch { /* ignore */ }
+      } catch { /* timeout or network error — challenge section stays hidden */ }
     })();
-    return () => { cancelled = true; };
+    return () => { cancelled = true; ctrl.abort(); clearTimeout(timer); };
   }, []);
 
   return { challenge, userVote, setUserVote };
@@ -258,29 +383,33 @@ export default function DashboardScreen({ sport, setSport, onOpenMatch, onOpenPl
   const scoresLoading = !isConnected && groups.length === 0;
   const leagueLabel = [...new Set(groups.slice(0, 3).map(g => g.leagueShortName))].join(' · ');
 
-  // Fetch upcoming matches when no matches today
+  // Fetch upcoming matches when no matches today — all days in parallel
   useEffect(() => {
     if (!isConnected || allMatches.length > 0) { setUpcoming(null); return; }
     let cancelled = false;
     (async () => {
-      for (let i = 1; i <= 5; i++) {
+      const days = Array.from({ length: 5 }, (_, i) => {
         const d = new Date();
-        d.setDate(d.getDate() + i);
-        const yyyymmdd = d.toISOString().slice(0, 10).replace(/-/g, '');
-        try {
-          const res = await fetch(`/api/espn/scoreboard?sport=${sport}&date=${yyyymmdd}`);
-          const json = await res.json();
-          const nMatches: NormalizedMatch[] = (json.groups ?? []).flatMap((g: { matches: NormalizedMatch[] }) => g.matches);
-          if (nMatches.length > 0 && !cancelled) {
-            const label = i === 1 ? t('time.tomorrow') : formatDate(d, locale, { weekday: 'short', month: 'short', day: 'numeric' });
-            setUpcoming({ label, matches: nMatches.slice(0, 6).map(normalizedToMobile) });
-            return;
-          }
-        } catch { /* skip day */ }
+        d.setDate(d.getDate() + i + 1);
+        return { dayOffset: i + 1, date: d, yyyymmdd: d.toISOString().slice(0, 10).replace(/-/g, '') };
+      });
+      const results = await Promise.allSettled(
+        days.map(({ yyyymmdd }) => fetch(`/api/espn/scoreboard?sport=${sport}&date=${yyyymmdd}`).then(r => r.json()))
+      );
+      if (cancelled) return;
+      for (let i = 0; i < results.length; i++) {
+        const r = results[i];
+        if (r.status !== 'fulfilled') continue;
+        const nMatches: NormalizedMatch[] = (r.value.groups ?? []).flatMap((g: { matches: NormalizedMatch[] }) => g.matches);
+        if (nMatches.length > 0) {
+          const label = days[i].dayOffset === 1 ? t('time.tomorrow') : formatDate(days[i].date, locale, { weekday: 'short', month: 'short', day: 'numeric' });
+          setUpcoming({ label, matches: nMatches.slice(0, 6).map(normalizedToMobile) });
+          return;
+        }
       }
     })();
     return () => { cancelled = true; };
-  }, [isConnected, allMatches.length, sport, t]);
+  }, [isConnected, allMatches.length, sport, t, locale]);
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--bg)' }}>
@@ -336,6 +465,8 @@ export default function DashboardScreen({ sport, setSport, onOpenMatch, onOpenPl
                   <button
                     key={team}
                     onClick={async () => {
+                      // Optimistic: show vote instantly
+                      setChallengeVote(team);
                       try {
                         const selectedTeam = team === activeChallenge.teamA ? 'teamA' : 'teamB';
                         const res = await fetch('/api/challenges', {
@@ -343,8 +474,8 @@ export default function DashboardScreen({ sport, setSport, onOpenMatch, onOpenPl
                           headers: { 'Content-Type': 'application/json' },
                           body: JSON.stringify({ challengeId: activeChallenge.id, selectedTeam }),
                         });
-                        if (res.ok) setChallengeVote(team);
-                      } catch { /* ignore */ }
+                        if (!res.ok) setChallengeVote(''); // Revert on failure
+                      } catch { setChallengeVote(''); }
                     }}
                     style={{
                       flex: 1, padding: '7px 12px',
@@ -371,6 +502,9 @@ export default function DashboardScreen({ sport, setSport, onOpenMatch, onOpenPl
             </div>
           </div>
         )}
+
+        {/* Redeem code */}
+        <RedeemCodeBox />
 
         {/* Live scores */}
         <Card

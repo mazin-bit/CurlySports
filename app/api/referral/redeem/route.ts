@@ -1,9 +1,30 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
-import { ensureChallengeTables, cuid } from "@/lib/ensure-challenge-tables";
+import { ensureChallengeTables, ensureNotificationsTable, cuid } from "@/lib/ensure-challenge-tables";
 
 export const dynamic = "force-dynamic";
+
+/* ------------------------------------------------------------------ */
+/*  GET /api/referral/redeem — Check if user already redeemed a code   */
+/* ------------------------------------------------------------------ */
+export async function GET() {
+  try {
+    const auth = await requireAuth();
+    if (auth instanceof NextResponse) return auth;
+    const { user } = auth;
+
+    const rows: { referredBy: string | null }[] = await prisma.$queryRawUnsafe(
+      `SELECT "referredBy" FROM users WHERE id = $1`,
+      user.id
+    );
+    const redeemed = rows.length > 0 && !!rows[0].referredBy;
+
+    return NextResponse.json({ redeemed });
+  } catch {
+    return NextResponse.json({ redeemed: false });
+  }
+}
 
 /* ------------------------------------------------------------------ */
 /*  POST /api/referral/redeem — Redeem a referral code after signup    */
@@ -150,6 +171,7 @@ export async function POST(req: NextRequest) {
       // Create notification for the referrer
       try {
         const entriesGranted = activeEntries.length;
+        await ensureNotificationsTable();
         await prisma.$executeRawUnsafe(
           `INSERT INTO scheduled_notifications (id, title, body, "targetType", "targetUsers", "scheduledAt", status, "createdAt", "updatedAt")
            VALUES ($1, $2, $3, 'user', ARRAY[$4]::TEXT[], NOW(), 'scheduled', NOW(), NOW())`,

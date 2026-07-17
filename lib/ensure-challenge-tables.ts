@@ -84,6 +84,26 @@ export async function ensureChallengeTables() {
   tablesEnsured = true;
 }
 
+let notifsTableEnsured = false;
+
+export async function ensureNotificationsTable() {
+  if (notifsTableEnsured) return;
+  await prisma.$executeRawUnsafe(`
+    CREATE TABLE IF NOT EXISTS scheduled_notifications (
+      id TEXT PRIMARY KEY,
+      title TEXT NOT NULL,
+      body TEXT NOT NULL,
+      "targetType" TEXT NOT NULL,
+      "targetUsers" TEXT[] DEFAULT '{}',
+      "scheduledAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      status TEXT NOT NULL DEFAULT 'scheduled',
+      "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+  notifsTableEnsured = true;
+}
+
 /** Generate a referral code from a username */
 export function generateReferralCode(username: string): string {
   const prefix = username.replace(/[^a-zA-Z]/g, "").toUpperCase().slice(0, 5).padEnd(3, "X");

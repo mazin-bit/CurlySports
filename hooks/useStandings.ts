@@ -57,7 +57,7 @@ export function useStandings(sport?: string, leagueId?: string, season?: string)
   const { data, error, isLoading, isValidating } = useSWR<StandingsResponse>(
     url,
     fetcher,
-    { refreshInterval: 60_000 }
+    { refreshInterval: 60_000, keepPreviousData: true, dedupingInterval: 30_000 }
   );
 
   return {
@@ -76,7 +76,7 @@ export function useSingleStandings(leagueId: string | null, season?: string) {
   const { data, error, isLoading } = useSWR<LeagueStandings>(
     leagueId ? `/api/espn/standings?${params.toString()}` : null,
     fetcher,
-    { refreshInterval: 60_000 }
+    { refreshInterval: 60_000, keepPreviousData: true, dedupingInterval: 30_000 }
   );
 
   return { standings: data ?? null, isLoading, error };

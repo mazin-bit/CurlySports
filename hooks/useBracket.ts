@@ -15,7 +15,7 @@ export function useBracket(leagueId: string | null, season?: string) {
   const { data, error, isLoading } = useSWR<BracketData>(
     leagueId ? `/api/espn/bracket?${params.toString()}` : null,
     fetcher,
-    { refreshInterval: 60_000 }
+    { refreshInterval: 60_000, keepPreviousData: true, dedupingInterval: 30_000 }
   );
 
   return {

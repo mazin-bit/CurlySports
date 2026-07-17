@@ -19,7 +19,7 @@ export function useTeams(sport?: string, leagueId?: string) {
   const { data, error, isLoading, isValidating } = useSWR<TeamsResponse>(
     url,
     fetcher,
-    { refreshInterval: 60 * 60_000 } // 1 hour
+    { refreshInterval: 60 * 60_000, keepPreviousData: true, dedupingInterval: 60_000 }
   );
 
   return {

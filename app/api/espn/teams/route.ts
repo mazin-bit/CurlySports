@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { cacheGet, cacheSet } from "@/lib/redis";
 
 export const dynamic = "force-dynamic";
 
@@ -154,6 +155,13 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ teams, updatedAt: new Date().toISOString() });
   }
 
+  // Cache key based on sport + optional league filter
+  const cacheKey = `teams:${sport}:${leagueId ?? "all"}`;
+  const cached = await cacheGet<{ teams: EspnTeamEntry[]; updatedAt: string }>(cacheKey);
+  if (cached) {
+    return NextResponse.json(cached, { headers: { "Cache-Control": "public, max-age=300", "X-Cache": "HIT" } });
+  }
+
   const paths = SPORT_TEAM_PATHS[sport] ?? SPORT_TEAM_PATHS.football;
   const filteredPaths = leagueId ? paths.filter((p) => p.leagueId === leagueId) : paths;
 
@@ -170,7 +178,10 @@ export async function GET(req: NextRequest) {
     if (r.status === "fulfilled") allTeams.push(...r.value);
   }
 
-  return NextResponse.json({ teams: allTeams, updatedAt: new Date().toISOString() }, {
-    headers: { "Cache-Control": "public, max-age=300" },
+  const payload = { teams: allTeams, updatedAt: new Date().toISOString() };
+  cacheSet(cacheKey, payload, 3600).catch(() => {}); // Cache teams for 1 hour
+
+  return NextResponse.json(payload, {
+    headers: { "Cache-Control": "public, max-age=300", "X-Cache": "MISS" },
   });
 }

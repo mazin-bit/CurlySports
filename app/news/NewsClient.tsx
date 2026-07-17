@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Image from "next/image";
 import AdSlot from "@/components/AdSlot";
 import styles from "./news.module.css";
@@ -110,9 +110,9 @@ export default function NewsClient() {
   const { activeSport, activeSportConfig } = useActiveSport();
   const { t, locale } = useLanguage();
   const [activeFilter, setActiveFilter] = useState("All News");
-  const { articles, isLoading, isValidating } = useNews(50, activeSport);
+  const { articles, isLoading, isValidating } = useNews(30, activeSport);
 
-  const filtered = articles.filter((a) => {
+  const filtered = useMemo(() => articles.filter((a) => {
     if (activeFilter === "All News") return true;
     const tag = tagIdForArticle(a);
     if (activeFilter === "Transfers") return tag === "TRANSFER";
@@ -122,7 +122,7 @@ export default function NewsClient() {
       return titleLc.includes("match") || titleLc.includes("beat") || titleLc.includes("win") || titleLc.includes("draw") || titleLc.includes("vs");
     }
     return true;
-  });
+  }), [articles, activeFilter]);
 
   const featured = filtered[0];
   const rest = filtered.slice(1);

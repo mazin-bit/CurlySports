@@ -59,12 +59,10 @@ export default function NewsScreen({ sport, setSport, onSearch, onBell, unread }
   const { t } = useLanguage();
   const [filter, setFilter] = useState<NewsFilter>('all');
 
-  const { articles: sportArticles, isLoading: sportLoading } = useNews(50, sport);
-  const { articles: allArticles, isLoading: allLoading } = useNews(50);
-
-  const baseArticles = filter === 'sport' ? sportArticles : allArticles;
-  const isLoading = filter === 'sport' ? sportLoading : allLoading;
-  const articles = applyFilter(baseArticles, filter, sport);
+  // Only fetch the data we need based on the active filter
+  const needsSportData = filter === 'sport';
+  const { articles: rawArticles, isLoading } = useNews(50, needsSportData ? sport : undefined);
+  const articles = applyFilter(rawArticles, filter, sport);
 
   const openArticle = (url: string) => {
     openExternal(url);

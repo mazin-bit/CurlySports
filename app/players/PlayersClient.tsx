@@ -1,7 +1,7 @@
 "use client";
 
 import AppShell from "@/components/AppShell";
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import Link from "next/link";
 import styles from "./players.module.css";
 import { PersonStanding, Search, Globe } from "lucide-react";
@@ -276,18 +276,18 @@ export default function PlayersPage() {
         .then((r) => r.json())
         .then((d) => { setGlobalResults(d.players ?? []); setGlobalLoading(false); })
         .catch(() => setGlobalLoading(false));
-    }, 400);
+    }, 200);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search, isGlobalSearch]);
 
-  const positions = Array.from(
+  const positions = useMemo(() => Array.from(
     new Set(players.map((p) => p.position).filter((p) => p && p !== "?"))
-  ).sort();
+  ).sort(), [players]);
 
-  const filtered = players.filter((p) => {
+  const filtered = useMemo(() => players.filter((p) => {
     if (posFilter !== "All" && p.position !== posFilter) return false;
     return true;
-  });
+  }), [players, posFilter]);
 
   const visible = filtered.slice(0, page * PAGE_SIZE);
   const hasMore = visible.length < filtered.length;

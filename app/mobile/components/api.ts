@@ -66,7 +66,7 @@ export function useMatchDetail(matchId?: string | number | null, leagueId?: stri
   const id = matchId ? String(matchId) : null;
   const league = leagueId ?? 'eng.1';
   const url = id ? `/api/espn/match?id=${encodeURIComponent(id)}&league=${encodeURIComponent(league)}` : null;
-  const { data, isLoading, error } = useSWR<RealMatchDetail>(url, fetcher, { refreshInterval: 15_000 });
+  const { data, isLoading, error } = useSWR<RealMatchDetail>(url, fetcher, { refreshInterval: 15_000, keepPreviousData: true });
   return { detail: data ?? null, isLoading, error };
 }
 
@@ -100,7 +100,7 @@ export function usePlayerDetail(playerId?: string | null, leagueId?: string | nu
   const id = playerId ?? null;
   const league = leagueId ?? 'eng.1';
   const url = id ? `/api/espn/player?id=${encodeURIComponent(id)}&league=${encodeURIComponent(league)}` : null;
-  const { data, isLoading, error } = useSWR<RealPlayerDetail>(url, fetcher, { refreshInterval: 300_000 });
+  const { data, isLoading, error } = useSWR<RealPlayerDetail>(url, fetcher, { refreshInterval: 300_000, keepPreviousData: true });
   return { player: data ?? null, isLoading, error };
 }
 
@@ -121,7 +121,7 @@ export interface RealDebate {
 }
 
 export function useDebatesList() {
-  const { data, isLoading, error, mutate } = useSWR<RealDebate[]>('/api/debates', fetcher, { refreshInterval: 60_000 });
+  const { data, isLoading, error, mutate } = useSWR<RealDebate[]>('/api/debates', fetcher, { refreshInterval: 60_000, keepPreviousData: true });
   return { debates: data ?? [], isLoading, error, mutate };
 }
 
@@ -141,7 +141,7 @@ export interface RealTeam {
 export function useTeamsList(sport = 'football', leagueId?: string) {
   const params = new URLSearchParams({ sport });
   if (leagueId) params.set('league', leagueId);
-  const { data, isLoading } = useSWR<{ teams: RealTeam[] }>(`/api/espn/teams?${params}`, fetcher, { revalidateOnFocus: false });
+  const { data, isLoading } = useSWR<{ teams: RealTeam[] }>(`/api/espn/teams?${params}`, fetcher, { revalidateOnFocus: false, keepPreviousData: true, dedupingInterval: 60_000 });
   return { teams: data?.teams ?? [], isLoading };
 }
 

@@ -754,15 +754,19 @@ function getStaticStandings(leagueId: string, season?: string): LeagueStandings 
 async function fetchCricketStandings(leagueId: string, season?: string): Promise<LeagueStandings | null> {
   if (leagueId === "ipl") return fetchIPLStandings(season);
 
-  // TheSportsDB covers: aus.domestic, eng.domestic(1/2)
-  const tsdb = await fetchCricketStandingsFromTsdb(leagueId);
+  // Fetch TSDB and ESPNcricinfo in parallel instead of sequential fallback
+  const [tsdbResult, cricinfoResult] = await Promise.allSettled([
+    fetchCricketStandingsFromTsdb(leagueId),
+    fetchFromCricinfoHtml(leagueId, season),
+  ]);
+
+  const tsdb = tsdbResult.status === "fulfilled" ? tsdbResult.value : null;
   if (tsdb) return tsdb;
 
-  // ESPNcricinfo HTML scraper (works locally, blocked in production by Akamai)
-  const cricinfo = await fetchFromCricinfoHtml(leagueId, season);
+  const cricinfo = cricinfoResult.status === "fulfilled" ? cricinfoResult.value : null;
   if (cricinfo) return cricinfo;
 
-  // Static fallback for when ESPNcricinfo is blocked
+  // Static fallback for when both sources fail
   return getStaticStandings(leagueId, season);
 }
 

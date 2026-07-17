@@ -423,16 +423,89 @@
 .challengeVoteBtn:hover:not(:disabled) {
   background: var(--surface-3); border-color: var(--ink);
 }
+.challengeVoteBtn:active:not(:disabled) {
+  transform: scale(0.95);
+  background: rgba(200,255,61,0.15);
+  border-color: var(--accent);
+  transition-duration: 0.05s;
+}
 .challengeVoteBtn:disabled { opacity: 0.6; cursor: not-allowed; }
 .challengeVoteBtnSelected {
   background: rgba(200,255,61,0.15); border-color: var(--accent);
   color: var(--ink); cursor: default;
+  animation: voteFlash 0.3s ease-out;
+}
+@keyframes voteFlash {
+  0% { transform: scale(0.92); background: rgba(200,255,61,0.4); }
+  50% { transform: scale(1.03); }
+  100% { transform: scale(1); background: rgba(200,255,61,0.15); }
+}
+.challengeVotedFade {
+  animation: fadeInVoted 0.25s ease-out;
+}
+@keyframes fadeInVoted {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 .challengeCardFooter {
   display: flex; align-items: center; justify-content: space-between;
   margin-top: 10px; padding-top: 10px; border-top: 1.5px solid var(--border-2);
   font-family: var(--mono); font-size: 11px; font-weight: 700;
   color: var(--text-mute);
+}
+
+/* ── Redeem Code Box ── */
+.redeemBox {
+  background: var(--surface);
+  border: 1.5px solid var(--border-2);
+  border-radius: var(--r-lg);
+  padding: 14px 18px;
+}
+.redeemBadge {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-family: var(--mono); font-size: 10px; font-weight: 800;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--accent); margin-bottom: 10px;
+}
+.redeemRow {
+  display: flex; gap: 8px;
+}
+.redeemInput {
+  flex: 1; padding: 9px 12px;
+  font-family: var(--mono); font-size: 13px; font-weight: 600;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--ink); background: var(--surface-2);
+  border: 1.5px solid var(--border-2); border-radius: 8px;
+  outline: none; transition: border-color 0.15s;
+}
+.redeemInput::placeholder {
+  color: var(--text-mute); text-transform: none;
+  letter-spacing: 0; font-weight: 500;
+}
+.redeemInput:focus {
+  border-color: var(--accent);
+}
+.redeemBtn {
+  padding: 9px 18px;
+  font-family: var(--display); font-size: 13px; font-weight: 700;
+  color: #07090b; background: var(--accent);
+  border: 1.5px solid transparent; border-radius: 8px;
+  cursor: pointer; transition: background 0.15s, opacity 0.15s;
+}
+.redeemBtn:hover:not(:disabled) {
+  opacity: 0.85;
+}
+.redeemBtn:disabled {
+  color: var(--text-mute); background: var(--surface-2);
+  cursor: not-allowed;
+}
+.redeemSuccess {
+  margin-top: 8px; font-size: 12px; font-family: var(--body);
+  color: var(--accent); display: flex; align-items: center; gap: 5px;
+}
+.redeemError {
+  margin-top: 8px; font-size: 12px; font-family: var(--body);
+  color: var(--orange); display: flex; align-items: center; gap: 5px;
 }
 
 @media (max-width: 640px) {

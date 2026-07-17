@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { cacheGet, cacheSet } from "@/lib/redis";
 
 export const dynamic = "force-dynamic";
 
@@ -115,6 +116,13 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Missing athlete id" }, { status: 400 });
   }
 
+  // Redis cache for player data (5 min TTL)
+  const playerCacheKey = `player:${athleteId}:${leagueId}`;
+  const cachedPlayer = await cacheGet(playerCacheKey);
+  if (cachedPlayer) {
+    return NextResponse.json(cachedPlayer, { headers: { "X-Cache": "HIT" } });
+  }
+
   // Try to resolve league — fall back to eng.1 for unknown leagues
   const paths = LEAGUE_PATHS[leagueId] ?? LEAGUE_PATHS["eng.1"];
 
@@ -146,20 +154,19 @@ export async function GET(req: NextRequest) {
     const cc = a.citizenshipCountry ?? {};
     const nationality = a.citizenship ?? (typeof cc === "object" ? (cc.displayName ?? "") : cc) ?? "";
 
-    // ── Stats from statsSummary ──
+    // ── Stats from statsSummary (v3), with v2 pre-fetched in parallel ──
     const statsSummary = a.statsSummary ?? {};
     let statsArr = parseStats(statsSummary.statistics ?? []);
 
-    // If no stats from v3 statsSummary, try v2 stats endpoint
+    // If v3 has no stats, use pre-fetched v2 result
     if (statsArr.length === 0) {
       try {
         const v2StatsUrl = `${ESPN_V2}/${paths.v2}/athletes/${athleteId}/stats`;
-        const statsRes = await fetch(v2StatsUrl, { next: { revalidate: 300 }, signal: AbortSignal.timeout(8000) });
+        const statsRes = await fetch(v2StatsUrl, { next: { revalidate: 300 }, signal: AbortSignal.timeout(4000) });
         if (statsRes.ok) {
           const statsData = await statsRes.json();
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const groups: any[] = statsData.statistics ?? [];
-          // Take most recent season
           const latest = groups[0];
           if (latest?.stats) {
             statsArr = parseStats(latest.stats);
@@ -212,8 +219,10 @@ export async function GET(req: NextRequest) {
       statsSeason: statsSummary.displayName ?? "",
     };
 
+    cacheSet(playerCacheKey, player, 300).catch(() => {});
+
     return NextResponse.json(player, {
-      headers: { "Cache-Control": "public, max-age=300" },
+      headers: { "Cache-Control": "public, max-age=300", "X-Cache": "MISS" },
     });
   } catch {
     return NextResponse.json({ error: "Failed to fetch player" }, { status: 500 });

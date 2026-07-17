@@ -3,6 +3,7 @@ import { optionalAuth } from "@/lib/auth";
 import { createClient } from "@/utils/supabase/server";
 import prisma from "@/lib/prisma";
 import { headers } from "next/headers";
+import { ensureNotificationsTable } from "@/lib/ensure-challenge-tables";
 
 interface MobileNotif {
   id: string;
@@ -54,20 +55,7 @@ export async function GET(req: NextRequest) {
 
   // 1. Fetch admin-sent notifications from scheduled_notifications
   try {
-    // Ensure table exists
-    await prisma.$executeRawUnsafe(`
-      CREATE TABLE IF NOT EXISTS scheduled_notifications (
-        id TEXT PRIMARY KEY,
-        title TEXT NOT NULL,
-        body TEXT NOT NULL,
-        "targetType" TEXT NOT NULL,
-        "targetUsers" TEXT[] DEFAULT '{}',
-        "scheduledAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        status TEXT NOT NULL DEFAULT 'scheduled',
-        "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
+    await ensureNotificationsTable();
 
     // Get notifications that are due (scheduledAt <= now) and not cancelled
     const adminNotifs = await prisma.$queryRawUnsafe<Array<{

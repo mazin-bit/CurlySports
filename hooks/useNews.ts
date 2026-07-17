@@ -16,7 +16,7 @@ export function useNews(limit = 20, sport?: string) {
   const { data, error, isLoading, isValidating } = useSWR<NewsResponse>(
     url,
     fetcher,
-    { refreshInterval: 60_000 }
+    { refreshInterval: 60_000, keepPreviousData: true, dedupingInterval: 30_000 }
   );
 
   const articles = (data?.articles ?? []).slice(0, limit);

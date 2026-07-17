@@ -438,23 +438,26 @@ export default function ChallengesScreen({ sport, onOpenChallenge, onSearch, onB
 
   /* ── Vote ── */
 
-  const handleVote = async (challengeId: string, side: 'teamA' | 'teamB') => {
+  const handleVote = (challengeId: string, side: 'teamA' | 'teamB') => {
+    // Optimistic update — show vote instantly
     setVotingId(challengeId);
-    try {
-      const res = await fetch('/api/challenges', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ challengeId, selectedTeam: side }),
-      });
-
+    setChallenges(prev => prev.map(c => c.id === challengeId ? { ...c, userVote: side } : c));
+    // Fire-and-forget API call
+    fetch('/api/challenges', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ challengeId, selectedTeam: side }),
+    }).then(res => {
       if (res.ok) {
-        setChallenges(prev => prev.map(c => c.id === challengeId ? { ...c, userVote: side } : c));
-        // Refresh stats after voting
-        fetchData();
+        fetchData(); // Refresh stats
+      } else {
+        // Revert on failure
+        setChallenges(prev => prev.map(c => c.id === challengeId ? { ...c, userVote: undefined } : c));
       }
-    } catch { /* ignore */ }
-    finally { setVotingId(null); }
+    }).catch(() => {
+      setChallenges(prev => prev.map(c => c.id === challengeId ? { ...c, userVote: undefined } : c));
+    }).finally(() => setVotingId(null));
   };
 
   /* ── Derived ── */

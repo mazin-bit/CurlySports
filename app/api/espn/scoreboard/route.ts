@@ -394,7 +394,8 @@ async function upsertMatchesToDb(groups: LeagueGroup[]) {
   for (const group of groups) {
     if (!DB_SUPPORTED.includes(group.sport)) continue;
     try {
-      await prisma.league.upsert({
+      // Upsert league once per group, reuse its id
+      const league = await prisma.league.upsert({
         where: { espnId: group.leagueId },
         update: { name: group.leagueName, shortName: group.leagueShortName },
         create: {
@@ -405,57 +406,35 @@ async function upsertMatchesToDb(groups: LeagueGroup[]) {
         },
       });
 
-      for (const m of group.matches) {
-        const homeTeam = await prisma.team.upsert({
-          where: { espnId: m.homeTeam.id },
-          update: { name: m.homeTeam.name, shortName: m.homeTeam.shortName, logoUrl: m.homeTeam.logoUrl },
-          create: {
-            espnId: m.homeTeam.id,
-            name: m.homeTeam.name,
-            shortName: m.homeTeam.shortName,
-            logoUrl: m.homeTeam.logoUrl,
-            sport: mapSportEnum(m.sport),
-          },
-        });
+      // Process matches in parallel batches of 10
+      const batchSize = 10;
+      for (let i = 0; i < group.matches.length; i += batchSize) {
+        const batch = group.matches.slice(i, i + batchSize);
+        await Promise.allSettled(batch.map(async (m) => {
+          // Upsert both teams in parallel
+          const [homeTeam, awayTeam] = await Promise.all([
+            prisma.team.upsert({
+              where: { espnId: m.homeTeam.id },
+              update: { name: m.homeTeam.name, shortName: m.homeTeam.shortName, logoUrl: m.homeTeam.logoUrl },
+              create: { espnId: m.homeTeam.id, name: m.homeTeam.name, shortName: m.homeTeam.shortName, logoUrl: m.homeTeam.logoUrl, sport: mapSportEnum(m.sport) },
+            }),
+            prisma.team.upsert({
+              where: { espnId: m.awayTeam.id },
+              update: { name: m.awayTeam.name, shortName: m.awayTeam.shortName, logoUrl: m.awayTeam.logoUrl },
+              create: { espnId: m.awayTeam.id, name: m.awayTeam.name, shortName: m.awayTeam.shortName, logoUrl: m.awayTeam.logoUrl, sport: mapSportEnum(m.sport) },
+            }),
+          ]);
 
-        const awayTeam = await prisma.team.upsert({
-          where: { espnId: m.awayTeam.id },
-          update: { name: m.awayTeam.name, shortName: m.awayTeam.shortName, logoUrl: m.awayTeam.logoUrl },
-          create: {
-            espnId: m.awayTeam.id,
-            name: m.awayTeam.name,
-            shortName: m.awayTeam.shortName,
-            logoUrl: m.awayTeam.logoUrl,
-            sport: mapSportEnum(m.sport),
-          },
-        });
-
-        const league = await prisma.league.findUnique({ where: { espnId: group.leagueId } });
-
-        await prisma.match.upsert({
-          where: { espnId: m.id },
-          update: {
-            homeScore: m.homeScore,
-            awayScore: m.awayScore,
-            status: m.status,
-            minute: m.minute,
-            period: m.statusDisplay,
-          },
-          create: {
-            espnId: m.id,
-            homeTeamId: homeTeam.id,
-            awayTeamId: awayTeam.id,
-            leagueId: league?.id,
-            homeScore: m.homeScore,
-            awayScore: m.awayScore,
-            status: m.status,
-            sport: mapSportEnum(m.sport),
-            scheduledAt: new Date(m.scheduledAt),
-            minute: m.minute,
-            period: m.statusDisplay,
-            venue: m.venue,
-          },
-        });
+          await prisma.match.upsert({
+            where: { espnId: m.id },
+            update: { homeScore: m.homeScore, awayScore: m.awayScore, status: m.status, minute: m.minute, period: m.statusDisplay },
+            create: {
+              espnId: m.id, homeTeamId: homeTeam.id, awayTeamId: awayTeam.id, leagueId: league.id,
+              homeScore: m.homeScore, awayScore: m.awayScore, status: m.status, sport: mapSportEnum(m.sport),
+              scheduledAt: new Date(m.scheduledAt), minute: m.minute, period: m.statusDisplay, venue: m.venue,
+            },
+          });
+        }));
       }
     } catch {
       // Non-blocking

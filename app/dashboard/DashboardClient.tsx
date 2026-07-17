@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import AdSlot from "@/components/AdSlot";
 import styles from "./dashboard.module.css";
-import { Zap, Newspaper, Trophy, ArrowRightLeft, CircleDot, ChevronRight, Radio, Gift, Check, Clock } from "lucide-react";
+import { Zap, Newspaper, Trophy, ArrowRightLeft, CircleDot, ChevronRight, Radio, Gift, Check, Clock, Ticket, CheckCircle, AlertCircle } from "lucide-react";
 import { useScoresStream } from "@/hooks/useScoresStream";
 import { useNews } from "@/hooks/useNews";
 import { useStandings, useSingleStandings } from "@/hooks/useStandings";
@@ -338,28 +338,41 @@ function useUpcomingMatches(sport: string, todayKey: string, skip: boolean) {
     let cancelled = false;
 
     async function findNext() {
-      for (let d = 1; d <= 7; d++) {
-        if (cancelled) return;
-        const candidate = new Date(
+      // Fetch all 7 days in parallel instead of sequentially
+      const days = Array.from({ length: 7 }, (_, i) => i + 1);
+      const candidates = days.map(d => ({
+        d,
+        date: new Date(
           parseInt(todayKey.slice(0, 4)),
           parseInt(todayKey.slice(4, 6)) - 1,
           parseInt(todayKey.slice(6, 8)) + d
-        );
-        const key = toDateKey(candidate);
-        try {
+        ),
+      }));
+
+      const results = await Promise.allSettled(
+        candidates.map(async ({ date }) => {
+          const key = toDateKey(date);
           const res = await fetch(`/api/espn/scoreboard?sport=${sport}&date=${key}`);
-          if (!res.ok) continue;
+          if (!res.ok) return [];
           const data = await res.json();
           const groups = data.groups ?? [];
-          const matches: NormalizedMatch[] = groups.flatMap((g: { matches: NormalizedMatch[] }) => g.matches);
-          if (matches.length > 0 && !cancelled) {
-            const label = d === 1 ? "__tomorrow__" : candidate.toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "short" });
-            setUpcoming({ matches, dateLabel: label });
-            return;
-          }
-        } catch { /* ignore */ }
+          return groups.flatMap((g: { matches: NormalizedMatch[] }) => g.matches) as NormalizedMatch[];
+        })
+      );
+
+      if (cancelled) return;
+
+      // Find the earliest day with matches
+      for (let i = 0; i < results.length; i++) {
+        const r = results[i];
+        if (r.status === "fulfilled" && r.value.length > 0) {
+          const { d, date } = candidates[i];
+          const label = d === 1 ? "__tomorrow__" : date.toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "short" });
+          setUpcoming({ matches: r.value, dateLabel: label });
+          return;
+        }
       }
-      if (!cancelled) setUpcoming(null);
+      setUpcoming(null);
     }
 
     findNext();
@@ -384,18 +397,21 @@ interface ChallengeData {
 function useActiveChallenge() {
   const [challenge, setChallenge] = useState<ChallengeData | null>(null);
   const [userVote, setUserVote] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch("/api/challenges?status=active&limit=1", { credentials: "include" });
+        const res = await fetch("/api/challenges?status=active&limit=1", {
+          credentials: "include",
+          signal: AbortSignal.timeout(5000),
+        });
         if (!res.ok) return;
         const data = await res.json();
         const items = data.challenges ?? data;
         if (Array.isArray(items) && items.length > 0 && !cancelled) {
           const c = items[0];
-          // userVote is already included in the response ("teamA"/"teamB" or null)
           if (c.userVote) {
             const teamName = c.userVote === "teamA" ? c.teamA : c.teamB;
             setUserVote(teamName);
@@ -403,11 +419,12 @@ function useActiveChallenge() {
           setChallenge(c);
         }
       } catch { /* ignore */ }
+      if (!cancelled) setLoading(false);
     })();
     return () => { cancelled = true; };
   }, []);
 
-  return { challenge, userVote, setUserVote };
+  return { challenge, userVote, setUserVote, loading };
 }
 
 function ChallengeCountdown({ matchDate }: { matchDate: string }) {
@@ -430,23 +447,139 @@ function ChallengeCountdown({ matchDate }: { matchDate: string }) {
   return <span>{remaining}</span>;
 }
 
+function ChallengeSkeleton() {
+  return (
+    <div className={styles.challengeCard} style={{ opacity: 0.5, pointerEvents: "none" }}>
+      <div className={styles.challengeCardBadge}>
+        <Trophy size={13} strokeWidth={2.5} />
+        MYSTERY PRIZE CHALLENGE
+      </div>
+      <div className={styles.challengeCardTeams}>
+        <span className="skeleton-row" style={{ width: 80, height: 18, borderRadius: 6 }} />
+        <span className={styles.challengeCardVs}>VS</span>
+        <span className="skeleton-row" style={{ width: 80, height: 18, borderRadius: 6 }} />
+      </div>
+      <div style={{ display: "flex", gap: 8 }}>
+        <div className={`${styles.challengeVoteBtn} skeleton-row`} style={{ height: 36 }} />
+        <div className={`${styles.challengeVoteBtn} skeleton-row`} style={{ height: 36 }} />
+      </div>
+      <div className={styles.challengeCardFooter}>
+        <span className="skeleton-row" style={{ width: 60, height: 12, borderRadius: 4 }} />
+        <span className="skeleton-row" style={{ width: 60, height: 12, borderRadius: 4 }} />
+      </div>
+    </div>
+  );
+}
+
+function RedeemCodeBox() {
+  const { t } = useLanguage();
+  const [code, setCode] = useState('');
+  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error' | 'redeemed'>('idle');
+  const [message, setMessage] = useState('');
+
+  // Check on mount if user already redeemed
+  useEffect(() => {
+    fetch('/api/referral/redeem')
+      .then(r => r.json())
+      .then(d => { if (d.redeemed) setStatus('redeemed'); })
+      .catch(() => {});
+  }, []);
+
+  const handleRedeem = async () => {
+    const trimmed = code.trim();
+    if (!trimmed || status === 'redeemed') return;
+    setStatus('loading');
+    try {
+      const res = await fetch('/api/referral/redeem', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: trimmed }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setStatus('redeemed');
+        setMessage(data.message || 'Code redeemed successfully!');
+        setCode('');
+      } else if (res.status === 409) {
+        setStatus('redeemed');
+        setMessage(data.error || 'You have already used a referral code.');
+      } else {
+        setStatus('error');
+        setMessage(data.error || 'Invalid code.');
+      }
+    } catch {
+      setStatus('error');
+      setMessage('Network error. Please try again.');
+    }
+  };
+
+  if (status === 'redeemed') {
+    return (
+      <div className={styles.redeemBox}>
+        <div className={styles.redeemBadge}>
+          <Ticket size={13} strokeWidth={2.5} />
+          {t('redeem.title', 'Redeem Code')}
+        </div>
+        <div className={styles.redeemSuccess}>
+          <CheckCircle size={12} strokeWidth={2} /> {message || t('redeem.alreadyUsed', 'You have already redeemed a code.')}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className={styles.redeemBox}>
+      <div className={styles.redeemBadge}>
+        <Ticket size={13} strokeWidth={2.5} />
+        {t('redeem.title', 'Redeem Code')}
+      </div>
+      <div className={styles.redeemRow}>
+        <input
+          type="text"
+          value={code}
+          onChange={(e) => { setCode(e.target.value.toUpperCase()); if (status !== 'idle') setStatus('idle'); }}
+          placeholder={t('redeem.placeholder', 'Enter code')}
+          maxLength={20}
+          className={styles.redeemInput}
+          onKeyDown={(e) => { if (e.key === 'Enter') handleRedeem(); }}
+        />
+        <button
+          onClick={handleRedeem}
+          disabled={!code.trim() || status === 'loading'}
+          className={styles.redeemBtn}
+        >
+          {status === 'loading' ? '...' : t('redeem.apply', 'Apply')}
+        </button>
+      </div>
+      {status === 'error' && (
+        <div className={styles.redeemError}>
+          <AlertCircle size={12} strokeWidth={2} /> {message}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ChallengeCard({ challenge, userVote, onVote }: { challenge: ChallengeData; userVote: string | null; onVote: (team: string) => void }) {
   const { t } = useLanguage();
-  const [voting, setVoting] = useState(false);
+  const [voting, setVoting] = useState<string | null>(null);
 
-  const handleVote = async (team: string) => {
+  const handleVote = (e: React.MouseEvent, team: string) => {
+    e.preventDefault();
+    e.stopPropagation();
     if (voting || userVote) return;
-    setVoting(true);
+    // Instant visual feedback
+    setVoting(team);
+    onVote(team);
+    // Fire-and-forget API call
     const selectedTeam = team === challenge.teamA ? "teamA" : "teamB";
-    try {
-      const res = await fetch("/api/challenges", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ challengeId: challenge.id, selectedTeam }),
-      });
-      if (res.ok) onVote(team);
-    } catch { /* ignore */ }
-    setVoting(false);
+    fetch("/api/challenges", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ challengeId: challenge.id, selectedTeam }),
+    }).then(res => {
+      if (!res.ok) { onVote(""); setVoting(null); }
+    }).catch(() => { onVote(""); setVoting(null); });
   };
 
   return (
@@ -462,7 +595,7 @@ function ChallengeCard({ challenge, userVote, onVote }: { challenge: ChallengeDa
           <span>{challenge.teamB}</span>
         </div>
         {userVote ? (
-          <div style={{ textAlign: "center" }}>
+          <div style={{ textAlign: "center" }} className={styles.challengeVotedFade}>
             <div className={`${styles.challengeVoteBtn} ${styles.challengeVoteBtnSelected}`}>
               <Check size={13} strokeWidth={2.5} />
               {t("challenges.yourPrediction", "Your Prediction")}: {userVote}
@@ -472,11 +605,21 @@ function ChallengeCard({ challenge, userVote, onVote }: { challenge: ChallengeDa
             </div>
           </div>
         ) : (
-          <div style={{ display: "flex", gap: 8 }} onClick={(e) => e.preventDefault()}>
-            <button className={styles.challengeVoteBtn} disabled={voting} onClick={() => handleVote(challenge.teamA)}>
+          <div style={{ display: "flex", gap: 8 }}>
+            <button
+              className={`${styles.challengeVoteBtn} ${voting === challenge.teamA ? styles.challengeVoteBtnSelected : ""}`}
+              disabled={!!voting}
+              onClick={(e) => handleVote(e, challenge.teamA)}
+            >
+              {voting === challenge.teamA && <Check size={13} strokeWidth={2.5} />}
               {challenge.teamA}
             </button>
-            <button className={styles.challengeVoteBtn} disabled={voting} onClick={() => handleVote(challenge.teamB)}>
+            <button
+              className={`${styles.challengeVoteBtn} ${voting === challenge.teamB ? styles.challengeVoteBtnSelected : ""}`}
+              disabled={!!voting}
+              onClick={(e) => handleVote(e, challenge.teamB)}
+            >
+              {voting === challenge.teamB && <Check size={13} strokeWidth={2.5} />}
               {challenge.teamB}
             </button>
           </div>
@@ -534,7 +677,7 @@ export default function DashboardClient() {
   const upcomingData = useUpcomingMatches(activeSport, todayKey, !noMatchesToday);
 
   // Active challenge
-  const { challenge, userVote, setUserVote } = useActiveChallenge();
+  const { challenge, userVote, setUserVote, loading: challengeLoading } = useActiveChallenge();
 
   const featuredStandings = isFootball ? null : standings[0];
 
@@ -573,6 +716,22 @@ export default function DashboardClient() {
           </div>
         )}
 
+        {/* Challenge card — loads independently of scores */}
+        {challengeLoading ? (
+          <div style={{ marginBottom: 14 }}>
+            <ChallengeSkeleton />
+          </div>
+        ) : challenge ? (
+          <div style={{ marginBottom: 14 }}>
+            <ChallengeCard challenge={challenge} userVote={userVote} onVote={setUserVote} />
+          </div>
+        ) : null}
+
+        {/* Redeem code */}
+        <div style={{ marginBottom: 14 }}>
+          <RedeemCodeBox />
+        </div>
+
         {scoresLoading ? (
           <>
             <div className="skeleton-row" style={{ height: 130, borderRadius: 16, marginBottom: 14 }} />
@@ -586,12 +745,6 @@ export default function DashboardClient() {
           <>
             {/* Hero: first live match featured */}
             {heroMatch && <HeroMatchCard m={heroMatch} />}
-            {/* Challenge card */}
-            {challenge && (
-              <div style={{ marginTop: heroMatch ? 14 : 0, marginBottom: 14 }}>
-                <ChallengeCard challenge={challenge} userVote={userVote} onVote={setUserVote} />
-              </div>
-            )}
             {gridMatches.length > 0 && (
               <div className={styles.matchGrid} style={{ marginTop: heroMatch ? 14 : 0 }}>
                 {gridMatches.slice(0, 8).map((m) => <MatchCard key={m.id} m={m} />)}

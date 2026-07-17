@@ -91,7 +91,7 @@ export default function PlayersScreen({ sport, setSport, onSearch, onBell, onOpe
 
   // Debounce search query
   useEffect(() => {
-    const t = setTimeout(() => setDebouncedQ(q.trim()), 350);
+    const t = setTimeout(() => setDebouncedQ(q.trim()), 150);
     return () => clearTimeout(t);
   }, [q]);
 
@@ -102,14 +102,14 @@ export default function PlayersScreen({ sport, setSport, onSearch, onBell, onOpe
   const { data: searchData, isLoading: searchLoading } = useSWR<{ players: PlayerResult[] }>(
     isSearching ? `/api/espn/player-search?q=${encodeURIComponent(debouncedQ)}&sport=${sport}` : null,
     fetcher,
-    { revalidateOnFocus: false }
+    { revalidateOnFocus: false, keepPreviousData: true }
   );
 
   // Teams for browsing (when not searching)
   const { data: teamsData, isLoading: teamsLoading } = useSWR<{ teams: RealTeam[] }>(
     !isSearching ? `/api/espn/teams?sport=${sport}&league=${activeLeague}` : null,
     fetcher,
-    { revalidateOnFocus: false, dedupingInterval: 3_600_000 }
+    { revalidateOnFocus: false, keepPreviousData: true, dedupingInterval: 3_600_000 }
   );
 
   const players = searchData?.players ?? [];

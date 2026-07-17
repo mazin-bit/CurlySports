@@ -12,6 +12,7 @@ export function SWRProvider({ children }: { children: ReactNode }) {
         refreshWhenHidden: false,
         errorRetryCount: 3,
         dedupingInterval: 10_000,
+        keepPreviousData: true,
       }}
     >
       {children}

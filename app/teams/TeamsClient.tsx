@@ -2,7 +2,7 @@
 
 import AppShell from "@/components/AppShell";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import styles from "./teams.module.css";
 import { Heart, Users } from "lucide-react";
 import { useTeams } from "@/hooks/useTeams";
@@ -48,7 +48,7 @@ export default function TeamsPage() {
   const [selectedLeague, setSelectedLeague] = useState<string | null>(null);
   const { teams, isLoading } = useTeams(activeSport, selectedLeague ?? undefined);
 
-  const leagues = Array.from(new Map(teams.map((t) => [t.leagueId, t.leagueName])).entries());
+  const leagues = useMemo(() => Array.from(new Map(teams.map((t) => [t.leagueId, t.leagueName])).entries()), [teams]);
 
   return (
     <AppShell active="teams" title={t("teams.teamsAccent")} subtitle={`${activeSportConfig.label} ${t("teams.clubs")}`}>

@@ -5,6 +5,9 @@ import { ensureChallengeTables, cuid } from "@/lib/ensure-challenge-tables";
 
 export const dynamic = "force-dynamic";
 
+// Pre-warm table creation at module load (non-blocking)
+const tablesReady = ensureChallengeTables().catch(() => {});
+
 // In-memory cache (faster than remote Redis for frequently-hit routes)
 const memCache = new Map<string, { data: unknown; expires: number }>();
 function memGet<T>(key: string): T | null {
@@ -27,9 +30,9 @@ export async function GET(req: NextRequest) {
     const limit = Math.min(Math.max(parseInt(url.searchParams.get("limit") || "20", 10), 1), 100);
     const offset = Math.max(parseInt(url.searchParams.get("offset") || "0", 10), 0);
 
-    // Run ensureChallengeTables + optionalAuth in parallel
+    // Wait for pre-warmed tables + auth in parallel
     const [, user] = await Promise.all([
-      ensureChallengeTables(),
+      tablesReady,
       optionalAuth(),
     ]);
 
@@ -76,8 +79,8 @@ export async function GET(req: NextRequest) {
       total = rows.length > 0 ? Number(rows[0]._total) : 0;
       challenges = rows.map(({ _total, ...rest }) => rest);
 
-      // Cache for 15 seconds in-memory
-      memSet(cacheKey, { challenges, total }, 15);
+      // Cache for 60 seconds in-memory (challenges don't change often)
+      memSet(cacheKey, { challenges, total }, 60);
     }
 
     // If user is logged in, fetch their votes for these challenges
@@ -124,7 +127,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const [, auth, body] = await Promise.all([
-      ensureChallengeTables(),
+      tablesReady,
       requireAuth(),
       req.json(),
     ]);
@@ -147,11 +150,18 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Validate challenge exists and is active
-    const challengeRows: Record<string, unknown>[] = await prisma.$queryRawUnsafe(
-      `SELECT id, status, "matchDate" FROM prediction_challenges WHERE id = $1`,
-      challengeId
-    );
+    // Validate challenge + check existing vote in parallel
+    const [challengeRows, existingVote] = await Promise.all([
+      prisma.$queryRawUnsafe(
+        `SELECT id, status, "matchDate" FROM prediction_challenges WHERE id = $1`,
+        challengeId
+      ) as Promise<Record<string, unknown>[]>,
+      prisma.$queryRawUnsafe(
+        `SELECT id FROM challenge_votes WHERE "challengeId" = $1 AND "userId" = $2`,
+        challengeId,
+        user.id
+      ) as Promise<Record<string, unknown>[]>,
+    ]);
 
     if (challengeRows.length === 0) {
       return NextResponse.json(
@@ -175,13 +185,6 @@ export async function POST(req: NextRequest) {
         { status: 400, headers: { "Cache-Control": "no-store" } }
       );
     }
-
-    // Check if user already voted
-    const existingVote: Record<string, unknown>[] = await prisma.$queryRawUnsafe(
-      `SELECT id FROM challenge_votes WHERE "challengeId" = $1 AND "userId" = $2`,
-      challengeId,
-      user.id
-    );
 
     if (existingVote.length > 0) {
       return NextResponse.json(
@@ -219,6 +222,11 @@ export async function POST(req: NextRequest) {
     );
 
     await Promise.all([insertVote, upsertEntry, updateChallenge]);
+
+    // Invalidate challenge list cache so next GET returns fresh data
+    for (const key of memCache.keys()) {
+      if (key.startsWith("challenges:")) memCache.delete(key);
+    }
 
     const vote = {
       id: voteId,

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { ensureNotificationsTable } from "@/lib/ensure-challenge-tables";
 
 function isAdmin(req: NextRequest): boolean {
   const token = req.headers.get("x-admin-token");
@@ -11,29 +12,7 @@ function isAdmin(req: NextRequest): boolean {
   return timingSafeEqual(a, b);
 }
 
-async function ensureTable() {
-  await prisma.$executeRawUnsafe(`
-    CREATE TABLE IF NOT EXISTS scheduled_notifications (
-      id TEXT PRIMARY KEY,
-      title TEXT NOT NULL,
-      body TEXT NOT NULL,
-      "targetType" TEXT NOT NULL,
-      "targetUsers" TEXT[] DEFAULT '{}',
-      "scheduledAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      status TEXT NOT NULL DEFAULT 'scheduled',
-      "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
-    )
-  `);
-  // Add missing columns if table was created by an older version
-  await prisma.$executeRawUnsafe(`
-    DO $$ BEGIN
-      ALTER TABLE scheduled_notifications ADD COLUMN IF NOT EXISTS "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;
-      ALTER TABLE scheduled_notifications ADD COLUMN IF NOT EXISTS "targetUsers" TEXT[] DEFAULT '{}';
-    EXCEPTION WHEN others THEN NULL;
-    END $$
-  `);
-}
+const ensureTable = ensureNotificationsTable;
 
 // GET /api/admin/notifications — list scheduled notifications
 export async function GET(req: NextRequest) {

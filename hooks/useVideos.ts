@@ -17,9 +17,10 @@ export function useVideos(sport?: string) {
     url,
     fetcher,
     {
-      refreshInterval: 5 * 60_000,  // re-fetch every 5 minutes
-      dedupingInterval: 60_000,     // allow refetch after 1 min (not 2s default)
-      revalidateOnFocus: true,      // fresh videos when user returns to tab
+      refreshInterval: 5 * 60_000,
+      dedupingInterval: 60_000,
+      revalidateOnFocus: true,
+      keepPreviousData: true,
     }
   );
 
