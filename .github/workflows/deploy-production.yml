@@ -100,19 +100,14 @@ jobs:
           "
           echo "::endgroup::"
 
-          # Load migration env vars into the shell
-          set -a
-          source .env.migrate
-          set +a
-
           # Check pending migrations
           echo "::group::Prisma migrate status"
-          npx prisma migrate status || true
+          node --env-file=.env.migrate ./node_modules/.bin/prisma migrate status || true
           echo "::endgroup::"
 
           # Apply all pending Prisma migrations
           echo "::group::Running prisma migrate deploy"
-          npx prisma migrate deploy
+          node --env-file=.env.migrate ./node_modules/.bin/prisma migrate deploy
           MIGRATE_EXIT=$?
           echo "::endgroup::"
 
