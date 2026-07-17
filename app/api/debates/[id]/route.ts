@@ -22,8 +22,8 @@ export async function PATCH(
 
   const { id } = await params;
   const body = await req.json().catch(() => ({}));
+  const data: Record<string, unknown> = {};
   try {
-    const data: Record<string, unknown> = {};
     if (body.isLive !== undefined) data.isLive = !!body.isLive;
     if (body.isPinned !== undefined) data.isPinned = !!body.isPinned;
     if (body.question) data.question = body.question;
@@ -35,6 +35,20 @@ export async function PATCH(
     const updated = await prisma.debate.update({ where: { id }, data });
     return NextResponse.json(updated);
   } catch (err) {
+    // If isPinned column doesn't exist, retry without it
+    const msg = String(err);
+    if (body.isPinned !== undefined && (msg.includes("isPinned") || msg.includes("Unknown arg"))) {
+      logger.warn("debate update: isPinned column missing, retrying without it");
+      delete data.isPinned;
+      if (Object.keys(data).length === 0) return NextResponse.json({ error: "isPinned not available yet" }, { status: 400 });
+      try {
+        const updated = await prisma.debate.update({ where: { id }, data });
+        return NextResponse.json(updated);
+      } catch (fallbackErr) {
+        logger.error("debate update fallback failed", { debateId: id, error: String(fallbackErr) });
+        return NextResponse.json({ error: "Failed to update debate" }, { status: 503 });
+      }
+    }
     logger.error("debate update failed", { debateId: id, error: String(err) });
     return NextResponse.json({ error: "Failed to update debate", debug: String(err) }, { status: 503 });
   }

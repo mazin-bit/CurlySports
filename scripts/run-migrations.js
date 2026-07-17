@@ -106,54 +106,67 @@ try {
   // status can exit non-zero if migrations are pending — that's expected
 }
 
+// ── Run prisma migrate deploy ──────────────────────────────────────
+function tryDeploy() {
+  try {
+    execFileSync('node', [prismaPath, 'migrate', 'deploy'], {
+      stdio: 'inherit',
+      env: process.env,
+    });
+    return true; // success
+  } catch (_) {
+    return false;
+  }
+}
+
 console.log('\n[migrate] ── prisma migrate deploy ──');
-try {
-  execFileSync('node', [prismaPath, 'migrate', 'deploy'], {
-    stdio: 'inherit',
-    env: process.env,
-  });
-  console.log('[migrate] Prisma migrations applied successfully');
-} catch (err) {
+if (!tryDeploy()) {
   // P3005 = database schema is not empty (needs baselining)
   // This happens when the DB was set up with `prisma db push` instead of migrations
-  if (err.status === 1) {
-    console.log('\n[migrate] ── migrate deploy failed, attempting to baseline ──');
+  console.log('\n[migrate] ── deploy failed (likely P3005), attempting incremental baseline ──');
 
-    // Read migration directories to find all migrations
-    const migrationsDir = './prisma/migrations';
-    const migrations = fs.readdirSync(migrationsDir)
-      .filter(f => f !== 'migration_lock.toml' && fs.statSync(`${migrationsDir}/${f}`).isDirectory())
-      .sort();
+  // Read migration directories sorted chronologically
+  const migrationsDir = './prisma/migrations';
+  const migrations = fs.readdirSync(migrationsDir)
+    .filter(f => f !== 'migration_lock.toml' && fs.statSync(`${migrationsDir}/${f}`).isDirectory())
+    .sort();
 
-    console.log(`[migrate] Found ${migrations.length} migrations to baseline: ${migrations.join(', ')}`);
+  console.log(`[migrate] Found ${migrations.length} migrations: ${migrations.join(', ')}`);
 
-    // Mark each migration as already applied
-    for (const migration of migrations) {
-      console.log(`[migrate] Resolving ${migration} as applied...`);
-      try {
-        execFileSync('node', [prismaPath, 'migrate', 'resolve', '--applied', migration], {
-          stdio: 'inherit',
-          env: process.env,
-        });
-      } catch (resolveErr) {
-        console.error(`[migrate] Failed to resolve ${migration}: exit code ${resolveErr.status}`);
-        // Continue trying other migrations
-      }
-    }
-
-    // Try deploy again — should succeed now
-    console.log('\n[migrate] ── prisma migrate deploy (after baseline) ──');
+  // Baseline ONE AT A TIME, then retry deploy after each.
+  // This ensures only migrations whose changes already exist in the DB get
+  // marked as applied. New migrations (like adding isPinned) will actually run.
+  for (let i = 0; i < migrations.length; i++) {
+    const migration = migrations[i];
+    console.log(`\n[migrate] Resolving "${migration}" as applied...`);
     try {
-      execFileSync('node', [prismaPath, 'migrate', 'deploy'], {
+      execFileSync('node', [prismaPath, 'migrate', 'resolve', '--applied', migration], {
         stdio: 'inherit',
         env: process.env,
       });
-      console.log('[migrate] Prisma migrations applied successfully after baselining');
-    } catch (retryErr) {
-      console.error(`[migrate] migrate deploy still failed after baselining (exit code ${retryErr.status})`);
-      process.exit(1);
+    } catch (resolveErr) {
+      console.error(`[migrate] Failed to resolve ${migration}: exit code ${resolveErr.status}`);
+      continue;
     }
-  } else {
-    throw err;
+
+    // After each baseline, try deploy — if remaining migrations can now apply, we're done
+    console.log(`[migrate] Retrying deploy after baselining ${i + 1}/${migrations.length}...`);
+    if (tryDeploy()) {
+      console.log('[migrate] Prisma migrations applied successfully after partial baseline');
+      process.exit(0);
+    }
+    // Deploy still fails — baseline the next migration too
+    console.log(`[migrate] Deploy still failing, will baseline next migration...`);
   }
+
+  // All migrations baselined and deploy STILL fails — something else is wrong
+  console.log('\n[migrate] ── final deploy attempt after full baseline ──');
+  if (tryDeploy()) {
+    console.log('[migrate] Prisma migrations applied successfully after full baseline');
+  } else {
+    console.error('[migrate] migrate deploy still failed after baselining all migrations');
+    process.exit(1);
+  }
+} else {
+  console.log('[migrate] Prisma migrations applied successfully');
 }

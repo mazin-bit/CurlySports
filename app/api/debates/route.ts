@@ -27,6 +27,21 @@ export async function GET(req: NextRequest) {
     });
     return NextResponse.json(debates);
   } catch (err) {
+    // Fallback: if isPinned column doesn't exist yet, query without it
+    const msg = String(err);
+    if (msg.includes("isPinned") || msg.includes("column") || msg.includes("Unknown arg")) {
+      logger.warn("debates: isPinned column missing, falling back to createdAt order");
+      try {
+        const debates = await prisma.debate.findMany({
+          where: live === "true" ? { isLive: true } : undefined,
+          orderBy: { createdAt: "desc" },
+        });
+        return NextResponse.json(debates);
+      } catch (fallbackErr) {
+        logger.error("debates fallback fetch failed", { error: String(fallbackErr) });
+        return NextResponse.json([]);
+      }
+    }
     logger.error("debates fetch failed", { error: String(err) });
     return NextResponse.json([]);
   }
