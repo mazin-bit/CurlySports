@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/utils/supabase/server";
+import prisma from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
 import { logger } from "@/lib/logger";
 
@@ -12,30 +12,37 @@ export async function POST(
   if (auth instanceof NextResponse) return auth;
   const { user } = auth;
 
-  const supabase = await createClient();
   const { id } = await params;
 
-  const { data, error } = await supabase.rpc("toggle_post_like", {
-    p_post_id: id,
-    p_user_id: user.id,
-  });
+  try {
+    // Check if already liked
+    const existing = await prisma.postLike.findUnique({
+      where: { postId_userId: { postId: id, userId: user.id } },
+    });
 
-  if (error) {
-    logger.error("post like failed", { postId: id, code: error.code });
-    if (error.code === "23503") {
-      return NextResponse.json(
-        { error: "Database migration needed. Run the user_id fix migration." },
-        { status: 503 }
-      );
+    let liked: boolean;
+
+    if (existing) {
+      // Unlike: delete the like and decrement count
+      await prisma.$transaction([
+        prisma.postLike.delete({ where: { id: existing.id } }),
+        prisma.post.update({ where: { id }, data: { likesCount: { decrement: 1 } } }),
+      ]);
+      liked = false;
+    } else {
+      // Like: create the like and increment count
+      await prisma.$transaction([
+        prisma.postLike.create({ data: { postId: id, userId: user.id } }),
+        prisma.post.update({ where: { id }, data: { likesCount: { increment: 1 } } }),
+      ]);
+      liked = true;
     }
+
+    const post = await prisma.post.findUnique({ where: { id }, select: { likesCount: true } });
+
+    return NextResponse.json({ liked, likes_count: post?.likesCount ?? 0 });
+  } catch (err) {
+    logger.error("post like failed", { postId: id, error: String(err) });
     return NextResponse.json({ error: "Failed to toggle like" }, { status: 500 });
   }
-
-  const { data: post } = await supabase
-    .from("posts")
-    .select("likes_count")
-    .eq("id", id)
-    .single();
-
-  return NextResponse.json({ liked: data as boolean, likes_count: post?.likes_count ?? 0 });
 }

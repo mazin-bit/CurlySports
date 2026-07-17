@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/utils/supabase/server";
+import prisma from "@/lib/prisma";
 import { requireAuth, optionalAuth } from "@/lib/auth";
 import { parseBody, createPostSchema } from "@/lib/validation";
 import { rateLimiters } from "@/lib/rate-limit";
@@ -8,56 +8,67 @@ import { logger } from "@/lib/logger";
 // GET /api/posts?sport=football&cursor=<iso-date>&limit=20
 export async function GET(req: NextRequest) {
   try {
-    const supabase = await createClient();
     const user = await optionalAuth();
     const { searchParams } = new URL(req.url);
-    const sport  = searchParams.get("sport");
+    const sport = searchParams.get("sport");
     const cursor = searchParams.get("cursor");
-    const limit  = Math.min(parseInt(searchParams.get("limit") ?? "20") || 20, 50);
+    const limit = Math.min(parseInt(searchParams.get("limit") ?? "20") || 20, 50);
 
-    let query = supabase
-      .from("posts")
-      .select("*, post_comments(count)")
-      .order("created_at", { ascending: false })
-      .limit(limit);
-
+    const where: Record<string, unknown> = {};
     if (sport && sport !== "all") {
-      query = query.eq("sport", sport);
+      where.sport = sport;
     }
-
     if (cursor) {
-      query = query.lt("created_at", cursor);
+      where.createdAt = { lt: new Date(cursor) };
     }
 
-    const { data: posts, error } = await query;
-    if (error) {
-      logger.error("posts fetch failed", { code: error.code });
-      return NextResponse.json({ posts: [], nextCursor: null, setup_needed: true });
-    }
-    if (!posts?.length) return NextResponse.json({ posts: [], nextCursor: null });
+    const posts = await prisma.post.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      take: limit,
+      include: {
+        _count: { select: { comments: true } },
+      },
+    });
+
+    if (!posts.length) return NextResponse.json({ posts: [], nextCursor: null });
 
     let likedSet = new Set<string>();
     let votedMap = new Map<string, number>();
 
     if (user) {
       const postIds = posts.map((p) => p.id);
-      const [{ data: likes }, { data: votes }] = await Promise.all([
-        supabase.from("post_likes").select("post_id").eq("user_id", user.id).in("post_id", postIds),
-        supabase.from("post_votes").select("post_id,option_index").eq("user_id", user.id).in("post_id", postIds),
+      const [likes, votes] = await Promise.all([
+        prisma.postLike.findMany({
+          where: { userId: user.id, postId: { in: postIds } },
+          select: { postId: true },
+        }),
+        prisma.postVote.findMany({
+          where: { userId: user.id, postId: { in: postIds } },
+          select: { postId: true, optionIndex: true },
+        }),
       ]);
-      likes?.forEach((l) => likedSet.add(l.post_id));
-      votes?.forEach((v) => votedMap.set(v.post_id, v.option_index));
+      likes.forEach((l) => likedSet.add(l.postId));
+      votes.forEach((v) => votedMap.set(v.postId, v.optionIndex));
     }
 
     const enriched = posts.map((p) => ({
-      ...p,
-      liked:         likedSet.has(p.id),
-      voted_option:  votedMap.has(p.id) ? votedMap.get(p.id) : null,
-      comments_count: (p.post_comments as { count: number }[] | null)?.[0]?.count ?? 0,
-      post_comments: undefined,
+      id: p.id,
+      user_id: p.userId,
+      author_name: p.authorName,
+      content: p.content,
+      sport: p.sport,
+      tag: p.tag,
+      image_url: p.imageUrl,
+      poll: p.poll,
+      likes_count: p.likesCount,
+      created_at: p.createdAt.toISOString(),
+      liked: likedSet.has(p.id),
+      voted_option: votedMap.has(p.id) ? votedMap.get(p.id) : null,
+      comments_count: p._count.comments,
     }));
 
-    const nextCursor = posts.length === limit ? posts[posts.length - 1].created_at : null;
+    const nextCursor = posts.length === limit ? posts[posts.length - 1].createdAt.toISOString() : null;
 
     return NextResponse.json({ posts: enriched, nextCursor });
   } catch (err) {
@@ -74,8 +85,6 @@ export async function POST(req: NextRequest) {
     if (auth instanceof NextResponse) return auth;
     const { user } = auth;
 
-    const supabase = await createClient();
-
     // Rate limit: 10 posts per hour per user
     const limited = await rateLimiters.createPost(req, user.id);
     if (limited) return limited;
@@ -91,33 +100,33 @@ export async function POST(req: NextRequest) {
       ? { options: poll.options, votes: poll.options.map(() => 0) }
       : null;
 
-    const { data, error } = await supabase
-      .from("posts")
-      .insert({
-        user_id:     user.id,
-        author_name: authorName,
+    const post = await prisma.post.create({
+      data: {
+        userId: user.id,
+        authorName,
         content,
         sport,
         tag,
-        image_url:   image_url ?? null,
-        poll:        pollData,
-      })
-      .select()
-      .single();
+        imageUrl: image_url ?? null,
+        poll: pollData ?? undefined,
+      },
+    });
 
-    if (error) {
-      logger.error("post create failed", { code: error.code, message: error.message });
-      if (error.code === "23503") {
-        return NextResponse.json(
-          { error: "Database migration needed. Run the user_id fix migration in Supabase SQL editor." },
-          { status: 503 }
-        );
-      }
-      return NextResponse.json({ error: "Failed to create post" }, { status: 500 });
-    }
-
-    logger.info("post created", { postId: data.id });
-    return NextResponse.json({ ...data, liked: false, voted_option: null }, { status: 201 });
+    logger.info("post created", { postId: post.id });
+    return NextResponse.json({
+      id: post.id,
+      user_id: post.userId,
+      author_name: post.authorName,
+      content: post.content,
+      sport: post.sport,
+      tag: post.tag,
+      image_url: post.imageUrl,
+      poll: post.poll,
+      likes_count: 0,
+      created_at: post.createdAt.toISOString(),
+      liked: false,
+      voted_option: null,
+    }, { status: 201 });
   } catch (err) {
     logger.error("posts POST error", { message: (err as Error).message });
     return NextResponse.json({ error: "Service unavailable" }, { status: 503 });

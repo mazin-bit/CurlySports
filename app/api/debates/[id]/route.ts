@@ -37,7 +37,7 @@ export async function PATCH(
   } catch (err) {
     // If isPinned column doesn't exist, retry without it
     const msg = String(err);
-    if (body.isPinned !== undefined && (msg.includes("isPinned") || msg.includes("Unknown arg"))) {
+    if (body.isPinned !== undefined && (msg.includes("isPinned") || msg.includes("Unknown arg") || msg.includes("Unknown argument"))) {
       logger.warn("debate update: isPinned column missing, retrying without it");
       delete data.isPinned;
       if (Object.keys(data).length === 0) return NextResponse.json({ error: "isPinned not available yet" }, { status: 400 });

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/utils/supabase/server";
+import prisma from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
 import { parseBody, voteSchema } from "@/lib/validation";
 import { logger } from "@/lib/logger";
@@ -13,38 +13,47 @@ export async function POST(
   if (auth instanceof NextResponse) return auth;
   const { user } = auth;
 
-  const supabase = await createClient();
   const { id } = await params;
   const body = await req.json().catch(() => ({}));
   const parsed = parseBody(voteSchema, body);
   if (!parsed.success) return parsed.response;
   const { optionIndex } = parsed.data;
 
-  const { error } = await supabase.rpc("cast_post_vote", {
-    p_post_id:      id,
-    p_user_id:      user.id,
-    p_option_index: optionIndex,
-  });
+  try {
+    // Check if already voted
+    const existing = await prisma.postVote.findUnique({
+      where: { postId_userId: { postId: id, userId: user.id } },
+    });
 
-  if (error) {
-    if (error.message.includes("already_voted")) {
+    if (existing) {
       return NextResponse.json({ error: "Already voted" }, { status: 409 });
     }
-    logger.error("post vote failed", { postId: id, code: error.code });
-    if (error.code === "23503") {
-      return NextResponse.json(
-        { error: "Database migration needed. Run the user_id fix migration." },
-        { status: 503 }
-      );
+
+    // Get the current post to update poll votes
+    const post = await prisma.post.findUnique({ where: { id }, select: { poll: true } });
+    if (!post?.poll) {
+      return NextResponse.json({ error: "Post has no poll" }, { status: 400 });
     }
+
+    const poll = post.poll as { options: string[]; votes: number[] };
+    if (optionIndex < 0 || optionIndex >= poll.options.length) {
+      return NextResponse.json({ error: "Invalid option index" }, { status: 400 });
+    }
+
+    // Increment the vote count for the selected option
+    const updatedVotes = [...poll.votes];
+    updatedVotes[optionIndex] = (updatedVotes[optionIndex] || 0) + 1;
+    const updatedPoll = { ...poll, votes: updatedVotes };
+
+    // Create vote record and update poll in a transaction
+    await prisma.$transaction([
+      prisma.postVote.create({ data: { postId: id, userId: user.id, optionIndex } }),
+      prisma.post.update({ where: { id }, data: { poll: updatedPoll } }),
+    ]);
+
+    return NextResponse.json({ poll: updatedPoll, voted_option: optionIndex });
+  } catch (err) {
+    logger.error("post vote failed", { postId: id, error: String(err) });
     return NextResponse.json({ error: "Failed to cast vote" }, { status: 500 });
   }
-
-  const { data: post } = await supabase
-    .from("posts")
-    .select("poll")
-    .eq("id", id)
-    .single();
-
-  return NextResponse.json({ poll: post?.poll, voted_option: optionIndex });
 }

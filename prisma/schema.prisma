@@ -311,6 +311,72 @@ model Favorite {
   @@map("favorites")
 }
 
+model Post {
+  id         String        @id @default(cuid())
+  userId     String
+  authorName String
+  content    String
+  sport      String?
+  tag        String?
+  imageUrl   String?
+  poll       Json?
+  likesCount Int           @default(0)
+  createdAt  DateTime      @default(now())
+  comments   PostComment[]
+  likes      PostLike[]
+  votes      PostVote[]
+
+  @@index([sport])
+  @@index([createdAt])
+  @@map("posts")
+}
+
+model PostComment {
+  id         String        @id @default(cuid())
+  postId     String
+  userId     String
+  authorName String
+  content    String
+  likesCount Int           @default(0)
+  createdAt  DateTime      @default(now())
+  post       Post          @relation(fields: [postId], references: [id], onDelete: Cascade)
+  likes      CommentLike[]
+
+  @@index([postId])
+  @@map("post_comments")
+}
+
+model PostLike {
+  id     String @id @default(cuid())
+  postId String
+  userId String
+  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId])
+  @@map("post_likes")
+}
+
+model PostVote {
+  id          String @id @default(cuid())
+  postId      String
+  userId      String
+  optionIndex Int
+  post        Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId])
+  @@map("post_votes")
+}
+
+model CommentLike {
+  id        String      @id @default(cuid())
+  commentId String
+  userId    String
+  comment   PostComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  @@unique([commentId, userId])
+  @@map("comment_likes")
+}
+
 model Feedback {
   id        String   @id @default(cuid())
   userId    String?

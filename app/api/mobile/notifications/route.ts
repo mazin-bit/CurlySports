@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { optionalAuth } from "@/lib/auth";
-import { createClient } from "@/utils/supabase/server";
 import prisma from "@/lib/prisma";
 import { headers } from "next/headers";
 import { ensureNotificationsTable } from "@/lib/ensure-challenge-tables";
@@ -43,7 +42,6 @@ function detectPlatform(ua: string): "ios" | "android" | "web" {
 
 export async function GET(req: NextRequest) {
   const user = await optionalAuth();
-  const supabase = await createClient();
   const now = new Date();
   const todayCutoff = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
@@ -118,25 +116,25 @@ export async function GET(req: NextRequest) {
   }
 
   // 2. Fetch recent posts for activity feed
-  const { data: posts } = await supabase
-    .from("posts")
-    .select("id, author_name, content, sport, tag, likes_count, created_at, user_id")
-    .order("created_at", { ascending: false })
-    .limit(25);
+  try {
+    const posts = await prisma.post.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 25,
+      select: { id: true, authorName: true, content: true, sport: true, tag: true, likesCount: true, createdAt: true, userId: true },
+    });
 
-  if (posts) {
     // My posts that got likes (personalised, shown first)
     if (user) {
-      const myLiked = posts.filter(p => p.user_id === user.id && (p.likes_count ?? 0) > 0);
+      const myLiked = posts.filter(p => p.userId === user.id && (p.likesCount ?? 0) > 0);
       for (const p of myLiked.slice(0, 3)) {
-        const dt = new Date(p.created_at);
+        const dt = p.createdAt;
         const group = dt >= todayCutoff ? "today" : "earlier";
         notifs.push({
           id: `like-${p.id}`,
           group,
           icon: "heart",
           color: "#ff5d9e",
-          title: `Your take got ${p.likes_count} like${p.likes_count !== 1 ? "s" : ""}`,
+          title: `Your take got ${p.likesCount} like${p.likesCount !== 1 ? "s" : ""}`,
           body: p.content.slice(0, 90) + (p.content.length > 90 ? "..." : ""),
           time: timeAgo(dt, now),
           unread: group === "today",
@@ -146,23 +144,25 @@ export async function GET(req: NextRequest) {
     }
 
     // Others' recent posts as activity notifications
-    const others = posts.filter(p => !user || p.user_id !== user.id);
+    const others = posts.filter(p => !user || p.userId !== user.id);
     for (const p of others.slice(0, 12)) {
-      const dt = new Date(p.created_at);
+      const dt = p.createdAt;
       const group = dt >= todayCutoff ? "today" : "earlier";
-      const meta = TAG_META[p.tag?.toUpperCase()] ?? { icon: "flame", color: "#c8ff3d" };
+      const meta = (p.tag ? TAG_META[p.tag.toUpperCase()] : null) ?? { icon: "flame", color: "#c8ff3d" };
       notifs.push({
         id: `post-${p.id}`,
         group,
         icon: meta.icon,
         color: meta.color,
-        title: `${p.author_name} dropped a take`,
+        title: `${p.authorName} dropped a take`,
         body: p.content.slice(0, 90) + (p.content.length > 90 ? "..." : ""),
         time: timeAgo(dt, now),
         unread: group === "today",
         type: "activity",
       });
     }
+  } catch {
+    // posts table might not exist yet, skip
   }
 
   // Sort: admin notifications first, then by recency

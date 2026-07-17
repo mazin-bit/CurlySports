@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
   } catch (err) {
     // Fallback: if isPinned column doesn't exist yet, query without it
     const msg = String(err);
-    if (msg.includes("isPinned") || msg.includes("column") || msg.includes("Unknown arg")) {
+    if (msg.includes("isPinned") || msg.includes("column") || msg.includes("Unknown arg") || msg.includes("Unknown argument")) {
       logger.warn("debates: isPinned column missing, falling back to createdAt order");
       try {
         const debates = await prisma.debate.findMany({

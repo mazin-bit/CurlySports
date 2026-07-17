@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/utils/supabase/server";
+import prisma from "@/lib/prisma";
 import { requireAuth, optionalAuth } from "@/lib/auth";
 import { parseBody, createCommentSchema, commentLikeSchema } from "@/lib/validation";
 import { rateLimiters } from "@/lib/rate-limit";
@@ -10,34 +10,41 @@ export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const supabase = await createClient();
   const user = await optionalAuth();
   const { id } = await params;
 
-  const { data: comments, error } = await supabase
-    .from("post_comments")
-    .select("*")
-    .eq("post_id", id)
-    .order("created_at", { ascending: true });
+  try {
+    const comments = await prisma.postComment.findMany({
+      where: { postId: id },
+      orderBy: { createdAt: "asc" },
+    });
 
-  if (error) {
-    logger.error("comments fetch failed", { postId: id, code: error.code });
+    let likedSet = new Set<string>();
+
+    if (user && comments.length) {
+      const likes = await prisma.commentLike.findMany({
+        where: { userId: user.id, commentId: { in: comments.map((c) => c.id) } },
+        select: { commentId: true },
+      });
+      likes.forEach((l) => likedSet.add(l.commentId));
+    }
+
+    const enriched = comments.map((c) => ({
+      id: c.id,
+      post_id: c.postId,
+      user_id: c.userId,
+      author_name: c.authorName,
+      content: c.content,
+      likes_count: c.likesCount,
+      created_at: c.createdAt.toISOString(),
+      liked: likedSet.has(c.id),
+    }));
+
+    return NextResponse.json({ comments: enriched });
+  } catch (err) {
+    logger.error("comments fetch failed", { postId: id, error: String(err) });
     return NextResponse.json({ error: "Failed to load comments" }, { status: 500 });
   }
-
-  let likedSet = new Set<string>();
-
-  if (user && comments?.length) {
-    const { data: likes } = await supabase
-      .from("comment_likes")
-      .select("comment_id")
-      .eq("user_id", user.id)
-      .in("comment_id", comments.map((c) => c.id));
-    likes?.forEach((l) => likedSet.add(l.comment_id));
-  }
-
-  const enriched = (comments ?? []).map((c) => ({ ...c, liked: likedSet.has(c.id) }));
-  return NextResponse.json({ comments: enriched });
 }
 
 // POST /api/posts/[id]/comments  body: { content }
@@ -48,8 +55,6 @@ export async function POST(
   const auth = await requireAuth();
   if (auth instanceof NextResponse) return auth;
   const { user } = auth;
-
-  const supabase = await createClient();
 
   // Rate limit: 30 comments per hour per user
   const limited = await rateLimiters.createComment(req, user.id);
@@ -63,25 +68,26 @@ export async function POST(
 
   const authorName = user.name || user.username || "Anonymous";
 
-  const { data, error } = await supabase
-    .from("post_comments")
-    .insert({ post_id: id, user_id: user.id, author_name: authorName, content })
-    .select()
-    .single();
+  try {
+    const comment = await prisma.postComment.create({
+      data: { postId: id, userId: user.id, authorName, content },
+    });
 
-  if (error) {
-    logger.error("comment create failed", { postId: id, code: error.code });
-    if (error.code === "23503") {
-      return NextResponse.json(
-        { error: "Database migration needed. Run the user_id fix migration." },
-        { status: 503 }
-      );
-    }
+    logger.info("comment created", { postId: id, commentId: comment.id });
+    return NextResponse.json({
+      id: comment.id,
+      post_id: comment.postId,
+      user_id: comment.userId,
+      author_name: comment.authorName,
+      content: comment.content,
+      likes_count: 0,
+      created_at: comment.createdAt.toISOString(),
+      liked: false,
+    }, { status: 201 });
+  } catch (err) {
+    logger.error("comment create failed", { postId: id, error: String(err) });
     return NextResponse.json({ error: "Failed to create comment" }, { status: 500 });
   }
-
-  logger.info("comment created", { postId: id, commentId: data.id });
-  return NextResponse.json({ ...data, liked: false }, { status: 201 });
 }
 
 // PATCH — toggle comment like
@@ -93,34 +99,37 @@ export async function PATCH(
   if (auth instanceof NextResponse) return auth;
   const { user } = auth;
 
-  const supabase = await createClient();
-
   const body = await req.json().catch(() => ({}));
   const parsed = parseBody(commentLikeSchema, body);
   if (!parsed.success) return parsed.response;
   const { commentId } = parsed.data;
 
-  const { data, error } = await supabase.rpc("toggle_comment_like", {
-    p_comment_id: commentId,
-    p_user_id: user.id,
-  });
+  try {
+    const existing = await prisma.commentLike.findUnique({
+      where: { commentId_userId: { commentId, userId: user.id } },
+    });
 
-  if (error) {
-    logger.error("comment like failed", { commentId, code: error.code });
-    if (error.code === "23503") {
-      return NextResponse.json(
-        { error: "Database migration needed. Run the user_id fix migration." },
-        { status: 503 }
-      );
+    let liked: boolean;
+
+    if (existing) {
+      await prisma.$transaction([
+        prisma.commentLike.delete({ where: { id: existing.id } }),
+        prisma.postComment.update({ where: { id: commentId }, data: { likesCount: { decrement: 1 } } }),
+      ]);
+      liked = false;
+    } else {
+      await prisma.$transaction([
+        prisma.commentLike.create({ data: { commentId, userId: user.id } }),
+        prisma.postComment.update({ where: { id: commentId }, data: { likesCount: { increment: 1 } } }),
+      ]);
+      liked = true;
     }
+
+    const comment = await prisma.postComment.findUnique({ where: { id: commentId }, select: { likesCount: true } });
+
+    return NextResponse.json({ liked, likes_count: comment?.likesCount ?? 0 });
+  } catch (err) {
+    logger.error("comment like failed", { commentId, error: String(err) });
     return NextResponse.json({ error: "Failed to toggle like" }, { status: 500 });
   }
-
-  const { data: comment } = await supabase
-    .from("post_comments")
-    .select("likes_count")
-    .eq("id", commentId)
-    .single();
-
-  return NextResponse.json({ liked: data as boolean, likes_count: comment?.likes_count ?? 0 });
 }

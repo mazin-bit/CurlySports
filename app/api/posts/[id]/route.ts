@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/utils/supabase/server";
+import prisma from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
 import { logger } from "@/lib/logger";
 
@@ -15,18 +15,13 @@ export async function DELETE(
   const { id } = await params;
 
   try {
-    const supabase = await createClient();
-
     // Only allow deleting own posts
-    const { error } = await supabase
-      .from("posts")
-      .delete()
-      .eq("id", id)
-      .eq("user_id", user.id);
+    const deleted = await prisma.post.deleteMany({
+      where: { id, userId: user.id },
+    });
 
-    if (error) {
-      logger.error("post delete failed", { postId: id, code: error.code });
-      return NextResponse.json({ error: "Failed to delete post" }, { status: 500 });
+    if (deleted.count === 0) {
+      return NextResponse.json({ error: "Post not found or not yours" }, { status: 404 });
     }
 
     logger.info("post deleted", { postId: id });

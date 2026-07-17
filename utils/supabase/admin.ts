@@ -15,13 +15,18 @@ function deriveSupabaseUrl(): string {
   return "";
 }
 
+function isValidHttpUrl(s: string): boolean {
+  return s.startsWith("https://") || s.startsWith("http://");
+}
+
 function getClient(): SupabaseClient {
   if (!_client) {
-    const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || deriveSupabaseUrl();
+    const raw = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || deriveSupabaseUrl();
+    const url = raw && isValidHttpUrl(raw) ? raw : "";
     const key = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
     if (!url || !key) {
       console.warn(
-        `supabaseAdmin: missing env vars — URL=${url ? "set" : "MISSING"} (tried SUPABASE_URL, NEXT_PUBLIC_SUPABASE_URL, derived from DATABASE_URL), SUPABASE_SERVICE_ROLE_KEY=${key ? "set" : "MISSING"}`
+        `supabaseAdmin: missing/invalid env vars — URL=${raw ? (isValidHttpUrl(raw) ? "set" : `INVALID(${raw.slice(0, 20)})`) : "MISSING"}, SUPABASE_SERVICE_ROLE_KEY=${key ? "set" : "MISSING"}`
       );
       // Return a stub client so the app doesn't crash when Supabase isn't configured
       _client = createClient(
