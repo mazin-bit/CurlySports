@@ -179,8 +179,8 @@ function useMobileActiveChallenge() {
   useEffect(() => {
     let cancelled = false;
     const ctrl = new AbortController();
-    // 3s timeout to prevent blocking UI
-    const timer = setTimeout(() => ctrl.abort(), 3000);
+    // 12s timeout — Vercel cold starts can take 5-8s
+    const timer = setTimeout(() => ctrl.abort(), 12000);
     (async () => {
       try {
         const res = await fetch('/api/challenges?status=active&limit=1', { signal: ctrl.signal });

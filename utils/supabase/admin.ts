@@ -20,9 +20,16 @@ function getClient(): SupabaseClient {
     const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || deriveSupabaseUrl();
     const key = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
     if (!url || !key) {
-      throw new Error(
+      console.warn(
         `supabaseAdmin: missing env vars — URL=${url ? "set" : "MISSING"} (tried SUPABASE_URL, NEXT_PUBLIC_SUPABASE_URL, derived from DATABASE_URL), SUPABASE_SERVICE_ROLE_KEY=${key ? "set" : "MISSING"}`
       );
+      // Return a stub client so the app doesn't crash when Supabase isn't configured
+      _client = createClient(
+        "https://placeholder.supabase.co",
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.placeholder",
+        { auth: { autoRefreshToken: false, persistSession: false } }
+      );
+      return _client;
     }
     _client = createClient(url, key, {
       auth: { autoRefreshToken: false, persistSession: false },

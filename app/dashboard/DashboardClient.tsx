@@ -405,7 +405,7 @@ function useActiveChallenge() {
       try {
         const res = await fetch("/api/challenges?status=active&limit=1", {
           credentials: "include",
-          signal: AbortSignal.timeout(5000),
+          signal: AbortSignal.timeout(12000),
         });
         if (!res.ok) return;
         const data = await res.json();

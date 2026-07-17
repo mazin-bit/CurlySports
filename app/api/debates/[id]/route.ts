@@ -23,30 +23,17 @@ export async function PATCH(
   const { id } = await params;
   const body = await req.json().catch(() => ({}));
   try {
-    // Ensure isPinned column exists
-    await prisma.$executeRawUnsafe(
-      `ALTER TABLE "debates" ADD COLUMN IF NOT EXISTS "isPinned" BOOLEAN NOT NULL DEFAULT false`
-    ).catch(() => {});
+    const data: Record<string, unknown> = {};
+    if (body.isLive !== undefined) data.isLive = !!body.isLive;
+    if (body.isPinned !== undefined) data.isPinned = !!body.isPinned;
+    if (body.question) data.question = body.question;
+    if (body.optionA) data.optionA = body.optionA;
+    if (body.optionB) data.optionB = body.optionB;
 
-    const sets: string[] = [];
-    const vals: unknown[] = [];
-    let idx = 1;
-    if (body.isLive !== undefined) { sets.push(`"isLive" = $${idx++}`); vals.push(!!body.isLive); }
-    if (body.isPinned !== undefined) { sets.push(`"isPinned" = $${idx++}`); vals.push(!!body.isPinned); }
-    if (body.question) { sets.push(`"question" = $${idx++}`); vals.push(body.question); }
-    if (body.optionA) { sets.push(`"optionA" = $${idx++}`); vals.push(body.optionA); }
-    if (body.optionB) { sets.push(`"optionB" = $${idx++}`); vals.push(body.optionB); }
+    if (Object.keys(data).length === 0) return NextResponse.json({ error: "Nothing to update" }, { status: 400 });
 
-    if (sets.length === 0) return NextResponse.json({ error: "Nothing to update" }, { status: 400 });
-
-    sets.push(`"updatedAt" = NOW()`);
-    vals.push(id);
-
-    const rows = await prisma.$queryRawUnsafe(
-      `UPDATE debates SET ${sets.join(", ")} WHERE id = $${idx} RETURNING *`,
-      ...vals
-    ) as unknown[];
-    return NextResponse.json((rows as Record<string, unknown>[])[0] ?? { id });
+    const updated = await prisma.debate.update({ where: { id }, data });
+    return NextResponse.json(updated);
   } catch (err) {
     logger.error("debate update failed", { debateId: id, error: String(err) });
     return NextResponse.json({ error: "Failed to update debate", debug: String(err) }, { status: 503 });

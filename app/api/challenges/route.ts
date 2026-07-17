@@ -5,8 +5,8 @@ import { ensureChallengeTables, cuid } from "@/lib/ensure-challenge-tables";
 
 export const dynamic = "force-dynamic";
 
-// Pre-warm table creation at module load (non-blocking)
-const tablesReady = ensureChallengeTables().catch(() => {});
+// Fire-and-forget table creation — don't block requests on DDL
+ensureChallengeTables().catch(() => {});
 
 // In-memory cache (faster than remote Redis for frequently-hit routes)
 const memCache = new Map<string, { data: unknown; expires: number }>();
@@ -30,11 +30,8 @@ export async function GET(req: NextRequest) {
     const limit = Math.min(Math.max(parseInt(url.searchParams.get("limit") || "20", 10), 1), 100);
     const offset = Math.max(parseInt(url.searchParams.get("offset") || "0", 10), 0);
 
-    // Wait for pre-warmed tables + auth in parallel
-    const [, user] = await Promise.all([
-      tablesReady,
-      optionalAuth(),
-    ]);
+    // Auth only — don't block on DDL
+    const user = await optionalAuth();
 
     // In-memory cache for challenge list (keyed by query params)
     const cacheKey = `challenges:${status || "all"}:${sport || "all"}:${limit}:${offset}`;
@@ -113,6 +110,15 @@ export async function GET(req: NextRequest) {
       { headers: { "Cache-Control": "no-store" } }
     );
   } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    // If table doesn't exist yet, return empty instead of 500
+    if (msg.includes("does not exist") || msg.includes("relation") || msg.includes("42P01")) {
+      console.warn("[GET /api/challenges] Table not found, returning empty:", msg);
+      return NextResponse.json(
+        { challenges: [], total: 0 },
+        { headers: { "Cache-Control": "no-store" } }
+      );
+    }
     console.error("[GET /api/challenges]", error);
     return NextResponse.json(
       { error: "Failed to fetch challenges" },
@@ -126,8 +132,7 @@ export async function GET(req: NextRequest) {
 /* ------------------------------------------------------------------ */
 export async function POST(req: NextRequest) {
   try {
-    const [, auth, body] = await Promise.all([
-      tablesReady,
+    const [auth, body] = await Promise.all([
       requireAuth(),
       req.json(),
     ]);

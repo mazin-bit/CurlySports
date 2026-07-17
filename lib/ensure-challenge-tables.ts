@@ -6,9 +6,19 @@ let tablesEnsured = false;
  * Ensures all prediction challenge tables exist.
  * Runs once per process lifecycle — uses CREATE TABLE IF NOT EXISTS
  * and ALTER TABLE ADD COLUMN IF NOT EXISTS for forward-compatibility.
+ * Safe to call from pooled connections — failures are non-fatal.
  */
 export async function ensureChallengeTables() {
   if (tablesEnsured) return;
+
+  // Quick check: if the table already exists, skip all DDL
+  try {
+    await prisma.$queryRawUnsafe(`SELECT 1 FROM prediction_challenges LIMIT 0`);
+    tablesEnsured = true;
+    return;
+  } catch {
+    // Table doesn't exist — try to create it (may fail on PgBouncer)
+  }
 
   // Tables must be created sequentially (votes references challenges, etc.)
   await prisma.$executeRawUnsafe(`
@@ -88,6 +98,12 @@ let notifsTableEnsured = false;
 
 export async function ensureNotificationsTable() {
   if (notifsTableEnsured) return;
+  // Quick check: skip DDL if table exists
+  try {
+    await prisma.$queryRawUnsafe(`SELECT 1 FROM scheduled_notifications LIMIT 0`);
+    notifsTableEnsured = true;
+    return;
+  } catch { /* table doesn't exist — create it */ }
   await prisma.$executeRawUnsafe(`
     CREATE TABLE IF NOT EXISTS scheduled_notifications (
       id TEXT PRIMARY KEY,
