@@ -41,62 +41,46 @@ jobs:
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
 
-      - name: Pull migration env
+      - name: Prepare migration URL
         id: migration-env
         run: |
-          echo "::group::Pulling env from Vercel"
-          vercel env pull .env.migrate --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
-          echo "::endgroup::"
+          # vercel env pull masks sensitive vars as [SENSITIVE], so use GitHub secret directly.
+          MIGRATE_URL="${{ secrets.DIRECT_DATABASE_URL }}"
 
-          # Debug: show which env vars were pulled (values masked)
-          echo "::group::Env vars pulled (keys only)"
-          grep -oP '^[A-Z_]+(?==)' .env.migrate || echo "(no vars found)"
-          echo "::endgroup::"
-
-          # Debug: show raw DIRECT_URL and DATABASE_URL lines (mask passwords)
-          echo "::group::Database URL diagnostics"
-          grep -E '^(DIRECT_URL|DATABASE_URL)=' .env.migrate | sed 's/:\/\/[^:]*:[^@]*@/:\/\/***:***@/g' || echo "(neither DIRECT_URL nor DATABASE_URL found)"
-          echo "::endgroup::"
-
-          # Migrations need a direct (non-pgbouncer) connection on port 5432.
-          sed -i 's|\.pooler\.supabase\.com:6543/|.pooler.supabase.com:5432/|g' .env.migrate
-          sed -i '/^DIRECT_URL=/s/?pgbouncer=true//' .env.migrate
-
-          # Check DIRECT_URL first, fall back to DATABASE_URL
-          DIRECT_URL_LINE=$(grep -m1 '^DIRECT_URL=' .env.migrate || true)
-          DIRECT_URL_VAL="${DIRECT_URL_LINE#DIRECT_URL=}"
-          DIRECT_URL_VAL=$(echo "$DIRECT_URL_VAL" | sed 's/^"//;s/"$//')
-
-          DATABASE_URL_LINE=$(grep -m1 '^DATABASE_URL=' .env.migrate || true)
-          DATABASE_URL_VAL="${DATABASE_URL_LINE#DATABASE_URL=}"
-          DATABASE_URL_VAL=$(echo "$DATABASE_URL_VAL" | sed 's/^"//;s/"$//')
-
-          if [ -n "$DIRECT_URL_VAL" ]; then
-            echo "has_direct_url=true" >> "$GITHUB_OUTPUT"
-            echo "Using DIRECT_URL for migrations"
-          elif [ -n "$DATABASE_URL_VAL" ]; then
-            echo "::notice::DIRECT_URL is empty but DATABASE_URL exists — using DATABASE_URL for migrations"
-            echo "DIRECT_URL=$DATABASE_URL_VAL" >> .env.migrate
-            echo "has_direct_url=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "::error::Neither DIRECT_URL nor DATABASE_URL is set — cannot run migrations. Add DATABASE_URL to Vercel env vars."
-            echo "has_direct_url=false" >> "$GITHUB_OUTPUT"
-            rm -f .env.migrate
+          if [ -z "$MIGRATE_URL" ]; then
+            echo "::error::DIRECT_DATABASE_URL secret is not set. Add it to GitHub repo secrets (Settings > Secrets > Actions)."
+            echo "::error::Use the direct (non-pooler) Supabase connection string on port 5432."
+            echo "has_url=false" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
-        env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+          # Ensure direct connection: port 5432, no pgbouncer
+          MIGRATE_URL=$(echo "$MIGRATE_URL" | sed 's|\.pooler\.supabase\.com:6543/|.pooler.supabase.com:5432/|g')
+          MIGRATE_URL=$(echo "$MIGRATE_URL" | sed 's/[?&]pgbouncer=true//g')
+
+          # Write .env.migrate for Prisma
+          echo "DATABASE_URL=$MIGRATE_URL" > .env.migrate
+          echo "DIRECT_URL=$MIGRATE_URL" >> .env.migrate
+
+          # Verify scheme
+          SCHEME=$(echo "$MIGRATE_URL" | grep -oP '^[a-z]+(?=://)' || true)
+          if [ -z "$SCHEME" ]; then
+            echo "::error::DIRECT_DATABASE_URL has no valid scheme (expected postgresql:// or postgres://)"
+            echo "has_url=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "Using DIRECT_DATABASE_URL (scheme: $SCHEME)"
+            echo "has_url=true" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Run Prisma migrations
-        if: steps.migration-env.outputs.has_direct_url == 'true'
+        if: steps.migration-env.outputs.has_url == 'true'
         run: node scripts/run-migrations.js
 
       - name: Run Supabase SQL migrations
-        if: steps.migration-env.outputs.has_direct_url == 'true'
+        if: steps.migration-env.outputs.has_url == 'true'
         run: |
           sudo apt-get install -y -q postgresql-client 2>/dev/null
 
-          # Extract the direct DB connection URL
           MIGRATE_URL=$(grep -m1 '^DIRECT_URL=' .env.migrate | sed 's/^DIRECT_URL=//' | tr -d '"')
 
           echo "::group::Supabase SQL migrations"
@@ -108,9 +92,6 @@ jobs:
           echo "::endgroup::"
 
           rm -f .env.migrate
-        env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
       - name: Build project
         run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
