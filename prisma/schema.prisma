@@ -312,7 +312,7 @@ model Favorite {
 }
 
 model Post {
-  id         String        @id @default(cuid())
+  id         String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   userId     String        @map("user_id")
   authorName String        @map("author_name")
   content    String
@@ -332,8 +332,8 @@ model Post {
 }
 
 model PostComment {
-  id         String        @id @default(cuid())
-  postId     String        @map("post_id")
+  id         String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  postId     String        @map("post_id") @db.Uuid
   userId     String        @map("user_id")
   authorName String        @map("author_name")
   content    String
@@ -347,7 +347,7 @@ model PostComment {
 }
 
 model PostLike {
-  postId String @map("post_id")
+  postId String @map("post_id") @db.Uuid
   userId String @map("user_id")
   post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
 
@@ -356,7 +356,7 @@ model PostLike {
 }
 
 model PostVote {
-  postId      String @map("post_id")
+  postId      String @map("post_id") @db.Uuid
   userId      String @map("user_id")
   optionIndex Int    @map("option_index")
   post        Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
@@ -366,7 +366,7 @@ model PostVote {
 }
 
 model CommentLike {
-  commentId String      @map("comment_id")
+  commentId String      @map("comment_id") @db.Uuid
   userId    String      @map("user_id")
   comment   PostComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
 
