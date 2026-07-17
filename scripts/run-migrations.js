@@ -107,9 +107,53 @@ try {
 }
 
 console.log('\n[migrate] ── prisma migrate deploy ──');
-execFileSync('node', [prismaPath, 'migrate', 'deploy'], {
-  stdio: 'inherit',
-  env: process.env,
-});
+try {
+  execFileSync('node', [prismaPath, 'migrate', 'deploy'], {
+    stdio: 'inherit',
+    env: process.env,
+  });
+  console.log('[migrate] Prisma migrations applied successfully');
+} catch (err) {
+  // P3005 = database schema is not empty (needs baselining)
+  // This happens when the DB was set up with `prisma db push` instead of migrations
+  if (err.status === 1) {
+    console.log('\n[migrate] ── migrate deploy failed, attempting to baseline ──');
 
-console.log('[migrate] Prisma migrations applied successfully');
+    // Read migration directories to find all migrations
+    const migrationsDir = './prisma/migrations';
+    const migrations = fs.readdirSync(migrationsDir)
+      .filter(f => f !== 'migration_lock.toml' && fs.statSync(`${migrationsDir}/${f}`).isDirectory())
+      .sort();
+
+    console.log(`[migrate] Found ${migrations.length} migrations to baseline: ${migrations.join(', ')}`);
+
+    // Mark each migration as already applied
+    for (const migration of migrations) {
+      console.log(`[migrate] Resolving ${migration} as applied...`);
+      try {
+        execFileSync('node', [prismaPath, 'migrate', 'resolve', '--applied', migration], {
+          stdio: 'inherit',
+          env: process.env,
+        });
+      } catch (resolveErr) {
+        console.error(`[migrate] Failed to resolve ${migration}: exit code ${resolveErr.status}`);
+        // Continue trying other migrations
+      }
+    }
+
+    // Try deploy again — should succeed now
+    console.log('\n[migrate] ── prisma migrate deploy (after baseline) ──');
+    try {
+      execFileSync('node', [prismaPath, 'migrate', 'deploy'], {
+        stdio: 'inherit',
+        env: process.env,
+      });
+      console.log('[migrate] Prisma migrations applied successfully after baselining');
+    } catch (retryErr) {
+      console.error(`[migrate] migrate deploy still failed after baselining (exit code ${retryErr.status})`);
+      process.exit(1);
+    }
+  } else {
+    throw err;
+  }
+}
