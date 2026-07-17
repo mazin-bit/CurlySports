@@ -102,12 +102,12 @@ jobs:
 
           # Check pending migrations
           echo "::group::Prisma migrate status"
-          node --env-file=.env.migrate ./node_modules/.bin/prisma migrate status || true
+          node --env-file=.env.migrate ./node_modules/prisma/build/index.js migrate status || true
           echo "::endgroup::"
 
           # Apply all pending Prisma migrations
           echo "::group::Running prisma migrate deploy"
-          node --env-file=.env.migrate ./node_modules/.bin/prisma migrate deploy
+          node --env-file=.env.migrate ./node_modules/prisma/build/index.js migrate deploy
           MIGRATE_EXIT=$?
           echo "::endgroup::"
 
