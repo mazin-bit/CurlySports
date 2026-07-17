@@ -113,7 +113,7 @@ export async function PATCH(
 
     if (existing) {
       await prisma.$transaction([
-        prisma.commentLike.delete({ where: { id: existing.id } }),
+        prisma.commentLike.delete({ where: { commentId_userId: { commentId, userId: user.id } } }),
         prisma.postComment.update({ where: { id: commentId }, data: { likesCount: { decrement: 1 } } }),
       ]);
       liked = false;

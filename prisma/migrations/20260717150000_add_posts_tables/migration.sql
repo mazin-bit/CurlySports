@@ -29,30 +29,27 @@ CREATE TABLE IF NOT EXISTS "post_comments" (
 
 -- CreateTable
 CREATE TABLE IF NOT EXISTS "post_likes" (
-    "id" TEXT NOT NULL,
     "post_id" TEXT NOT NULL,
     "user_id" TEXT NOT NULL,
 
-    CONSTRAINT "post_likes_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "post_likes_pkey" PRIMARY KEY ("post_id", "user_id")
 );
 
 -- CreateTable
 CREATE TABLE IF NOT EXISTS "post_votes" (
-    "id" TEXT NOT NULL,
     "post_id" TEXT NOT NULL,
     "user_id" TEXT NOT NULL,
     "option_index" INTEGER NOT NULL,
 
-    CONSTRAINT "post_votes_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "post_votes_pkey" PRIMARY KEY ("post_id", "user_id")
 );
 
 -- CreateTable
 CREATE TABLE IF NOT EXISTS "comment_likes" (
-    "id" TEXT NOT NULL,
     "comment_id" TEXT NOT NULL,
     "user_id" TEXT NOT NULL,
 
-    CONSTRAINT "comment_likes_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "comment_likes_pkey" PRIMARY KEY ("comment_id", "user_id")
 );
 
 -- CreateIndex
@@ -63,15 +60,6 @@ CREATE INDEX IF NOT EXISTS "posts_created_at_idx" ON "posts"("created_at");
 
 -- CreateIndex
 CREATE INDEX IF NOT EXISTS "post_comments_post_id_idx" ON "post_comments"("post_id");
-
--- CreateIndex
-CREATE UNIQUE INDEX IF NOT EXISTS "post_likes_post_id_user_id_key" ON "post_likes"("post_id", "user_id");
-
--- CreateIndex
-CREATE UNIQUE INDEX IF NOT EXISTS "post_votes_post_id_user_id_key" ON "post_votes"("post_id", "user_id");
-
--- CreateIndex
-CREATE UNIQUE INDEX IF NOT EXISTS "comment_likes_comment_id_user_id_key" ON "comment_likes"("comment_id", "user_id");
 
 -- AddForeignKey (safe — only if not exists)
 DO $$ BEGIN

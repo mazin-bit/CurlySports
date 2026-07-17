@@ -347,33 +347,30 @@ model PostComment {
 }
 
 model PostLike {
-  id     String @id @default(cuid())
   postId String @map("post_id")
   userId String @map("user_id")
   post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
 
-  @@unique([postId, userId])
+  @@id([postId, userId])
   @@map("post_likes")
 }
 
 model PostVote {
-  id          String @id @default(cuid())
   postId      String @map("post_id")
   userId      String @map("user_id")
   optionIndex Int    @map("option_index")
   post        Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
 
-  @@unique([postId, userId])
+  @@id([postId, userId])
   @@map("post_votes")
 }
 
 model CommentLike {
-  id        String      @id @default(cuid())
   commentId String      @map("comment_id")
   userId    String      @map("user_id")
   comment   PostComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
 
-  @@unique([commentId, userId])
+  @@id([commentId, userId])
   @@map("comment_likes")
 }
 

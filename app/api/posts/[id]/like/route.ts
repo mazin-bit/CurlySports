@@ -25,7 +25,7 @@ export async function POST(
     if (existing) {
       // Unlike: delete the like and decrement count
       await prisma.$transaction([
-        prisma.postLike.delete({ where: { id: existing.id } }),
+        prisma.postLike.delete({ where: { postId_userId: { postId: id, userId: user.id } } }),
         prisma.post.update({ where: { id }, data: { likesCount: { decrement: 1 } } }),
       ]);
       liked = false;
