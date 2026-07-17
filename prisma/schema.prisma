@@ -313,15 +313,15 @@ model Favorite {
 
 model Post {
   id         String        @id @default(cuid())
-  userId     String
-  authorName String
+  userId     String        @map("user_id")
+  authorName String        @map("author_name")
   content    String
   sport      String?
   tag        String?
-  imageUrl   String?
+  imageUrl   String?       @map("image_url")
   poll       Json?
-  likesCount Int           @default(0)
-  createdAt  DateTime      @default(now())
+  likesCount Int           @default(0) @map("likes_count")
+  createdAt  DateTime      @default(now()) @map("created_at")
   comments   PostComment[]
   likes      PostLike[]
   votes      PostVote[]
@@ -333,12 +333,12 @@ model Post {
 
 model PostComment {
   id         String        @id @default(cuid())
-  postId     String
-  userId     String
-  authorName String
+  postId     String        @map("post_id")
+  userId     String        @map("user_id")
+  authorName String        @map("author_name")
   content    String
-  likesCount Int           @default(0)
-  createdAt  DateTime      @default(now())
+  likesCount Int           @default(0) @map("likes_count")
+  createdAt  DateTime      @default(now()) @map("created_at")
   post       Post          @relation(fields: [postId], references: [id], onDelete: Cascade)
   likes      CommentLike[]
 
@@ -348,8 +348,8 @@ model PostComment {
 
 model PostLike {
   id     String @id @default(cuid())
-  postId String
-  userId String
+  postId String @map("post_id")
+  userId String @map("user_id")
   post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
 
   @@unique([postId, userId])
@@ -358,9 +358,9 @@ model PostLike {
 
 model PostVote {
   id          String @id @default(cuid())
-  postId      String
-  userId      String
-  optionIndex Int
+  postId      String @map("post_id")
+  userId      String @map("user_id")
+  optionIndex Int    @map("option_index")
   post        Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
 
   @@unique([postId, userId])
@@ -369,8 +369,8 @@ model PostVote {
 
 model CommentLike {
   id        String      @id @default(cuid())
-  commentId String
-  userId    String
+  commentId String      @map("comment_id")
+  userId    String      @map("user_id")
   comment   PostComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
 
   @@unique([commentId, userId])
