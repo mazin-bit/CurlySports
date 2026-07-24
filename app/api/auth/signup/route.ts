@@ -132,11 +132,9 @@ export async function POST(req: NextRequest) {
       { status: 201 }
     );
   } catch (err) {
-    const errMsg = err instanceof Error ? err.message : String(err);
-    const errStack = err instanceof Error ? err.stack?.split("\n").slice(0, 3).join(" | ") : "";
-    logger.error("signup error", { error: errMsg, stack: errStack });
+    logger.error("signup error", { error: String(err), stack: (err as Error).stack });
     return NextResponse.json(
-      { error: "Signup failed. Please try again.", debug: errMsg },
+      { error: "Signup failed. Please try again." },
       { status: 500 }
     );
   }
