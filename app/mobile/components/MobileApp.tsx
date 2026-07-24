@@ -27,7 +27,7 @@ import ChallengeDetailScreen from './ChallengeDetailScreen';
 import LeaderboardScreen from './LeaderboardScreen';
 import ReferralScreen from './ReferralScreen';
 import { hapticImpact } from '@/lib/native';
-import { Wrench, Gift, ArrowRight } from 'lucide-react';
+import { Wrench, Gift, ArrowRight, X } from 'lucide-react';
 
 type Tab = 'home' | 'live' | 'funzone' | 'leagues' | 'profile' | 'news' | 'teams' | 'favorites' | 'videos' | 'minigames' | 'players' | 'challenges';
 type OverlayType = 'match' | 'player' | 'search' | 'notifications' | 'feedback' | 'challenge-detail' | 'leaderboard' | 'referral';
