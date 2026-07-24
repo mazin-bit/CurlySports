@@ -169,7 +169,9 @@ export async function POST(req: NextRequest) {
 
     return setAuthCookies(response, accessToken, refreshToken);
   } catch (err) {
-    logger.error("login error", { error: String(err) });
-    return NextResponse.json({ error: "Login failed. Please try again." }, { status: 500 });
+    const errMsg = err instanceof Error ? err.message : String(err);
+    const errStack = err instanceof Error ? err.stack?.split("\n").slice(0, 3).join(" | ") : "";
+    logger.error("login error", { error: errMsg, stack: errStack });
+    return NextResponse.json({ error: "Login failed. Please try again.", debug: errMsg }, { status: 500 });
   }
 }
