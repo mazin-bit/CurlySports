@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { AuthProvider, useAuth } from './AuthContext';
 import type { Match } from '../data';
 import BottomNav from './ui/BottomNav';
@@ -27,7 +27,7 @@ import ChallengeDetailScreen from './ChallengeDetailScreen';
 import LeaderboardScreen from './LeaderboardScreen';
 import ReferralScreen from './ReferralScreen';
 import { hapticImpact } from '@/lib/native';
-import { Wrench, Gift, ArrowRight, X } from 'lucide-react';
+import { Wrench, Gift, ArrowRight } from 'lucide-react';
 
 type Tab = 'home' | 'live' | 'funzone' | 'leagues' | 'profile' | 'news' | 'teams' | 'favorites' | 'videos' | 'minigames' | 'players' | 'challenges';
 type OverlayType = 'match' | 'player' | 'search' | 'notifications' | 'feedback' | 'challenge-detail' | 'leaderboard' | 'referral';
@@ -313,6 +313,7 @@ function ReferralSurvey({ onDone }: { onDone: () => void }) {
   );
 }
 
+
 function AppInner() {
   const { user, profile, isLoading, isNewUser, setFavTeam, verifyingOtp, isNewSignup, clearNewSignup } = useAuth();
   const flags = useFlags();
@@ -369,6 +370,8 @@ function AppInner() {
 
   // 2 — Not authenticated → Login
   if (!user) return <LoginScreen />;
+
+  // 2.5 — Phone verification is only required for phone login method (handled in PhoneLoginScreen)
 
   // 3 — Maintenance mode (after auth so admins can still log in)
   if (flags?.maintenanceMode) {

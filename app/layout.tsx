@@ -5,7 +5,6 @@ import { SportProvider } from "@/contexts/SportContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { PageViewTracker } from "@/components/PageViewTracker";
 import { Analytics } from "@vercel/analytics/next";
-import Script from "next/script";
 
 const SITE_URL = "https://curlysports.com";
 
@@ -130,12 +129,6 @@ export default function RootLayout({
         </SWRProvider>
         <PageViewTracker />
         <Analytics />
-        <Script
-          async
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2394936440613571"
-          crossOrigin="anonymous"
-          strategy="afterInteractive"
-        />
       </body>
     </html>
   );

@@ -1,13 +1,14 @@
 "use client";
-export const dynamic = "force-dynamic";
 import { useState, useRef, useEffect, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import styles from "./login.module.css";
-import { Mail, Eye, EyeOff, Check, X, Loader2 } from "lucide-react";
+import { Mail, Eye, EyeOff, Check, X, Loader2, Phone, Smartphone, ChevronDown } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { usePhoneAuth } from "@/hooks/usePhoneAuth";
+import { COUNTRY_CODES, DEFAULT_COUNTRY, type CountryCode } from "@/lib/country-codes";
 
 
-type Mode = "login" | "signup" | "forgot";
+type Mode = "login" | "signup" | "forgot" | "phone";
 
 const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ?? "";
 
@@ -237,6 +238,244 @@ function OtpScreen({
   );
 }
 
+/* ── Phone OTP flow ────────────────────────────────────── */
+function PhoneOtpScreen({ onBack, onVerified }: { onBack: () => void; onVerified: () => void }) {
+  const { t } = useLanguage();
+  const { sendOtp, verifyOtp, reset, loading, error, codeSent } = usePhoneAuth();
+  const [country, setCountry] = useState<CountryCode>(DEFAULT_COUNTRY);
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [otp, setOtp] = useState<string[]>(["", "", "", "", "", ""]);
+  const [otpError, setOtpError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+  const [showCountryDropdown, setShowCountryDropdown] = useState(false);
+  const [countrySearch, setCountrySearch] = useState("");
+  const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+  const fullNumber = `${country.dial}${phoneNumber.replace(/\s/g, "")}`;
+
+  const filteredCountries = countrySearch
+    ? COUNTRY_CODES.filter(c =>
+        c.name.toLowerCase().includes(countrySearch.toLowerCase()) ||
+        c.dial.includes(countrySearch) ||
+        c.code.toLowerCase().includes(countrySearch.toLowerCase())
+      )
+    : COUNTRY_CODES;
+
+  useEffect(() => {
+    if (codeSent) otpRefs.current[0]?.focus();
+  }, [codeSent]);
+
+  async function handleSendOtp(e: React.FormEvent) {
+    e.preventDefault();
+    const cleaned = phoneNumber.replace(/\s/g, "");
+    if (!cleaned || cleaned.length < 4) {
+      setOtpError(t("auth.invalidPhone"));
+      return;
+    }
+    setOtpError(null);
+    await sendOtp(fullNumber);
+  }
+
+  function handleOtpChange(index: number, value: string) {
+    if (value && !/^\d$/.test(value)) return;
+    const newOtp = [...otp];
+    newOtp[index] = value;
+    setOtp(newOtp);
+    setOtpError(null);
+    if (value && index < 5) otpRefs.current[index + 1]?.focus();
+  }
+
+  function handleOtpKeyDown(index: number, e: React.KeyboardEvent) {
+    if (e.key === "Backspace" && !otp[index] && index > 0) {
+      otpRefs.current[index - 1]?.focus();
+    }
+  }
+
+  function handleOtpPaste(e: React.ClipboardEvent) {
+    e.preventDefault();
+    const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
+    if (!pasted) return;
+    const newOtp = [...otp];
+    for (let i = 0; i < 6; i++) newOtp[i] = pasted[i] || "";
+    setOtp(newOtp);
+    const nextEmpty = newOtp.findIndex((d) => !d);
+    otpRefs.current[nextEmpty >= 0 ? nextEmpty : 5]?.focus();
+  }
+
+  async function handleVerify() {
+    const code = otp.join("");
+    if (code.length !== 6) return;
+    setOtpError(null);
+    const result = await verifyOtp(code);
+    if (result) {
+      setSuccess(true);
+      setTimeout(onVerified, 1500);
+    } else {
+      setOtpError(error || t("auth.verificationFailed"));
+      setOtp(["", "", "", "", "", ""]);
+      otpRefs.current[0]?.focus();
+    }
+  }
+
+  if (success) {
+    return (
+      <div className={styles.formSide}>
+        <div className={styles.formTag}>{t("auth.verified")}</div>
+        <h1 className={styles.formTitle}>{t("auth.youreIn")}</h1>
+        <p className={styles.formSub}>{t("auth.phoneVerified")}</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className={styles.formSide}>
+      <a href="/" className={styles.mobileBrand}>
+        <div className={styles.mobileBrandMark}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/curly-guy.png" alt="Curly" />
+        </div>
+        <span>curly<span className={styles.dot}>.</span>sports</span>
+      </a>
+
+      <div className={styles.formTag}>{t("auth.signInWithPhone")}</div>
+      <h1 className={styles.formTitle}>
+        {codeSent ? t("auth.enterPhoneOtp") : t("auth.signInWithPhone")}
+      </h1>
+      <p className={styles.formSub}>
+        {codeSent
+          ? t("auth.weSentPhoneCode").replace("{phone}", phoneNumber)
+          : t("auth.invalidPhone").replace("Enter a valid phone number with country code (e.g. +1234567890)", "Enter your phone number with country code to receive a verification SMS.")}
+      </p>
+
+      {!codeSent ? (
+        <form onSubmit={handleSendOtp}>
+          <div className={styles.field}>
+            <label htmlFor="phone">{t("auth.phoneNumber")}</label>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button
+                type="button"
+                className={styles.btnSocial}
+                onClick={() => setShowCountryDropdown(!showCountryDropdown)}
+                style={{
+                  padding: "12px 10px", width: "auto", flexShrink: 0,
+                  display: "flex", alignItems: "center", gap: 4,
+                  fontFamily: "var(--mono)", fontSize: 13, fontWeight: 700,
+                  whiteSpace: "nowrap", boxShadow: "none", borderRadius: 14,
+                }}
+              >
+                {country.code} {country.dial}
+                <ChevronDown size={14} />
+              </button>
+              <input
+                id="phone"
+                type="tel"
+                placeholder="50 123 4567"
+                value={phoneNumber}
+                onChange={(e) => setPhoneNumber(e.target.value)}
+                required
+                autoComplete="tel"
+                style={{ flex: 1, minWidth: 0 }}
+              />
+            </div>
+
+            {showCountryDropdown && (
+              <div style={{
+                marginTop: 8, background: "#fffdf7", border: "2px solid #0c0a1d",
+                borderRadius: 12, maxHeight: 260, overflow: "hidden", display: "flex", flexDirection: "column",
+              }}>
+                <input
+                  value={countrySearch}
+                  onChange={(e) => setCountrySearch(e.target.value)}
+                  placeholder="Search country..."
+                  autoFocus
+                  style={{
+                    padding: "10px 14px", border: "none", borderBottom: "2px solid #0c0a1d",
+                    fontFamily: "var(--body)", fontSize: 13, color: "#0c0a1d",
+                    background: "#fffdf7", outline: "none",
+                  }}
+                />
+                <div style={{ overflowY: "auto", maxHeight: 210 }}>
+                  {filteredCountries.map((c) => (
+                    <button
+                      key={c.code + c.dial}
+                      type="button"
+                      onClick={() => { setCountry(c); setShowCountryDropdown(false); setCountrySearch(""); }}
+                      style={{
+                        width: "100%", padding: "10px 14px",
+                        background: country.code === c.code ? "var(--accent, #c8ff3d)" : "transparent",
+                        border: "none", fontFamily: "var(--body)", fontSize: 13, color: "#0c0a1d",
+                        cursor: "pointer", textAlign: "left", display: "flex", justifyContent: "space-between",
+                        borderBottom: "1px solid rgba(12,10,29,0.1)",
+                      }}
+                    >
+                      <span>{c.name}</span>
+                      <span style={{ fontFamily: "var(--mono)", fontWeight: 700, color: "rgba(12,10,29,0.5)" }}>{c.dial}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {(otpError || error) && <div className={styles.errorBanner}>{otpError || error}</div>}
+
+          <button id="send-otp-btn" className={styles.btnPrimary} type="submit" disabled={loading}>
+            {loading ? t("auth.sendingOtp") : t("auth.sendOtp")}
+          </button>
+        </form>
+      ) : (
+        <>
+          <div className={styles.otpGroup}>
+            {otp.map((digit, i) => (
+              <input
+                key={i}
+                ref={(el) => { otpRefs.current[i] = el; }}
+                className={styles.otpInput}
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]"
+                maxLength={1}
+                value={digit}
+                placeholder="-"
+                onChange={(e) => handleOtpChange(i, e.target.value)}
+                onKeyDown={(e) => handleOtpKeyDown(i, e)}
+                onPaste={handleOtpPaste}
+              />
+            ))}
+          </div>
+
+          {(otpError || error) && <div className={styles.errorBanner}>{otpError || error}</div>}
+
+          <button
+            className={styles.btnPrimary}
+            onClick={handleVerify}
+            disabled={loading || otp.join("").length < 6}
+          >
+            {loading ? t("auth.verifying") : t("auth.verifyCode")}
+          </button>
+
+          <button
+            className={styles.btnPrimary}
+            style={{ marginTop: "0.75rem", background: "transparent", color: "#0c0a1d", boxShadow: "none" }}
+            onClick={() => { reset(); setOtp(["", "", "", "", "", ""]); }}
+          >
+            {t("auth.tryAgain")}
+          </button>
+        </>
+      )}
+
+
+      <button
+        className={styles.btnPrimary}
+        style={{ marginTop: "1.5rem", background: "transparent", color: "#0c0a1d", boxShadow: "none" }}
+        onClick={onBack}
+      >
+        {t("auth.backToLogin")}
+      </button>
+    </div>
+  );
+}
+
 export default function LoginPage() {
   return (
     <Suspense>
@@ -361,6 +600,19 @@ function LoginPageContent() {
       state: referralCode ? `/dashboard?ref=${referralCode}` : '/dashboard',
     });
     window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
+  }
+
+  /* ── Phone OTP screen ─────────────────────────────────────── */
+  if (mode === "phone") {
+    return (
+      <div className={styles.layout}>
+        <Stage />
+        <PhoneOtpScreen
+          onBack={() => switchMode("login")}
+          onVerified={() => { router.replace("/dashboard"); router.refresh(); }}
+        />
+      </div>
+    );
   }
 
   /* ── OTP verification screen ───────────────────────────────── */
@@ -585,10 +837,20 @@ function LoginPageContent() {
                 </svg>
                 {t("auth.google")}
               </button>
+              <button
+                type="button"
+                className={styles.btnSocial}
+                onClick={() => switchMode("phone")}
+                disabled={loading}
+              >
+                <Smartphone size={18} />
+                {t("auth.phone")}
+              </button>
             </div>
           </>
         )}
 
+  
         <p className={styles.below}>
           {mode === "login" ? (
             <>{t("auth.newToCurly")}

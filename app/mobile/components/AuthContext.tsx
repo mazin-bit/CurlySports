@@ -8,6 +8,8 @@ export interface UserProfile {
   name: string | null;
   avatar: string | null;
   favTeam: { code: string; name: string } | null;
+  phone: string | null;
+  phoneVerified: boolean;
 }
 
 interface AuthContextValue {
@@ -24,6 +26,8 @@ interface AuthContextValue {
   verifyingOtp: boolean;
   /** True when user just completed signup (email or Google) — triggers referral popup */
   isNewSignup: boolean;
+  /** True when user is logged in but phone is not verified */
+  needsPhoneVerification: boolean;
   clearNewSignup: () => void;
   login: (email: string, password: string) => Promise<void>;
   signup: (email: string, password: string, username: string) => Promise<void>;
@@ -34,6 +38,8 @@ interface AuthContextValue {
   verifyOtp: (code: string) => Promise<void>;
   resendOtp: () => Promise<void>;
   cancelVerification: () => void;
+  /** Call after phone verification succeeds to refresh profile */
+  completePhoneVerification: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -79,6 +85,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           name: data.name,
           avatar: data.avatar,
           favTeam: data.favTeam ?? null,
+          phone: data.phone ?? null,
+          phoneVerified: data.phoneVerified ?? false,
         };
         setUser(p);
         setProfile(p);
@@ -198,6 +206,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const clearAuthError = () => setAuthError(null);
   const clearNewSignup = () => setIsNewSignup(false);
 
+  const completePhoneVerification = async () => {
+    await fetchProfile();
+  };
+
   const verifyOtp = async (code: string) => {
     setAuthError(null);
     const res = await fetch('/api/auth/verify-otp', {
@@ -236,14 +248,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const isNewUser = !!user && !profile?.favTeam;
+  const needsPhoneVerification = !!user && !profile?.phoneVerified;
 
   return (
     <AuthContext.Provider value={{
       user, profile, isLoading, isNewUser, authError,
       needsVerification, verificationEmail, verifyingOtp,
-      isNewSignup, clearNewSignup,
+      isNewSignup, needsPhoneVerification, clearNewSignup,
       login, signup, logout, deleteAccount, setFavTeam, clearAuthError,
-      verifyOtp, resendOtp, cancelVerification,
+      verifyOtp, resendOtp, cancelVerification, completePhoneVerification,
     }}>
       {children}
     </AuthContext.Provider>

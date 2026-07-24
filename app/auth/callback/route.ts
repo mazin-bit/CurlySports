@@ -13,6 +13,10 @@ export async function GET(request: NextRequest) {
   const safeState =
     state.startsWith("/") && !state.startsWith("//") ? state : "/dashboard";
 
+  // Detect if the OAuth flow originated from the mobile app
+  const isMobile = safeState.startsWith("/mobile");
+  const errorRedirectBase = isMobile ? "/mobile" : "/login";
+
   // Extract referral code and newSignup flag from state (e.g. "/dashboard?ref=ABC123")
   let referralCode: string | null = null;
   let hasNewSignupFlag = false;
@@ -35,14 +39,14 @@ export async function GET(request: NextRequest) {
   }
 
   if (!code) {
-    return NextResponse.redirect(`${origin}/login?error=no_code`);
+    return NextResponse.redirect(`${origin}${errorRedirectBase}?error=no_code`);
   }
 
   const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
 
   if (!clientId || !clientSecret) {
-    return NextResponse.redirect(`${origin}/login?error=google_not_configured`);
+    return NextResponse.redirect(`${origin}${errorRedirectBase}?error=google_not_configured`);
   }
 
   try {
@@ -60,7 +64,7 @@ export async function GET(request: NextRequest) {
     });
 
     if (!tokenRes.ok) {
-      return NextResponse.redirect(`${origin}/login?error=google_token_failed`);
+      return NextResponse.redirect(`${origin}${errorRedirectBase}?error=google_token_failed`);
     }
 
     const { access_token } = await tokenRes.json();
@@ -73,7 +77,7 @@ export async function GET(request: NextRequest) {
 
     if (!userInfoRes.ok) {
       return NextResponse.redirect(
-        `${origin}/login?error=google_userinfo_failed`
+        `${origin}${errorRedirectBase}?error=google_userinfo_failed`
       );
     }
 
@@ -156,7 +160,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (user.isBanned) {
-      return NextResponse.redirect(`${origin}/login?error=account_suspended`);
+      return NextResponse.redirect(`${origin}${errorRedirectBase}?error=account_suspended`);
     }
 
     const [accessToken, refreshToken] = await Promise.all([
@@ -192,6 +196,6 @@ export async function GET(request: NextRequest) {
 
     return setAuthCookies(response, accessToken, refreshToken);
   } catch {
-    return NextResponse.redirect(`${origin}/login?error=auth_callback_failed`);
+    return NextResponse.redirect(`${origin}${errorRedirectBase}?error=auth_callback_failed`);
   }
 }

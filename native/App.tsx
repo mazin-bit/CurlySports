@@ -84,7 +84,7 @@ export default function App() {
 
   const onShouldStartLoadWithRequest = useCallback(
     (request: { url: string; navigationType: string }) => {
-      const { url } = request;
+      const { url, navigationType } = request;
       // Allow javascript:, about:, data: schemes
       if (!url.startsWith("http://") && !url.startsWith("https://")) return true;
       try {
@@ -93,9 +93,15 @@ export default function App() {
         if (host === appHost || host === "localhost" || host.startsWith("192.168.") || host.startsWith("10.") || host === "0.0.0.0") {
           return true;
         }
-        // External URL → open in system browser
-        Linking.openURL(url);
-        return false;
+        // On iOS, onShouldStartLoadWithRequest fires for ALL requests (scripts,
+        // images, fonts, analytics, etc.) — not just link taps. Only open
+        // external URLs in the system browser for user-initiated navigations.
+        if (navigationType === "click" || navigationType === "formsubmit") {
+          Linking.openURL(url);
+          return false;
+        }
+        // Allow subresource loads (scripts, images, fonts, iframes) in WebView
+        return true;
       } catch {
         return true;
       }

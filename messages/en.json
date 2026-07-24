@@ -130,7 +130,17 @@
     "loginFailed": "Login failed.",
     "pickUsernameError": "Please pick a username.",
     "signupFailed": "Signup failed.",
-    "failedToSendReset": "Failed to send reset link."
+    "failedToSendReset": "Failed to send reset link.",
+    "phone": "Phone",
+    "phoneNumber": "Phone number",
+    "phonePlaceholder": "+1 234 567 8900",
+    "sendOtp": "Send OTP",
+    "sendingOtp": "Sending...",
+    "enterPhoneOtp": "Enter the 6-digit code sent to your phone.",
+    "weSentPhoneCode": "We sent a 6-digit code via SMS to {phone}.",
+    "phoneVerified": "Phone verified! Redirecting...",
+    "invalidPhone": "Enter a valid phone number with country code (e.g. +1234567890)",
+    "signInWithPhone": "Sign in with Phone"
   },
   "common": {
     "loading": "Loading\u2026",
