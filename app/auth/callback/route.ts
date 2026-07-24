@@ -175,7 +175,20 @@ export async function GET(request: NextRequest) {
       redirectPath = `${redirectPath}${sep}newSignup=1`;
     }
 
-    const response = NextResponse.redirect(`${origin}${redirectPath}`);
+    // For mobile WebView: use an HTML page with client-side redirect instead of a
+    // server 307 redirect. Server redirects from cross-origin OAuth pages can cause
+    // iOS WKWebView to open the redirect in Safari instead of staying in the WebView.
+    let response: NextResponse;
+    if (isMobile) {
+      const safeRedirect = redirectPath.replace(/'/g, "\\'").replace(/"/g, "&quot;");
+      const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Signing in...</title></head><body style="background:#07090b;color:#fffdf7;font-family:system-ui;display:flex;align-items:center;justify-content:center;height:100vh;margin:0"><div style="text-align:center"><div style="font-size:18px;font-weight:700;margin-bottom:8px">Signing you in...</div></div><script>window.location.replace('${safeRedirect}');</script></body></html>`;
+      response = new NextResponse(html, {
+        status: 200,
+        headers: { "Content-Type": "text/html; charset=utf-8" },
+      });
+    } else {
+      response = NextResponse.redirect(`${origin}${redirectPath}`);
+    }
 
     // Fire-and-forget session tracking — don't block OAuth callback
     const ua = request.headers.get("user-agent") ?? "";

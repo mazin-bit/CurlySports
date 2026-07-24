@@ -132,10 +132,9 @@ export async function POST(req: NextRequest) {
       { status: 201 }
     );
   } catch (err) {
-    const errMsg = String(err);
-    logger.error("signup error", { error: errMsg, stack: (err as Error).stack });
+    logger.error("signup error", { error: String(err), stack: (err as Error).stack });
     return NextResponse.json(
-      { error: "Signup failed. Please try again.", debug: errMsg },
+      { error: "Signup failed. Please try again." },
       { status: 500 }
     );
   }

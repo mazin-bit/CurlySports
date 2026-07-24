@@ -67,6 +67,7 @@ const BRIDGE_JS = `
 
 export default function App() {
   const webViewRef = useRef<WebView>(null);
+  const currentUrlRef = useRef<string>(BASE_URL);
   const [isReady, setIsReady] = useState(false);
   const [canGoBack, setCanGoBack] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -82,6 +83,13 @@ export default function App() {
     try { return new URL(BASE_URL).host; } catch { return "curlysports.com"; }
   })();
 
+  // Domains that must stay in the WebView for OAuth flows to work
+  // Domains that must stay in the WebView for OAuth/auth flows to work
+  const OAUTH_DOMAINS = [
+    "accounts.google.com", "www.google.com", "oauth2.googleapis.com",
+    "curlysports-mazin.firebaseapp.com", "www.gstatic.com", "apis.google.com",
+  ];
+
   const onShouldStartLoadWithRequest = useCallback(
     (request: { url: string; navigationType: string }) => {
       const { url, navigationType } = request;
@@ -91,6 +99,10 @@ export default function App() {
         const host = new URL(url).host;
         // Allow same-host navigation (app pages)
         if (host === appHost || host === "localhost" || host.startsWith("192.168.") || host.startsWith("10.") || host === "0.0.0.0") {
+          return true;
+        }
+        // Allow Google OAuth domains to stay in the WebView (don't open in Safari)
+        if (OAUTH_DOMAINS.some(d => host === d || host.endsWith("." + d))) {
           return true;
         }
         // On iOS, onShouldStartLoadWithRequest fires for ALL requests (scripts,
@@ -123,17 +135,33 @@ export default function App() {
     return () => sub.remove();
   }, [canGoBack]);
 
+  // Helper: check if a URL belongs to our app
+  const isAppUrl = useCallback((url: string) => {
+    try {
+      const host = new URL(url).host;
+      return host === appHost || host === "localhost" || host.startsWith("192.168.") || host.startsWith("10.") || host === "0.0.0.0";
+    } catch { return false; }
+  }, [appHost]);
+
   // ── App state (foreground/background) ─────────────────────
   useEffect(() => {
     const sub = AppState.addEventListener("change", (state) => {
       if (state === "active" && webViewRef.current) {
-        webViewRef.current.injectJavaScript(
-          `window.dispatchEvent(new Event('curly:app-resume')); true;`
-        );
+        // If the WebView is stuck on an external URL (e.g. Google OAuth page),
+        // navigate back to the app instead of showing the external page.
+        if (!isAppUrl(currentUrlRef.current)) {
+          webViewRef.current.injectJavaScript(
+            `window.location.replace('${BASE_URL}'); true;`
+          );
+        } else {
+          webViewRef.current.injectJavaScript(
+            `window.dispatchEvent(new Event('curly:app-resume')); true;`
+          );
+        }
       }
     });
     return () => sub.remove();
-  }, []);
+  }, [isAppUrl]);
 
   // ── Push notification tap → navigate in WebView ──────────
   useEffect(() => {
@@ -270,7 +298,7 @@ export default function App() {
             setLoadError(`Server error: ${e.nativeEvent.statusCode}`);
           }
         }}
-        onNavigationStateChange={(nav) => setCanGoBack(nav.canGoBack)}
+        onNavigationStateChange={(nav) => { setCanGoBack(nav.canGoBack); if (nav.url) currentUrlRef.current = nav.url; }}
         onShouldStartLoadWithRequest={onShouldStartLoadWithRequest}
         // Performance
         javaScriptEnabled
