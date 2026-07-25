@@ -1310,3 +1310,58 @@ html[lang="hi"] {
     transition-timing-function: cubic-bezier(.25,.46,.45,.94);
   }
 }
+
+/* Screen reader only — accessibility utility */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Share buttons */
+.share-buttons {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.share-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-decoration: none;
+  border: 1.5px solid var(--border-3);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.share-btn:hover {
+  background: var(--surface-2);
+  border-color: var(--border-2);
+}
+
+.share-twitter:hover { color: #1da1f2; }
+.share-whatsapp:hover { color: #25d366; }
+.share-facebook:hover { color: #1877f2; }
+.share-copy:hover { color: var(--accent); }
+
+.share-buttons[data-compact] .share-btn {
+  padding: 0.35rem;
+  border-radius: 50%;
+}
+
+.share-buttons[data-compact] .share-btn span {
+  display: none;
+}

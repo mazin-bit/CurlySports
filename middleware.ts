@@ -25,6 +25,10 @@ export async function middleware(request: NextRequest) {
     "/login", "/auth/callback", "/auth/check-email",
     "/reset-password", "/verify-email", "/", "/mobile", "/privacy", "/terms", "/admin", "/download",
     "/challenges",
+    "/sports",
+    "/delete-account",
+    "/feedback",
+    "/invite",
   ];
   const isPublic = publicPaths.some(
     (p) => pathname === p || pathname.startsWith(p + "?") || pathname.startsWith(p + "/")
@@ -82,6 +86,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|html)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|manifest\\.json|opensearch\\.xml|\\.well-known|.*\\.(?:svg|png|jpg|jpeg|gif|webp|html|xml|json|ico|txt)$).*)",
   ],
 };

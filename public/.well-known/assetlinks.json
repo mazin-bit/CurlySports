@@ -1,0 +1,10 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.curlysports.mobile",
+      "sha256_cert_fingerprints": ["8D:EA:0D:19:60:9C:D6:9D:E3:AC:02:72:47:D4:16:B5:E6:F3:22:53:28:8F:24:CD:55:19:F9:2A:3C:EA:CE:6B"]
+    }
+  }
+]

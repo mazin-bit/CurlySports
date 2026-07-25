@@ -1,0 +1,14 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "NNHVXX5TB3.com.curlysports.mobile",
+        "paths": ["/players/*", "/teams/*", "/matches/*", "/live-scores", "/news", "/challenges/*", "/dashboard", "/leagues"]
+      }
+    ]
+  },
+  "webcredentials": {
+    "apps": ["NNHVXX5TB3.com.curlysports.mobile"]
+  }
+}

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<OpenSearchDescription xmlns="http://a9.com/-/spec/opensearch/1.1/">
+  <ShortName>Curly Sports</ShortName>
+  <Description>Search sports scores, teams, players, and news on Curly Sports</Description>
+  <InputEncoding>UTF-8</InputEncoding>
+  <Url type="text/html" template="https://curlysports.com/players?q={searchTerms}"/>
+  <Image width="16" height="16" type="image/png">https://curlysports.com/icon.png</Image>
+</OpenSearchDescription>

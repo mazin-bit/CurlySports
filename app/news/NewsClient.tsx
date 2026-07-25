@@ -11,6 +11,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { localizeDigits } from "@/lib/locale-utils";
 import type { Locale } from "@/lib/i18n";
 import type { NormalizedNews } from "@/lib/types";
+import { ShareButtons } from "@/components/ShareButtons";
 
 const FILTERS = [
   { key: "news.allNews", id: "All News" },
@@ -173,6 +174,9 @@ export default function NewsClient() {
               <div className={styles.featuredMetaDot} />
               <span>{readTime(featured.title + " " + (featured.excerpt ?? ""), t, locale)}</span>
             </div>
+            <div onClick={(e) => e.preventDefault()} style={{ marginTop: 8 }}>
+              <ShareButtons url={featured.url ?? "/news"} title={featured.title} compact />
+            </div>
           </div>
         </a>
       )}
@@ -203,6 +207,9 @@ export default function NewsClient() {
                         <span>{timeSince(a.publishedAt, t, locale)}</span>
                         <div className={styles.newsMetaDot} />
                         <span className={styles.newsReadTime}>{rt}</span>
+                      </div>
+                      <div onClick={(e) => e.preventDefault()} style={{ marginTop: 6 }}>
+                        <ShareButtons url={a.url ?? "/news"} title={a.title} compact />
                       </div>
                     </div>
                   </a>

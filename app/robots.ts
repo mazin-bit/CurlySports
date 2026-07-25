@@ -13,7 +13,11 @@ export default function robots(): MetadataRoute.Robots {
           "/admin",
           "/admin/",
           "/_next/",
-          "/favorites",   // personal page, no indexing needed
+          "/login",
+          "/reset-password",
+          "/delete-account",
+          "/verify-email",
+          "/feedback",
         ],
       },
     ],

@@ -1,0 +1,168 @@
+.sportLanding {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 4rem;
+}
+
+.hero {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.hero h1 {
+  font-family: var(--font-display, 'Bricolage Grotesque', sans-serif);
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  font-weight: 800;
+  color: var(--text);
+  margin-bottom: 0.75rem;
+}
+
+.subtitle {
+  font-size: 1.05rem;
+  color: var(--text-dim);
+  max-width: 700px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+.content {
+  font-size: 1rem;
+  line-height: 1.7;
+  color: var(--text-dim);
+  margin-bottom: 2.5rem;
+}
+
+.section {
+  margin-bottom: 2.5rem;
+}
+
+.section h2 {
+  font-family: var(--font-display, 'Bricolage Grotesque', sans-serif);
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 1rem;
+}
+
+.leagueChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.leagueChip {
+  background: var(--surface-2);
+  border: 1px solid var(--border-3);
+  border-radius: 999px;
+  padding: 0.4rem 1rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text);
+  text-decoration: none;
+  transition: background 0.15s;
+}
+
+.leagueChip:hover {
+  background: var(--surface-3);
+}
+
+.linkGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1rem;
+}
+
+.linkCard {
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  padding: 1.25rem;
+  text-decoration: none;
+  color: inherit;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.linkCard:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.linkCard h3 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 0.35rem;
+}
+
+.linkCard p {
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  line-height: 1.5;
+}
+
+.faqItem {
+  border: 1px solid var(--border-3);
+  border-radius: 8px;
+  margin-bottom: 0.5rem;
+  overflow: hidden;
+}
+
+.faqItem summary {
+  padding: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--text);
+  list-style: none;
+}
+
+.faqItem summary::-webkit-details-marker {
+  display: none;
+}
+
+.faqItem p {
+  padding: 0 1rem 1rem;
+  color: var(--text-dim);
+  line-height: 1.6;
+  font-size: 0.9rem;
+}
+
+.cta {
+  text-align: center;
+  padding: 2.5rem;
+  background: var(--surface-2);
+  border: 2px solid var(--border);
+  border-radius: 16px;
+  box-shadow: var(--shadow-md);
+}
+
+.cta h2 {
+  font-family: var(--font-display, 'Bricolage Grotesque', sans-serif);
+  font-size: 1.35rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.cta p {
+  color: var(--text-dim);
+  margin-bottom: 1.25rem;
+}
+
+.ctaButton {
+  display: inline-block;
+  background: var(--accent);
+  color: var(--ink);
+  font-weight: 700;
+  padding: 0.75rem 2rem;
+  border-radius: 999px;
+  border: 2px solid var(--ink);
+  box-shadow: var(--shadow-sm);
+  text-decoration: none;
+  font-size: 1rem;
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+
+.ctaButton:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: var(--shadow-md);
+}
