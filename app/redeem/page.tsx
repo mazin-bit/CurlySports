@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import AppShell from "@/components/AppShell";
 import styles from "./redeem.module.css";
@@ -600,7 +600,7 @@ function UserSection() {
 
 /* ── Redeem Page ──────────────────────────────────────────── */
 
-export default function RedeemPage() {
+function RedeemPageContent() {
   return (
     <AppShell active="redeem" title="Redeem" subtitle="Refer friends & earn rewards">
       <div className={styles.stack}>
@@ -614,5 +614,13 @@ export default function RedeemPage() {
         <LeaderboardSection />
       </div>
     </AppShell>
+  );
+}
+
+export default function RedeemPage() {
+  return (
+    <Suspense>
+      <RedeemPageContent />
+    </Suspense>
   );
 }
