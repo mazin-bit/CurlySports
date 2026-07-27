@@ -89,6 +89,11 @@ export async function ensureChallengeTables() {
     prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS idx_challenge_votes_user ON challenge_votes("userId")`).catch(() => {}),
     prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS idx_referrals_referrer ON referrals("referrerUserId")`).catch(() => {}),
     prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS idx_challenge_entries_challenge ON challenge_entries("challengeId")`).catch(() => {}),
+    // Extra columns for admin promo code management
+    prisma.$executeRawUnsafe(`ALTER TABLE referral_codes ADD COLUMN IF NOT EXISTS "isPromo" BOOLEAN DEFAULT false`).catch(() => {}),
+    prisma.$executeRawUnsafe(`ALTER TABLE referral_codes ADD COLUMN IF NOT EXISTS label TEXT`).catch(() => {}),
+    prisma.$executeRawUnsafe(`ALTER TABLE referral_codes ADD COLUMN IF NOT EXISTS disabled BOOLEAN DEFAULT false`).catch(() => {}),
+    prisma.$executeRawUnsafe(`ALTER TABLE referral_codes ADD COLUMN IF NOT EXISTS "maxUses" INT`).catch(() => {}),
   ]);
 
   tablesEnsured = true;

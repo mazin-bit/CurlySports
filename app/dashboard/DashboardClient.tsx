@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import AdSlot from "@/components/AdSlot";
 import styles from "./dashboard.module.css";
-import { Zap, Newspaper, Trophy, ArrowRightLeft, CircleDot, ChevronRight, Radio, Gift, Check, Clock, Ticket, CheckCircle, AlertCircle } from "lucide-react";
+import { Zap, Newspaper, Trophy, ArrowRightLeft, CircleDot, ChevronRight, Radio, Gift, Check, Clock, Ticket, CheckCircle, AlertCircle, X, Loader2 } from "lucide-react";
 import { useScoresStream } from "@/hooks/useScoresStream";
 import { useNews } from "@/hooks/useNews";
 import { useStandings, useSingleStandings } from "@/hooks/useStandings";
@@ -407,16 +407,21 @@ function useActiveChallenge() {
           credentials: "include",
           signal: AbortSignal.timeout(12000),
         });
-        if (!res.ok) return;
+        if (!res.ok) throw new Error("not ok");
         const data = await res.json();
         const items = data.challenges ?? data;
         if (Array.isArray(items) && items.length > 0 && !cancelled) {
           const c = items[0];
-          if (c.userVote) {
-            const teamName = c.userVote === "teamA" ? c.teamA : c.teamB;
-            setUserVote(teamName);
+          // Hide challenge if match date has already passed
+          if (c.matchDate && new Date(c.matchDate).getTime() <= Date.now()) {
+            // Expired — don't show
+          } else {
+            if (c.userVote) {
+              const teamName = c.userVote === "teamA" ? c.teamA : c.teamB;
+              setUserVote(teamName);
+            }
+            setChallenge(c);
           }
-          setChallenge(c);
         }
       } catch { /* ignore */ }
       if (!cancelled) setLoading(false);
@@ -515,46 +520,40 @@ function RedeemCodeBox() {
 
   if (status === 'redeemed') {
     return (
-      <div className={styles.redeemBox}>
-        <div className={styles.redeemBadge}>
-          <Ticket size={13} strokeWidth={2.5} />
-          {t('redeem.title', 'Redeem Code')}
-        </div>
-        <div className={styles.redeemSuccess}>
-          <CheckCircle size={12} strokeWidth={2} /> {message || t('redeem.alreadyUsed', 'You have already redeemed a code.')}
-        </div>
+      <div className={styles.redeemBanner}>
+        <CheckCircle size={14} strokeWidth={2.5} className={styles.redeemBannerIcon} />
+        <span className={styles.redeemBannerText}>{message || t('redeem.alreadyUsed', 'Code redeemed')}</span>
+        <Link href="/redeem" className={styles.redeemBannerLink}>
+          {t('redeem.viewRewards', 'View rewards')} &rarr;
+        </Link>
       </div>
     );
   }
 
   return (
-    <div className={styles.redeemBox}>
-      <div className={styles.redeemBadge}>
-        <Ticket size={13} strokeWidth={2.5} />
-        {t('redeem.title', 'Redeem Code')}
-      </div>
-      <div className={styles.redeemRow}>
-        <input
-          type="text"
-          value={code}
-          onChange={(e) => { setCode(e.target.value.toUpperCase()); if (status !== 'idle') setStatus('idle'); }}
-          placeholder={t('redeem.placeholder', 'Enter code')}
-          maxLength={20}
-          className={styles.redeemInput}
-          onKeyDown={(e) => { if (e.key === 'Enter') handleRedeem(); }}
-        />
-        <button
-          onClick={handleRedeem}
-          disabled={!code.trim() || status === 'loading'}
-          className={styles.redeemBtn}
-        >
-          {status === 'loading' ? '...' : t('redeem.apply', 'Apply')}
-        </button>
-      </div>
+    <div className={styles.redeemBanner}>
+      <Ticket size={14} strokeWidth={2.5} className={styles.redeemBannerTicket} />
+      <span className={styles.redeemBannerLabel}>{t('redeem.haveCode', 'Have a code?')}</span>
+      <input
+        type="text"
+        value={code}
+        onChange={(e) => { setCode(e.target.value.toUpperCase()); if (status !== 'idle') setStatus('idle'); }}
+        placeholder={t('redeem.placeholder', 'Enter code')}
+        maxLength={20}
+        className={styles.redeemBannerInput}
+        onKeyDown={(e) => { if (e.key === 'Enter') handleRedeem(); }}
+      />
+      <button
+        onClick={handleRedeem}
+        disabled={!code.trim() || status === 'loading'}
+        className={styles.redeemBannerBtn}
+      >
+        {status === 'loading' ? '...' : t('redeem.apply', 'Apply')}
+      </button>
       {status === 'error' && (
-        <div className={styles.redeemError}>
-          <AlertCircle size={12} strokeWidth={2} /> {message}
-        </div>
+        <span className={styles.redeemBannerError}>
+          <AlertCircle size={11} strokeWidth={2} /> {message}
+        </span>
       )}
     </div>
   );
@@ -601,7 +600,7 @@ function ChallengeCard({ challenge, userVote, onVote }: { challenge: ChallengeDa
               {t("challenges.yourPrediction", "Your Prediction")}: {userVote}
             </div>
             <div style={{ marginTop: 6, fontSize: 11, color: "var(--text-mute)", fontFamily: "var(--body)" }}>
-              {t("challenges.goToChallenges", "Go to Challenges tab for entries, referrals & leaderboard")} &rarr;
+              {t("challenges.goToChallenges", "Tap for entries, referrals & leaderboard")} &rarr;
             </div>
           </div>
         ) : (
@@ -640,6 +639,225 @@ function ChallengeCard({ challenge, userVote, onVote }: { challenge: ChallengeDa
 }
 
 /* ── Main Dashboard Client ───────────────────────────────────── */
+/* ── Welcome Redeem Popup (neo-brutalist) ───────────────────── */
+function WelcomeRedeemPopup() {
+  const [visible, setVisible] = useState(false);
+  const [code, setCode] = useState("");
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [message, setMessage] = useState("");
+
+  useEffect(() => {
+    // Don't show if already dismissed
+    if (typeof window === "undefined") return;
+    if (localStorage.getItem("cs_redeem_popup_shown")) return;
+
+    // Check if user already redeemed a code
+    fetch("/api/referral/redeem")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.redeemed) {
+          // Already redeemed, mark as shown and don't display
+          localStorage.setItem("cs_redeem_popup_shown", "1");
+        } else {
+          setVisible(true);
+        }
+      })
+      .catch(() => {
+        // If check fails, still show the popup
+        setVisible(true);
+      });
+  }, []);
+
+  const dismiss = () => {
+    setVisible(false);
+    localStorage.setItem("cs_redeem_popup_shown", "1");
+  };
+
+  const handleRedeem = async () => {
+    if (!code.trim()) return;
+    setStatus("loading");
+    setMessage("");
+    try {
+      const res = await fetch("/api/referral/redeem", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: code.trim() }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setStatus("success");
+        setMessage(data.message || "Code redeemed successfully!");
+        localStorage.setItem("cs_redeem_popup_shown", "1");
+        setTimeout(() => setVisible(false), 2500);
+      } else {
+        setStatus("error");
+        setMessage(data.error || "Failed to redeem code.");
+      }
+    } catch {
+      setStatus("error");
+      setMessage("Network error. Please try again.");
+    }
+  };
+
+  if (!visible) return null;
+
+  return (
+    <div style={{
+      position: "fixed", inset: 0, zIndex: 9999,
+      display: "flex", alignItems: "center", justifyContent: "center",
+      background: "rgba(7, 9, 11, 0.75)", backdropFilter: "blur(4px)",
+    }}>
+      <div style={{
+        background: "#12151a",
+        border: "2px solid #fffdf7",
+        boxShadow: "6px 6px 0 #c8ff3d",
+        borderRadius: 0,
+        padding: "32px 28px 28px",
+        width: "min(420px, 90vw)",
+        position: "relative",
+        fontFamily: "var(--font-body, 'DM Sans', sans-serif)",
+      }}>
+        {/* Close button */}
+        <button
+          onClick={dismiss}
+          aria-label="Close"
+          style={{
+            position: "absolute", top: 10, right: 10,
+            background: "none", border: "none", cursor: "pointer",
+            color: "#fffdf7", opacity: 0.6, padding: 4,
+          }}
+        >
+          <X size={18} strokeWidth={2.5} />
+        </button>
+
+        {/* Title */}
+        <div style={{
+          fontFamily: "'Courier New', Courier, monospace",
+          fontWeight: 700, fontSize: 11, letterSpacing: "0.12em",
+          textTransform: "uppercase", color: "#c8ff3d",
+          marginBottom: 6,
+        }}>
+          Welcome
+        </div>
+        <h2 style={{
+          fontFamily: "var(--font-display, 'Bricolage Grotesque', sans-serif)",
+          fontSize: 22, fontWeight: 800, color: "#fffdf7",
+          margin: "0 0 8px",
+        }}>
+          Welcome to Curly Sports!
+        </h2>
+        <p style={{
+          fontSize: 14, color: "rgba(255, 253, 247, 0.6)",
+          margin: "0 0 20px", lineHeight: 1.5,
+        }}>
+          Have a referral code? Enter it below to unlock bonus rewards for you and your friend.
+        </p>
+
+        {/* Input */}
+        <div style={{ marginBottom: 16 }}>
+          <label style={{
+            fontFamily: "'Courier New', Courier, monospace",
+            fontWeight: 700, fontSize: 10, letterSpacing: "0.1em",
+            textTransform: "uppercase", color: "rgba(255, 253, 247, 0.5)",
+            display: "block", marginBottom: 6,
+          }}>
+            Referral Code
+          </label>
+          <input
+            type="text"
+            value={code}
+            onChange={(e) => { setCode(e.target.value.toUpperCase()); if (status === "error") setStatus("idle"); }}
+            placeholder="e.g. CURLY2026"
+            disabled={status === "loading" || status === "success"}
+            style={{
+              width: "100%", boxSizing: "border-box",
+              padding: "10px 12px",
+              background: "#07090b",
+              border: "2px solid rgba(255, 253, 247, 0.25)",
+              color: "#fffdf7",
+              fontSize: 15, fontWeight: 600,
+              fontFamily: "'Courier New', Courier, monospace",
+              letterSpacing: "0.08em",
+              outline: "none",
+              borderRadius: 0,
+              transition: "border-color 0.15s",
+            }}
+            onFocus={(e) => { e.currentTarget.style.borderColor = "#c8ff3d"; }}
+            onBlur={(e) => { e.currentTarget.style.borderColor = "rgba(255, 253, 247, 0.25)"; }}
+            onKeyDown={(e) => { if (e.key === "Enter" && code.trim()) handleRedeem(); }}
+          />
+        </div>
+
+        {/* Status message */}
+        {message && (
+          <div style={{
+            fontSize: 13, marginBottom: 14, lineHeight: 1.4,
+            color: status === "success" ? "#c8ff3d" : "#ff6b6b",
+            display: "flex", alignItems: "center", gap: 6,
+          }}>
+            {status === "success" ? <CheckCircle size={14} /> : <AlertCircle size={14} />}
+            {message}
+          </div>
+        )}
+
+        {/* Buttons */}
+        <div style={{ display: "flex", gap: 10 }}>
+          <button
+            onClick={handleRedeem}
+            disabled={!code.trim() || status === "loading" || status === "success"}
+            style={{
+              flex: 1,
+              padding: "10px 16px",
+              background: status === "success" ? "#c8ff3d" : code.trim() ? "#c8ff3d" : "rgba(200, 255, 61, 0.3)",
+              color: "#07090b",
+              border: "2px solid #fffdf7",
+              boxShadow: "3px 3px 0 #fffdf7",
+              borderRadius: 0,
+              fontFamily: "'Courier New', Courier, monospace",
+              fontWeight: 700, fontSize: 13,
+              letterSpacing: "0.06em",
+              textTransform: "uppercase",
+              cursor: !code.trim() || status === "loading" || status === "success" ? "not-allowed" : "pointer",
+              opacity: !code.trim() && status !== "success" ? 0.5 : 1,
+              display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+              transition: "transform 0.1s, box-shadow 0.1s",
+            }}
+            onMouseDown={(e) => { if (code.trim()) { e.currentTarget.style.transform = "translate(2px, 2px)"; e.currentTarget.style.boxShadow = "1px 1px 0 #fffdf7"; } }}
+            onMouseUp={(e) => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = "3px 3px 0 #fffdf7"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = "3px 3px 0 #fffdf7"; }}
+          >
+            {status === "loading" && <Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} />}
+            {status === "success" ? "Redeemed" : "Redeem"}
+          </button>
+          <button
+            onClick={dismiss}
+            disabled={status === "loading"}
+            style={{
+              padding: "10px 16px",
+              background: "transparent",
+              color: "rgba(255, 253, 247, 0.6)",
+              border: "2px solid rgba(255, 253, 247, 0.2)",
+              boxShadow: "3px 3px 0 rgba(255, 253, 247, 0.1)",
+              borderRadius: 0,
+              fontFamily: "'Courier New', Courier, monospace",
+              fontWeight: 700, fontSize: 13,
+              letterSpacing: "0.06em",
+              textTransform: "uppercase",
+              cursor: status === "loading" ? "not-allowed" : "pointer",
+              transition: "transform 0.1s, box-shadow 0.1s",
+            }}
+            onMouseDown={(e) => { e.currentTarget.style.transform = "translate(2px, 2px)"; e.currentTarget.style.boxShadow = "1px 1px 0 rgba(255, 253, 247, 0.1)"; }}
+            onMouseUp={(e) => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = "3px 3px 0 rgba(255, 253, 247, 0.1)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = "3px 3px 0 rgba(255, 253, 247, 0.1)"; }}
+          >
+            Skip
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function DashboardClient() {
   const { activeSport, activeSportConfig } = useActiveSport();
   const { t, locale } = useLanguage();
@@ -679,6 +897,22 @@ export default function DashboardClient() {
   // Active challenge
   const { challenge, userVote, setUserVote, loading: challengeLoading } = useActiveChallenge();
 
+  // Top referrers leaderboard
+  const [topReferrers, setTopReferrers] = useState<{ name: string; code: string; count: number }[]>([]);
+  useEffect(() => {
+    fetch('/api/referral/leaderboard')
+      .then(r => r.json())
+      .then(d => {
+        const raw = (d.leaderboard || d.entries || []).slice(0, 3);
+        setTopReferrers(raw.map((r: any) => ({
+          name: r.username || r.name || '',
+          code: r.userId || r.code || '',
+          count: r.totalReferrals ?? r.count ?? 0,
+        })));
+      })
+      .catch(() => {});
+  }, []);
+
   const featuredStandings = isFootball ? null : standings[0];
 
   // Football: World Cup data ready?
@@ -707,6 +941,37 @@ export default function DashboardClient() {
           <Link href="/live-scores" className={styles.viewAll}>{t("common.viewAll")}</Link>
         </div>
 
+        {/* Redeem banner + Leaderboard */}
+        <RedeemCodeBox />
+        {topReferrers.length > 0 && (
+          <div className={styles.dashLeaderboard}>
+            <div className={styles.dashLeaderboardHead}>
+              <Trophy size={14} strokeWidth={2.5} className={styles.dashLeaderboardIcon} />
+              <span>{t('redeem.topReferrers', 'Top Referrers')}</span>
+              <Link href="/redeem" className={styles.dashLeaderboardAll}>{t('common.viewAll', 'View all')} &rarr;</Link>
+            </div>
+            <div className={styles.dashLeaderboardTable}>
+              <div className={styles.dashLbHeader}>
+                <span className={styles.dashLbHeaderRank}>#</span>
+                <span className={styles.dashLbHeaderUser}>User</span>
+                <span className={styles.dashLbHeaderCount}>Referrals</span>
+              </div>
+              {topReferrers.map((r, i) => (
+                <div key={r.code || i} className={`${styles.dashLbRow} ${i === 0 ? styles.dashLbRowFirst : ''}`}>
+                  <span className={`${styles.dashLbRank} ${i === 0 ? styles.dashLbRankGold : i === 1 ? styles.dashLbRankSilver : styles.dashLbRankBronze}`}>
+                    {i + 1}
+                  </span>
+                  <div className={styles.dashLbAvatar}>
+                    {(r.name || r.code || '?').charAt(0).toUpperCase()}
+                  </div>
+                  <span className={styles.dashLbName}>{r.name || r.code}</span>
+                  <span className={styles.dashLbCount}>{r.count}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Live Now Banner */}
         {!scoresLoading && liveCount > 0 && (
           <div className={styles.liveBanner}>
@@ -717,20 +982,11 @@ export default function DashboardClient() {
         )}
 
         {/* Challenge card — loads independently of scores */}
-        {challengeLoading ? (
-          <div style={{ marginBottom: 14 }}>
-            <ChallengeSkeleton />
-          </div>
-        ) : challenge ? (
+        {challenge ? (
           <div style={{ marginBottom: 14 }}>
             <ChallengeCard challenge={challenge} userVote={userVote} onVote={setUserVote} />
           </div>
         ) : null}
-
-        {/* Redeem code */}
-        <div style={{ marginBottom: 14 }}>
-          <RedeemCodeBox />
-        </div>
 
         {scoresLoading ? (
           <>
@@ -795,6 +1051,8 @@ export default function DashboardClient() {
           </div>
         ) : null}
       </section>
+
+      {/* Redeem + Leaderboard moved to top of dashboard */}
 
       {/* World Cup Standings (football only) */}
       {isFootball && (wcSectionLoading || showWcGroups || showWcBracket) && (
@@ -876,6 +1134,9 @@ export default function DashboardClient() {
           ) : null}
         </section>
       )}
+
+      {/* Welcome Redeem Code Popup (first visit only) */}
+      <WelcomeRedeemPopup />
     </>
   );
 }

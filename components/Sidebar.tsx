@@ -17,6 +17,7 @@ const NAV_MAIN = [
   { key: "teams",   tKey: "nav.teams",      icon: "i-team",   href: "/teams",       feature: "teams" },
   { key: "players", tKey: "nav.players",    icon: "i-user",   href: "/players",     feature: "players" },
   { key: "leagues", tKey: "nav.leagues",    icon: "i-trophy", href: "/leagues",     feature: "leagues" },
+  { key: "redeem", tKey: "nav.redeem",     icon: "i-gift",   href: "/redeem",     feature: null },
 ];
 
 const NAV_CONTENT = [
@@ -213,6 +214,15 @@ export default function Sidebar({ active }: { active: string }) {
       .catch(() => setFlagsLoaded(true));
   }, []);
 
+  // Check if there's an active challenge — hide challenges link if not
+  const [hasActiveChallenge, setHasActiveChallenge] = useState(false);
+  useEffect(() => {
+    fetch("/api/challenges/active")
+      .then((r) => r.json())
+      .then((data) => setHasActiveChallenge(!!data?.challenge))
+      .catch(() => setHasActiveChallenge(false));
+  }, []);
+
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deletePassword, setDeletePassword] = useState("");
   const [deleting, setDeleting] = useState(false);
@@ -247,7 +257,11 @@ export default function Sidebar({ active }: { active: string }) {
   // Filter nav items by feature flags (show all if flags not yet loaded)
   function filterByFeature(items: NavItem[]) {
     if (!flagsLoaded) return items;
-    return items.filter((item) => !item.feature || enabledFeatures.has(item.feature));
+    return items.filter((item) => {
+      if (item.feature && !enabledFeatures.has(item.feature)) return false;
+      if (item.key === 'challenges' && !hasActiveChallenge) return false;
+      return true;
+    });
   }
 
   const currentLocale = LOCALES.find((l) => l.code === locale);

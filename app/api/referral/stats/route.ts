@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
-import { ensureChallengeTables } from "@/lib/ensure-challenge-tables";
-
 export const dynamic = "force-dynamic";
 
 /* ------------------------------------------------------------------ */
@@ -10,8 +8,6 @@ export const dynamic = "force-dynamic";
 /* ------------------------------------------------------------------ */
 export async function GET() {
   try {
-    await ensureChallengeTables();
-
     const auth = await requireAuth();
     if (auth instanceof NextResponse) return auth;
     const { user } = auth;
@@ -40,42 +36,33 @@ export async function GET() {
       );
     }
 
-    const { code } = codeRows[0];
+    const { code, totalReferrals: codeReferrals, totalEntries: codeEntries } = codeRows[0];
 
-    // Check if this user has already redeemed someone else's code
-    const referredByRows: { referredBy: string | null }[] = await prisma.$queryRawUnsafe(
-      `SELECT "referredBy" FROM users WHERE id = $1`,
+    // Single query to get all stats at once (faster than 4 separate queries)
+    const statsResult: {
+      hasRedeemed: boolean;
+      verifiedCount: number;
+      pendingCount: number;
+      challengeEntries: number;
+      referralEntries: number;
+    }[] = await prisma.$queryRawUnsafe(
+      `SELECT
+        (SELECT "referredBy" IS NOT NULL FROM users WHERE id = $1) AS "hasRedeemed",
+        COALESCE((SELECT COUNT(*)::int FROM referrals WHERE "referrerUserId" = $1 AND status = 'verified'), 0) AS "verifiedCount",
+        COALESCE((SELECT COUNT(*)::int FROM referrals WHERE "referrerUserId" = $1 AND status = 'pending'), 0) AS "pendingCount",
+        COALESCE((SELECT SUM("totalEntries")::int FROM challenge_entries WHERE "userId" = $1), 0) AS "challengeEntries",
+        COALESCE((SELECT SUM("referralEntries")::int FROM challenge_entries WHERE "userId" = $1), 0) AS "referralEntries"`,
       user.id
     );
-    const hasRedeemed = !!(referredByRows[0]?.referredBy);
 
-    // Count verified referrals
-    const verifiedResult: { count: bigint }[] = await prisma.$queryRawUnsafe(
-      `SELECT COUNT(*)::int as count FROM referrals WHERE "referrerUserId" = $1 AND status = 'verified'`,
-      user.id
-    );
-    const verifiedReferrals = Number(verifiedResult[0]?.count ?? 0);
-
-    // Count pending referrals
-    const pendingResult: { count: bigint }[] = await prisma.$queryRawUnsafe(
-      `SELECT COUNT(*)::int as count FROM referrals WHERE "referrerUserId" = $1 AND status = 'pending'`,
-      user.id
-    );
-    const pendingReferrals = Number(pendingResult[0]?.count ?? 0);
-
-    const totalReferrals = verifiedReferrals + pendingReferrals;
-
-    // Sum actual total entries (base + referral) across all challenges
-    const entryResult: { totalEntries: bigint | null; totalReferralEntries: bigint | null }[] =
-      await prisma.$queryRawUnsafe(
-        `SELECT COALESCE(SUM("totalEntries"), 0)::int as "totalEntries",
-                COALESCE(SUM("referralEntries"), 0)::int as "totalReferralEntries"
-         FROM challenge_entries
-         WHERE "userId" = $1`,
-        user.id
-      );
-    const actualTotalEntries = Number(entryResult[0]?.totalEntries ?? 0);
-    const totalBonusEntries = Number(entryResult[0]?.totalReferralEntries ?? 0);
+    const s = statsResult[0];
+    const hasRedeemed = !!s?.hasRedeemed;
+    const verifiedReferrals = Number(s?.verifiedCount ?? 0);
+    const pendingReferrals = Number(s?.pendingCount ?? 0);
+    // Use the higher of referral_codes.totalReferrals vs referrals table count for consistency
+    const totalReferrals = Math.max(Number(codeReferrals), verifiedReferrals + pendingReferrals);
+    const actualTotalEntries = Math.max(Number(codeEntries), Number(s?.challengeEntries ?? 0));
+    const totalBonusEntries = Number(s?.referralEntries ?? 0);
 
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://curlysports.com";
 
@@ -83,11 +70,9 @@ export async function GET() {
       {
         code,
         link: `${baseUrl}/invite/${code}`,
-        // Field names the frontend expects
         verified: verifiedReferrals,
         total: totalReferrals,
         totalEntries: actualTotalEntries,
-        // Also provide descriptive names
         totalReferrals,
         verifiedReferrals,
         pendingReferrals,

@@ -25,6 +25,7 @@ export async function middleware(request: NextRequest) {
     "/login", "/auth/callback", "/auth/check-email",
     "/reset-password", "/verify-email", "/", "/mobile", "/privacy", "/terms", "/admin", "/download",
     "/challenges",
+    "/redeem",
     "/sports",
     "/delete-account",
     "/feedback",

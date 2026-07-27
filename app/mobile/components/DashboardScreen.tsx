@@ -190,10 +190,15 @@ function useMobileActiveChallenge() {
         const items = data.challenges ?? data;
         if (Array.isArray(items) && items.length > 0 && !cancelled) {
           const c = items[0];
-          setChallenge(c);
-          if (c.userVote) {
-            const teamName = c.userVote === 'teamA' ? c.teamA : c.teamB;
-            setUserVote(teamName);
+          // Hide challenge if match date has already passed
+          if (c.matchDate && new Date(c.matchDate).getTime() <= Date.now()) {
+            // Expired — don't show
+          } else {
+            setChallenge(c);
+            if (c.userVote) {
+              const teamName = c.userVote === 'teamA' ? c.teamA : c.teamB;
+              setUserVote(teamName);
+            }
           }
         }
       } catch { /* timeout or network error — challenge section stays hidden */ }
@@ -370,6 +375,15 @@ export default function DashboardScreen({ sport, setSport, onOpenMatch, onOpenPl
   const { standings, isLoading: standingsLoading } = useStandings(isFootball ? undefined : sport);
   const [upcoming, setUpcoming] = useState<{ label: string; matches: Match[] } | null>(null);
 
+  // Top Referrers leaderboard for dashboard widget
+  const [topReferrers, setTopReferrers] = useState<{ rank: number; username: string; totalReferrals: number; isCurrentUser: boolean }[]>([]);
+  useEffect(() => {
+    fetch('/api/referral/leaderboard?limit=5')
+      .then(r => r.json())
+      .then(d => { if (d.leaderboard) setTopReferrers(d.leaderboard); })
+      .catch(() => {});
+  }, []);
+
   const showWcGroups = isFootball && wcStandings && wcStandings.hasGroups && wcStandings.groups && wcStandings.groups.length > 0;
   const showWcBracket = isFootball && wcRounds.length > 0;
   const wcSectionLoading = isFootball && (wcLoading || bracketLoading);
@@ -425,6 +439,67 @@ export default function DashboardScreen({ sport, setSport, onOpenMatch, onOpenPl
         <div className="cs-content-wrap" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         <SportSelector active={sport} onSelect={setSport} />
 
+        {/* Redeem code (first - instant access) */}
+        <RedeemCodeBox />
+
+        {/* Top Referrers widget */}
+        {topReferrers.length > 0 && (
+          <Card subtitle="REFERRALS" title="Top Referrers">
+            <div style={{ borderTop: '1px solid var(--border-3)' }}>
+              {topReferrers.map((entry, idx) => {
+                const medalColor = idx === 0 ? '#FFD700' : idx === 1 ? '#C0C0C0' : idx === 2 ? '#CD7F32' : 'var(--text-mute)';
+                const isTop3 = idx < 3;
+                return (
+                  <div key={entry.rank} style={{
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    padding: '9px 4px',
+                    borderBottom: idx < topReferrers.length - 1 ? '1px solid var(--border-3)' : 'none',
+                    background: entry.isCurrentUser ? 'rgba(232,96,28,0.06)' : 'transparent',
+                    borderRadius: entry.isCurrentUser ? 6 : 0,
+                  }}>
+                    <div style={{
+                      width: 24, height: 24, borderRadius: 6,
+                      background: isTop3 ? `${medalColor}18` : 'var(--surface-2)',
+                      border: isTop3 ? `2px solid ${medalColor}` : '1.5px solid var(--border-2)',
+                      display: 'grid', placeItems: 'center',
+                      fontFamily: "'Courier New', monospace", fontSize: 10, fontWeight: 900,
+                      color: medalColor, flexShrink: 0,
+                    }}>
+                      {isTop3 ? <Icon name="crown" size={12} style={{ color: medalColor }} /> : entry.rank}
+                    </div>
+                    <div style={{
+                      width: 26, height: 26, borderRadius: 7,
+                      background: entry.isCurrentUser ? 'var(--orange)' : 'var(--ink)',
+                      color: entry.isCurrentUser ? 'var(--surface)' : 'var(--accent)',
+                      display: 'grid', placeItems: 'center',
+                      fontFamily: 'var(--display)', fontWeight: 800, fontSize: 10,
+                      border: '1.5px solid var(--ink)', flexShrink: 0,
+                    }}>
+                      {entry.username.slice(0, 2).toUpperCase()}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <span style={{
+                        fontFamily: 'var(--display)', fontWeight: 700, fontSize: 12,
+                        color: entry.isCurrentUser ? 'var(--orange)' : 'var(--ink)',
+                        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                      }}>
+                        {entry.username}
+                        {entry.isCurrentUser && <span style={{ fontFamily: 'var(--mono)', fontSize: 8, fontWeight: 700, color: 'var(--orange)', marginLeft: 4 }}>YOU</span>}
+                      </span>
+                    </div>
+                    <div style={{
+                      fontFamily: "'Courier New', monospace", fontSize: 13, fontWeight: 900,
+                      color: isTop3 ? medalColor : 'var(--ink)',
+                    }}>
+                      {entry.totalReferrals}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </Card>
+        )}
+
         {/* Challenge card */}
         {activeChallenge && (
           <div
@@ -456,7 +531,7 @@ export default function DashboardScreen({ sport, setSport, onOpenMatch, onOpenPl
                   {t('challenges.yourPrediction', 'Your Prediction')}: {challengeVote}
                 </div>
                 <div style={{ marginTop: 6, fontSize: 10, color: 'var(--text-mute)', fontFamily: 'var(--body)' }}>
-                  {t('challenges.goToChallenges', 'Go to Challenges tab for entries, referrals & leaderboard')} →
+                  {t('challenges.goToChallenges', 'Tap for entries, referrals & leaderboard')} →
                 </div>
               </div>
             ) : (
@@ -502,9 +577,6 @@ export default function DashboardScreen({ sport, setSport, onOpenMatch, onOpenPl
             </div>
           </div>
         )}
-
-        {/* Redeem code */}
-        <RedeemCodeBox />
 
         {/* Live scores */}
         <Card

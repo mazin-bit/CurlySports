@@ -1,0 +1,591 @@
+/* Redeem page — neo-brutalist referral hub */
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  max-width: 100%;
+  width: 100%;
+}
+
+/* ── Section label ────────────────────────────────────────── */
+.sectionLabel {
+  font-family: "Courier New", monospace;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  font-size: 13px;
+  color: var(--text-mute);
+  margin-bottom: 12px;
+}
+
+/* ── Card base ────────────────────────────────────────────── */
+.card {
+  background: var(--surface);
+  border: 2px solid var(--ink);
+  border-radius: var(--r-lg);
+  box-shadow: 3px 3px 0 var(--ink);
+  padding: 28px 32px;
+}
+
+/* ── Your Referral Code ──────────────────────────────────── */
+.codeDisplay {
+  font-family: "Courier New", monospace;
+  font-size: 32px;
+  font-weight: 900;
+  letter-spacing: 5px;
+  color: var(--ink);
+  text-align: center;
+  padding: 16px 0 20px;
+  user-select: all;
+}
+
+.codeBtns {
+  display: flex;
+  gap: 10px;
+}
+
+.codeBtn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 12px 20px;
+  background: var(--ink);
+  color: var(--surface);
+  font-family: "Courier New", monospace;
+  font-weight: 700;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border: 2px solid var(--ink);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.codeBtn:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 2px 2px 0 var(--ink);
+}
+.codeBtn:active {
+  transform: scale(0.97);
+  transition-duration: 0.06s;
+}
+
+.shareBtn {
+  composes: codeBtn;
+  background: var(--orange);
+  border-color: var(--ink);
+  color: #fff;
+}
+
+.noCode {
+  text-align: center;
+  padding: 14px 0;
+  color: var(--text-mute);
+  font-size: 13px;
+}
+
+/* ── Sign-in code placeholder ──────────────────────────── */
+.signInCodeBox {
+  text-align: center;
+  padding: 12px 0 16px;
+}
+
+.signInCodePlaceholder {
+  font-family: "Courier New", monospace;
+  font-size: 32px;
+  font-weight: 900;
+  letter-spacing: 8px;
+  color: var(--border-2);
+  padding: 8px 0;
+}
+
+.signInLink {
+  display: inline-block;
+  margin-top: 6px;
+  font-family: "Courier New", monospace;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--orange);
+  text-decoration: none;
+  transition: opacity 0.15s;
+}
+.signInLink:hover {
+  opacity: 0.8;
+  text-decoration: underline;
+}
+
+.redeemHint {
+  margin-top: 8px;
+  font-family: "Courier New", monospace;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-mute);
+  letter-spacing: 0.04em;
+}
+
+/* ── Enter Friend's Code ─────────────────────────────────── */
+.redeemRow {
+  display: flex;
+  gap: 8px;
+}
+
+.redeemInput {
+  flex: 1;
+  min-width: 0;
+  padding: 16px 18px;
+  background: var(--surface-2);
+  border: 2px solid var(--border-2);
+  border-radius: 12px;
+  font-family: "Courier New", monospace;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--ink);
+  outline: none;
+  text-transform: uppercase;
+  transition: border-color 0.15s;
+}
+.redeemInput::placeholder {
+  color: var(--text-mute);
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 500;
+}
+.redeemInput:focus {
+  border-color: var(--orange);
+}
+
+.redeemBtn {
+  padding: 16px 28px;
+  background: var(--ink);
+  color: var(--surface);
+  font-family: "Courier New", monospace;
+  font-weight: 700;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border: 2px solid var(--ink);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s, opacity 0.15s;
+}
+.redeemBtn:hover:not(:disabled) {
+  transform: translate(-2px, -2px);
+  box-shadow: 2px 2px 0 var(--ink);
+}
+.redeemBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.redeemSuccess {
+  margin-top: 8px;
+  font-size: 12px;
+  font-family: "Courier New", monospace;
+  font-weight: 700;
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.redeemError {
+  margin-top: 8px;
+  font-size: 12px;
+  font-family: "Courier New", monospace;
+  font-weight: 700;
+  color: var(--coral, var(--orange));
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.alreadyRedeemed {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: rgba(200, 255, 61, 0.12);
+  border: 2px solid var(--accent);
+  border-radius: 10px;
+}
+.alreadyRedeemedText {
+  font-family: "Courier New", monospace;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* ── Stats grid ──────────────────────────────────────────── */
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.statBox {
+  background: var(--surface-2);
+  border: 2px solid var(--border-2);
+  border-radius: 10px;
+  padding: 16px 12px;
+  text-align: center;
+}
+
+.statValue {
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 28px;
+  color: var(--ink);
+  line-height: 1;
+}
+
+.statLabel {
+  font-family: "Courier New", monospace;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-mute);
+  margin-top: 8px;
+}
+
+/* ── Leaderboard ─────────────────────────────────────────── */
+.lbHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.lbCount {
+  font-family: "Courier New", monospace;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-mute);
+  text-transform: uppercase;
+}
+
+.lbRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 8px;
+  border-bottom: 1px solid var(--border-2);
+  transition: background 0.12s;
+}
+.lbRow:last-child {
+  border-bottom: none;
+}
+.lbRow:hover {
+  background: var(--surface-2);
+}
+
+.lbRowYou {
+  composes: lbRow;
+  background: rgba(232, 96, 28, 0.06);
+  border-radius: 8px;
+}
+
+.lbRank {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: var(--surface-2);
+  border: 1.5px solid var(--border-2);
+  display: grid;
+  place-items: center;
+  font-family: "Courier New", monospace;
+  font-size: 12px;
+  font-weight: 900;
+  color: var(--text-mute);
+  flex-shrink: 0;
+}
+
+.lbRankGold {
+  composes: lbRank;
+  background: rgba(255, 215, 0, 0.12);
+  border-color: #FFD700;
+  color: #FFD700;
+}
+.lbRankSilver {
+  composes: lbRank;
+  background: rgba(192, 192, 192, 0.12);
+  border-color: #C0C0C0;
+  color: #C0C0C0;
+}
+.lbRankBronze {
+  composes: lbRank;
+  background: rgba(205, 127, 50, 0.12);
+  border-color: #CD7F32;
+  color: #CD7F32;
+}
+
+.lbAvatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  border: 2px solid var(--ink);
+  display: grid;
+  place-items: center;
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 11px;
+  flex-shrink: 0;
+  background: var(--ink);
+  color: var(--accent);
+  overflow: hidden;
+}
+.lbAvatarYou {
+  composes: lbAvatar;
+  background: var(--orange);
+  color: var(--surface);
+}
+
+.lbName {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.lbNameYou {
+  composes: lbName;
+  color: var(--orange);
+}
+
+.youBadge {
+  font-family: "Courier New", monospace;
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--orange);
+  margin-left: 6px;
+  background: rgba(232, 96, 28, 0.1);
+  padding: 2px 5px;
+  border-radius: 4px;
+}
+
+.lbScore {
+  font-family: "Courier New", monospace;
+  font-size: 14px;
+  font-weight: 900;
+  color: var(--ink);
+  flex-shrink: 0;
+}
+.lbScoreGold { composes: lbScore; color: #FFD700; }
+.lbScoreSilver { composes: lbScore; color: #C0C0C0; }
+.lbScoreBronze { composes: lbScore; color: #CD7F32; }
+
+.showAllBtn {
+  width: 100%;
+  margin-top: 12px;
+  padding: 12px 20px;
+  background: var(--surface-2);
+  color: var(--ink);
+  font-family: "Courier New", monospace;
+  font-weight: 700;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border: 2px solid var(--border-2);
+  border-radius: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: background 0.15s, border-color 0.15s;
+}
+.showAllBtn:hover:not(:disabled) {
+  background: var(--surface-3);
+  border-color: var(--ink);
+}
+.showAllBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── Empty leaderboard ───────────────────────────────────── */
+.emptyLb {
+  padding: 24px 0;
+  text-align: center;
+  color: var(--text-mute);
+  font-size: 13px;
+}
+.emptyLbIcon {
+  color: var(--text-mute);
+  margin: 0 auto 8px;
+  display: block;
+}
+
+/* ── Challenge card ──────────────────────────────────────── */
+.challengeCard {
+  background: var(--surface);
+  border: 2px solid var(--orange);
+  border-radius: var(--r-lg);
+  padding: 18px 22px;
+  box-shadow: 4px 4px 0 var(--orange);
+  transition: transform 0.2s cubic-bezier(.25,.46,.45,.94), box-shadow 0.2s cubic-bezier(.25,.46,.45,.94);
+  will-change: transform;
+}
+.challengeCard:hover {
+  transform: translate(-3px, -3px);
+  box-shadow: 7px 7px 0 var(--orange);
+}
+
+.challengeBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: "Courier New", monospace;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--orange);
+  margin-bottom: 10px;
+}
+
+.challengeTitle {
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 16px;
+  color: var(--ink);
+  margin-bottom: 6px;
+}
+
+.challengeDesc {
+  font-size: 13px;
+  color: var(--text-dim);
+  line-height: 1.45;
+  margin-bottom: 14px;
+}
+
+.challengeReward {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  background: rgba(232, 96, 28, 0.08);
+  border: 1.5px solid var(--orange);
+  border-radius: 8px;
+  font-family: "Courier New", monospace;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--orange);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.challengeDeadline {
+  margin-top: 10px;
+  font-family: "Courier New", monospace;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-mute);
+  text-transform: uppercase;
+}
+
+/* ── Skeleton loaders ────────────────────────────────────── */
+.skeleton {
+  border-radius: 14px;
+  background: var(--surface);
+  border: 2px solid var(--border-2);
+  animation: redeemPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes redeemPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* ── Login prompt ────────────────────────────────────────── */
+.loginPrompt {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 12px 0;
+}
+
+.loginIcon {
+  width: 56px;
+  height: 56px;
+  background: var(--surface-3);
+  border-radius: 14px;
+  border: 2px solid var(--border-2);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  color: var(--text-mute);
+}
+
+.loginTitle {
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 18px;
+  color: var(--ink);
+  margin-bottom: 4px;
+}
+
+.loginDesc {
+  font-size: 14px;
+  color: var(--text-dim);
+  line-height: 1.5;
+}
+
+/* ── Toast notification ──────────────────────────────────── */
+.toast {
+  position: fixed;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 10px 24px;
+  background: var(--ink);
+  color: var(--accent);
+  border-radius: 999px;
+  font-family: "Courier New", monospace;
+  font-size: 12px;
+  font-weight: 700;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  animation: toastIn 0.2s ease;
+}
+
+@keyframes toastIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+/* ── Responsive ──────────────────────────────────────────── */
+@media (max-width: 540px) {
+  .statsGrid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+  .statValue {
+    font-size: 22px;
+  }
+  .codeDisplay {
+    font-size: 24px;
+    letter-spacing: 3px;
+  }
+  .codeBtns {
+    flex-direction: column;
+  }
+}

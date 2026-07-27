@@ -5,7 +5,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 const ITEMS = [
   { key: 'home', tKey: 'nav.home', icon: 'home' },
   { key: 'live', tKey: 'nav.liveScores', icon: 'live' },
-  { key: 'funzone', tKey: 'nav.debates', icon: 'spark' },
+  { key: 'redeem', tKey: 'nav.redeem', icon: 'gift' },
   { key: 'leagues', tKey: 'nav.leagues', icon: 'trophy' },
   { key: 'more', tKey: 'nav.more', icon: 'bars' },
 ];

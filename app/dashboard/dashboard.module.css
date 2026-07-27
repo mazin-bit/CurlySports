@@ -455,57 +455,189 @@
 }
 
 /* ── Redeem Code Box ── */
-.redeemBox {
-  background: var(--surface);
-  border: 1.5px solid var(--border-2);
-  border-radius: var(--r-lg);
-  padding: 14px 18px;
+/* ── Redeem banner (inline, slim) ── */
+.redeemBanner {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 14px;
+  background: rgba(200, 255, 61, 0.06);
+  border: 1px solid rgba(200, 255, 61, 0.18);
+  border-radius: 10px;
+  margin-bottom: 10px;
 }
-.redeemBadge {
-  display: inline-flex; align-items: center; gap: 5px;
-  font-family: var(--mono); font-size: 10px; font-weight: 800;
-  letter-spacing: 0.08em; text-transform: uppercase;
-  color: var(--accent); margin-bottom: 10px;
+.redeemBannerTicket {
+  color: var(--accent); flex-shrink: 0;
 }
-.redeemRow {
-  display: flex; gap: 8px;
+.redeemBannerIcon {
+  color: var(--accent); flex-shrink: 0;
 }
-.redeemInput {
-  flex: 1; padding: 9px 12px;
-  font-family: var(--mono); font-size: 13px; font-weight: 600;
+.redeemBannerLabel {
+  font-family: var(--display); font-size: 13px; font-weight: 700;
+  color: var(--ink); white-space: nowrap;
+}
+.redeemBannerText {
+  font-family: var(--body); font-size: 13px; font-weight: 600;
+  color: var(--ink); white-space: nowrap;
+}
+.redeemBannerInput {
+  width: 140px; padding: 6px 10px;
+  font-family: var(--mono); font-size: 12px; font-weight: 600;
   letter-spacing: 0.06em; text-transform: uppercase;
-  color: var(--ink); background: var(--surface-2);
-  border: 1.5px solid var(--border-2); border-radius: 8px;
+  color: var(--ink); background: var(--surface);
+  border: 1px solid var(--border-2); border-radius: 6px;
   outline: none; transition: border-color 0.15s;
 }
-.redeemInput::placeholder {
+.redeemBannerInput::placeholder {
   color: var(--text-mute); text-transform: none;
   letter-spacing: 0; font-weight: 500;
 }
-.redeemInput:focus {
+.redeemBannerInput:focus {
   border-color: var(--accent);
 }
-.redeemBtn {
-  padding: 9px 18px;
-  font-family: var(--display); font-size: 13px; font-weight: 700;
+.redeemBannerBtn {
+  padding: 6px 14px;
+  font-family: var(--display); font-size: 12px; font-weight: 700;
   color: #07090b; background: var(--accent);
-  border: 1.5px solid transparent; border-radius: 8px;
-  cursor: pointer; transition: background 0.15s, opacity 0.15s;
+  border: none; border-radius: 6px;
+  cursor: pointer; transition: opacity 0.15s; white-space: nowrap;
 }
-.redeemBtn:hover:not(:disabled) {
-  opacity: 0.85;
-}
-.redeemBtn:disabled {
-  color: var(--text-mute); background: var(--surface-2);
+.redeemBannerBtn:hover:not(:disabled) { opacity: 0.85; }
+.redeemBannerBtn:disabled {
+  color: var(--text-mute); background: var(--surface-3);
   cursor: not-allowed;
 }
-.redeemSuccess {
-  margin-top: 8px; font-size: 12px; font-family: var(--body);
-  color: var(--accent); display: flex; align-items: center; gap: 5px;
+.redeemBannerLink {
+  margin-left: auto;
+  font-family: var(--mono); font-size: 11px; font-weight: 700;
+  color: var(--accent); text-decoration: none; white-space: nowrap;
 }
-.redeemError {
-  margin-top: 8px; font-size: 12px; font-family: var(--body);
-  color: var(--orange); display: flex; align-items: center; gap: 5px;
+.redeemBannerLink:hover { text-decoration: underline; text-underline-offset: 3px; }
+.redeemBannerError {
+  font-size: 11px; font-family: var(--body);
+  color: var(--orange); display: flex; align-items: center; gap: 3px;
+  white-space: nowrap;
+}
+@media (max-width: 640px) {
+  .redeemBanner { flex-wrap: wrap; }
+  .redeemBannerInput { flex: 1; min-width: 100px; }
+}
+
+/* Dashboard Leaderboard Widget */
+.dashLeaderboard {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 14px;
+}
+.dashLeaderboardHead {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: var(--display);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-mute);
+  margin-bottom: 10px;
+}
+.dashLeaderboardIcon { color: var(--accent); flex-shrink: 0; }
+.dashLeaderboardAll {
+  margin-left: auto;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent);
+  text-decoration: none;
+  font-family: var(--body);
+  text-transform: none;
+  letter-spacing: 0;
+}
+.dashLeaderboardAll:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+/* Table-style leaderboard */
+.dashLeaderboardTable {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.dashLbHeader {
+  display: flex;
+  align-items: center;
+  padding: 0 10px 8px;
+  font-size: 10px;
+  font-weight: 600;
+  font-family: var(--body);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-mute);
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 4px;
+}
+.dashLbHeaderRank { width: 28px; flex-shrink: 0; }
+.dashLbHeaderUser { flex: 1; padding-left: 4px; }
+.dashLbHeaderCount { width: 70px; text-align: right; flex-shrink: 0; }
+
+.dashLbRow {
+  display: flex;
+  align-items: center;
+  padding: 8px 10px;
+  border-radius: 8px;
+  transition: background 0.15s;
+}
+.dashLbRow:hover { background: var(--surface-3, rgba(255,255,255,0.03)); }
+.dashLbRowFirst { background: rgba(200,255,61,0.06); }
+.dashLbRowFirst:hover { background: rgba(200,255,61,0.1); }
+
+.dashLbRank {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 800;
+  font-family: var(--mono);
+  flex-shrink: 0;
+  margin-right: 8px;
+}
+.dashLbRankGold { background: rgba(255,215,0,0.15); color: #ffd700; }
+.dashLbRankSilver { background: rgba(192,192,192,0.12); color: #c0c0c0; }
+.dashLbRankBronze { background: rgba(205,127,50,0.12); color: #cd7f32; }
+
+.dashLbAvatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: var(--display);
+  flex-shrink: 0;
+  margin-right: 10px;
+}
+.dashLbName {
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--body);
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+.dashLbCount {
+  font-size: 13px;
+  font-weight: 700;
+  font-family: var(--mono);
+  color: var(--accent);
+  width: 70px;
+  text-align: right;
+  flex-shrink: 0;
 }
 
 @media (max-width: 640px) {

@@ -26,10 +26,11 @@ import ChallengesScreen from './ChallengesScreen';
 import ChallengeDetailScreen from './ChallengeDetailScreen';
 import LeaderboardScreen from './LeaderboardScreen';
 import ReferralScreen from './ReferralScreen';
+import RedeemTab from './RedeemTab';
 import { hapticImpact } from '@/lib/native';
 import { Wrench, Gift, ArrowRight, X } from 'lucide-react';
 
-type Tab = 'home' | 'live' | 'funzone' | 'leagues' | 'profile' | 'news' | 'teams' | 'favorites' | 'videos' | 'minigames' | 'players' | 'challenges';
+type Tab = 'home' | 'live' | 'funzone' | 'redeem' | 'leagues' | 'profile' | 'news' | 'teams' | 'favorites' | 'videos' | 'minigames' | 'players' | 'challenges';
 type OverlayType = 'match' | 'player' | 'search' | 'notifications' | 'feedback' | 'challenge-detail' | 'leaderboard' | 'referral';
 interface Overlay { type: OverlayType; data?: Match; playerId?: string; playerLeagueId?: string; challengeId?: string }
 
@@ -356,7 +357,7 @@ function AppInner() {
 
   const onMenuNav = (key: string) => {
     setMenuOpen(false);
-    const tabs: Tab[] = ['home', 'live', 'funzone', 'leagues', 'profile', 'news', 'teams', 'favorites', 'videos', 'minigames', 'players', 'challenges'];
+    const tabs: Tab[] = ['home', 'live', 'funzone', 'redeem', 'leagues', 'profile', 'news', 'teams', 'favorites', 'videos', 'minigames', 'players', 'challenges'];
     if (tabs.includes(key as Tab)) { clearStack(); goTab(key as Tab); return; }
     if (key === 'search') { clearStack(); openSearch(); return; }
     if (key === 'notifications') { clearStack(); openNotifications(); return; }
@@ -426,6 +427,7 @@ function AppInner() {
   if      (tab === 'home')      screen = <DashboardScreen sport={sport} setSport={setSport} onOpenMatch={openMatch} onOpenPlayer={openPlayer} onOpenChallenge={openChallengeDetail} fav={fav} {...nav} />;
   else if (tab === 'live')      screen = <LiveScoresScreen sport={sport} setSport={setSport} onOpenMatch={openMatch} {...nav} />;
   else if (tab === 'funzone')   screen = <DebatesScreen sport={sport} onOpenPlayer={openPlayer} {...nav} />;
+  else if (tab === 'redeem')    screen = <RedeemTab {...nav} />;
   else if (tab === 'leagues')   screen = <LeaguesScreen sport={sport} setSport={setSport} onOpenPlayer={openPlayer} {...nav} />;
   else if (tab === 'profile')   screen = <ProfileScreen fav={fav} {...nav} />;
   else if (tab === 'news')      screen = <NewsScreen sport={sport} setSport={setSport} {...nav} />;
@@ -436,7 +438,7 @@ function AppInner() {
   else if (tab === 'players')   screen = <PlayersScreen sport={sport} setSport={setSport} onOpenPlayer={openPlayer} {...nav} />;
   else if (tab === 'challenges') screen = <ChallengesScreen sport={sport} onOpenChallenge={openChallengeDetail} {...nav} />;
 
-  const bottomActive = menuOpen ? 'more' : (['home', 'live', 'funzone', 'leagues'].includes(tab) ? tab : '');
+  const bottomActive = menuOpen ? 'more' : (['home', 'live', 'redeem', 'leagues'].includes(tab) ? tab : '');
 
   return (
     <div style={{ position: 'relative', height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--bg-2)' }}>

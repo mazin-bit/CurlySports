@@ -1,4 +1,5 @@
 'use client';
+import { useState, useEffect } from 'react';
 import Icon from './ui/Icon';
 import Badge from './ui/Badge';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -36,6 +37,14 @@ interface MenuDrawerProps {
 
 export default function MenuDrawer({ active, onClose, onNavigate, user }: MenuDrawerProps) {
   const { t } = useLanguage();
+  const [hasActiveChallenge, setHasActiveChallenge] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/challenges/active')
+      .then((r) => r.json())
+      .then((data) => setHasActiveChallenge(!!data?.challenge))
+      .catch(() => setHasActiveChallenge(false));
+  }, []);
 
   return (
     <>
@@ -49,10 +58,15 @@ export default function MenuDrawer({ active, onClose, onNavigate, user }: MenuDr
           </button>
         </div>
         <div style={{ flex: 1, overflowY: 'auto', padding: '8px 12px' }}>
-          {SECTIONS.map(([labelKey, items]) => (
+          {SECTIONS.map(([labelKey, items]) => {
+            const filteredItems = items.filter(
+              ([key]) => key !== 'challenges' || hasActiveChallenge
+            );
+            if (filteredItems.length === 0) return null;
+            return (
             <div key={labelKey}>
               <div style={{ fontFamily: 'var(--mono)', fontSize: 9.5, fontWeight: 700, letterSpacing: '0.12em', color: 'var(--text-mute)', textTransform: 'uppercase', padding: '10px 6px 5px' }}>{t(labelKey)}</div>
-              {items.map(([key, nameKey, icon, badgeKey]) => {
+              {filteredItems.map(([key, nameKey, icon, badgeKey]) => {
                 const isActive = active === key;
                 return (
                   <button key={key} onClick={() => onNavigate(key)} style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', padding: 10, borderRadius: 10, marginBottom: 2, cursor: 'pointer', textAlign: 'start', border: `1.5px solid ${isActive ? 'var(--ink)' : 'transparent'}`, background: isActive ? 'var(--accent)' : 'transparent', boxShadow: isActive ? 'var(--shadow-sm)' : 'none', color: isActive ? 'var(--ink)' : 'var(--text-dim)', fontWeight: isActive ? 700 : 600, fontSize: 13.5 }}>
@@ -65,7 +79,8 @@ export default function MenuDrawer({ active, onClose, onNavigate, user }: MenuDr
                 );
               })}
             </div>
-          ))}
+            );
+          })}
         </div>
         <div style={{ flexShrink: 0, borderTop: '2px solid var(--border-2)', padding: '12px 14px 18px', background: 'var(--bg-2)' }}>
           <button onClick={() => onNavigate('profile')} style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '10px 12px', background: 'var(--surface)', border: '2px solid var(--ink)', borderRadius: 12, boxShadow: 'var(--shadow-sm)', cursor: 'pointer', textAlign: 'start' }}>

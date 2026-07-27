@@ -38,6 +38,8 @@ export const DEFAULT_FLAGS: AdminFlags = {
     players: true,
     teams: true,
     favorites: true,
+    redeemCodes: true,
+    challenges: false,
   },
   pageViews: {},
   activityLog: [],

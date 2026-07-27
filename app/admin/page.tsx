@@ -40,6 +40,8 @@ const FEATURE_META: Record<string, { label: string; desc: string; href: string }
   players:    { label: "Players",      desc: "Player profiles and stats directory",         href: "/players" },
   teams:      { label: "Teams",        desc: "Team rosters and information",                href: "/teams" },
   favorites:  { label: "Favorites",    desc: "Saved teams, players, and matches",           href: "/favorites" },
+  redeemCodes:{ label: "Redeem Codes", desc: "Enable/disable referral code system across the app", href: "" },
+  challenges: { label: "Challenges",  desc: "Show challenge section when an active challenge exists", href: "" },
 };
 
 function Toggle({ on, onChange }: { on: boolean; onChange: (v: boolean) => void }) {
@@ -3269,6 +3271,461 @@ function ChallengesTab({ adminToken }: { adminToken: string }) {
   );
 }
 
+/* ── Redeem Codes tab ─────────────────────────── */
+interface RedeemCode {
+  id: string;
+  userId: string;
+  code: string;
+  totalReferrals: number;
+  totalEntries: number;
+  createdAt: string;
+  username: string | null;
+  email: string | null;
+  avatar: string | null;
+  isPromo: boolean;
+  label: string | null;
+  disabled: boolean;
+  maxUses: number | null;
+}
+
+interface Redemption {
+  id: string;
+  referrerUserId: string;
+  referredUserId: string;
+  status: string;
+  createdAt: string;
+  referrerUsername: string | null;
+  referredUsername: string | null;
+  referredEmail: string | null;
+}
+
+function RedeemCodesTab({ adminToken, flags, onSave }: { adminToken: string; flags: AdminFlags; onSave: (u: Partial<AdminFlags>, action: string) => Promise<void> }) {
+  const redeemEnabled = flags.features.redeemCodes ?? true;
+  const [codes, setCodes] = useState<RedeemCode[]>([]);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [filterType, setFilterType] = useState("all");
+  const [creating, setCreating] = useState(false);
+  const [showCreate, setShowCreate] = useState(false);
+  const [newCode, setNewCode] = useState("");
+  const [newLabel, setNewLabel] = useState("");
+  const [newMaxUses, setNewMaxUses] = useState("");
+  const [error, setError] = useState("");
+  const [selectedCode, setSelectedCode] = useState<RedeemCode | null>(null);
+  const [redemptions, setRedemptions] = useState<Redemption[]>([]);
+  const [loadingRedemptions, setLoadingRedemptions] = useState(false);
+
+  const fetchCodes = useCallback(async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (search) params.set("search", search);
+      if (filterType !== "all") params.set("type", filterType);
+      const res = await fetch(`/api/admin/redeem-codes?${params}`, {
+        headers: { "x-admin-token": adminToken },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setCodes(data.codes || []);
+        setTotal(data.total || 0);
+      }
+    } catch (e) {
+      console.error("Failed to fetch codes", e);
+    }
+    setLoading(false);
+  }, [adminToken, search, filterType]);
+
+  useEffect(() => { fetchCodes(); }, [fetchCodes]);
+
+  async function toggleRedeemSystem() {
+    const next = { ...flags.features, redeemCodes: !redeemEnabled };
+    await onSave({ features: next }, `${!redeemEnabled ? "Enabled" : "Disabled"} redeem code system`);
+  }
+
+  async function createCode() {
+    if (!newCode.trim()) { setError("Code is required"); return; }
+    setCreating(true);
+    setError("");
+    try {
+      const res = await fetch("/api/admin/redeem-codes", {
+        method: "POST",
+        headers: { "content-type": "application/json", "x-admin-token": adminToken },
+        body: JSON.stringify({
+          code: newCode.trim(),
+          label: newLabel.trim() || undefined,
+          maxUses: newMaxUses ? parseInt(newMaxUses) : undefined,
+        }),
+      });
+      if (res.ok) {
+        setShowCreate(false);
+        setNewCode("");
+        setNewLabel("");
+        setNewMaxUses("");
+        fetchCodes();
+      } else {
+        const data = await res.json();
+        setError(data.error || "Failed to create code");
+      }
+    } catch {
+      setError("Network error");
+    }
+    setCreating(false);
+  }
+
+  async function toggleCode(code: RedeemCode) {
+    try {
+      await fetch("/api/admin/redeem-codes", {
+        method: "PATCH",
+        headers: { "content-type": "application/json", "x-admin-token": adminToken },
+        body: JSON.stringify({ id: code.id, disabled: !code.disabled }),
+      });
+      fetchCodes();
+    } catch (e) {
+      console.error("Failed to toggle code", e);
+    }
+  }
+
+  async function deleteCode(code: RedeemCode) {
+    if (!confirm(`Delete code "${code.code}"? This will also remove all its redemptions.`)) return;
+    try {
+      await fetch(`/api/admin/redeem-codes?id=${code.id}`, {
+        method: "DELETE",
+        headers: { "x-admin-token": adminToken },
+      });
+      if (selectedCode?.id === code.id) setSelectedCode(null);
+      fetchCodes();
+    } catch (e) {
+      console.error("Failed to delete code", e);
+    }
+  }
+
+  async function viewRedemptions(code: RedeemCode) {
+    setSelectedCode(code);
+    setLoadingRedemptions(true);
+    try {
+      const res = await fetch(`/api/admin/redeem-codes?codeId=${code.id}`, {
+        headers: { "x-admin-token": adminToken },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setRedemptions(data.redemptions || []);
+      }
+    } catch (e) {
+      console.error("Failed to fetch redemptions", e);
+    }
+    setLoadingRedemptions(false);
+  }
+
+  async function resetAllData() {
+    if (!confirm("Reset ALL referral data? This will zero out all counters and delete all redemption records. This cannot be undone.")) return;
+    try {
+      const res = await fetch("/api/admin/redeem-codes", {
+        method: "PATCH",
+        headers: { "content-type": "application/json", "x-admin-token": adminToken },
+        body: JSON.stringify({ action: "reset-all" }),
+      });
+      if (res.ok) {
+        fetchCodes();
+        setSelectedCode(null);
+      }
+    } catch (e) {
+      console.error("Failed to reset data", e);
+    }
+  }
+
+  return (
+    <div className={styles.tabContent}>
+      <div className={styles.tabHeader}>
+        <div>
+          <h2>Redeem Codes</h2>
+          <p className={styles.tabDesc}>Control the referral & redeem code system</p>
+        </div>
+      </div>
+
+      {/* ── Master Controls ─────────────────────────────── */}
+      <div className={styles.card} style={{ padding: 20, marginBottom: 20 }}>
+        <h3 style={{ margin: "0 0 16px", fontSize: 14, color: "#888", textTransform: "uppercase", letterSpacing: 1 }}>System Controls</h3>
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          {/* Master toggle */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", background: redeemEnabled ? "rgba(34,197,94,0.08)" : "rgba(239,68,68,0.08)", border: `1px solid ${redeemEnabled ? "#22c55e33" : "#ef444433"}`, borderRadius: 10 }}>
+            <div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: "#fff", marginBottom: 2 }}>
+                Redeem Code System
+              </div>
+              <div style={{ fontSize: 12, color: "#888" }}>
+                {redeemEnabled ? "Users can view and redeem codes across the app" : "Redeem code input and referral features are hidden from all users"}
+              </div>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: redeemEnabled ? "#22c55e" : "#ef4444" }}>{redeemEnabled ? "ON" : "OFF"}</span>
+              <Toggle on={redeemEnabled} onChange={toggleRedeemSystem} />
+            </div>
+          </div>
+
+          {/* Action buttons */}
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+            <button className={styles.btnSave} onClick={() => { setShowCreate(!showCreate); setError(""); }}>
+              <Gift size={14} /> Create Promo Code
+            </button>
+            <button className={styles.btnGhost} onClick={resetAllData} style={{ color: "#ef4444", borderColor: "#ef444444" }}>
+              <Trash2 size={14} /> Reset All Data
+            </button>
+            <button className={styles.btnGhost} onClick={fetchCodes}>
+              <RefreshCw size={14} /> Refresh
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Create promo code form */}
+      {showCreate && (
+        <div className={styles.card} style={{ marginBottom: 20, padding: 20 }}>
+          <h3 style={{ margin: "0 0 12px", fontSize: 15, color: "#fff" }}>New Promo Code</h3>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 12 }}>
+            <div>
+              <label style={{ display: "block", fontSize: 12, color: "#888", marginBottom: 4 }}>Code *</label>
+              <input
+                className={styles.input}
+                value={newCode}
+                onChange={e => setNewCode(e.target.value.toUpperCase())}
+                placeholder="e.g. SUMMER2026"
+                style={{ width: "100%" }}
+              />
+            </div>
+            <div>
+              <label style={{ display: "block", fontSize: 12, color: "#888", marginBottom: 4 }}>Label (optional)</label>
+              <input
+                className={styles.input}
+                value={newLabel}
+                onChange={e => setNewLabel(e.target.value)}
+                placeholder="e.g. Summer Campaign"
+                style={{ width: "100%" }}
+              />
+            </div>
+            <div>
+              <label style={{ display: "block", fontSize: 12, color: "#888", marginBottom: 4 }}>Max Uses (optional)</label>
+              <input
+                className={styles.input}
+                value={newMaxUses}
+                onChange={e => setNewMaxUses(e.target.value.replace(/\D/g, ""))}
+                placeholder="Unlimited"
+                style={{ width: "100%" }}
+              />
+            </div>
+          </div>
+          {error && <p style={{ color: "#ff4444", fontSize: 13, margin: "0 0 8px" }}>{error}</p>}
+          <div style={{ display: "flex", gap: 8 }}>
+            <button className={styles.btnSave} onClick={createCode} disabled={creating}>
+              {creating ? "Creating..." : "Create Code"}
+            </button>
+            <button className={styles.btnGhost} onClick={() => setShowCreate(false)}>Cancel</button>
+          </div>
+        </div>
+      )}
+
+      {/* Stats summary */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginBottom: 20 }}>
+        {[
+          { label: "Total Codes", value: total, color: "#fff" },
+          { label: "Referral Codes", value: codes.filter(c => !c.isPromo).length, color: "#6fcf6f" },
+          { label: "Promo Codes", value: codes.filter(c => c.isPromo).length, color: "#b088f9" },
+          { label: "Total Redemptions", value: codes.reduce((s, c) => s + c.totalReferrals, 0), color: "var(--a-accent)" },
+        ].map(s => (
+          <div key={s.label} className={styles.card} style={{ padding: "16px 14px", textAlign: "center" }}>
+            <div style={{ fontSize: 24, fontWeight: 800, color: s.color, fontFamily: "var(--f-mono)" }}>{s.value}</div>
+            <div style={{ fontSize: 11, color: "#888", marginTop: 4, textTransform: "uppercase", letterSpacing: 0.5 }}>{s.label}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Search & filter */}
+      <div style={{ display: "flex", gap: 10, marginBottom: 16, alignItems: "center" }}>
+        <div style={{ position: "relative", flex: 1 }}>
+          <Search size={14} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "#666" }} />
+          <input
+            className={styles.input}
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Search by code, username, or label..."
+            style={{ width: "100%", paddingLeft: 32 }}
+          />
+        </div>
+        <select
+          className={styles.input}
+          value={filterType}
+          onChange={e => setFilterType(e.target.value)}
+          style={{ width: 140 }}
+        >
+          <option value="all">All Codes</option>
+          <option value="referral">Referral</option>
+          <option value="promo">Promo</option>
+        </select>
+      </div>
+
+      {/* Codes table */}
+      {loading ? (
+        <div className={styles.empty}>Loading codes...</div>
+      ) : codes.length === 0 ? (
+        <div className={styles.empty}>No codes found.</div>
+      ) : (
+        <div className={styles.card} style={{ overflow: "auto" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+            <thead>
+              <tr style={{ borderBottom: "1px solid #222", color: "#888", textAlign: "left" }}>
+                <th style={{ padding: "10px 12px" }}>Code</th>
+                <th style={{ padding: "10px 12px" }}>Type</th>
+                <th style={{ padding: "10px 12px" }}>User / Label</th>
+                <th style={{ padding: "10px 12px" }}>Referrals</th>
+                <th style={{ padding: "10px 12px" }}>Entries</th>
+                <th style={{ padding: "10px 12px" }}>Status</th>
+                <th style={{ padding: "10px 12px" }}>Created</th>
+                <th style={{ padding: "10px 12px" }}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {codes.map(code => (
+                <tr key={code.id} style={{ borderBottom: "1px solid #1a1a1a" }}>
+                  <td style={{ padding: "10px 12px", fontFamily: "var(--f-mono)", color: "var(--a-accent)", fontWeight: 600 }}>
+                    {code.code}
+                  </td>
+                  <td style={{ padding: "10px 12px" }}>
+                    <span style={{
+                      display: "inline-block",
+                      padding: "2px 8px",
+                      borderRadius: 4,
+                      fontSize: 11,
+                      fontWeight: 600,
+                      background: code.isPromo ? "#2d1f5e" : "#1a2e1a",
+                      color: code.isPromo ? "#b088f9" : "#6fcf6f",
+                    }}>
+                      {code.isPromo ? "PROMO" : "REFERRAL"}
+                    </span>
+                  </td>
+                  <td style={{ padding: "10px 12px", color: "#ccc" }}>
+                    {code.isPromo ? (code.label || "—") : (code.username || code.email || code.userId)}
+                    {code.maxUses && (
+                      <span style={{ color: "#666", fontSize: 11, marginLeft: 6 }}>
+                        (max {code.maxUses} uses)
+                      </span>
+                    )}
+                  </td>
+                  <td style={{ padding: "10px 12px", color: "#fff", fontWeight: 600 }}>
+                    {code.totalReferrals}
+                  </td>
+                  <td style={{ padding: "10px 12px", color: "#888" }}>
+                    {code.totalEntries}
+                  </td>
+                  <td style={{ padding: "10px 12px" }}>
+                    <span style={{
+                      display: "inline-block",
+                      width: 8, height: 8,
+                      borderRadius: "50%",
+                      background: code.disabled ? "#ff4444" : "#4caf50",
+                      marginRight: 6,
+                    }} />
+                    {code.disabled ? "Disabled" : "Active"}
+                  </td>
+                  <td style={{ padding: "10px 12px", color: "#666", fontSize: 12 }}>
+                    {new Date(code.createdAt).toLocaleDateString()}
+                  </td>
+                  <td style={{ padding: "10px 12px" }}>
+                    <div style={{ display: "flex", gap: 6 }}>
+                      <button
+                        className={styles.btnGhost}
+                        onClick={() => viewRedemptions(code)}
+                        title="View redemptions"
+                        style={{ padding: "4px 8px", fontSize: 11 }}
+                      >
+                        <Eye size={12} />
+                      </button>
+                      <button
+                        className={styles.btnGhost}
+                        onClick={() => toggleCode(code)}
+                        title={code.disabled ? "Enable" : "Disable"}
+                        style={{ padding: "4px 8px", fontSize: 11 }}
+                      >
+                        {code.disabled ? <CheckCircle2 size={12} /> : <Ban size={12} />}
+                      </button>
+                      <button
+                        className={styles.btnGhost}
+                        onClick={() => deleteCode(code)}
+                        title="Delete"
+                        style={{ padding: "4px 8px", fontSize: 11, color: "#ff4444" }}
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Redemption history drawer */}
+      {selectedCode && (
+        <div className={styles.card} style={{ marginTop: 20, padding: 20 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+            <div>
+              <h3 style={{ margin: 0, fontSize: 15, color: "#fff" }}>
+                Redemptions for <span style={{ color: "var(--a-accent)", fontFamily: "var(--f-mono)" }}>{selectedCode.code}</span>
+              </h3>
+              <p style={{ margin: "4px 0 0", fontSize: 12, color: "#888" }}>
+                {selectedCode.totalReferrals} total redemptions
+              </p>
+            </div>
+            <button className={styles.btnGhost} onClick={() => setSelectedCode(null)} style={{ padding: "4px 8px" }}>
+              <X size={14} />
+            </button>
+          </div>
+
+          {loadingRedemptions ? (
+            <div className={styles.empty}>Loading...</div>
+          ) : redemptions.length === 0 ? (
+            <div className={styles.empty}>No redemptions yet.</div>
+          ) : (
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+              <thead>
+                <tr style={{ borderBottom: "1px solid #222", color: "#888", textAlign: "left" }}>
+                  <th style={{ padding: "8px 12px" }}>Referred User</th>
+                  <th style={{ padding: "8px 12px" }}>Email</th>
+                  <th style={{ padding: "8px 12px" }}>Status</th>
+                  <th style={{ padding: "8px 12px" }}>Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {redemptions.map(r => (
+                  <tr key={r.id} style={{ borderBottom: "1px solid #1a1a1a" }}>
+                    <td style={{ padding: "8px 12px", color: "#ccc" }}>{r.referredUsername || r.referredUserId}</td>
+                    <td style={{ padding: "8px 12px", color: "#888" }}>{r.referredEmail || "—"}</td>
+                    <td style={{ padding: "8px 12px" }}>
+                      <span style={{
+                        padding: "2px 8px",
+                        borderRadius: 4,
+                        fontSize: 11,
+                        fontWeight: 600,
+                        background: r.status === "verified" ? "#1a2e1a" : "#2e2a1a",
+                        color: r.status === "verified" ? "#6fcf6f" : "#cfb86f",
+                      }}>
+                        {r.status.toUpperCase()}
+                      </span>
+                    </td>
+                    <td style={{ padding: "8px 12px", color: "#666", fontSize: 12 }}>
+                      {new Date(r.createdAt).toLocaleString()}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ── Nav items (grouped into sections) ────────── */
 const NAV_SECTIONS = [
   {
@@ -3292,6 +3749,7 @@ const NAV_SECTIONS = [
     items: [
       { key: "notifications", label: "Notifications", icon: Megaphone },
       { key: "challenges",    label: "Challenges",    icon: Trophy },
+      { key: "redeem-codes",   label: "Redeem Codes",  icon: Gift },
       { key: "ads",            label: "Ads",           icon: DollarSign },
       { key: "sponsors",       label: "Sponsors",      icon: Building2 },
     ],
@@ -3456,6 +3914,7 @@ export default function AdminPage() {
           {tab === "sponsors"       && <SponsorsTab adminToken={token()} />}
           {tab === "debates"        && <DebatesTab adminToken={token()} />}
           {tab === "challenges"    && <ChallengesTab adminToken={token()} />}
+          {tab === "redeem-codes"  && <RedeemCodesTab adminToken={token()} flags={flags} onSave={saveFlags} />}
           {tab === "flags"          && <FlagsTab flags={flags} onSave={saveFlags} />}
           {tab === "sports"         && <SportsTab flags={flags} onSave={saveFlags} />}
           {tab === "feedback"       && <FeedbackTab adminToken={token()} />}

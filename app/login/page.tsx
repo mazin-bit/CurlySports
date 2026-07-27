@@ -501,6 +501,7 @@ function LoginPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [referralCode] = useState(() => searchParams.get("ref") ?? "");
+  const redirectAfterLogin = searchParams.get("redirect") || "/dashboard";
 
   const checkUsername = useCallback((value: string) => {
     if (usernameTimerRef.current) clearTimeout(usernameTimerRef.current);
@@ -546,7 +547,7 @@ function LoginPageContent() {
           }
           throw new Error(json.error ?? t("auth.loginFailed"));
         }
-        router.push("/dashboard");
+        router.push(redirectAfterLogin);
         router.refresh();
 
       } else if (mode === "signup") {
@@ -563,7 +564,7 @@ function LoginPageContent() {
           setNeedsVerification(true);
           return;
         }
-        router.push("/dashboard");
+        router.push(redirectAfterLogin);
         router.refresh();
 
       } else if (mode === "forgot") {
@@ -597,7 +598,7 @@ function LoginPageContent() {
       scope: "openid email profile",
       access_type: "offline",
       prompt: "select_account",
-      state: referralCode ? `/dashboard?ref=${referralCode}` : '/dashboard',
+      state: referralCode ? `${redirectAfterLogin}${redirectAfterLogin.includes('?') ? '&' : '?'}ref=${referralCode}` : redirectAfterLogin,
     });
     window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
   }
@@ -609,7 +610,7 @@ function LoginPageContent() {
         <Stage />
         <PhoneOtpScreen
           onBack={() => switchMode("login")}
-          onVerified={() => { router.replace("/dashboard"); router.refresh(); }}
+          onVerified={() => { router.replace(redirectAfterLogin); router.refresh(); }}
         />
       </div>
     );
