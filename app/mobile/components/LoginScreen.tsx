@@ -206,6 +206,24 @@ export default function LoginScreen() {
   const [usernameStatus, setUsernameStatus] = useState<'idle' | 'checking' | 'available' | 'taken' | 'invalid'>('idle');
   const usernameTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { login, signup, authError, clearAuthError, needsVerification } = useAuth();
+  const [oauthError, setOauthError] = useState<string | null>(null);
+
+  // Detect Google OAuth errors from callback redirect
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const err = params.get('error');
+    if (err) {
+      const messages: Record<string, string> = {
+        no_code: 'Google sign-in was cancelled',
+        google_not_configured: 'Google sign-in is not configured',
+        google_token_failed: 'Google sign-in failed. Please try again.',
+        google_userinfo_failed: 'Could not get your Google account info',
+        account_suspended: 'This account has been suspended',
+        auth_callback_failed: 'Sign-in failed. Please try again.',
+      };
+      setOauthError(messages[err] || `Sign-in error: ${err}`);
+    }
+  }, []);
 
   const checkUsername = useCallback((value: string) => {
     if (usernameTimerRef.current) clearTimeout(usernameTimerRef.current);
@@ -456,7 +474,7 @@ export default function LoginScreen() {
                 scope: 'openid email profile',
                 access_type: 'offline',
                 prompt: 'select_account',
-                state: '/mobile?newSignup=1',
+                state: `/mobile?newSignup=1${(window as any).CurlyNative?.isNative ? '&native=1' : ''}`,
               });
               window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
             }}
@@ -573,10 +591,10 @@ export default function LoginScreen() {
           />
         </div>
 
-        {authError && (
+        {(authError || oauthError) && (
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, background: 'var(--surface)', border: '2px solid var(--coral)', borderRadius: 10, padding: '10px 12px' }}>
             <Icon name="close" size={14} style={{ flexShrink: 0, color: 'var(--coral)', marginTop: 1 }} />
-            <span style={{ fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 700, color: 'var(--coral)', lineHeight: 1.4 }}>{authError}</span>
+            <span style={{ fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 700, color: 'var(--coral)', lineHeight: 1.4 }}>{authError || oauthError}</span>
           </div>
         )}
 

@@ -503,6 +503,22 @@ function LoginPageContent() {
   const [referralCode] = useState(() => searchParams.get("ref") ?? "");
   const redirectAfterLogin = searchParams.get("redirect") || "/dashboard";
 
+  // Show Google OAuth error from callback redirect
+  useEffect(() => {
+    const oauthError = searchParams.get("error");
+    if (oauthError) {
+      const errorMessages: Record<string, string> = {
+        no_code: "Google sign-in was cancelled",
+        google_not_configured: "Google sign-in is not configured",
+        google_token_failed: "Google sign-in failed. Please try again.",
+        google_userinfo_failed: "Could not get your Google account info",
+        account_suspended: "This account has been suspended",
+        auth_callback_failed: "Sign-in failed. Please try again.",
+      };
+      setError(errorMessages[oauthError] || `Sign-in error: ${oauthError}`);
+    }
+  }, [searchParams]);
+
   const checkUsername = useCallback((value: string) => {
     if (usernameTimerRef.current) clearTimeout(usernameTimerRef.current);
     const trimmed = value.trim();

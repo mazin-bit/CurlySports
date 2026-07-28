@@ -3,11 +3,15 @@ import prisma from "@/lib/prisma";
 import { signAccessToken, signRefreshToken, setAuthCookies } from "@/lib/jwt";
 import { ensureChallengeTables, cuid } from "@/lib/ensure-challenge-tables";
 import { logger } from "@/lib/logger";
+import { cacheSet } from "@/lib/redis";
 
 export async function GET(request: NextRequest) {
   const reqUrl = new URL(request.url);
   const searchParams = reqUrl.searchParams;
-  const origin = reqUrl.origin.replace("://0.0.0.0", "://localhost");
+  // Use x-forwarded headers for reliable origin on Vercel (avoids http vs https mismatch)
+  const proto = request.headers.get("x-forwarded-proto")?.split(",")[0]?.trim() || reqUrl.protocol.replace(":", "");
+  const host = request.headers.get("x-forwarded-host")?.split(",")[0]?.trim() || request.headers.get("host") || reqUrl.host;
+  const origin = `${proto}://${host}`.replace("://0.0.0.0", "://localhost").replace(/\/$/, "");
   const code = searchParams.get("code");
   const state = searchParams.get("state") ?? "/dashboard";
   const safeState =
@@ -17,14 +21,16 @@ export async function GET(request: NextRequest) {
   const isMobile = safeState.startsWith("/mobile");
   const errorRedirectBase = isMobile ? "/mobile" : "/login";
 
-  // Extract referral code and newSignup flag from state (e.g. "/dashboard?ref=ABC123")
+  // Extract referral code, newSignup flag, and native flag from state
   let referralCode: string | null = null;
   let hasNewSignupFlag = false;
+  let isNativeFromState = false;
   let safeNext = safeState;
   try {
     const stateUrl = new URL(safeState, origin);
     referralCode = stateUrl.searchParams.get("ref") || null;
     hasNewSignupFlag = stateUrl.searchParams.get("newSignup") === "1";
+    isNativeFromState = stateUrl.searchParams.get("native") === "1";
     // Strip ref param from redirect so it doesn't leak into the dashboard URL
     if (referralCode) {
       stateUrl.searchParams.delete("ref");
@@ -33,6 +39,8 @@ export async function GET(request: NextRequest) {
     if (hasNewSignupFlag) {
       stateUrl.searchParams.delete("newSignup");
     }
+    // Strip native flag from redirect
+    stateUrl.searchParams.delete("native");
     safeNext = stateUrl.pathname + (stateUrl.search || "");
   } catch {
     // state wasn't a valid relative URL, ignore
@@ -64,6 +72,8 @@ export async function GET(request: NextRequest) {
     });
 
     if (!tokenRes.ok) {
+      const errBody = await tokenRes.text().catch(() => "");
+      logger.error("Google token exchange failed", { status: tokenRes.status, body: errBody, redirect_uri: `${origin}/auth/callback` });
       return NextResponse.redirect(`${origin}${errorRedirectBase}?error=google_token_failed`);
     }
 
@@ -175,13 +185,28 @@ export async function GET(request: NextRequest) {
       redirectPath = `${redirectPath}${sep}newSignup=1`;
     }
 
-    // For mobile WebView: use an HTML page with client-side redirect instead of a
-    // server 307 redirect. Server redirects from cross-origin OAuth pages can cause
-    // iOS WKWebView to open the redirect in Safari instead of staying in the WebView.
+    const ua = request.headers.get("user-agent") ?? "";
+    const isNativeApp = isNativeFromState ||
+      /CurlySportsApp|CurlySports-iOS|CurlySports-Android/i.test(ua) ||
+      (/Expo|ReactNative/i.test(ua));
+
     let response: NextResponse;
-    if (isMobile) {
-      const safeRedirect = redirectPath.replace(/'/g, "\\'").replace(/"/g, "&quot;");
-      const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Signing in...</title></head><body style="background:#07090b;color:#fffdf7;font-family:system-ui;display:flex;align-items:center;justify-content:center;height:100vh;margin:0"><div style="text-align:center"><div style="font-size:18px;font-weight:700;margin-bottom:8px">Signing you in...</div></div><script>window.location.replace('${safeRedirect}');</script></body></html>`;
+    if (isMobile && isNativeApp) {
+      // Native app — OAuth completed in external browser (Chrome/Safari).
+      // Generate a one-time code, store auth data in Redis, and redirect via
+      // deep link so the native app intercepts it and completes auth in WebView.
+      const otc = `otc_${Date.now()}_${Math.random().toString(36).slice(2, 12)}`;
+      await cacheSet(`auth:otc:${otc}`, JSON.stringify({
+        accessToken,
+        refreshToken,
+        redirectPath,
+        userId: user.id,
+      }), 120); // 2 minute TTL
+
+      // Redirect to deep link — Android/iOS app intercepts this
+      const deepLink = `curlysports://auth-callback?code=${encodeURIComponent(otc)}`;
+      // Use HTML page with meta refresh + JS redirect for maximum compatibility
+      const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="refresh" content="0;url=${deepLink}"><title>Returning to app...</title></head><body style="background:#07090b;color:#fffdf7;font-family:system-ui;display:flex;align-items:center;justify-content:center;height:100vh;margin:0"><div style="text-align:center"><div style="font-size:18px;font-weight:700;margin-bottom:8px">Returning to app...</div><div style="font-size:14px;opacity:0.7;margin-top:12px"><a href="${deepLink}" style="color:#c8ff3d">Tap here if not redirected</a></div></div><script>window.location.href="${deepLink}";</script></body></html>`;
       response = new NextResponse(html, {
         status: 200,
         headers: { "Content-Type": "text/html; charset=utf-8" },
@@ -191,7 +216,6 @@ export async function GET(request: NextRequest) {
     }
 
     // Fire-and-forget session tracking — don't block OAuth callback
-    const ua = request.headers.get("user-agent") ?? "";
     const platform = /CurlySports-iOS/i.test(ua) || (/iPhone|iPad|iPod/i.test(ua) && /Expo|ReactNative|okhttp/i.test(ua))
       ? "ios"
       : /CurlySports-Android/i.test(ua) || (/Android/i.test(ua) && /Expo|ReactNative|okhttp/i.test(ua))
