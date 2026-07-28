@@ -219,7 +219,7 @@ export default function LoginScreen() {
     const redirectUri = `${origin}/auth/callback`;
     // Detect native app — when running inside Android/iOS WebView wrapper,
     // add native=1 so the callback uses deep link to return to the app
-    const isNative = typeof window !== 'undefined' && !!(window as Record<string, unknown>).CurlyNative;
+    const isNative = typeof window !== 'undefined' && !!(window as unknown as Record<string, unknown>).CurlyNative;
     const state = isNative ? '/mobile?native=1' : '/mobile';
     const params = new URLSearchParams({
       client_id: GOOGLE_CLIENT_ID,
