@@ -193,7 +193,9 @@ export async function GET(request: NextRequest) {
 
     let response: NextResponse;
     if (needsDeepLink) {
-      // OAuth completed in external browser (Chrome/Safari) — deep link back to native app.
+      // OAuth completed in Chrome Custom Tab — 302 redirect to custom scheme.
+      // Chrome Custom Tabs properly follow HTTP redirects to custom schemes,
+      // triggering the Android intent filter and closing the tab automatically.
       const otc = `otc_${Date.now()}_${Math.random().toString(36).slice(2, 12)}`;
       await cacheSet(`auth:otc:${otc}`, JSON.stringify({
         accessToken,
@@ -203,10 +205,9 @@ export async function GET(request: NextRequest) {
       }), 120); // 2 minute TTL
 
       const deepLink = `curlysports://auth-callback?code=${encodeURIComponent(otc)}`;
-      const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="refresh" content="0;url=${deepLink}"><title>Returning to app...</title></head><body style="background:#07090b;color:#fffdf7;font-family:system-ui;display:flex;align-items:center;justify-content:center;height:100vh;margin:0"><div style="text-align:center"><div style="font-size:18px;font-weight:700;margin-bottom:8px">Returning to app...</div><div style="font-size:14px;opacity:0.7;margin-top:12px"><a href="${deepLink}" style="color:#c8ff3d">Tap here if not redirected</a></div></div><script>window.location.href="${deepLink}";</script></body></html>`;
-      response = new NextResponse(html, {
-        status: 200,
-        headers: { "Content-Type": "text/html; charset=utf-8" },
+      response = new NextResponse(null, {
+        status: 302,
+        headers: { "Location": deepLink },
       });
     } else {
       // WebView or regular browser — just redirect normally with cookies

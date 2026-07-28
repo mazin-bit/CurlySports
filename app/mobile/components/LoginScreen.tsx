@@ -467,6 +467,7 @@ export default function LoginScreen() {
               if (!clientId) return;
               const origin = window.location.origin.replace('://0.0.0.0', '://localhost');
               const redirectUri = `${origin}/auth/callback`;
+              const isNative = !!(window as any).CurlyNative?.isNative;
               const params = new URLSearchParams({
                 client_id: clientId,
                 redirect_uri: redirectUri,
@@ -474,9 +475,15 @@ export default function LoginScreen() {
                 scope: 'openid email profile',
                 access_type: 'offline',
                 prompt: 'select_account',
-                state: `/mobile?newSignup=1${(window as any).CurlyNative?.isNative ? '&native=1' : ''}`,
+                state: `/mobile?newSignup=1${isNative ? '&native=1' : ''}`,
               });
-              window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
+              const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
+              // On native, use Chrome Custom Tab for OAuth (handles deep link callbacks properly)
+              if (isNative && (window as any).CurlyNative?.openAuthUrl) {
+                (window as any).CurlyNative.openAuthUrl(authUrl);
+              } else {
+                window.location.href = authUrl;
+              }
             }}
             style={{
               width: '100%', padding: '13px 0', background: 'var(--surface)', border: '2px solid var(--ink)',
