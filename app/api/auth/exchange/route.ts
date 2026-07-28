@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
 
   let data: { accessToken: string; refreshToken: string; redirectPath?: string; redirect?: string };
   try {
-    data = JSON.parse(raw);
+    data = JSON.parse(raw as string);
   } catch {
     return NextResponse.json({ error: "invalid_data" }, { status: 500 });
   }
