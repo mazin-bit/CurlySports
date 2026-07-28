@@ -5,64 +5,7 @@ import { useAuth } from './AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import Icon from './ui/Icon';
 
-/* ── Google popup sign-in (no redirect, stays in WebView) ───── */
-function useGooglePopupSignIn(onSuccess: () => void, onError: (msg: string) => void) {
-  const [loading, setLoading] = useState(false);
-  const clientRef = useRef<any>(null);
-
-  useEffect(() => {
-    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-    if (!clientId) return;
-
-    // Load GIS script
-    if (document.getElementById('gsi-script')) return;
-    const script = document.createElement('script');
-    script.id = 'gsi-script';
-    script.src = 'https://accounts.google.com/gsi/client';
-    script.async = true;
-    script.onload = () => {
-      clientRef.current = (window as any).google?.accounts?.oauth2?.initCodeClient({
-        client_id: clientId,
-        scope: 'openid email profile',
-        ux_mode: 'popup',
-        callback: async (resp: { code?: string; error?: string }) => {
-          if (resp.error || !resp.code) {
-            setLoading(false);
-            onError('Google sign-in was cancelled');
-            return;
-          }
-          try {
-            const res = await fetch('/api/auth/google-token', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ code: resp.code }),
-            });
-            const data = await res.json();
-            if (!res.ok) {
-              throw new Error(data.error || 'Google sign-in failed');
-            }
-            // Cookies are set by the response. Reload to pick up auth state.
-            onSuccess();
-          } catch (err: any) {
-            onError(err.message || 'Google sign-in failed');
-          } finally {
-            setLoading(false);
-          }
-        },
-      });
-    };
-    document.body.appendChild(script);
-  }, [onError, onSuccess]);
-
-  const trigger = useCallback(() => {
-    if (clientRef.current) {
-      setLoading(true);
-      clientRef.current.requestCode();
-    }
-  }, []);
-
-  return { trigger, loading };
-}
+const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ?? '';
 
 // Lazy-load PhoneLoginScreen to avoid eagerly initializing Firebase SDK on page load.
 // Firebase initialization can cause unwanted redirects in iOS WebViews.
@@ -267,13 +210,24 @@ export default function LoginScreen() {
   const { login, signup, authError, clearAuthError, needsVerification } = useAuth();
   const [oauthError, setOauthError] = useState<string | null>(null);
 
-  const handleGoogleSuccess = useCallback(() => {
-    window.location.reload();
-  }, []);
-  const handleGoogleError = useCallback((msg: string) => {
-    setOauthError(msg);
-  }, []);
-  const { trigger: triggerGoogle, loading: googleLoading } = useGooglePopupSignIn(handleGoogleSuccess, handleGoogleError);
+  function handleGoogle() {
+    if (!GOOGLE_CLIENT_ID) {
+      setOauthError('Google sign-in is not configured');
+      return;
+    }
+    const origin = window.location.origin.replace('://0.0.0.0', '://localhost');
+    const redirectUri = `${origin}/auth/callback`;
+    const params = new URLSearchParams({
+      client_id: GOOGLE_CLIENT_ID,
+      redirect_uri: redirectUri,
+      response_type: 'code',
+      scope: 'openid email profile',
+      access_type: 'offline',
+      prompt: 'select_account',
+      state: '/mobile',
+    });
+    window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
+  }
 
   // Detect Google OAuth errors from callback redirect
   useEffect(() => {
@@ -529,14 +483,12 @@ export default function LoginScreen() {
       <>
         <button
           type="button"
-          disabled={googleLoading}
-          onClick={triggerGoogle}
+          onClick={handleGoogle}
             style={{
               width: '100%', padding: '13px 0', background: 'var(--surface)', border: '2px solid var(--ink)',
               borderRadius: 12, fontFamily: 'var(--mono)', fontSize: 12, fontWeight: 700,
-              letterSpacing: '0.04em', color: 'var(--ink)', cursor: googleLoading ? 'not-allowed' : 'pointer',
+              letterSpacing: '0.04em', color: 'var(--ink)', cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-              opacity: googleLoading ? 0.6 : 1,
             }}
           >
             <svg viewBox="0 0 24 24" width="18" height="18">
@@ -545,7 +497,7 @@ export default function LoginScreen() {
               <path fill="#FBBC05" d="M5.85 14.1c-.22-.66-.35-1.36-.35-2.1s.13-1.44.35-2.1V7.07H2.18a10.99 10.99 0 0 0 0 9.87l3.67-2.84z"/>
               <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1A11 11 0 0 0 2.18 7.07l3.67 2.84C6.71 7.31 9.14 5.38 12 5.38z"/>
             </svg>
-            {googleLoading ? 'SIGNING IN...' : 'CONTINUE WITH GOOGLE'}
+            CONTINUE WITH GOOGLE
           </button>
 
           <button
