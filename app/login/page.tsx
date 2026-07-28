@@ -605,7 +605,7 @@ function LoginPageContent() {
       setError(t("auth.googleLoginNotConfigured"));
       return;
     }
-    const origin = window.location.origin.replace("://0.0.0.0", "://localhost");
+    const origin = (process.env.NEXT_PUBLIC_APP_URL || window.location.origin).replace(/\/$/, "").replace("://0.0.0.0", "://localhost");
     const redirectUri = `${origin}/auth/callback`;
     const params = new URLSearchParams({
       client_id: GOOGLE_CLIENT_ID,

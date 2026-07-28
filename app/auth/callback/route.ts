@@ -8,10 +8,21 @@ import { cacheSet } from "@/lib/redis";
 export async function GET(request: NextRequest) {
   const reqUrl = new URL(request.url);
   const searchParams = reqUrl.searchParams;
-  // Use x-forwarded headers for reliable origin on Vercel (avoids http vs https mismatch)
-  const proto = request.headers.get("x-forwarded-proto")?.split(",")[0]?.trim() || reqUrl.protocol.replace(":", "");
-  const host = request.headers.get("x-forwarded-host")?.split(",")[0]?.trim() || request.headers.get("host") || reqUrl.host;
-  const origin = `${proto}://${host}`.replace("://0.0.0.0", "://localhost").replace(/\/$/, "");
+  // Use NEXT_PUBLIC_APP_URL for guaranteed redirect_uri match with the login page.
+  // Falls back to x-forwarded headers, then hardcoded production URL.
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+  let origin: string;
+  if (appUrl) {
+    origin = appUrl.replace(/\/$/, "");
+  } else {
+    const proto = request.headers.get("x-forwarded-proto")?.split(",")[0]?.trim() || reqUrl.protocol.replace(":", "");
+    const host = request.headers.get("x-forwarded-host")?.split(",")[0]?.trim() || request.headers.get("host") || reqUrl.host;
+    origin = `${proto}://${host}`.replace("://0.0.0.0", "://localhost").replace(/\/$/, "");
+    // Production fallback — ensure https
+    if (origin.includes("curlysports.com") && !origin.startsWith("https")) {
+      origin = "https://curlysports.com";
+    }
+  }
   const code = searchParams.get("code");
   const state = searchParams.get("state") ?? "/dashboard";
   const safeState =
@@ -73,7 +84,17 @@ export async function GET(request: NextRequest) {
 
     if (!tokenRes.ok) {
       const errBody = await tokenRes.text().catch(() => "");
-      logger.error("Google token exchange failed", { status: tokenRes.status, body: errBody, redirect_uri: `${origin}/auth/callback` });
+      const usedRedirectUri = `${origin}/auth/callback`;
+      logger.error("Google token exchange failed", {
+        status: tokenRes.status,
+        body: errBody,
+        redirect_uri: usedRedirectUri,
+        origin,
+        x_forwarded_host: request.headers.get("x-forwarded-host"),
+        x_forwarded_proto: request.headers.get("x-forwarded-proto"),
+        host_header: request.headers.get("host"),
+        request_url: request.url,
+      });
       return NextResponse.redirect(`${origin}${errorRedirectBase}?error=google_token_failed`);
     }
 

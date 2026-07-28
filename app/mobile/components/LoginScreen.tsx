@@ -215,8 +215,12 @@ export default function LoginScreen() {
       setOauthError('Google sign-in is not configured');
       return;
     }
-    const origin = window.location.origin.replace('://0.0.0.0', '://localhost');
+    const origin = (process.env.NEXT_PUBLIC_APP_URL || window.location.origin).replace(/\/$/, '').replace('://0.0.0.0', '://localhost');
     const redirectUri = `${origin}/auth/callback`;
+    // Detect native app — when running inside Android/iOS WebView wrapper,
+    // add native=1 so the callback uses deep link to return to the app
+    const isNative = typeof window !== 'undefined' && !!(window as Record<string, unknown>).CurlyNative;
+    const state = isNative ? '/mobile?native=1' : '/mobile';
     const params = new URLSearchParams({
       client_id: GOOGLE_CLIENT_ID,
       redirect_uri: redirectUri,
@@ -224,7 +228,7 @@ export default function LoginScreen() {
       scope: 'openid email profile',
       access_type: 'offline',
       prompt: 'select_account',
-      state: '/mobile',
+      state,
     });
     window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
   }
