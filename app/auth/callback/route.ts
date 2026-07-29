@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { createServerClient } from "@supabase/ssr";
 import prisma from "@/lib/prisma";
 import { signAccessToken, signRefreshToken, setAuthCookies } from "@/lib/jwt";
 import { ensureChallengeTables, cuid } from "@/lib/ensure-challenge-tables";
@@ -8,144 +9,129 @@ import { cacheSet } from "@/lib/redis";
 export async function GET(request: NextRequest) {
   const reqUrl = new URL(request.url);
   const searchParams = reqUrl.searchParams;
-  // Use NEXT_PUBLIC_APP_URL for guaranteed redirect_uri match with the login page.
-  // Falls back to x-forwarded headers, then hardcoded production URL.
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
-  let origin: string;
-  if (appUrl) {
-    origin = appUrl.replace(/\/$/, "");
-  } else {
-    const proto = request.headers.get("x-forwarded-proto")?.split(",")[0]?.trim() || reqUrl.protocol.replace(":", "");
-    const host = request.headers.get("x-forwarded-host")?.split(",")[0]?.trim() || request.headers.get("host") || reqUrl.host;
-    origin = `${proto}://${host}`.replace("://0.0.0.0", "://localhost").replace(/\/$/, "");
-    // Production fallback — ensure https
-    if (origin.includes("curlysports.com") && !origin.startsWith("https")) {
-      origin = "https://curlysports.com";
-    }
+  const proto = request.headers.get("x-forwarded-proto")?.split(",")[0]?.trim() || reqUrl.protocol.replace(":", "");
+  const host = request.headers.get("x-forwarded-host")?.split(",")[0]?.trim() || request.headers.get("host") || reqUrl.host;
+  let origin = `${proto}://${host}`.replace("://0.0.0.0", "://localhost").replace(/\/$/, "");
+  if (origin.includes("curlysports.com") && !origin.startsWith("https")) {
+    origin = "https://curlysports.com";
   }
+
   const code = searchParams.get("code");
-  const state = searchParams.get("state") ?? "/dashboard";
-  const safeState =
-    state.startsWith("/") && !state.startsWith("//") ? state : "/dashboard";
+
+  // Read redirect info from oauth_state cookie (set before OAuth redirect)
+  // Falls back to query params for backward compatibility
+  let next = searchParams.get("next") ?? "/dashboard";
+  let referralCode = searchParams.get("ref") || null;
+  try {
+    const oauthStateCookie = request.cookies.get("oauth_state")?.value;
+    if (oauthStateCookie) {
+      const state = JSON.parse(decodeURIComponent(oauthStateCookie));
+      if (state.next) next = state.next;
+      if (state.ref) referralCode = state.ref;
+    }
+  } catch {
+    // cookie parse failed, use query params
+  }
+
+  const safeNext = next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard";
 
   // Detect if the OAuth flow originated from the mobile app
-  const isMobile = safeState.startsWith("/mobile");
+  const isMobile = safeNext.startsWith("/mobile");
   const errorRedirectBase = isMobile ? "/mobile" : "/login";
 
-  // Extract referral code, newSignup flag, and native flag from state
-  let referralCode: string | null = null;
+  // Extract newSignup and native flags from next param
   let hasNewSignupFlag = false;
   let isNativeFromState = false;
-  let safeNext = safeState;
+  let cleanNext = safeNext;
   try {
-    const stateUrl = new URL(safeState, origin);
-    referralCode = stateUrl.searchParams.get("ref") || null;
-    hasNewSignupFlag = stateUrl.searchParams.get("newSignup") === "1";
-    isNativeFromState = stateUrl.searchParams.get("native") === "1";
-    // Strip ref param from redirect so it doesn't leak into the dashboard URL
-    if (referralCode) {
-      stateUrl.searchParams.delete("ref");
-    }
-    // Strip newSignup — we'll re-add it only for genuinely new users
-    if (hasNewSignupFlag) {
-      stateUrl.searchParams.delete("newSignup");
-    }
-    // Strip native flag from redirect
-    stateUrl.searchParams.delete("native");
-    safeNext = stateUrl.pathname + (stateUrl.search || "");
+    const nextUrl = new URL(safeNext, origin);
+    if (!referralCode) referralCode = nextUrl.searchParams.get("ref") || null;
+    hasNewSignupFlag = nextUrl.searchParams.get("newSignup") === "1";
+    isNativeFromState = nextUrl.searchParams.get("native") === "1";
+    nextUrl.searchParams.delete("ref");
+    nextUrl.searchParams.delete("newSignup");
+    nextUrl.searchParams.delete("native");
+    cleanNext = nextUrl.pathname + (nextUrl.search || "");
   } catch {
-    // state wasn't a valid relative URL, ignore
+    // not a valid relative URL, ignore
   }
 
   if (!code) {
     return NextResponse.redirect(`${origin}${errorRedirectBase}?error=no_code`);
   }
 
-  const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-  const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
-
-  if (!clientId || !clientSecret) {
-    return NextResponse.redirect(`${origin}${errorRedirectBase}?error=google_not_configured`);
-  }
-
   try {
-    // Exchange authorization code for tokens
-    const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({
-        code,
-        client_id: clientId,
-        client_secret: clientSecret,
-        redirect_uri: `${origin}/auth/callback`,
-        grant_type: "authorization_code",
-      }),
-    });
+    // Create a Supabase server client that can read PKCE verifier from cookies
+    const response = NextResponse.redirect(`${origin}${cleanNext}`);
+    // Clear the oauth_state cookie
+    response.cookies.set("oauth_state", "", { path: "/", maxAge: 0 });
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return request.cookies.getAll();
+          },
+          setAll(cookiesToSet) {
+            cookiesToSet.forEach(({ name, value, options }) => {
+              response.cookies.set(name, value, options);
+            });
+          },
+        },
+      },
+    );
 
-    if (!tokenRes.ok) {
-      const errBody = await tokenRes.text().catch(() => "");
-      const usedRedirectUri = `${origin}/auth/callback`;
-      logger.error("Google token exchange failed", {
-        status: tokenRes.status,
-        body: errBody,
-        redirect_uri: usedRedirectUri,
-        origin,
-        x_forwarded_host: request.headers.get("x-forwarded-host"),
-        x_forwarded_proto: request.headers.get("x-forwarded-proto"),
-        host_header: request.headers.get("host"),
-        request_url: request.url,
+    // Exchange the Supabase PKCE code for a session
+    const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+
+    if (exchangeError || !data.user) {
+      logger.error("Supabase code exchange failed", {
+        error: exchangeError?.message,
+        code: code.slice(0, 10) + "...",
       });
       return NextResponse.redirect(`${origin}${errorRedirectBase}?error=google_token_failed`);
     }
 
-    const { access_token } = await tokenRes.json();
-
-    // Get user info from Google
-    const userInfoRes = await fetch(
-      "https://www.googleapis.com/oauth2/v2/userinfo",
-      { headers: { Authorization: `Bearer ${access_token}` } }
-    );
-
-    if (!userInfoRes.ok) {
-      return NextResponse.redirect(
-        `${origin}${errorRedirectBase}?error=google_userinfo_failed`
-      );
-    }
-
-    const googleUser = (await userInfoRes.json()) as {
-      id: string;
-      email: string;
-      name: string;
-      picture: string;
-    };
+    const supabaseUser = data.user;
+    const googleId = supabaseUser.user_metadata?.provider_id
+      || supabaseUser.user_metadata?.sub
+      || supabaseUser.id;
+    const email = supabaseUser.email!;
+    const name = supabaseUser.user_metadata?.full_name
+      || supabaseUser.user_metadata?.name
+      || "";
+    const picture = supabaseUser.user_metadata?.avatar_url
+      || supabaseUser.user_metadata?.picture
+      || "";
 
     // Upsert user in Prisma
     let isNewGoogleUser = false;
     let user = await prisma.user.findFirst({
-      where: { OR: [{ googleId: googleUser.id }, { email: googleUser.email }] },
+      where: { OR: [{ googleId }, { email }] },
     });
 
     if (user) {
       user = await prisma.user.update({
         where: { id: user.id },
         data: {
-          googleId: googleUser.id,
-          name: user.name || googleUser.name,
-          avatar: user.avatar || googleUser.picture,
+          googleId,
+          name: user.name || name,
+          avatar: user.avatar || picture,
           emailVerified: true,
         },
       });
     } else {
       isNewGoogleUser = true;
-      const baseUsername = googleUser.email.split("@")[0];
+      const baseUsername = email.split("@")[0];
       const username = `${baseUsername}_${Date.now().toString(36)}`;
       user = await prisma.user.create({
         data: {
-          email: googleUser.email,
+          email,
           username,
-          googleId: googleUser.id,
-          name: googleUser.name,
-          avatar: googleUser.picture,
+          googleId,
+          name,
+          avatar: picture,
           emailVerified: true,
         },
       });
@@ -185,7 +171,6 @@ export async function GET(request: NextRequest) {
           }
         } catch (err) {
           logger.error("referral processing failed (OAuth)", { userId: user.id, referralCode, error: String(err) });
-          // Don't fail OAuth callback if referral processing fails
         }
       }
     }
@@ -200,7 +185,7 @@ export async function GET(request: NextRequest) {
     ]);
 
     // Re-add newSignup flag for genuinely new users so the mobile app shows referral popup
-    let redirectPath = safeNext;
+    let redirectPath = cleanNext;
     if (hasNewSignupFlag && isNewGoogleUser) {
       const sep = redirectPath.includes("?") ? "&" : "?";
       redirectPath = `${redirectPath}${sep}newSignup=1`;
@@ -208,34 +193,33 @@ export async function GET(request: NextRequest) {
 
     const ua = request.headers.get("user-agent") ?? "";
     const isWebViewUA = /CurlySportsApp|CurlySports-iOS|CurlySports-Android/i.test(ua);
-    // Only use deep link when OAuth happened in an external browser (not in WebView).
-    // If the UA contains the app identifier, the request is FROM the WebView — just redirect normally.
     const needsDeepLink = isMobile && isNativeFromState && !isWebViewUA;
 
-    let response: NextResponse;
+    let finalResponse: NextResponse;
     if (needsDeepLink) {
-      // OAuth completed in Chrome Custom Tab — 302 redirect to custom scheme.
-      // Chrome Custom Tabs properly follow HTTP redirects to custom schemes,
-      // triggering the Android intent filter and closing the tab automatically.
       const otc = `otc_${Date.now()}_${Math.random().toString(36).slice(2, 12)}`;
       await cacheSet(`auth:otc:${otc}`, JSON.stringify({
         accessToken,
         refreshToken,
         redirectPath,
         userId: user.id,
-      }), 120); // 2 minute TTL
+      }), 120);
 
       const deepLink = `curlysports://auth-callback?code=${encodeURIComponent(otc)}`;
-      response = new NextResponse(null, {
+      finalResponse = new NextResponse(null, {
         status: 302,
         headers: { "Location": deepLink },
       });
     } else {
-      // WebView or regular browser — just redirect normally with cookies
-      response = NextResponse.redirect(`${origin}${redirectPath}`);
+      finalResponse = NextResponse.redirect(`${origin}${redirectPath}`);
     }
 
-    // Fire-and-forget session tracking — don't block OAuth callback
+    // Copy Supabase cookies to the final response (clears PKCE verifier)
+    response.cookies.getAll().forEach((cookie) => {
+      finalResponse.cookies.set(cookie.name, cookie.value);
+    });
+
+    // Fire-and-forget session tracking
     const platform = /CurlySports-iOS/i.test(ua) || (/iPhone|iPad|iPod/i.test(ua) && /Expo|ReactNative|okhttp/i.test(ua))
       ? "ios"
       : /CurlySports-Android/i.test(ua) || (/Android/i.test(ua) && /Expo|ReactNative|okhttp/i.test(ua))
@@ -251,8 +235,9 @@ export async function GET(request: NextRequest) {
       VALUES (${sessionId}, ${user.id}, ${platform}, ${ip}, ${country}, ${city}, ${ua.slice(0, 500)}, NOW())
     `.catch(() => {});
 
-    return setAuthCookies(response, accessToken, refreshToken);
-  } catch {
+    return setAuthCookies(finalResponse, accessToken, refreshToken);
+  } catch (err) {
+    logger.error("auth callback failed", { error: String(err) });
     return NextResponse.redirect(`${origin}${errorRedirectBase}?error=auth_callback_failed`);
   }
 }

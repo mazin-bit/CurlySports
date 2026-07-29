@@ -4,8 +4,7 @@ import dynamic from 'next/dynamic';
 import { useAuth } from './AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import Icon from './ui/Icon';
-
-const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ?? '';
+import { createClient } from '@/utils/supabase/client';
 
 // Lazy-load PhoneLoginScreen to avoid eagerly initializing Firebase SDK on page load.
 // Firebase initialization can cause unwanted redirects in iOS WebViews.
@@ -210,27 +209,29 @@ export default function LoginScreen() {
   const { login, signup, authError, clearAuthError, needsVerification } = useAuth();
   const [oauthError, setOauthError] = useState<string | null>(null);
 
-  function handleGoogle() {
-    if (!GOOGLE_CLIENT_ID) {
-      setOauthError('Google sign-in is not configured');
-      return;
-    }
-    const origin = (process.env.NEXT_PUBLIC_APP_URL || window.location.origin).replace(/\/$/, '').replace('://0.0.0.0', '://localhost');
-    const redirectUri = `${origin}/auth/callback`;
-    // Detect native app — when running inside Android/iOS WebView wrapper,
-    // add native=1 so the callback uses deep link to return to the app
+  async function handleGoogle() {
+    const supabase = createClient();
+    const origin = window.location.origin.replace(/\/$/, '').replace('://0.0.0.0', '://localhost');
+    const callbackUrl = `${origin}/auth/callback`;
+
+    // Detect native app
     const isNative = typeof window !== 'undefined' && !!(window as unknown as Record<string, unknown>).CurlyNative;
-    const state = isNative ? '/mobile?native=1' : '/mobile';
-    const params = new URLSearchParams({
-      client_id: GOOGLE_CLIENT_ID,
-      redirect_uri: redirectUri,
-      response_type: 'code',
-      scope: 'openid email profile',
-      access_type: 'offline',
-      prompt: 'select_account',
-      state,
+    const nextPath = isNative ? '/mobile?native=1' : '/mobile';
+
+    // Store redirect info in a cookie (Supabase may reject redirectTo with query params)
+    const authState = JSON.stringify({ next: nextPath, ref: '' });
+    document.cookie = `oauth_state=${encodeURIComponent(authState)};path=/;max-age=600;samesite=lax`;
+
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: callbackUrl,
+      },
     });
-    window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
+
+    if (error) {
+      setOauthError(error.message);
+    }
   }
 
   // Detect Google OAuth errors from callback redirect

@@ -6,11 +6,10 @@ import { Mail, Eye, EyeOff, Check, X, Loader2, Phone, Smartphone, ChevronDown } 
 import { useLanguage } from "@/contexts/LanguageContext";
 import { usePhoneAuth } from "@/hooks/usePhoneAuth";
 import { COUNTRY_CODES, DEFAULT_COUNTRY, type CountryCode } from "@/lib/country-codes";
+import { createClient } from "@/utils/supabase/client";
 
 
 type Mode = "login" | "signup" | "forgot" | "phone";
-
-const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ?? "";
 
 /* ── Shared mascot left-panel ──────────────────────────────── */
 function Stage() {
@@ -600,23 +599,25 @@ function LoginPageContent() {
     }
   }
 
-  function handleGoogle() {
-    if (!GOOGLE_CLIENT_ID) {
-      setError(t("auth.googleLoginNotConfigured"));
-      return;
-    }
-    const origin = (process.env.NEXT_PUBLIC_APP_URL || window.location.origin).replace(/\/$/, "").replace("://0.0.0.0", "://localhost");
-    const redirectUri = `${origin}/auth/callback`;
-    const params = new URLSearchParams({
-      client_id: GOOGLE_CLIENT_ID,
-      redirect_uri: redirectUri,
-      response_type: "code",
-      scope: "openid email profile",
-      access_type: "offline",
-      prompt: "select_account",
-      state: referralCode ? `${redirectAfterLogin}${redirectAfterLogin.includes('?') ? '&' : '?'}ref=${referralCode}` : redirectAfterLogin,
+  async function handleGoogle() {
+    const supabase = createClient();
+    const origin = window.location.origin.replace(/\/$/, "").replace("://0.0.0.0", "://localhost");
+    const callbackUrl = `${origin}/auth/callback`;
+
+    // Store redirect info in a cookie (Supabase may reject redirectTo with query params)
+    const authState = JSON.stringify({ next: redirectAfterLogin, ref: referralCode || "" });
+    document.cookie = `oauth_state=${encodeURIComponent(authState)};path=/;max-age=600;samesite=lax`;
+
+    const { data: oauthData, error: oauthError } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: callbackUrl,
+      },
     });
-    window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
+
+    if (oauthError) {
+      setError(oauthError.message);
+    }
   }
 
   /* ── Phone OTP screen ─────────────────────────────────────── */
