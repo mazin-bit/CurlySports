@@ -7,6 +7,20 @@ const nextConfig: NextConfig = {
   // Required for Docker standalone deployment
   output: "standalone",
 
+  // Explicitly pass NEXT_PUBLIC env vars to the client bundle
+  // (Turbopack may not inline process.env.NEXT_PUBLIC_* automatically in all cases)
+  env: {
+    NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL || "",
+    NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "",
+    NEXT_PUBLIC_GOOGLE_CLIENT_ID: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "",
+    NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL || "",
+    NEXT_PUBLIC_FIREBASE_PROJECT_ID: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "",
+    NEXT_PUBLIC_FIREBASE_API_KEY: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "",
+    NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "",
+    NEXT_PUBLIC_RECAPTCHA_SITE_KEY: process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || "",
+    NEXT_PUBLIC_VERSION: process.env.NEXT_PUBLIC_VERSION || "",
+  },
+
   // Allow local network IPs to access dev resources (HMR, etc.) — dev only
   ...(process.env.NODE_ENV === "development" ? { allowedDevOrigins: ["192.168.110.0"] } : {}),
 
