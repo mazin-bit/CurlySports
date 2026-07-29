@@ -93,17 +93,39 @@ jobs:
 
           rm -f .env.migrate
 
+      - name: Extract NEXT_PUBLIC env vars
+        id: extract-env
+        run: |
+          # Extract NEXT_PUBLIC_* vars from .vercel/.env.production.local
+          # and format them as --build-env flags for vercel deploy
+          BUILD_ENV_FLAGS=""
+          if [ -f .vercel/.env.production.local ]; then
+            while IFS='=' read -r key value; do
+              # Skip comments and empty lines
+              [[ "$key" =~ ^#.*$ || -z "$key" ]] && continue
+              # Only include NEXT_PUBLIC_ vars
+              if [[ "$key" == NEXT_PUBLIC_* ]]; then
+                # Strip surrounding quotes from value
+                value=$(echo "$value" | sed 's/^"//;s/"$//')
+                BUILD_ENV_FLAGS="$BUILD_ENV_FLAGS --build-env $key=$value"
+              fi
+            done < .vercel/.env.production.local
+          fi
+          # Add the version
+          BUILD_ENV_FLAGS="$BUILD_ENV_FLAGS --build-env NEXT_PUBLIC_VERSION=${{ inputs.app-version }}"
+          echo "flags=$BUILD_ENV_FLAGS" >> "$GITHUB_OUTPUT"
+
       - name: Deploy to Vercel
         id: deploy
         run: |
-          # Deploy directly — Vercel builds on its servers where env vars are properly injected.
-          # vercel build in CI doesn't inline NEXT_PUBLIC_* vars into the client bundle.
-          URL=$(vercel deploy --prod --force --token=${{ secrets.VERCEL_TOKEN }})
+          # Pass NEXT_PUBLIC env vars explicitly via --build-env since the Vercel
+          # project dashboard may not have them, and vercel deploy doesn't read
+          # .vercel/.env.production.local during remote builds.
+          URL=$(vercel deploy --prod --force ${{ steps.extract-env.outputs.flags }} --token=${{ secrets.VERCEL_TOKEN }})
           echo "url=$URL" >> "$GITHUB_OUTPUT"
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-          NEXT_PUBLIC_VERSION: ${{ inputs.app-version }}
 
       - name: Summary
         run: |
