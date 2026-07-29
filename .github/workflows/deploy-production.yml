@@ -93,35 +93,17 @@ jobs:
 
           rm -f .env.migrate
 
-      - name: Inject NEXT_PUBLIC env vars for build
-        run: |
-          # vercel build in CI doesn't inline NEXT_PUBLIC_* vars into the client bundle.
-          # Copy the pulled env file to .env.production.local at project root so Next.js reads it.
-          ENV_FILE=".vercel/.env.production.local"
-          if [ -f "$ENV_FILE" ]; then
-            cp "$ENV_FILE" .env.production.local
-            echo "NEXT_PUBLIC_VERSION=${{ inputs.app-version }}" >> .env.production.local
-            echo "Copied env file to .env.production.local ($(grep -c '^NEXT_PUBLIC_' .env.production.local) NEXT_PUBLIC vars)"
-            grep '^NEXT_PUBLIC_' .env.production.local | sed 's/=.*/=***/'
-          else
-            echo "::warning::$ENV_FILE not found — NEXT_PUBLIC_* vars may be missing from build"
-          fi
-
-      - name: Build project
-        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
-        env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-          NEXT_PUBLIC_VERSION: ${{ inputs.app-version }}
-
       - name: Deploy to Vercel
         id: deploy
         run: |
-          URL=$(vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }})
+          # Deploy directly — Vercel builds on its servers where env vars are properly injected.
+          # vercel build in CI doesn't inline NEXT_PUBLIC_* vars into the client bundle.
+          URL=$(vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }})
           echo "url=$URL" >> "$GITHUB_OUTPUT"
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          NEXT_PUBLIC_VERSION: ${{ inputs.app-version }}
 
       - name: Summary
         run: |
