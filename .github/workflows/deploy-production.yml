@@ -93,6 +93,25 @@ jobs:
 
           rm -f .env.migrate
 
+      - name: Export NEXT_PUBLIC env vars for build
+        run: |
+          # vercel build in CI doesn't inject NEXT_PUBLIC_* vars into the Next.js build.
+          # Read them from the pulled env file and export them.
+          ENV_FILE=".vercel/.env.production.local"
+          if [ -f "$ENV_FILE" ]; then
+            while IFS='=' read -r key value; do
+              # Only export NEXT_PUBLIC_ vars (they're safe — already public in client bundle)
+              if [[ "$key" == NEXT_PUBLIC_* ]]; then
+                # Strip surrounding quotes if present
+                value=$(echo "$value" | sed 's/^"//;s/"$//')
+                echo "${key}=${value}" >> "$GITHUB_ENV"
+              fi
+            done < "$ENV_FILE"
+            echo "Exported NEXT_PUBLIC_* vars from $ENV_FILE"
+          else
+            echo "::warning::$ENV_FILE not found — NEXT_PUBLIC_* vars may be missing from build"
+          fi
+
       - name: Build project
         run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
         env:
