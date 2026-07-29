@@ -1,5 +1,6 @@
 {
   "framework": "nextjs",
+  "installCommand": "pnpm install --filter=curly-sports",
   "headers": [
     {
       "source": "/(.*)\\.(js|css|png|jpg|jpeg|svg|ico|woff|woff2|ttf|eot)",
