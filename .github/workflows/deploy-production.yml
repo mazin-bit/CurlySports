@@ -98,7 +98,7 @@ jobs:
         run: |
           # Deploy directly — Vercel builds on its servers where env vars are properly injected.
           # vercel build in CI doesn't inline NEXT_PUBLIC_* vars into the client bundle.
-          URL=$(vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }})
+          URL=$(vercel deploy --prod --force --token=${{ secrets.VERCEL_TOKEN }})
           echo "url=$URL" >> "$GITHUB_OUTPUT"
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
