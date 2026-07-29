@@ -600,23 +600,34 @@ function LoginPageContent() {
   }
 
   async function handleGoogle() {
-    const supabase = createClient();
-    const origin = window.location.origin.replace(/\/$/, "").replace("://0.0.0.0", "://localhost");
-    const callbackUrl = `${origin}/auth/callback`;
+    setError(null);
+    setLoading(true);
+    try {
+      const supabase = createClient();
+      const origin = window.location.origin.replace(/\/$/, "").replace("://0.0.0.0", "://localhost");
+      const callbackUrl = `${origin}/auth/callback`;
 
-    // Store redirect info in a cookie (Supabase may reject redirectTo with query params)
-    const authState = JSON.stringify({ next: redirectAfterLogin, ref: referralCode || "" });
-    document.cookie = `oauth_state=${encodeURIComponent(authState)};path=/;max-age=600;samesite=lax`;
+      // Store redirect info in a cookie (Supabase may reject redirectTo with query params)
+      const authState = JSON.stringify({ next: redirectAfterLogin, ref: referralCode || "" });
+      document.cookie = `oauth_state=${encodeURIComponent(authState)};path=/;max-age=600;samesite=lax`;
 
-    const { data: oauthData, error: oauthError } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: callbackUrl,
-      },
-    });
+      const { data: oauthData, error: oauthError } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: callbackUrl,
+        },
+      });
 
-    if (oauthError) {
-      setError(oauthError.message);
+      if (oauthError) {
+        console.error("Google OAuth error:", oauthError);
+        setError(oauthError.message);
+        setLoading(false);
+      }
+      // If no error, browser will redirect — don't setLoading(false)
+    } catch (err) {
+      console.error("Google OAuth exception:", err);
+      setError(err instanceof Error ? err.message : "Google sign-in failed. Please try again.");
+      setLoading(false);
     }
   }
 

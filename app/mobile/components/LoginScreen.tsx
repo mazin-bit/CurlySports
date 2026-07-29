@@ -210,27 +210,34 @@ export default function LoginScreen() {
   const [oauthError, setOauthError] = useState<string | null>(null);
 
   async function handleGoogle() {
-    const supabase = createClient();
-    const origin = window.location.origin.replace(/\/$/, '').replace('://0.0.0.0', '://localhost');
-    const callbackUrl = `${origin}/auth/callback`;
+    setOauthError(null);
+    try {
+      const supabase = createClient();
+      const origin = window.location.origin.replace(/\/$/, '').replace('://0.0.0.0', '://localhost');
+      const callbackUrl = `${origin}/auth/callback`;
 
-    // Detect native app
-    const isNative = typeof window !== 'undefined' && !!(window as unknown as Record<string, unknown>).CurlyNative;
-    const nextPath = isNative ? '/mobile?native=1' : '/mobile';
+      // Detect native app
+      const isNative = typeof window !== 'undefined' && !!(window as unknown as Record<string, unknown>).CurlyNative;
+      const nextPath = isNative ? '/mobile?native=1' : '/mobile';
 
-    // Store redirect info in a cookie (Supabase may reject redirectTo with query params)
-    const authState = JSON.stringify({ next: nextPath, ref: '' });
-    document.cookie = `oauth_state=${encodeURIComponent(authState)};path=/;max-age=600;samesite=lax`;
+      // Store redirect info in a cookie (Supabase may reject redirectTo with query params)
+      const authState = JSON.stringify({ next: nextPath, ref: '' });
+      document.cookie = `oauth_state=${encodeURIComponent(authState)};path=/;max-age=600;samesite=lax`;
 
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: callbackUrl,
-      },
-    });
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: callbackUrl,
+        },
+      });
 
-    if (error) {
-      setOauthError(error.message);
+      if (error) {
+        console.error('Google OAuth error:', error);
+        setOauthError(error.message);
+      }
+    } catch (err) {
+      console.error('Google OAuth exception:', err);
+      setOauthError(err instanceof Error ? err.message : 'Google sign-in failed. Please try again.');
     }
   }
 

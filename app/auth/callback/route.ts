@@ -17,6 +17,14 @@ export async function GET(request: NextRequest) {
   }
 
   const code = searchParams.get("code");
+  const allCookies = request.cookies.getAll();
+  const hasCodeVerifier = allCookies.some(c => c.name.includes("code-verifier"));
+  logger.info("Auth callback hit", {
+    origin,
+    hasCode: !!code,
+    hasCodeVerifier,
+    cookieCount: allCookies.length,
+  });
 
   // Read redirect info from oauth_state cookie (set before OAuth redirect)
   // Falls back to query params for backward compatibility
@@ -88,7 +96,11 @@ export async function GET(request: NextRequest) {
     if (exchangeError || !data.user) {
       logger.error("Supabase code exchange failed", {
         error: exchangeError?.message,
+        errorStatus: exchangeError?.status,
         code: code.slice(0, 10) + "...",
+        origin,
+        hasCookies: request.cookies.getAll().length,
+        cookieNames: request.cookies.getAll().map(c => c.name).join(", "),
       });
       return NextResponse.redirect(`${origin}${errorRedirectBase}?error=google_token_failed`);
     }
