@@ -512,7 +512,7 @@ function LoginPageContent() {
         google_token_failed: "Google sign-in failed. Please try again.",
         google_userinfo_failed: "Could not get your Google account info",
         account_suspended: "This account has been suspended",
-        auth_callback_failed: "Sign-in failed. Please try again.",
+        auth_callback_failed: `Sign-in failed: ${searchParams.get("debug") || "unknown error"}`,
       };
       setError(errorMessages[oauthError] || `Sign-in error: ${oauthError}`);
     }

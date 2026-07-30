@@ -252,7 +252,9 @@ export async function GET(request: NextRequest) {
 
     return setAuthCookies(finalResponse, accessToken, refreshToken);
   } catch (err) {
-    logger.error("auth callback failed", { error: String(err) });
-    return NextResponse.redirect(`${origin}${errorRedirectBase}?error=auth_callback_failed`);
+    const errMsg = err instanceof Error ? `${err.message} | ${err.stack?.split("\n")[1]?.trim() || ""}` : String(err);
+    logger.error("auth callback failed", { error: errMsg });
+    const debugParam = encodeURIComponent(err instanceof Error ? err.message : String(err));
+    return NextResponse.redirect(`${origin}${errorRedirectBase}?error=auth_callback_failed&debug=${debugParam}`);
   }
 }
