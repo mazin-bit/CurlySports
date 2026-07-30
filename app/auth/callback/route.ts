@@ -73,9 +73,12 @@ export async function GET(request: NextRequest) {
     const response = NextResponse.redirect(`${origin}${cleanNext}`);
     // Clear the oauth_state cookie
     response.cookies.set("oauth_state", "", { path: "/", maxAge: 0 });
+    // Hardcoded: Vercel build doesn't reliably inject NEXT_PUBLIC_* env vars
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://xbswslbgrlhyqigpzdwz.supabase.co";
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhic3dzbGJncmxoeXFpZ3B6ZHd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1NTI0MzksImV4cCI6MjA5NTEyODQzOX0.31dKgGujVd1HbrDYl2cq3pNY9FepXO9FfmkS--mXEIE";
     const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      supabaseUrl,
+      supabaseKey,
       {
         cookies: {
           getAll() {
