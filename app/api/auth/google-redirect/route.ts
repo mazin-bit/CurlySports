@@ -47,7 +47,11 @@ export async function GET(request: NextRequest) {
   });
 
   const redirectTo = new URL("/auth/callback", origin);
-  redirectTo.searchParams.set("next", "/mobile?newSignup=1&native=1");
+  // Check if request came from Expo native shell or regular mobile WebView
+  const platformParam = reqUrl.searchParams.get("platform");
+  const returnScheme = reqUrl.searchParams.get("returnScheme");
+  const isNativeShell = !!platformParam && !!returnScheme;
+  redirectTo.searchParams.set("next", isNativeShell ? "/mobile?newSignup=1&native=1" : "/mobile?newSignup=1");
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",

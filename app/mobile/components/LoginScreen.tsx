@@ -4,7 +4,6 @@ import dynamic from 'next/dynamic';
 import { useAuth } from './AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import Icon from './ui/Icon';
-import { createClient } from '@/utils/supabase/client';
 
 // Lazy-load PhoneLoginScreen to avoid eagerly initializing Firebase SDK on page load.
 // Firebase initialization can cause unwanted redirects in iOS WebViews.
@@ -209,36 +208,12 @@ export default function LoginScreen() {
   const { login, signup, authError, clearAuthError, needsVerification } = useAuth();
   const [oauthError, setOauthError] = useState<string | null>(null);
 
-  async function handleGoogle() {
+  function handleGoogle() {
     setOauthError(null);
-    try {
-      const supabase = createClient();
-      const origin = window.location.origin.replace(/\/$/, '').replace('://0.0.0.0', '://localhost');
-      const callbackUrl = `${origin}/auth/callback`;
-
-      // Detect native app
-      const isNative = typeof window !== 'undefined' && !!(window as unknown as Record<string, unknown>).CurlyNative;
-      const nextPath = isNative ? '/mobile?native=1' : '/mobile';
-
-      // Store redirect info in a cookie (Supabase may reject redirectTo with query params)
-      const authState = JSON.stringify({ next: nextPath, ref: '' });
-      document.cookie = `oauth_state=${encodeURIComponent(authState)};path=/;max-age=600;samesite=lax`;
-
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: callbackUrl,
-        },
-      });
-
-      if (error) {
-        console.error('Google OAuth error:', error);
-        setOauthError(error.message);
-      }
-    } catch (err) {
-      console.error('Google OAuth exception:', err);
-      setOauthError(err instanceof Error ? err.message : 'Google sign-in failed. Please try again.');
-    }
+    // Navigate to server-side Google OAuth endpoint instead of using
+    // supabase.auth.signInWithOAuth() which opens Chrome externally.
+    // This keeps the entire OAuth flow within the WebView.
+    window.location.href = '/api/auth/google-redirect';
   }
 
   // Detect Google OAuth errors from callback redirect
