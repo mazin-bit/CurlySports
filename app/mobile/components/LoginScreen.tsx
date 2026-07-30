@@ -210,10 +210,17 @@ export default function LoginScreen() {
 
   function handleGoogle() {
     setOauthError(null);
-    // Navigate to server-side Google OAuth endpoint instead of using
-    // supabase.auth.signInWithOAuth() which opens Chrome externally.
-    // This keeps the entire OAuth flow within the WebView.
-    window.location.href = '/api/auth/google-redirect';
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const nativeApp = typeof window !== 'undefined' && (window as any).CurlyNative;
+    if (nativeApp?.openAuthUrl) {
+      // Use Chrome Custom Tabs for Google OAuth (WebViews are blocked by Google).
+      // The callback detects native=1 and redirects via curlysports:// deep link,
+      // which the Android app catches and exchanges for auth cookies in the WebView.
+      nativeApp.openAuthUrl('https://curlysports.com/api/auth/google-redirect?platform=android&returnScheme=curlysports');
+    } else {
+      // Regular browser redirect for non-native contexts (e.g. Safari mobile web)
+      window.location.href = '/api/auth/google-redirect';
+    }
   }
 
   // Detect Google OAuth errors from callback redirect
