@@ -6,69 +6,98 @@ import { logger } from "@/lib/logger";
 
 /**
  * POST /api/auth/google-token
- * Accepts a Google authorization code obtained via popup (GIS) flow.
- * Exchanges it for user info, upserts user, returns auth cookies.
+ * Accepts either:
+ *   - { credential: "..." } — Google ID token from GIS One Tap / popup (no client secret needed)
+ *   - { code: "..." } — Google authorization code from GIS code flow
+ * Verifies the token, upserts user, returns auth cookies.
  * Used by the /mobile WebView so OAuth stays in-page (no redirect to Chrome).
  */
 export async function POST(request: NextRequest) {
-  const reqUrl = new URL(request.url);
-  const proto = request.headers.get("x-forwarded-proto")?.split(",")[0]?.trim() || reqUrl.protocol.replace(":", "");
-  const host = request.headers.get("x-forwarded-host")?.split(",")[0]?.trim() || request.headers.get("host") || reqUrl.host;
-  const origin = `${proto}://${host}`.replace("://0.0.0.0", "://localhost").replace(/\/$/, "");
-
   const body = await request.json().catch(() => null);
-  if (!body?.code) {
-    return NextResponse.json({ error: "missing_code" }, { status: 400 });
+  if (!body?.credential && !body?.code) {
+    return NextResponse.json({ error: "missing_credential_or_code" }, { status: 400 });
   }
 
-  const { code, referralCode } = body as { code: string; referralCode?: string };
+  const { credential, code, referralCode } = body as {
+    credential?: string;
+    code?: string;
+    referralCode?: string;
+  };
 
-  const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-  const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
-
-  if (!clientId || !clientSecret) {
-    return NextResponse.json({ error: "google_not_configured" }, { status: 500 });
-  }
+  const clientId = "512124239392-velrug04ps35ihhig7spbe3fv4nqh103.apps.googleusercontent.com";
 
   try {
-    // Exchange authorization code for tokens
-    // For popup (GIS) flow, redirect_uri must be "postmessage"
-    const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({
-        code,
-        client_id: clientId,
-        client_secret: clientSecret,
-        redirect_uri: "postmessage",
-        grant_type: "authorization_code",
-      }),
-    });
+    let googleUser: { id: string; email: string; name: string; picture: string };
 
-    if (!tokenRes.ok) {
-      const errBody = await tokenRes.text().catch(() => "");
-      logger.error("Google token exchange failed (popup)", { status: tokenRes.status, body: errBody });
-      return NextResponse.json({ error: "google_token_failed" }, { status: 400 });
+    if (credential) {
+      // ID token flow — verify the JWT with Google's tokeninfo endpoint
+      const verifyRes = await fetch(
+        `https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(credential)}`
+      );
+
+      if (!verifyRes.ok) {
+        const errBody = await verifyRes.text().catch(() => "");
+        logger.error("Google ID token verification failed", { status: verifyRes.status, body: errBody });
+        return NextResponse.json({ error: "google_token_failed" }, { status: 400 });
+      }
+
+      const tokenInfo = await verifyRes.json();
+
+      // Verify the token was issued for our app
+      if (tokenInfo.aud !== clientId) {
+        logger.error("Google ID token audience mismatch", { aud: tokenInfo.aud, expected: clientId });
+        return NextResponse.json({ error: "google_token_failed" }, { status: 400 });
+      }
+
+      googleUser = {
+        id: tokenInfo.sub,
+        email: tokenInfo.email,
+        name: tokenInfo.name || tokenInfo.email.split("@")[0],
+        picture: tokenInfo.picture || "",
+      };
+    } else {
+      // Authorization code flow — exchange code for tokens
+      const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+      if (!clientSecret) {
+        return NextResponse.json({ error: "google_not_configured" }, { status: 500 });
+      }
+
+      const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          code: code!,
+          client_id: clientId,
+          client_secret: clientSecret,
+          redirect_uri: "postmessage",
+          grant_type: "authorization_code",
+        }),
+      });
+
+      if (!tokenRes.ok) {
+        const errBody = await tokenRes.text().catch(() => "");
+        logger.error("Google token exchange failed (popup)", { status: tokenRes.status, body: errBody });
+        return NextResponse.json({ error: "google_token_failed" }, { status: 400 });
+      }
+
+      const { access_token } = await tokenRes.json();
+
+      const userInfoRes = await fetch(
+        "https://www.googleapis.com/oauth2/v2/userinfo",
+        { headers: { Authorization: `Bearer ${access_token}` } }
+      );
+
+      if (!userInfoRes.ok) {
+        return NextResponse.json({ error: "google_userinfo_failed" }, { status: 400 });
+      }
+
+      googleUser = (await userInfoRes.json()) as {
+        id: string;
+        email: string;
+        name: string;
+        picture: string;
+      };
     }
-
-    const { access_token } = await tokenRes.json();
-
-    // Get user info from Google
-    const userInfoRes = await fetch(
-      "https://www.googleapis.com/oauth2/v2/userinfo",
-      { headers: { Authorization: `Bearer ${access_token}` } }
-    );
-
-    if (!userInfoRes.ok) {
-      return NextResponse.json({ error: "google_userinfo_failed" }, { status: 400 });
-    }
-
-    const googleUser = (await userInfoRes.json()) as {
-      id: string;
-      email: string;
-      name: string;
-      picture: string;
-    };
 
     // Upsert user in Prisma
     let isNewUser = false;
