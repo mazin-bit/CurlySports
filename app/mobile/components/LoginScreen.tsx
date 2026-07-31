@@ -221,7 +221,8 @@ export default function LoginScreen() {
     if (native?.isNative && native.googleSignIn) {
       // Use Android Credential Manager — shows a native bottom sheet popup
       // with the user's Google accounts. No Chrome, no redirect.
-      const win = window as Record<string, unknown>;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const win = window as any;
       win.__onGoogleIdToken = async (idToken: string) => {
         try {
           const res = await fetch('/api/auth/google-token', {
