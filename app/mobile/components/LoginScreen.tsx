@@ -212,10 +212,11 @@ export default function LoginScreen() {
   function handleGoogle() {
     setOauthError(null);
     setGoogleLoading(true);
-    // Navigate within the WebView to start Google OAuth.
-    // The WebView keeps google.com and supabase.co URLs inside (no Chrome).
-    // After auth, callback redirects back to /mobile.
-    window.location.href = '/api/auth/google-redirect';
+    // Pass platform=android&returnScheme=curlysports so the auth callback
+    // redirects back to the app via curlysports:// deep link after Chrome auth.
+    // If auth stays in WebView, the callback detects CurlySportsApp UA and
+    // redirects normally to /mobile instead.
+    window.location.href = '/api/auth/google-redirect?platform=android&returnScheme=curlysports';
   }
 
   // Detect Google OAuth errors from callback redirect
