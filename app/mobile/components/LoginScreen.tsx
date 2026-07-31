@@ -212,10 +212,42 @@ export default function LoginScreen() {
   function handleGoogle() {
     setOauthError(null);
     setGoogleLoading(true);
-    // Navigate to Google OAuth via server-side redirect.
-    // The Android WebView keeps Google/Supabase URLs inside the WebView,
-    // so the entire OAuth flow happens in-app without opening Chrome.
-    window.location.href = '/api/auth/google-redirect';
+
+    // Check if running in the native Android app with Google Sign-In bridge
+    const native = (window as Record<string, unknown>).CurlyNative as
+      | { isNative?: boolean; googleSignIn?: () => void }
+      | undefined;
+
+    if (native?.isNative && native.googleSignIn) {
+      // Use native Android Credential Manager for Google Sign-In.
+      // Shows a native Google popup inside the app — no Chrome, no redirect.
+      (window as Record<string, unknown>).__onGoogleIdToken = async (idToken: string) => {
+        try {
+          const res = await fetch('/api/auth/google-token', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ idToken, mobile: true }),
+          });
+          const data = await res.json() as { error?: string };
+          if (!res.ok) throw new Error(data.error || 'Google sign-in failed');
+          // Auth cookies are set — navigate to dashboard
+          window.location.href = '/mobile';
+        } catch (err) {
+          setOauthError(err instanceof Error ? err.message : 'Google sign-in failed');
+          setGoogleLoading(false);
+        }
+      };
+      (window as Record<string, unknown>).__onGoogleError = (msg: string) => {
+        if (msg !== 'cancelled') {
+          setOauthError(`Google sign-in failed: ${msg}`);
+        }
+        setGoogleLoading(false);
+      };
+      native.googleSignIn();
+    } else {
+      // Fallback for non-native (web browser): use server-side redirect
+      window.location.href = '/api/auth/google-redirect';
+    }
   }
 
   // Detect Google OAuth errors from callback redirect

@@ -14,25 +14,28 @@ import { logger } from "@/lib/logger";
  */
 export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => null);
-  if (!body?.credential && !body?.code) {
+  if (!body?.credential && !body?.idToken && !body?.code) {
     return NextResponse.json({ error: "missing_credential_or_code" }, { status: 400 });
   }
 
-  const { credential, code, referralCode } = body as {
+  const { credential, idToken, code, referralCode } = body as {
     credential?: string;
+    idToken?: string;
     code?: string;
     referralCode?: string;
   };
+  // Accept either "credential" or "idToken" as the ID token key
+  const idTokenValue = credential || idToken;
 
   const clientId = "512124239392-velrug04ps35ihhig7spbe3fv4nqh103.apps.googleusercontent.com";
 
   try {
     let googleUser: { id: string; email: string; name: string; picture: string };
 
-    if (credential) {
+    if (idTokenValue) {
       // ID token flow — verify the JWT with Google's tokeninfo endpoint
       const verifyRes = await fetch(
-        `https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(credential)}`
+        `https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(idTokenValue)}`
       );
 
       if (!verifyRes.ok) {
