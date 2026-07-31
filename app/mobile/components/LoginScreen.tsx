@@ -209,54 +209,145 @@ export default function LoginScreen() {
   const [oauthError, setOauthError] = useState<string | null>(null);
   const [googleLoading, setGoogleLoading] = useState(false);
 
+  const gisLoadedRef = useRef(false);
+
+  // Load Google Identity Services script once
+  useEffect(() => {
+    if (gisLoadedRef.current) return;
+    if (document.querySelector('script[src*="accounts.google.com/gsi/client"]')) {
+      gisLoadedRef.current = true;
+      return;
+    }
+    const s = document.createElement('script');
+    s.src = 'https://accounts.google.com/gsi/client';
+    s.async = true;
+    s.defer = true;
+    s.onload = () => { gisLoadedRef.current = true; };
+    document.head.appendChild(s);
+  }, []);
+
   async function handleGoogle() {
     setOauthError(null);
     setGoogleLoading(true);
 
-    // Check if native Android bridge is available (shows native Google popup)
-    const native = (window as unknown as Record<string, unknown>).CurlyNative as
-      | { googleSignIn?: () => void; isNative?: boolean }
-      | undefined;
+    const CLIENT_ID = '512124239392-velrug04ps35ihhig7spbe3fv4nqh103.apps.googleusercontent.com';
 
-    if (native?.isNative && native.googleSignIn) {
-      // Use Android Credential Manager — shows a native bottom sheet popup
-      // with the user's Google accounts. No Chrome, no redirect.
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const win = window as any;
-      win.__onGoogleIdToken = async (idToken: string) => {
-        try {
-          const res = await fetch('/api/auth/google-token', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ idToken }),
-          });
-          const data = await res.json();
-          if (!res.ok || data.error) {
-            setOauthError(data.error || 'Google sign-in failed');
-            setGoogleLoading(false);
-            return;
-          }
-          // Auth cookies are set — navigate to dashboard
-          window.location.href = '/mobile';
-        } catch {
-          setOauthError('Google sign-in failed. Please try again.');
-          setGoogleLoading(false);
-        }
-      };
-      win.__onGoogleError = (err: string) => {
-        if (err === 'cancelled') {
-          setGoogleLoading(false);
-          return;
-        }
-        setOauthError(`Google sign-in error: ${err}`);
-        setGoogleLoading(false);
-      };
-      native.googleSignIn();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const g = (window as any).google;
+
+    if (!g?.accounts?.id) {
+      // GIS not loaded yet — fallback
+      setOauthError('Google sign-in is loading. Please try again.');
+      setGoogleLoading(false);
       return;
     }
 
-    // Fallback: redirect flow (for non-native or desktop)
-    window.location.href = '/api/auth/google-redirect?platform=android&returnScheme=curlysports';
+    // Handle the credential response from Google
+    const handleCredential = async (response: { credential: string }) => {
+      try {
+        const res = await fetch('/api/auth/google-token', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ credential: response.credential }),
+        });
+        const data = await res.json();
+        if (!res.ok || data.error) {
+          setOauthError(data.error || 'Google sign-in failed');
+          setGoogleLoading(false);
+          return;
+        }
+        // Auth cookies are set — navigate to dashboard
+        window.location.href = '/mobile';
+      } catch {
+        setOauthError('Google sign-in failed. Please try again.');
+        setGoogleLoading(false);
+      }
+    };
+
+    // Initialize GIS
+    g.accounts.id.initialize({
+      client_id: CLIENT_ID,
+      callback: handleCredential,
+      auto_select: false,
+      cancel_on_tap_outside: true,
+      context: 'signin',
+      ux_mode: 'popup',
+    });
+
+    // Try One Tap first — shows a small popup overlay on the page
+    g.accounts.id.prompt((notification: { isNotDisplayed: () => boolean; isSkippedMoment: () => boolean; getNotDisplayedReason: () => string }) => {
+      if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+        // One Tap not available — use the popup button flow
+        // Create a temporary container for the Google rendered button
+        const container = document.createElement('div');
+        container.style.position = 'fixed';
+        container.style.top = '0';
+        container.style.left = '0';
+        container.style.width = '100%';
+        container.style.height = '100%';
+        container.style.zIndex = '99999';
+        container.style.background = 'rgba(0,0,0,0.5)';
+        container.style.display = 'flex';
+        container.style.alignItems = 'center';
+        container.style.justifyContent = 'center';
+        document.body.appendChild(container);
+
+        // Close on background click
+        container.addEventListener('click', (e) => {
+          if (e.target === container) {
+            container.remove();
+            setGoogleLoading(false);
+          }
+        });
+
+        const btnDiv = document.createElement('div');
+        btnDiv.style.background = 'white';
+        btnDiv.style.borderRadius = '16px';
+        btnDiv.style.padding = '32px 24px';
+        btnDiv.style.minWidth = '280px';
+        btnDiv.style.textAlign = 'center';
+        container.appendChild(btnDiv);
+
+        const title = document.createElement('div');
+        title.textContent = 'Sign in with Google';
+        title.style.fontFamily = 'var(--display)';
+        title.style.fontSize = '18px';
+        title.style.fontWeight = '700';
+        title.style.marginBottom = '20px';
+        title.style.color = '#1a1a1a';
+        btnDiv.appendChild(title);
+
+        const gBtn = document.createElement('div');
+        btnDiv.appendChild(gBtn);
+
+        g.accounts.id.renderButton(gBtn, {
+          theme: 'outline',
+          size: 'large',
+          width: 260,
+          text: 'signin_with',
+          shape: 'pill',
+        });
+
+        // Clean up container when auth completes
+        const origCallback = handleCredential;
+        g.accounts.id.initialize({
+          client_id: CLIENT_ID,
+          callback: async (resp: { credential: string }) => {
+            container.remove();
+            await origCallback(resp);
+          },
+          auto_select: false,
+          ux_mode: 'popup',
+        });
+        g.accounts.id.renderButton(gBtn, {
+          theme: 'outline',
+          size: 'large',
+          width: 260,
+          text: 'signin_with',
+          shape: 'pill',
+        });
+      }
+    });
   }
 
   // Detect Google OAuth errors from callback redirect
