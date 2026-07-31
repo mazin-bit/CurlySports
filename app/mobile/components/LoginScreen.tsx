@@ -209,13 +209,51 @@ export default function LoginScreen() {
   const [oauthError, setOauthError] = useState<string | null>(null);
   const [googleLoading, setGoogleLoading] = useState(false);
 
-  function handleGoogle() {
+  async function handleGoogle() {
     setOauthError(null);
     setGoogleLoading(true);
-    // Pass platform=android&returnScheme=curlysports so the auth callback
-    // redirects back to the app via curlysports:// deep link after Chrome auth.
-    // If auth stays in WebView, the callback detects CurlySportsApp UA and
-    // redirects normally to /mobile instead.
+
+    // Check if native Android bridge is available (shows native Google popup)
+    const native = (window as unknown as Record<string, unknown>).CurlyNative as
+      | { googleSignIn?: () => void; isNative?: boolean }
+      | undefined;
+
+    if (native?.isNative && native.googleSignIn) {
+      // Use Android Credential Manager — shows a native bottom sheet popup
+      // with the user's Google accounts. No Chrome, no redirect.
+      (window as unknown as Record<string, { __onGoogleIdToken: (token: string) => void; __onGoogleError: (err: string) => void }>).__onGoogleIdToken = async (idToken: string) => {
+        try {
+          const res = await fetch('/api/auth/google-token', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ idToken }),
+          });
+          const data = await res.json();
+          if (!res.ok || data.error) {
+            setOauthError(data.error || 'Google sign-in failed');
+            setGoogleLoading(false);
+            return;
+          }
+          // Auth cookies are set — navigate to dashboard
+          window.location.href = '/mobile';
+        } catch {
+          setOauthError('Google sign-in failed. Please try again.');
+          setGoogleLoading(false);
+        }
+      };
+      (window as unknown as Record<string, { __onGoogleError: (err: string) => void }>).__onGoogleError = (err: string) => {
+        if (err === 'cancelled') {
+          setGoogleLoading(false);
+          return;
+        }
+        setOauthError(`Google sign-in error: ${err}`);
+        setGoogleLoading(false);
+      };
+      native.googleSignIn();
+      return;
+    }
+
+    // Fallback: redirect flow (for non-native or desktop)
     window.location.href = '/api/auth/google-redirect?platform=android&returnScheme=curlysports';
   }
 
