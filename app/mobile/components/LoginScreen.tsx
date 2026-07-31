@@ -221,7 +221,8 @@ export default function LoginScreen() {
     if (native?.isNative && native.googleSignIn) {
       // Use Android Credential Manager — shows a native bottom sheet popup
       // with the user's Google accounts. No Chrome, no redirect.
-      (window as unknown as Record<string, { __onGoogleIdToken: (token: string) => void; __onGoogleError: (err: string) => void }>).__onGoogleIdToken = async (idToken: string) => {
+      const win = window as Record<string, unknown>;
+      win.__onGoogleIdToken = async (idToken: string) => {
         try {
           const res = await fetch('/api/auth/google-token', {
             method: 'POST',
@@ -241,7 +242,7 @@ export default function LoginScreen() {
           setGoogleLoading(false);
         }
       };
-      (window as unknown as Record<string, { __onGoogleError: (err: string) => void }>).__onGoogleError = (err: string) => {
+      win.__onGoogleError = (err: string) => {
         if (err === 'cancelled') {
           setGoogleLoading(false);
           return;
