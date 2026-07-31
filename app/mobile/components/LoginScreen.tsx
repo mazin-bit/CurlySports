@@ -214,14 +214,14 @@ export default function LoginScreen() {
     setGoogleLoading(true);
 
     // Check if running in the native Android app with Google Sign-In bridge
-    const native = (window as Record<string, unknown>).CurlyNative as
+    const native = (window as unknown as Record<string, unknown>).CurlyNative as
       | { isNative?: boolean; googleSignIn?: () => void }
       | undefined;
 
     if (native?.isNative && native.googleSignIn) {
       // Use native Android Credential Manager for Google Sign-In.
       // Shows a native Google popup inside the app — no Chrome, no redirect.
-      (window as Record<string, unknown>).__onGoogleIdToken = async (idToken: string) => {
+      (window as unknown as Record<string, unknown>).__onGoogleIdToken = async (idToken: string) => {
         try {
           const res = await fetch('/api/auth/google-token', {
             method: 'POST',
