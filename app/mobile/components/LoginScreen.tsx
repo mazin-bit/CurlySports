@@ -237,7 +237,7 @@ export default function LoginScreen() {
           setGoogleLoading(false);
         }
       };
-      (window as Record<string, unknown>).__onGoogleError = (msg: string) => {
+      (window as unknown as Record<string, unknown>).__onGoogleError = (msg: string) => {
         if (msg !== 'cancelled') {
           setOauthError(`Google sign-in failed: ${msg}`);
         }
