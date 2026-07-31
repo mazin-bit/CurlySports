@@ -212,26 +212,10 @@ export default function LoginScreen() {
   function handleGoogle() {
     setOauthError(null);
     setGoogleLoading(true);
-
-    const native = (window as unknown as Record<string, unknown>).CurlyNative as
-      | { isNative?: boolean; openAuthUrl?: (url: string) => void }
-      | undefined;
-
-    // Build the Google OAuth URL with deep link params so the callback
-    // redirects back to the app via curlysports:// scheme after auth.
-    const authUrl = `${window.location.origin}/api/auth/google-redirect?platform=android&returnScheme=curlysports`;
-
-    if (native?.isNative && native.openAuthUrl) {
-      // Open in Chrome Custom Tab (looks in-app, Google allows it).
-      // After auth, callback redirects to curlysports://auth-callback?code=OTC
-      // which Android catches and exchanges for auth cookies in the WebView.
-      native.openAuthUrl(authUrl);
-      // Reset loading after a delay — user may cancel the tab
-      setTimeout(() => setGoogleLoading(false), 3000);
-    } else {
-      // Fallback for non-native (regular browser)
-      window.location.href = authUrl;
-    }
+    // Navigate within the WebView to start Google OAuth.
+    // The WebView keeps google.com and supabase.co URLs inside (no Chrome).
+    // After auth, callback redirects back to /mobile.
+    window.location.href = '/api/auth/google-redirect';
   }
 
   // Detect Google OAuth errors from callback redirect
