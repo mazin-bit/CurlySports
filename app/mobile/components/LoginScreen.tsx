@@ -208,107 +208,14 @@ export default function LoginScreen() {
   const { login, signup, authError, clearAuthError, needsVerification } = useAuth();
   const [oauthError, setOauthError] = useState<string | null>(null);
   const [googleLoading, setGoogleLoading] = useState(false);
-  const googleBtnRef = useRef<HTMLDivElement | null>(null);
-  const gisLoadedRef = useRef(false);
-
-  // Load Google Identity Services script and render the sign-in button
-  useEffect(() => {
-    if (gisLoadedRef.current) return;
-    gisLoadedRef.current = true;
-
-    const script = document.createElement('script');
-    script.src = 'https://accounts.google.com/gsi/client';
-    script.async = true;
-    script.defer = true;
-    script.onload = () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const google = (window as any).google;
-      if (!google?.accounts?.id) return;
-
-      google.accounts.id.initialize({
-        client_id: '512124239392-velrug04ps35ihhig7spbe3fv4nqh103.apps.googleusercontent.com',
-        callback: handleGoogleCredential,
-        auto_select: false,
-        cancel_on_tap_outside: true,
-      });
-
-      // Render the hidden Google button (we trigger it from our styled button)
-      if (googleBtnRef.current) {
-        google.accounts.id.renderButton(googleBtnRef.current, {
-          type: 'standard',
-          theme: 'outline',
-          size: 'large',
-          width: 300,
-        });
-      }
-    };
-    document.head.appendChild(script);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Handle the credential response from Google Identity Services
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async function handleGoogleCredential(response: any) {
-    if (!response?.credential) {
-      setOauthError('Google sign-in was cancelled');
-      setGoogleLoading(false);
-      return;
-    }
-
-    setGoogleLoading(true);
-    setOauthError(null);
-
-    try {
-      const res = await fetch('/api/auth/google-token', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ credential: response.credential }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok || !data.success) {
-        const messages: Record<string, string> = {
-          google_token_failed: 'Google sign-in failed. Please try again.',
-          account_suspended: 'This account has been suspended',
-          auth_failed: 'Sign-in failed. Please try again.',
-        };
-        setOauthError(messages[data.error] || data.error || 'Sign-in failed');
-        setGoogleLoading(false);
-        return;
-      }
-
-      // Auth cookies are set by the response. Navigate to dashboard.
-      window.location.href = '/mobile';
-    } catch {
-      setOauthError('Network error. Please try again.');
-      setGoogleLoading(false);
-    }
-  }
 
   function handleGoogle() {
     setOauthError(null);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const google = (window as any).google;
-    if (google?.accounts?.id) {
-      // Try One Tap prompt first
-      google.accounts.id.prompt((notification: { isNotDisplayed: () => boolean; isSkippedMoment: () => boolean }) => {
-        if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-          // One Tap not available — click the hidden rendered Google button
-          const btn = googleBtnRef.current?.querySelector('div[role="button"]') as HTMLElement
-            || googleBtnRef.current?.querySelector('iframe');
-          if (btn) {
-            btn.click();
-          } else {
-            // Last resort: redirect flow (stays in WebView since UA is modified)
-            window.location.href = '/api/auth/google-redirect';
-          }
-        }
-      });
-    } else {
-      // GIS not loaded — fallback to redirect flow
-      window.location.href = '/api/auth/google-redirect';
-    }
+    setGoogleLoading(true);
+    // Navigate to Google OAuth via server-side redirect.
+    // The Android WebView keeps Google/Supabase URLs inside the WebView,
+    // so the entire OAuth flow happens in-app without opening Chrome.
+    window.location.href = '/api/auth/google-redirect';
   }
 
   // Detect Google OAuth errors from callback redirect
@@ -560,32 +467,6 @@ export default function LoginScreen() {
           </button>
         ))}
       </div>
-
-      {/* Hidden Google Identity Services button container */}
-      <div ref={googleBtnRef} style={{ position: 'absolute', opacity: 0, pointerEvents: 'none', width: 0, height: 0, overflow: 'hidden' }} />
-
-      {/* Google sign-in loading overlay */}
-      {googleLoading && (
-        <div style={{
-          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 9999,
-          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16,
-        }}>
-          <div style={{
-            background: 'var(--bg)', borderRadius: 16, border: '2px solid var(--ink)',
-            padding: '28px 36px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14,
-            boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
-          }}>
-            <div style={{
-              width: 32, height: 32, border: '3px solid var(--ink)', borderTopColor: 'var(--lime)',
-              borderRadius: '50%', animation: 'spin 0.8s linear infinite',
-            }} />
-            <span style={{ fontFamily: 'var(--mono)', fontSize: 12, fontWeight: 700, color: 'var(--ink)', letterSpacing: '0.04em' }}>
-              SIGNING IN...
-            </span>
-          </div>
-          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-        </div>
-      )}
 
       {/* Google sign-in */}
       <>
