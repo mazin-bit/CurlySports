@@ -5,6 +5,7 @@ import { SportProvider } from "@/contexts/SportContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { PageViewTracker } from "@/components/PageViewTracker";
 import { Analytics } from "@vercel/analytics/next";
+import GlobalAnimations from "@/components/GlobalAnimations";
 
 const SITE_URL = "https://curlysports.com";
 
@@ -194,6 +195,7 @@ export default function RootLayout({
             <SportProvider>{children}</SportProvider>
           </LanguageProvider>
         </SWRProvider>
+        <GlobalAnimations />
         <PageViewTracker />
         <Analytics />
       </body>

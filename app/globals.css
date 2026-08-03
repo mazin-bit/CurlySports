@@ -1366,3 +1366,195 @@ html[lang="hi"] {
 .share-buttons[data-compact] .share-btn span {
   display: none;
 }
+
+/* ========== GLOBAL INTERACTIVE ANIMATIONS ========== */
+
+/* Custom cursor */
+.g-custom-cursor {
+  position: fixed;
+  pointer-events: none;
+  z-index: 10000;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid var(--accent, #c8ff3d);
+  background: transparent;
+  transition: width 0.3s cubic-bezier(.22,1,.36,1), height 0.3s cubic-bezier(.22,1,.36,1),
+              background 0.3s, border-color 0.3s, transform 0.15s;
+  will-change: transform;
+  mix-blend-mode: difference;
+}
+
+/* Card corner peel */
+.g-card-peel {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 0;
+  height: 0;
+  background: linear-gradient(135deg, transparent 50%, var(--accent, #c8ff3d) 50%);
+  border-radius: 0 0 inherit 0;
+  transition: width 0.35s cubic-bezier(.22,1,.36,1), height 0.35s cubic-bezier(.22,1,.36,1);
+  pointer-events: none;
+  z-index: 2;
+  opacity: 0.7;
+}
+
+/* Scroll progress bar */
+.g-scroll-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 3px;
+  width: 0%;
+  background: linear-gradient(90deg, var(--accent, #c8ff3d), var(--orange, #ff5b3d));
+  z-index: 10001;
+  pointer-events: none;
+  transition: width 0.1s linear;
+}
+
+/* Shockwave ring */
+.g-shockwave-ring {
+  position: absolute;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  border: 2px solid var(--accent, #c8ff3d);
+  pointer-events: none;
+  z-index: 10;
+  transform: translate(-50%, -50%);
+  animation: g-shockwaveExpand 0.85s cubic-bezier(0, 0.6, 0.3, 1) forwards;
+}
+@keyframes g-shockwaveExpand {
+  0% { width: 0; height: 0; opacity: 0.8; border-width: 3px; }
+  100% { width: 500px; height: 500px; opacity: 0; border-width: 1px; }
+}
+
+/* ── Confetti particle ── */
+.g-confetti-particle {
+  position: absolute;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+/* ── Elastic hover bounce ── */
+.g-elastic-bounce {
+  transition: transform 0.5s cubic-bezier(.22, 1.4, .36, 1) !important;
+}
+.g-elastic-bounce:hover {
+  transform: scale(1.05) !important;
+}
+.g-elastic-bounce:active {
+  transform: scale(0.97) !important;
+  transition-duration: 0.1s !important;
+}
+
+/* ── Image parallax ── */
+.g-img-parallax {
+  transition: transform 0.3s ease-out;
+  transform: translate(var(--img-px, 0), var(--img-py, 0)) scale(1.04);
+}
+
+/* ── Hover ripple ring ── */
+.g-hover-ripple {
+  position: absolute;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(200, 255, 61, 0.25) 0%, transparent 70%);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 1;
+  animation: g-rippleExpand 0.65s cubic-bezier(0, 0.5, 0.3, 1) forwards;
+}
+@keyframes g-rippleExpand {
+  0% { width: 0; height: 0; opacity: 1; }
+  100% { width: 300px; height: 300px; opacity: 0; }
+}
+
+/* ── Footer dramatic reveal ── */
+.g-footer-dramatic {
+  filter: blur(6px);
+  opacity: 0.3;
+  transform: scale(0.96) translateY(20px);
+  transition: filter 0.8s ease, opacity 0.8s ease, transform 0.8s cubic-bezier(.22, 1, .36, 1);
+}
+.g-footer-dramatic.g-footer-revealed {
+  filter: blur(0);
+  opacity: 1;
+  transform: scale(1) translateY(0);
+}
+
+/* ── Charge ring (click-and-hold) ── */
+.g-charge-ring {
+  position: fixed;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  border: 2px solid var(--accent, #c8ff3d);
+  pointer-events: none;
+  z-index: 10001;
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  will-change: width, height, opacity;
+  box-sizing: border-box;
+}
+.g-charge-ring.g-charge-pulse {
+  animation: g-chargePulse 0.4s ease-in-out infinite alternate;
+}
+@keyframes g-chargePulse {
+  0% { box-shadow: 0 0 8px rgba(200, 255, 61, 0.4); transform: translate(-50%, -50%) scale(1); }
+  100% { box-shadow: 0 0 20px rgba(200, 255, 61, 0.7); transform: translate(-50%, -50%) scale(1.15); }
+}
+
+/* ── Section gradient follow ── */
+[style*="--gf-x"]::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    600px circle at var(--gf-x, 50%) var(--gf-y, 50%),
+    rgba(200, 255, 61, 0.03) 0%,
+    transparent 60%
+  );
+  pointer-events: none;
+  z-index: 0;
+  transition: background 0.2s ease;
+}
+
+/* Hide on touch devices */
+@media (hover: none) {
+  .g-custom-cursor,
+  .g-card-peel,
+  .g-shockwave-ring,
+  .g-confetti-particle,
+  .g-hover-ripple,
+  .g-charge-ring { display: none !important; }
+  .g-elastic-bounce { transition: none !important; }
+  .g-elastic-bounce:hover { transform: none !important; }
+  .g-footer-dramatic { filter: none; opacity: 1; transform: none; }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .g-custom-cursor,
+  .g-card-peel,
+  .g-shockwave-ring,
+  .g-scroll-progress,
+  .g-confetti-particle,
+  .g-hover-ripple,
+  .g-charge-ring { display: none !important; }
+  .g-elastic-bounce { transition: none !important; }
+  .g-elastic-bounce:hover { transform: none !important; }
+  .g-footer-dramatic { filter: none; opacity: 1; transform: none; transition: none; }
+  .g-img-parallax { transform: none; transition: none; }
+}
+
+/* Mobile — hide cursor effects */
+@media (max-width: 700px) {
+  .g-custom-cursor { display: none !important; }
+  .g-shockwave-ring { display: none; }
+  .g-confetti-particle { display: none !important; }
+  .g-hover-ripple { display: none; }
+  .g-charge-ring { display: none !important; }
+}

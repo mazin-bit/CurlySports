@@ -1,8 +1,10 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import Lenis from "lenis";
 import "./landing.css";
-import { Activity, TrendingUp, Target, MapPin, MessageSquareMore, Zap, Shield, Globe, Trophy } from "lucide-react";
+import { Target, MapPin, Zap, Shield, Globe, Trophy, Activity, TrendingUp, MessageSquareMore } from "lucide-react";
+import PhoneMockup from "@/components/PhoneMockup";
 
 /* ── Sport card data ─────────────────────────────── */
 const SPORT_CARDS = [
@@ -53,8 +55,8 @@ const SECTION_ORDER = ["hero", "about", "preview", "different", "founder", "deba
 export default function LandingPage() {
   const rootRef = useRef<HTMLDivElement>(null);
   const [activeSection, setActiveSection] = useState("hero");
-
-  // Smooth scroll to section
+  const [navFloating, setNavFloating] = useState(false);
+  // Smooth scroll to section (Lenis handles the smooth physics)
   const scrollTo = (e: React.MouseEvent, id: string) => {
     e.preventDefault();
     const section = document.getElementById(id);
@@ -64,19 +66,52 @@ export default function LandingPage() {
     }
   };
 
-  /* Scroll reveal + active section tracking */
+  /* ── Lenis smooth scroll + reveal + parallax + interactions ── */
   useEffect(() => {
     const el = rootRef.current;
     if (!el) return;
+
+    // ── Lenis smooth scroll ──
+    const lenis = new Lenis({
+      duration: 1.2,
+      easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      touchMultiplier: 2,
+      infinite: false,
+    });
+
+    function raf(time: number) {
+      lenis.raf(time);
+      requestAnimationFrame(raf);
+    }
+    requestAnimationFrame(raf);
+
+    // ── Scroll-driven reveal with IntersectionObserver ──
     const revealObs = new IntersectionObserver((entries) => {
       entries.forEach((e) => {
-        if (e.isIntersecting) { e.target.classList.add("in"); revealObs.unobserve(e.target); }
+        if (e.isIntersecting) {
+          e.target.classList.add("in");
+        } else {
+          e.target.classList.remove("in");
+        }
       });
     }, { threshold: 0.1 });
     el.querySelectorAll(".reveal").forEach((node) => revealObs.observe(node));
 
-    // Track active section on scroll
+    // ── Scroll-driven parallax + progress + velocity text skew ──
+    const parallaxEls = el.querySelectorAll("[data-parallax]");
+    const kickers = el.querySelectorAll<HTMLElement>(".l-kicker");
+    let lastScrollY = window.scrollY;
+    let scrollVelocity = 0;
+
     const onScroll = () => {
+      const scrollY = window.scrollY;
+      const docH = document.documentElement.scrollHeight - window.innerHeight;
+      const progress = docH > 0 ? scrollY / docH : 0;
+
+      // Floating nav
+      setNavFloating(scrollY > 60);
+
+      // Active section detection
       let current = SECTION_ORDER[0];
       for (const id of SECTION_ORDER) {
         const section = document.getElementById(id);
@@ -86,10 +121,193 @@ export default function LandingPage() {
         }
       }
       setActiveSection(current);
+
+      // Parallax depth layers
+      parallaxEls.forEach((pel) => {
+        const speed = parseFloat((pel as HTMLElement).dataset.parallax || "0.15");
+        const rect = pel.getBoundingClientRect();
+        const offset = (rect.top - window.innerHeight / 2) * speed;
+        (pel as HTMLElement).style.transform = `translateY(${offset}px)`;
+      });
+
+      // Scroll velocity → text skew
+      scrollVelocity = scrollY - lastScrollY;
+      lastScrollY = scrollY;
+      const skew = Math.max(-4, Math.min(4, scrollVelocity * 0.15));
+      kickers.forEach((k) => {
+        k.style.transform = `skewX(${skew}deg)`;
+      });
     };
     window.addEventListener("scroll", onScroll, { passive: true });
 
-    return () => { revealObs.disconnect(); window.removeEventListener("scroll", onScroll); };
+    // Reset text skew when scrolling stops
+    let skewTimeout: ReturnType<typeof setTimeout>;
+    const onScrollEnd = () => {
+      clearTimeout(skewTimeout);
+      skewTimeout = setTimeout(() => {
+        kickers.forEach((k) => { k.style.transform = "skewX(0deg)"; });
+      }, 150);
+    };
+    window.addEventListener("scroll", onScrollEnd, { passive: true });
+
+    // ── Interactive 3D phone tilt with side edge lighting ──
+    const phone = document.getElementById("phone-mockup");
+    if (phone) {
+      const phoneParent = phone.closest(".l-hero-preview") as HTMLElement;
+      const sideLeft = phone.querySelector(".l-phone-side-left") as HTMLElement;
+      const sideRight = phone.querySelector(".l-phone-side-right") as HTMLElement;
+      const sideTop = phone.querySelector(".l-phone-side-top") as HTMLElement;
+      const sideBottom = phone.querySelector(".l-phone-side-bottom") as HTMLElement;
+
+      const onMouseMove = (e: MouseEvent) => {
+        if (!phoneParent) return;
+        const rect = phoneParent.getBoundingClientRect();
+        const x = (e.clientX - rect.left) / rect.width - 0.5;
+        const y = (e.clientY - rect.top) / rect.height - 0.5;
+        const rotateY = x * 30;
+        const rotateX = -y * 18;
+        phone.style.transform = `perspective(1000px) rotateY(${rotateY}deg) rotateX(${rotateX}deg) scale3d(1.02, 1.02, 1.02)`;
+
+        // Dynamic side edge lighting based on tilt direction
+        if (sideLeft) {
+          const leftLight = Math.max(0, -x) * 0.3;
+          sideLeft.style.background = `linear-gradient(180deg, rgba(255,255,255,${0.04 + leftLight}) 0%, rgba(30,30,34,1) 15%, rgba(42,42,47,1) 50%, rgba(26,26,30,1) 85%, rgba(255,255,255,${0.04 + leftLight}) 100%)`;
+        }
+        if (sideRight) {
+          const rightLight = Math.max(0, x) * 0.3;
+          sideRight.style.background = `linear-gradient(180deg, rgba(255,255,255,${0.04 + rightLight}) 0%, rgba(30,30,34,1) 15%, rgba(42,42,47,1) 50%, rgba(26,26,30,1) 85%, rgba(255,255,255,${0.04 + rightLight}) 100%)`;
+        }
+        if (sideTop) {
+          const topLight = Math.max(0, -y) * 0.25;
+          sideTop.style.background = `linear-gradient(90deg, rgba(58,58,64,1) 0%, rgba(30,30,34,${1 - topLight}) 20%, rgba(255,255,255,${0.05 + topLight}) 50%, rgba(30,30,34,${1 - topLight}) 80%, rgba(58,58,64,1) 100%)`;
+        }
+        if (sideBottom) {
+          const bottomLight = Math.max(0, y) * 0.2;
+          sideBottom.style.background = `linear-gradient(90deg, rgba(58,58,64,1) 0%, rgba(30,30,34,${1 - bottomLight}) 20%, rgba(255,255,255,${0.04 + bottomLight}) 50%, rgba(30,30,34,${1 - bottomLight}) 80%, rgba(58,58,64,1) 100%)`;
+        }
+
+        const glow = phone.querySelector(".l-phone-glow") as HTMLElement;
+        if (glow) {
+          glow.style.left = `${50 + x * 30}%`;
+          glow.style.top = `${50 + y * 30}%`;
+        }
+      };
+      const onMouseLeave = () => {
+        phone.style.transform = "perspective(1000px) rotateY(-4deg) rotateX(2deg)";
+        const glow = phone.querySelector(".l-phone-glow") as HTMLElement;
+        if (glow) { glow.style.left = "50%"; glow.style.top = "50%"; }
+        // Reset side lighting
+        [sideLeft, sideRight, sideTop, sideBottom].forEach(s => { if (s) s.style.background = ""; });
+      };
+      if (phoneParent) {
+        phoneParent.addEventListener("mousemove", onMouseMove);
+        phoneParent.addEventListener("mouseleave", onMouseLeave);
+      }
+    }
+
+    // ── Global mouse-interactive 3D tilt on all tiltable cards ──
+    const tiltCleanups: (() => void)[] = [];
+    const tiltCards = el.querySelectorAll<HTMLElement>(
+      ".l-feat-card, .l-news-card, .l-debate-post, .l-download-feat, .l-preview-mockup, .l-founder-portrait"
+    );
+    tiltCards.forEach((card) => {
+      card.style.transition = "transform 0.35s cubic-bezier(.22,1,.36,1)";
+      card.style.willChange = "transform";
+      const onMove = (e: MouseEvent) => {
+        const rect = card.getBoundingClientRect();
+        const x = (e.clientX - rect.left) / rect.width - 0.5;
+        const y = (e.clientY - rect.top) / rect.height - 0.5;
+        const tiltX = -y * 12;
+        const tiltY = x * 12;
+        card.style.transform = `perspective(800px) rotateX(${tiltX}deg) rotateY(${tiltY}deg) scale(1.03)`;
+      };
+      const onLeave = () => {
+        card.style.transform = "perspective(800px) rotateX(0) rotateY(0) scale(1)";
+      };
+      card.addEventListener("mousemove", onMove);
+      card.addEventListener("mouseleave", onLeave);
+      tiltCleanups.push(() => {
+        card.removeEventListener("mousemove", onMove);
+        card.removeEventListener("mouseleave", onLeave);
+      });
+    });
+
+    // ── Global cursor spotlight ──
+    const spotlight = document.createElement("div");
+    spotlight.className = "cursor-spotlight";
+    el.appendChild(spotlight);
+    const onGlobalMove = (e: MouseEvent) => {
+      spotlight.style.left = `${e.pageX}px`;
+      spotlight.style.top = `${e.pageY}px`;
+      spotlight.style.opacity = "1";
+    };
+    const onGlobalLeave = () => { spotlight.style.opacity = "0"; };
+    el.addEventListener("mousemove", onGlobalMove);
+    el.addEventListener("mouseleave", onGlobalLeave);
+
+    // ── Magnetic hover on CTA buttons ──
+    const magBtns = el.querySelectorAll<HTMLElement>(".l-btn-orange, .l-btn-lime");
+    const magCleanups: (() => void)[] = [];
+    magBtns.forEach((btn) => {
+      const onBtnMove = (e: MouseEvent) => {
+        const rect = btn.getBoundingClientRect();
+        const x = e.clientX - rect.left - rect.width / 2;
+        const y = e.clientY - rect.top - rect.height / 2;
+        btn.style.transform = `translate(${x * 0.25}px, ${y * 0.25}px) scale(1.05)`;
+        btn.style.transition = "transform 0.2s ease";
+      };
+      const onBtnLeave = () => {
+        btn.style.transform = "translate(0,0) scale(1)";
+        btn.style.transition = "transform 0.4s cubic-bezier(.22,1,.36,1)";
+      };
+      btn.addEventListener("mousemove", onBtnMove);
+      btn.addEventListener("mouseleave", onBtnLeave);
+      magCleanups.push(() => {
+        btn.removeEventListener("mousemove", onBtnMove);
+        btn.removeEventListener("mouseleave", onBtnLeave);
+      });
+    });
+
+    // ── Scroll-driven counter animation for stat numbers ──
+    const counterObs = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          const el = entry.target as HTMLElement;
+          const target = el.dataset.countTo;
+          if (!target || el.dataset.counted === "true") return;
+          el.dataset.counted = "true";
+          const end = parseInt(target.replace(/[^0-9]/g, ""), 10);
+          const suffix = target.replace(/[0-9]/g, "");
+          if (isNaN(end)) return;
+          const duration = 1200;
+          const start = performance.now();
+          const step = (now: number) => {
+            const t = Math.min(1, (now - start) / duration);
+            const eased = 1 - Math.pow(1 - t, 3);
+            el.textContent = `${Math.round(eased * end)}${suffix}`;
+            if (t < 1) requestAnimationFrame(step);
+          };
+          requestAnimationFrame(step);
+        } else {
+          (entry.target as HTMLElement).dataset.counted = "";
+        }
+      });
+    }, { threshold: 0.5 });
+    el.querySelectorAll("[data-count-to]").forEach((n) => counterObs.observe(n));
+
+    return () => {
+      lenis.destroy();
+      revealObs.disconnect();
+      counterObs.disconnect();
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("scroll", onScrollEnd);
+      clearTimeout(skewTimeout);
+      tiltCleanups.forEach(fn => fn());
+      magCleanups.forEach(fn => fn());
+      el.removeEventListener("mousemove", onGlobalMove);
+      el.removeEventListener("mouseleave", onGlobalLeave);
+      spotlight.remove();
+    };
   }, []);
 
   return (
@@ -150,7 +368,7 @@ export default function LandingPage() {
       </svg>
 
       {/* ── Nav ───────────────────────────────────── */}
-      <nav className="l-nav">
+      <nav className={`l-nav${navFloating ? " l-nav-floating" : ""}`}>
         <div className="l-nav-inner">
           <a href="/" className="l-logo">
             <div className="l-logo-mark">
@@ -184,14 +402,13 @@ export default function LandingPage() {
               <a href="/login" className="l-live-more">Sign in →</a>
             </div>
 
-            {/* Headline */}
+            {/* Headline — split-text clip-path reveal */}
             <h1 className="l-hero-title">
-              Live scores.<br />
-              Deep stats.<br />
-              <span className="l-underline-word">Real debates.</span>
+              <span className="l-clip-line" style={{ animationDelay: "0.2s" }}>Live scores.</span>
+              <span className="l-clip-line" style={{ animationDelay: "0.4s" }}>Deep stats.</span>
+              <span className="l-clip-line" style={{ animationDelay: "0.6s" }}><span className="l-underline-word">Real debates.</span></span>
             </h1>
 
-            {/* Feature cards */}
             <div className="l-hero-feats">
               <div className="l-feat-card fc-live">
                 <div className="l-feat-icon-box"><Activity size={24} strokeWidth={2} /></div>
@@ -252,60 +469,23 @@ export default function LandingPage() {
               </div>
             </div>
           </div>
-          {/* RIGHT: App preview */}
+          {/* RIGHT: iPhone 17 Mockup — Interactive */}
           <div className="l-hero-preview">
-            <div className="l-preview-card">
-              <div className="l-preview-header">
-                <span className="l-live-dot"></span>
-                <span className="l-live-label">LIVE SCORES</span>
+            <div className="l-phone-mockup" id="phone-mockup">
+              <div className="l-phone-side-left"></div>
+              <div className="l-phone-side-right"></div>
+              <div className="l-phone-side-top"></div>
+              <div className="l-phone-side-bottom"></div>
+              <div className="l-phone-frame">
+                <div className="l-phone-screen">
+                  <div className="l-phone-island"></div>
+                  <PhoneMockup />
+                </div>
+                <div className="l-phone-home-bar"></div>
               </div>
-              <div className="l-match">
-                <div className="l-match-teams">
-                  <span className="l-abbr">MUN</span>
-                  <span className="l-score">2</span>
-                  <span className="l-vs">–</span>
-                  <span className="l-score">1</span>
-                  <span className="l-abbr r">CHE</span>
-                </div>
-                <div className="l-match-foot">
-                  <div className="l-progress-bar"><div className="l-progress-fill" style={{width:"74%"}}></div></div>
-                  <span>74&apos;</span>
-                  <span className="l-sport-tag">EPL</span>
-                </div>
-              </div>
-              <div className="l-match">
-                <div className="l-match-teams">
-                  <span className="l-abbr">LAL</span>
-                  <span className="l-score">112</span>
-                  <span className="l-vs">–</span>
-                  <span className="l-score">98</span>
-                  <span className="l-abbr r">BOS</span>
-                </div>
-                <div className="l-match-foot">
-                  <div className="l-progress-bar"><div className="l-progress-fill" style={{width:"88%"}}></div></div>
-                  <span>Q4 · 3:42</span>
-                  <span className="l-sport-tag">NBA</span>
-                </div>
-              </div>
-              <div className="l-match">
-                <div className="l-match-teams">
-                  <span className="l-abbr">ARS</span>
-                  <span className="l-score">3</span>
-                  <span className="l-vs">–</span>
-                  <span className="l-score">2</span>
-                  <span className="l-abbr r">LIV</span>
-                </div>
-                <div className="l-match-foot">
-                  <div className="l-progress-bar"><div className="l-progress-fill" style={{width:"51%"}}></div></div>
-                  <span>51&apos;</span>
-                  <span className="l-sport-tag">EPL</span>
-                </div>
-              </div>
-              <a href="/live-scores" className="l-preview-cta">View all live scores →</a>
+              <div className="l-phone-glow"></div>
+              <div className="l-phone-reflection"></div>
             </div>
-            <div className="l-preview-chip chip-debates"><Activity size={13} strokeWidth={2} /><span>Live Scores</span></div>
-            <div className="l-preview-chip chip-stats"><TrendingUp size={13} strokeWidth={2} /><span>Deep Stats</span></div>
-            <div className="l-preview-chip chip-predict"><Target size={13} strokeWidth={2} /><span>Predictions</span></div>
           </div>
         </div>
       </div>
@@ -334,14 +514,34 @@ export default function LandingPage() {
             </span>
           ))}
         </div>
+        <div className="l-ticker-track l-ticker-reverse">
+          {[0, 1].map((dup) => (
+            <span key={dup} style={{ display: "contents" }}>
+              <span className="l-ticker-item"><span className="live-dot" /><span className="score">ARS 2 - 1 CHE</span></span>
+              <span className="l-ticker-item" style={{ opacity: 0.4 }}>·</span>
+              <span className="l-ticker-item"><span className="live-dot" /><span className="score">BAR 4 - 1 RMA</span></span>
+              <span className="l-ticker-item" style={{ opacity: 0.4 }}>·</span>
+              <span className="l-ticker-item"><span className="score">LAL 112 - 108 GSW</span></span>
+              <span className="l-ticker-item" style={{ opacity: 0.4 }}>·</span>
+              <span className="l-ticker-item"><span className="score">VER P1 · HAM P2</span></span>
+              <span className="l-ticker-item" style={{ opacity: 0.4 }}>·</span>
+              <span className="l-ticker-item"><span className="live-dot" /><span className="score">IND 287/4 v AUS</span></span>
+              <span className="l-ticker-item" style={{ opacity: 0.4 }}>·</span>
+              <span className="l-ticker-item"><span className="score">KC 24 - 21 SF</span></span>
+              <span className="l-ticker-item" style={{ opacity: 0.4 }}>·</span>
+              <span className="l-ticker-item"><span className="score">DJO 6-4 7-5 ALZ</span></span>
+              <span className="l-ticker-item" style={{ opacity: 0.4 }}>·</span>
+            </span>
+          ))}
+        </div>
       </div>
 
       {/* ── Problem ───────────────────────────────── */}
-      <div className="l-problem reveal" id="about">
+      <div className="l-problem reveal reveal-split" id="about" style={{position:"relative"}}>
         <span className="l-section-tag"><span className="num">01</span> · The problem</span>
         <div className="l-quote-block">
           <p className="l-quote-text">
-            Right now, sports fans either get <span className="strike">basic scores</span> or they get <span className="circle">overloaded with stats nobody understands</span>. There&apos;s almost nothing in the middle that makes analytics both <span className="lime-bg">powerful</span> <em>and</em> enjoyable.
+            Right now, sports fans either get <span className="strike">basic scores</span> or they get <span className="circle">overloaded</span> with stats nobody understands. There&apos;s almost nothing in the middle that makes analytics both <span className="lime-bg">powerful</span> <em>and</em>&nbsp;enjoyable.
           </p>
           <div className="l-quote-source">
             <div className="photo">
@@ -353,11 +553,11 @@ export default function LandingPage() {
       </div>
 
       {/* ── Sport Cards ───────────────────────────── */}
-      <div className="l-sports-section" id="sports">
-        <div className="l-sports-head reveal">
+      <div className="l-sports-section" id="sports" style={{position:"relative"}}>
+        <div className="l-sports-head reveal reveal-perspective">
           <div className="l-sports-head-l">
             <span className="l-section-tag"><span className="num">02</span> · Every sport, every league</span>
-            <h2 className="l-kicker">Curly knows<br />them all.</h2>
+            <h2 className="l-kicker"><span className="l-kicker-line">Curly knows</span><span className="l-kicker-line">them&nbsp;all.</span></h2>
             <p className="l-lede">Football, basketball, NFL, tennis, baseball, F1 — same depth of stats, same playful interface. Hover a card to see what data we track.</p>
           </div>
           <a href="#preview" className="l-btn l-btn-dark">See sample stats ↓</a>
@@ -407,10 +607,10 @@ export default function LandingPage() {
       </div>
 
       {/* ── Platform Preview ──────────────────────── */}
-      <div className="l-preview-wrap" id="preview">
-        <div className="l-preview-section reveal">
+      <div className="l-preview-wrap" id="preview" style={{position:"relative"}}>
+        <div className="l-preview-section reveal reveal-cinematic">
           <span className="l-section-tag"><span className="num">03</span> · The platform</span>
-          <h2 className="l-kicker" style={{ maxWidth: 720 }}>Powerful stats, presented like you actually want to read them.</h2>
+          <h2 className="l-kicker"><span className="l-kicker-line">Powerful stats, presented like</span><span className="l-kicker-line">you actually want to read&nbsp;them.</span></h2>
           <p className="l-lede">A real-time dashboard with live scores, momentum charts, attack maps, player comparisons, debate threads — and 17 wild themes including a &quot;founder&apos;s bedroom&quot; mode.</p>
 
           <div className="l-preview-mockup">
@@ -436,14 +636,14 @@ export default function LandingPage() {
       </div>
 
       {/* ── Features ──────────────────────────────── */}
-      <div className="l-features reveal" id="different">
+      <div className="l-features reveal reveal-flip3d" id="different" style={{position:"relative"}}>
         <div className="l-section" style={{ padding: "96px 32px 120px" }}>
           <span className="l-section-tag"><span className="num">04</span> · What makes Curly different</span>
-          <h2 className="l-kicker" style={{ maxWidth: 720 }}>Four things every other<br />sports site gets wrong.</h2>
+          <h2 className="l-kicker"><span className="l-kicker-line">Four things every other</span><span className="l-kicker-line">sports site gets&nbsp;wrong.</span></h2>
           <div className="l-feat-grid">
             {[
               { cls: "f1", num: "01", title: "Analytics, but readable", desc: "xG, EPA, WAR — explained inline with friendly tooltips. No PhD required.", link: "Learn more", icon: <path d="M3 3v18h18M7 14V18M12 9v9M17 5v13" /> },
-              { cls: "f2", num: "02", title: "Debate like Reddit, with receipts", desc: "Post a hot take, back it up with one-tap stat embeds, watch the votes roll in.", link: "See debates", icon: <path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 8.4 8.4 0 0 1-3.4-.8L3 21l1.9-5.6a8.4 8.4 0 1 1 16.1-3.9z" /> },
+              { cls: "f2", num: "02", title: "Debates with receipts", desc: "Post a hot take, back it up with one-tap stat embeds, watch the votes roll in.", link: "See debates", icon: <path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 8.4 8.4 0 0 1-3.4-.8L3 21l1.9-5.6a8.4 8.4 0 1 1 16.1-3.9z" /> },
               { cls: "f3", num: "03", title: "Mini-games & trivia", desc: "Daily lineup quizzes, prediction games, and \"guess the player\" — all scored against your friends.", link: "Play now", icon: <path d="M6 4l16 8L6 20V4z" /> },
               { cls: "f4", num: "04", title: "17 wild themes", desc: 'Not just dark mode. "Stadium night", "Curly\'s bedroom", "Retro Teletext", and more.', link: "Try themes", icon: <><circle cx="12" cy="12" r="9"/><path d="M12 3v18M3 12h18" /></> },
             ].map(({ cls, num, title, desc, link, icon }) => (
@@ -463,8 +663,8 @@ export default function LandingPage() {
 
 
       {/* ── Founder ───────────────────────────────── */}
-      <div className="l-founder-wrap" id="founder">
-        <div className="l-founder reveal">
+      <div className="l-founder-wrap" id="founder" style={{position:"relative"}}>
+        <div className="l-founder reveal reveal-founder">
           <div className="l-founder-grid">
             <div className="l-founder-portrait">
               <span className="l-label-strip">Founder · Grade 9</span>
@@ -473,7 +673,7 @@ export default function LandingPage() {
             </div>
             <div>
               <span className="l-section-tag"><span className="num">05</span> · About the founder</span>
-              <h2 className="l-kicker">Meet Mazin —<br />the curly-haired<br />kid behind it all.</h2>
+              <h2 className="l-kicker"><span className="l-kicker-line">Meet Mazin —</span><span className="l-kicker-line">the curly-haired</span><span className="l-kicker-line">kid behind it&nbsp;all.</span></h2>
               <p className="l-founder-bio">
                 At 14, after his fifth screaming match with a tab full of broken stat pages, <strong>Mazin</strong> sketched the first version of Curly Sports on a literal napkin. The mascot? A cartoon version of himself — curls and all — because the website should feel like a friend, not a spreadsheet.
               </p>
@@ -493,14 +693,15 @@ export default function LandingPage() {
       </div>
 
       {/* ── Debate ────────────────────────────────── */}
-      <div className="l-debate-wrap" id="debates">
-        <div className="l-debate reveal">
+      <div className="l-debate-wrap" id="debates" style={{position:"relative"}}>
+        <div className="l-debate reveal reveal-cascade">
           <div className="l-debate-grid">
             <div>
               <span className="l-section-tag"><span className="num">06</span> · The debate floor</span>
               <h2 className="l-kicker">
-                Bring your<br />hot take.<br />
-                <span style={{ background: "var(--orange)", color: "var(--paper)", padding: "0 14px", borderRadius: 14, transform: "rotate(-2deg)", display: "inline-block" }}>Bring receipts.</span>
+                <span className="l-kicker-line">Bring your</span>
+                <span className="l-kicker-line">hot take.</span>
+                <span className="l-kicker-line"><span style={{ background: "var(--orange)", color: "var(--paper)", padding: "0 12px", borderRadius: 14, transform: "rotate(-2deg)", display: "inline", whiteSpace: "nowrap" }}>Bring receipts.</span></span>
               </h2>
               <p className="l-lede">A feed for the actually-good sports arguments. Every post lets you embed live stats, tag teams, and watch people vote in real time.</p>
               <div className="l-debate-btns">
@@ -568,12 +769,12 @@ export default function LandingPage() {
       </div>
 
       {/* ── News ──────────────────────────────────── */}
-      <div className="l-news reveal" id="news">
+      <div className="l-news reveal reveal-waterfall" id="news" style={{position:"relative"}}>
         <div className="l-section">
           <div className="l-news-head">
             <div>
               <span className="l-section-tag"><span className="num">07</span> · Today in sports</span>
-              <h2 className="l-kicker">Latest news,<br />Curly-curated.</h2>
+              <h2 className="l-kicker"><span className="l-kicker-line">Latest news,</span><span className="l-kicker-line">Curly-curated.</span></h2>
               <p className="l-lede">Stories that actually matter — pulled from the people who watched the game.</p>
             </div>
             <a href="/news" className="l-btn l-btn-dark">All stories →</a>
@@ -614,11 +815,11 @@ export default function LandingPage() {
       </div>
 
       {/* ── Final CTA ─────────────────────────────── */}
-      <div className="l-cta-final reveal" id="cta">
+      <div className="l-cta-final reveal reveal-glow" id="cta">
         <div className="l-cta-wrap">
-          <svg className="l-cta-star s1" viewBox="0 0 40 40"><use href="#star" /></svg>
-          <svg className="l-cta-star s2" viewBox="0 0 40 40"><use href="#star" /></svg>
-          <svg className="l-cta-star s3" viewBox="0 0 40 40"><use href="#star" /></svg>
+          <svg className="l-cta-star s1" viewBox="0 0 40 40" data-parallax="0.12"><use href="#star" /></svg>
+          <svg className="l-cta-star s2" viewBox="0 0 40 40" data-parallax="-0.08"><use href="#star" /></svg>
+          <svg className="l-cta-star s3" viewBox="0 0 40 40" data-parallax="0.18"><use href="#star" /></svg>
           <h2>
             Stop arguing<br />
             with <span className="l-stack-em">tab clutter.</span><br />
@@ -633,12 +834,12 @@ export default function LandingPage() {
       </div>
 
       {/* ── Download Section ──────────────────────── */}
-      <div className="l-download" id="download">
+      <div className="l-download reveal reveal-device" id="download" style={{position:"relative"}}>
         <div className="l-download-inner">
           <div className="l-section-tag"><span className="l-tag-dot" /><span>DOWNLOAD</span></div>
           <h2 className="l-kicker">
-            Your sports companion,<br />
-            <span style={{ color: "var(--ink-soft)" }}>always in your pocket.</span>
+            <span className="l-kicker-line">Your sports companion,</span>
+            <span className="l-kicker-line" style={{ color: "var(--ink-soft)" }}>always in your pocket.</span>
           </h2>
           <p className="l-lede">
             Live scores, deep stats, 150+ leagues, and hot debates —
