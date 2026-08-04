@@ -165,6 +165,7 @@ html:has(.landing-root) {
 .landing-root .l-kicker {
   font-family: var(--display); font-size: clamp(40px, 5.2vw, 72px);
   font-weight: 800; letter-spacing: -0.03em; line-height: 0.95; margin: 20px 0 16px;
+  overflow-wrap: normal; word-break: normal;
 }
 .landing-root .l-lede { font-size: 19px; color: var(--ink-soft); max-width: 640px; line-height: 1.5; }
 
@@ -2062,8 +2063,15 @@ html:has(.landing-root) {
 @media (max-width: 700px) {
   .landing-root .l-nav-links { display: none; }
   .landing-root .l-nav-inner { padding: 12px 16px; gap: 0; }
+  .landing-root .l-logo { font-size: 18px; }
   .landing-root .l-feat-grid { grid-template-columns: 1fr; }
   .landing-root .l-news-grid { grid-template-columns: 1fr; }
+  /* Hero feature cards */
+  .landing-root .l-hero-feats .l-feat-card { padding: 10px 14px; gap: 10px; }
+  .landing-root .l-hero-feats .l-feat-stat { font-size: 20px; }
+  .landing-root .l-hero-feats .l-feat-stat span { font-size: 8px; }
+  /* Kicker headings — prevent word breaks */
+  .landing-root .l-kicker { font-size: clamp(26px, 4.2vw, 44px); }
   .landing-root .l-section { padding: 56px 20px; }
   .landing-root .l-preview-section { padding: 48px 24px; margin: 0 12px; border-radius: 24px; }
   .landing-root .l-founder { padding: 48px 24px; margin: 0 12px; border-radius: 24px; }
@@ -2087,6 +2095,7 @@ html:has(.landing-root) {
   .landing-root footer { padding: 48px 20px 24px; }
   .landing-root .l-problem { padding: 72px 20px; }
   .landing-root .l-features { padding: 56px 20px 72px; }
+  .landing-root .l-features .l-section { padding: 56px 20px 72px !important; }
   .landing-root .l-news { padding: 56px 20px 48px; }
   .landing-root .l-sponsors-inner { padding: 16px 16px; gap: 12px; }
   .landing-root .l-sponsors-reach { display: none; }
@@ -2096,21 +2105,43 @@ html:has(.landing-root) {
   .landing-root .l-hero-preview { display: none; }
   .landing-root .l-hero { padding-top: 96px; padding-bottom: 48px; }
   .landing-root .l-hero-actions { flex-wrap: wrap; gap: 10px; }
-  .landing-root .l-hero-actions .l-btn { flex: 1; min-width: 140px; justify-content: center; }
+  .landing-root .l-hero-actions .l-btn { flex: 1; min-width: 130px; justify-content: center; }
+  /* Feature cards — responsive at tablet */
+  .landing-root .l-hero-feats .l-feat-stat { font-size: 20px; }
+  .landing-root .l-hero-feats .l-feat-stat span { font-size: 8px; }
 }
 @media (max-width: 480px) {
+  /* Nav — hide logo text on mobile, show only mascot */
   .landing-root .l-nav-inner { padding: 10px 14px; }
-  .landing-root .l-logo { font-size: 18px; }
-  .landing-root .l-logo-mark { width: 32px; height: 32px; }
-  .landing-root .l-nav-cta gap { gap: 6px; }
+  .landing-root .l-logo { font-size: 0; gap: 0; }
+  .landing-root .l-logo-mark { width: 34px; height: 34px; }
+  .landing-root .l-nav-cta { gap: 6px; flex-shrink: 0; }
+  .landing-root .l-nav-cta .l-btn { padding: 8px 14px; font-size: 12px; }
+  /* Buttons */
   .landing-root .l-btn { padding: 10px 16px; font-size: 13px; }
-  .landing-root .l-btn-lg { padding: 13px 22px; font-size: 14px; }
+  .landing-root .l-btn-lg { padding: 13px 20px; font-size: 14px; }
+  /* Hero */
   .landing-root .l-hero-grid { gap: 32px; }
-  .landing-root .l-hero-title { font-size: clamp(40px, 11vw, 72px); }
-  .landing-root .l-hero-live-bar { font-size: 11px; overflow: hidden; max-width: 100%; }
-  .landing-root .l-live-items { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .landing-root .l-hero-actions { gap: 8px; }
-  .landing-root .l-kicker { font-size: clamp(32px, 9vw, 56px); }
+  .landing-root .l-hero-title { font-size: clamp(36px, 10vw, 72px); overflow-wrap: normal; word-break: normal; }
+  /* Live bar — constrain to viewport */
+  .landing-root .l-hero-live-bar { font-size: 10px; overflow: hidden; max-width: calc(100vw - 28px); box-sizing: border-box; }
+  .landing-root .l-live-items { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0; }
+  /* Feature cards — prevent stat badges from clipping */
+  .landing-root .l-hero-feats .l-feat-card { padding: 10px 12px; gap: 8px; box-shadow: 3px 3px 0 var(--ink); }
+  .landing-root .l-hero-feats .l-feat-icon-box { width: 38px; height: 38px; border-radius: 10px; font-size: 20px; }
+  .landing-root .l-hero-feats .l-feat-name { font-size: 13px; }
+  .landing-root .l-hero-feats .l-feat-val { font-size: 10px; }
+  .landing-root .l-hero-feats .l-feat-stat { font-size: 18px; }
+  .landing-root .l-hero-feats .l-feat-stat span { font-size: 7px; letter-spacing: 0.05em; }
+  /* CTA buttons — stack vertically on small screens */
+  .landing-root .l-hero-actions { gap: 8px; flex-direction: column; width: 100%; }
+  .landing-root .l-hero-actions .l-btn { width: 100%; min-width: unset; justify-content: center; }
+  /* League chips */
+  .landing-root .l-hero-leagues { gap: 8px; }
+  .landing-root .l-leagues-pills { gap: 5px; }
+  .landing-root .l-leagues-pills span { font-size: 10px; padding: 3px 8px; }
+  /* Sections */
+  .landing-root .l-kicker { font-size: clamp(28px, 7.5vw, 56px); overflow-wrap: normal; word-break: normal; }
   .landing-root .l-lede { font-size: 16px; }
   .landing-root .l-section { padding: 48px 14px; }
   .landing-root .l-hero { padding-top: 88px; padding-bottom: 48px; }
@@ -2119,12 +2150,11 @@ html:has(.landing-root) {
   .landing-root .l-debate { padding: 32px 16px; margin: 40px 6px; border-radius: 18px; }
   .landing-root .l-founder-meta { grid-template-columns: 1fr 1fr; gap: 12px; }
   .landing-root .l-cta-final { padding: 52px 14px; }
-  .landing-root .l-cta-final h2 { font-size: clamp(44px, 13vw, 80px); }
+  .landing-root .l-cta-final h2 { font-size: clamp(36px, 10vw, 80px); overflow-wrap: normal; word-break: normal; }
   .landing-root .l-cta-final p { font-size: 16px; margin: 20px auto 28px; }
   .landing-root .l-cta-star { display: none; }
   .landing-root .l-download { padding: 52px 14px 40px; }
   .landing-root .l-download-img-wrap { max-height: 280px; }
-  /* chips removed */
   .landing-root .l-foot-grid { grid-template-columns: 1fr 1fr; gap: 20px; }
   .landing-root footer { padding: 40px 14px 20px; }
   .landing-root .l-foot-bottom { flex-direction: column; gap: 8px; align-items: flex-start; font-size: 11px; }
@@ -2132,6 +2162,7 @@ html:has(.landing-root) {
   .landing-root .l-problem { padding: 52px 14px; }
   .landing-root .l-quote-text { font-size: clamp(22px, 7vw, 36px); }
   .landing-root .l-features { padding: 48px 14px 56px; }
+  .landing-root .l-features .l-section { padding: 48px 14px 56px !important; }
   .landing-root .l-feat-card { min-height: 220px; padding: 20px; }
   .landing-root .l-feat-card h3 { font-size: 18px; }
   .landing-root .l-news { padding: 48px 14px 40px; }
@@ -2140,4 +2171,26 @@ html:has(.landing-root) {
   .landing-root .l-ticker-item { font-size: 11px; }
   .landing-root .l-sponsor-slot { min-width: 110px; padding: 8px 12px; }
   .landing-root .l-sponsor-div { display: none; }
+}
+/* Very small phones (iPhone SE, Galaxy S8) */
+@media (max-width: 360px) {
+  .landing-root .l-nav-inner { padding: 8px 10px; }
+  .landing-root .l-nav-cta .l-btn { padding: 6px 10px; font-size: 11px; }
+  .landing-root .l-hero { padding-top: 76px; padding-bottom: 36px; }
+  .landing-root .l-hero-title { font-size: clamp(32px, 9vw, 56px); }
+  .landing-root .l-hero-live-bar { font-size: 9px; max-width: calc(100vw - 20px); }
+  .landing-root .l-hero-feats .l-feat-card { padding: 8px 10px; gap: 6px; }
+  .landing-root .l-hero-feats .l-feat-icon-box { width: 32px; height: 32px; font-size: 16px; }
+  .landing-root .l-hero-feats .l-feat-name { font-size: 12px; }
+  .landing-root .l-hero-feats .l-feat-stat { font-size: 14px; }
+  .landing-root .l-hero-feats .l-feat-stat span { font-size: 6px; }
+  .landing-root .l-btn { padding: 8px 12px; font-size: 12px; }
+  .landing-root .l-btn-lg { padding: 10px 16px; font-size: 13px; }
+  .landing-root .l-kicker { font-size: clamp(24px, 7vw, 44px); }
+  .landing-root .l-lede { font-size: 14px; }
+  .landing-root .l-section { padding: 36px 10px; }
+  .landing-root .l-cta-final h2 { font-size: clamp(28px, 9vw, 60px); }
+  .landing-root .l-quote-text { font-size: clamp(18px, 6vw, 30px); }
+  .landing-root .l-foot-grid { grid-template-columns: 1fr; }
+  .landing-root .l-founder-meta { grid-template-columns: 1fr; gap: 10px; }
 }

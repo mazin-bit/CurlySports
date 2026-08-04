@@ -201,3 +201,13 @@
   .newsGrid > div:first-child { grid-column: span 1; }
   .newsGrid > div:first-child .newsImg { aspect-ratio: 16/9; }
 }
+@media (max-width: 480px) {
+  .featured { aspect-ratio: 16/10; min-height: 160px; }
+  .featuredContent { padding: 12px 14px 16px; }
+  .featuredTitle { font-size: 16px; }
+  .newsCard { border-radius: 12px; }
+  .newsBody { padding: 12px; gap: 6px; }
+  .newsTitle { font-size: 13px; }
+  .newsExcerpt { font-size: 12px; -webkit-line-clamp: 2; }
+  .newsMeta { font-size: 10px; }
+}

@@ -11,39 +11,322 @@ import { createClient } from "@/utils/supabase/client";
 
 type Mode = "login" | "signup" | "forgot" | "phone";
 
-/* ── Shared mascot left-panel ──────────────────────────────── */
+/* ── Stage panel — interactive holographic match card ──── */
 function Stage() {
+  const stageRef = useRef<HTMLDivElement>(null);
+  const innerRef = useRef<HTMLDivElement>(null);
+  const glareRef = useRef<HTMLDivElement>(null);
+  const [flipped, setFlipped] = useState(false);
+  const [phraseIdx, setPhraseIdx] = useState(0);
+
+  /* Drag state */
+  const dragRef = useRef({
+    dragging: false,
+    startX: 0, startY: 0,
+    offsetX: 0, offsetY: 0,
+    currentX: 0, currentY: 0,
+    velX: 0, velY: 0,
+    lastMoveX: 0, lastMoveY: 0,
+    lastMoveTime: 0,
+  });
+
+  const phrases = [
+    "The hot take was correct.",
+    "That goal was offside, actually.",
+    "Stats don\u2019t lie, fans do.",
+    "Your bracket, your rules.",
+    "Argue with data, not feelings.",
+    "Every match has a story.",
+  ];
+
+  useEffect(() => {
+    const iv = setInterval(() => setPhraseIdx((i) => (i + 1) % phrases.length), 3000);
+    return () => clearInterval(iv);
+  }, [phrases.length]);
+
+  /* 3D tilt on mouse move (only when not dragging) */
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    const d = dragRef.current;
+    if (d.dragging) return;
+    const inner = innerRef.current;
+    const glare = glareRef.current;
+    if (!inner) return;
+    const rect = inner.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width;
+    const y = (e.clientY - rect.top) / rect.height;
+    const rotY = (x - 0.5) * 25;
+    const rotX = (0.5 - y) * 25;
+    inner.style.transform = `rotateX(${rotX}deg) rotateY(${flipped ? 180 + rotY : rotY}deg) scale(1.04)`;
+    if (glare) {
+      glare.style.opacity = "1";
+      const angle = Math.atan2(y - 0.5, x - 0.5) * (180 / Math.PI);
+      glare.style.background = `
+        radial-gradient(circle at ${x * 100}% ${y * 100}%, rgba(200,255,61,0.45) 0%, rgba(255,140,50,0.3) 25%, rgba(160,80,220,0.25) 50%, transparent 70%),
+        linear-gradient(${angle}deg, rgba(200,255,61,0.2) 0%, rgba(255,140,50,0.15) 40%, rgba(160,80,220,0.2) 100%)
+      `;
+    }
+  }, [flipped]);
+
+  const handleMouseLeave = useCallback(() => {
+    const d = dragRef.current;
+    if (d.dragging) return;
+    const inner = innerRef.current;
+    const glare = glareRef.current;
+    if (inner) inner.style.transform = `rotateX(0) rotateY(${flipped ? 180 : 0}deg) scale(1)`;
+    if (glare) glare.style.opacity = "0";
+  }, [flipped]);
+
+  /* Double-click to flip */
+  const handleDoubleClick = useCallback(() => {
+    setFlipped(f => !f);
+    const inner = innerRef.current;
+    const glare = glareRef.current;
+    if (inner) inner.style.transform = `rotateX(0) rotateY(${!flipped ? 180 : 0}deg) scale(1)`;
+    if (glare) glare.style.opacity = "0";
+  }, [flipped]);
+
+  /* Drag handlers */
+  const handlePointerDown = useCallback((e: React.PointerEvent) => {
+    const d = dragRef.current;
+    const wrapper = (e.currentTarget as HTMLElement);
+    wrapper.setPointerCapture(e.pointerId);
+    d.dragging = true;
+    d.startX = e.clientX - d.currentX;
+    d.startY = e.clientY - d.currentY;
+    d.lastMoveX = e.clientX;
+    d.lastMoveY = e.clientY;
+    d.lastMoveTime = Date.now();
+    d.velX = 0;
+    d.velY = 0;
+    wrapper.style.cursor = "grabbing";
+    wrapper.style.transition = "none";
+  }, []);
+
+  const handlePointerMove = useCallback((e: React.PointerEvent) => {
+    const d = dragRef.current;
+    if (!d.dragging) return;
+    const now = Date.now();
+    const dt = Math.max(now - d.lastMoveTime, 1);
+    const newX = e.clientX - d.startX;
+    const newY = e.clientY - d.startY;
+    d.velX = (e.clientX - d.lastMoveX) / dt * 16;
+    d.velY = (e.clientY - d.lastMoveY) / dt * 16;
+    d.lastMoveX = e.clientX;
+    d.lastMoveY = e.clientY;
+    d.lastMoveTime = now;
+    d.currentX = newX;
+    d.currentY = newY;
+    const wrapper = (e.currentTarget as HTMLElement);
+    wrapper.style.transform = `translate(${newX}px, ${newY}px)`;
+  }, []);
+
+  const handlePointerUp = useCallback((e: React.PointerEvent) => {
+    const d = dragRef.current;
+    if (!d.dragging) return;
+    d.dragging = false;
+    const wrapper = (e.currentTarget as HTMLElement);
+    wrapper.releasePointerCapture(e.pointerId);
+    wrapper.style.cursor = "grab";
+
+    /* Spring back with momentum */
+    const spring = () => {
+      d.velX *= 0.92;
+      d.velY *= 0.92;
+      d.currentX = d.currentX * 0.88 + d.velX;
+      d.currentY = d.currentY * 0.88 + d.velY;
+      wrapper.style.transform = `translate(${d.currentX}px, ${d.currentY}px)`;
+      if (Math.abs(d.currentX) > 0.5 || Math.abs(d.currentY) > 0.5 || Math.abs(d.velX) > 0.3 || Math.abs(d.velY) > 0.3) {
+        requestAnimationFrame(spring);
+      } else {
+        d.currentX = 0;
+        d.currentY = 0;
+        wrapper.style.transform = "translate(0, 0)";
+        wrapper.style.transition = "";
+      }
+    };
+    requestAnimationFrame(spring);
+  }, []);
+
   return (
-    <div className={styles.stage}>
+    <div className={styles.stage} ref={stageRef}>
+      <div className={styles.stageNoise} />
+
+      {/* Brand */}
       <a href="/" className={styles.brand}>
         <div className={styles.brandMark}>C</div>
         <span>curly<span className={styles.dot}>.</span>sports</span>
       </a>
 
-      <div className={styles.mascotStage}>
-        <div className={styles.mascotFrame}>
-          <div className={styles.mascotDisc}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/curly-guy.png" alt="Curly" className={styles.mascotImg} />
+      {/* Interaction guide */}
+      <div className={styles.guideBar}>
+        <span className={styles.guideItem}>
+          <kbd className={styles.guideKbd}>Hover</kbd> Tilt
+        </span>
+        <span className={styles.guideSep} />
+        <span className={styles.guideItem}>
+          <kbd className={styles.guideKbd}>Drag</kbd> Move
+        </span>
+        <span className={styles.guideSep} />
+        <span className={styles.guideItem}>
+          <kbd className={styles.guideKbd}>2x Click</kbd> Flip
+        </span>
+      </div>
+
+      {/* Center — holographic match card */}
+      <div className={styles.stageCenter}>
+        <div
+          className={styles.holoWrapper}
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          onDoubleClick={handleDoubleClick}
+          style={{ cursor: "grab", touchAction: "none" }}
+        >
+          <div
+            ref={innerRef}
+            className={`${styles.holoInner} ${flipped ? styles.holoFlipped : ""}`}
+            onMouseMove={handleMouseMove}
+            onMouseLeave={handleMouseLeave}
+          >
+            {/* ─── FRONT FACE ─── */}
+            <div className={styles.holoFront}>
+              {/* Holographic glare overlay */}
+              <div ref={glareRef} className={styles.holoGlare} />
+
+              {/* LIVE badge */}
+              <div className={styles.holoLive}>
+                <span className={styles.holoLiveDot} />
+                LIVE
+              </div>
+
+              {/* Curly Sports mascot logo */}
+              <img
+                src="/curly-mark.png"
+                alt="Curly Sports"
+                className={styles.holoMascot}
+              />
+
+              {/* League label */}
+              <div className={styles.holoLeague}>LA LIGA</div>
+
+              {/* Match score */}
+              <div className={styles.holoMatch}>
+                <div className={styles.holoTeam}>
+                  <div className={styles.holoTeamIcon} style={{ background: "linear-gradient(135deg, #a50044, #004d98)" }}>
+                    <span style={{ fontSize: 22 }}>B</span>
+                  </div>
+                  <span className={styles.holoTeamName}>Barcelona</span>
+                </div>
+                <div className={styles.holoScore}>
+                  <span>3</span>
+                  <span className={styles.holoScoreSep}>:</span>
+                  <span>1</span>
+                </div>
+                <div className={styles.holoTeam}>
+                  <div className={styles.holoTeamIcon} style={{ background: "linear-gradient(135deg, #febe10, #00529f)" }}>
+                    <span style={{ fontSize: 22 }}>R</span>
+                  </div>
+                  <span className={styles.holoTeamName}>Real Madrid</span>
+                </div>
+              </div>
+
+              {/* Match minute */}
+              <div className={styles.holoMinute}>82&apos;</div>
+
+              {/* Scorers */}
+              <div className={styles.holoScorers}>
+                <div className={styles.holoScorerSide}>
+                  <span>Lamine Yamal 18&apos;</span>
+                  <span>Lewandowski 45&apos;</span>
+                  <span>Pedri 71&apos;</span>
+                </div>
+                <div className={styles.holoScorerSide}>
+                  <span>Mbapp&eacute; 33&apos;</span>
+                </div>
+              </div>
+            </div>
+
+            {/* ─── BACK FACE ─── */}
+            <div className={styles.holoBack}>
+              <div className={styles.backTitle}>Match Stats</div>
+
+              <div className={styles.statRow}>
+                <span className={styles.statVal}>62%</span>
+                <span className={styles.statLabel}>Possession</span>
+                <span className={styles.statVal}>38%</span>
+              </div>
+              <div className={styles.statBar}>
+                <div className={styles.statBarFill} style={{ width: "62%", background: "linear-gradient(90deg, #a50044, #004d98)" }} />
+              </div>
+
+              <div className={styles.statRow}>
+                <span className={styles.statVal}>15</span>
+                <span className={styles.statLabel}>Shots</span>
+                <span className={styles.statVal}>8</span>
+              </div>
+              <div className={styles.statBar}>
+                <div className={styles.statBarFill} style={{ width: "65%", background: "linear-gradient(90deg, #a50044, #004d98)" }} />
+              </div>
+
+              <div className={styles.statRow}>
+                <span className={styles.statVal}>7</span>
+                <span className={styles.statLabel}>On Target</span>
+                <span className={styles.statVal}>3</span>
+              </div>
+              <div className={styles.statBar}>
+                <div className={styles.statBarFill} style={{ width: "70%", background: "linear-gradient(90deg, #a50044, #004d98)" }} />
+              </div>
+
+              <div className={styles.statRow}>
+                <span className={styles.statVal}>537</span>
+                <span className={styles.statLabel}>Passes</span>
+                <span className={styles.statVal}>328</span>
+              </div>
+              <div className={styles.statBar}>
+                <div className={styles.statBarFill} style={{ width: "62%", background: "linear-gradient(90deg, #a50044, #004d98)" }} />
+              </div>
+
+              <div className={styles.statRow}>
+                <span className={styles.statVal}>89%</span>
+                <span className={styles.statLabel}>Pass Acc.</span>
+                <span className={styles.statVal}>82%</span>
+              </div>
+              <div className={styles.statBar}>
+                <div className={styles.statBarFill} style={{ width: "52%", background: "linear-gradient(90deg, #a50044, #004d98)" }} />
+              </div>
+
+              <div className={styles.statRow}>
+                <span className={styles.statVal}>11</span>
+                <span className={styles.statLabel}>Corners</span>
+                <span className={styles.statVal}>4</span>
+              </div>
+              <div className={styles.statBar}>
+                <div className={styles.statBarFill} style={{ width: "73%", background: "linear-gradient(90deg, #a50044, #004d98)" }} />
+              </div>
+
+              <div className={styles.backFlipHint}>Double-click to flip back</div>
+            </div>
           </div>
         </div>
       </div>
 
-      <div className={`${styles.scribble} ${styles.sc1}`}>your sports hub →</div>
-      <div className={`${styles.scribble} ${styles.sc2}`}>← built for fans</div>
-
-      <div className={`${styles.statFloat} ${styles.sf1}`}>
-        <div className={styles.statNum}>150+</div>
-        <div className={styles.statLbl}>LEAGUES COVERED</div>
-      </div>
-      <div className={`${styles.statFloat} ${styles.sf2}`}>
-        <div className={styles.statNum}>Live</div>
-        <div className={styles.statLbl}>SCORES NOW</div>
-      </div>
-
-      <div className={styles.ribbon}>
-        <span><span className={styles.lime}>●</span> Real-time scores · 150+ leagues</span>
-        <span>v1.0.0 · made for fans</span>
+      {/* Bottom — phrase ticker */}
+      <div className={styles.stageBottom}>
+        <div className={styles.phraseTicker}>
+          <span className={styles.phraseQuote}>&ldquo;</span>
+          <p key={phraseIdx} className={styles.phraseText}>
+            {phrases[phraseIdx]}
+          </p>
+          <span className={styles.phraseQuote}>&rdquo;</span>
+        </div>
+        <div className={styles.phraseDotsRow}>
+          {phrases.map((_, i) => (
+            <span
+              key={i}
+              className={`${styles.phraseDot} ${i === phraseIdx ? styles.phraseDotActive : ""}`}
+            />
+          ))}
+        </div>
       </div>
     </div>
   );

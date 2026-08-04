@@ -51,8 +51,17 @@
 .teamLeague { font-size: 11px; color: var(--text-mute); font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.05em; }
 .teamRecord { font-size: 12px; color: var(--text-dim); margin-top: 6px; font-family: var(--mono); }
 
+@media (max-width: 768px) {
+  .teamsGrid { grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .teamBanner { height: 80px; }
+}
 @media (max-width: 480px) {
-  .teamsGrid { grid-template-columns: repeat(2, 1fr); }
+  .teamsGrid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .teamBanner { height: 70px; }
+  .teamBody { padding: 10px; }
+  .teamName { font-size: 13px; }
+  .teamLeague { font-size: 10px; }
+  .teamRecord { font-size: 11px; }
 }
 
 /* ── RTL overrides ── */

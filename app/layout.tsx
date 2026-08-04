@@ -15,12 +15,14 @@ export const metadata: Metadata = {
     template: "%s · Curly Sports",
   },
   description:
-    "Curly Sports is your ultimate sports hub — live scores, match details, team stats, player profiles, leagues, debates, and breaking sports news for football, basketball, F1, cricket & more.",
+    "Curly Sports (CurlySports.com) is your free sports hub — live scores, match details, team stats, player profiles, leagues, debates, and breaking sports news for football, cricket, basketball, F1, NFL, tennis & more.",
   keywords: [
-    "curly sports", "curlysports", "live scores", "football scores",
-    "basketball scores", "sports news", "match results", "player stats",
-    "team stats", "sports app", "F1 live", "cricket scores", "NBA scores",
-    "NFL scores", "sports hub", "sports dashboard",
+    "curly sports", "curlysports", "curlysports.com", "curly sports app",
+    "curly sports live scores", "curly sports news",
+    "live scores", "football scores", "basketball scores", "cricket scores",
+    "sports news", "match results", "player stats", "team stats",
+    "sports app", "F1 live", "NBA scores", "NFL scores",
+    "free sports app", "sports hub", "sports dashboard",
   ],
   authors: [{ name: "Curly Sports", url: SITE_URL }],
   creator: "Curly Sports",
@@ -65,7 +67,10 @@ export const metadata: Metadata = {
     },
   },
   icons: {
-    icon: "/icon.png",
+    icon: [
+      { url: "/favicon.ico", sizes: "48x48" },
+      { url: "/icon.png", sizes: "512x512", type: "image/png" },
+    ],
     apple: "/apple-icon.png",
   },
   manifest: "/manifest.json",
@@ -73,9 +78,7 @@ export const metadata: Metadata = {
     "apple-itunes-app": "app-id=com.curlysports.mobile, app-argument=curlysports://",
     "google-play-app": "app-id=com.curlysports.mobile",
   },
-  verification: {
-    google: "GOOGLE_SITE_VERIFICATION_CODE",
-  },
+  // verification: { google: "ADD_YOUR_REAL_CODE_FROM_SEARCH_CONSOLE" },
 };
 
 export const viewport: Viewport = {
@@ -97,7 +100,9 @@ export default function RootLayout({
         "@id": `${SITE_URL}/#website`,
         url: SITE_URL,
         name: "Curly Sports",
-        description: "Your ultimate sports hub — live scores, teams, players, leagues, debates & news.",
+        alternateName: ["CurlySports", "CurlySports.com", "Curly Sports App"],
+        description: "Curly Sports (CurlySports.com) is a free sports platform for live scores, news, team stats, player profiles, and fan debates across football, cricket, basketball, F1, NFL, tennis, and 10+ sports.",
+        inLanguage: "en",
         potentialAction: {
           "@type": "SearchAction",
           target: { "@type": "EntryPoint", urlTemplate: `${SITE_URL}/players?q={search_term_string}` },
@@ -108,6 +113,7 @@ export default function RootLayout({
         "@type": "Organization",
         "@id": `${SITE_URL}/#organization`,
         name: "Curly Sports",
+        alternateName: ["CurlySports", "CurlySports.com"],
         url: SITE_URL,
         logo: {
           "@type": "ImageObject",
@@ -115,6 +121,8 @@ export default function RootLayout({
           width: 512,
           height: 512,
         },
+        description: "Curly Sports is a free multi-sport platform providing live scores, match stats, player profiles, team data, league standings, fan debates, and sports news. Curly Sports is NOT related to curling.",
+        foundingDate: "2024",
         sameAs: [
           "https://x.com/curlysportsofcl",
           "https://www.instagram.com/curlysportsofficial/",
@@ -122,14 +130,31 @@ export default function RootLayout({
         ],
       },
       {
+        "@type": "MobileApplication",
+        name: "Curly Sports",
+        operatingSystem: "iOS, Android",
+        applicationCategory: "SportsApplication",
+        offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+        url: `${SITE_URL}/download`,
+        description: "Free live sports scores app for football, cricket, basketball, F1, NFL, and 10+ sports.",
+      },
+      {
         "@type": "FAQPage",
         "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "What is Curly Sports?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Curly Sports (CurlySports.com) is a free sports platform — not related to curling. It provides live scores, match details, team stats, player profiles, league standings, fan debates, and breaking sports news for football, cricket, basketball, F1, NFL, tennis, and more."
+            }
+          },
           {
             "@type": "Question",
             "name": "What sports does Curly Sports cover?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Curly Sports covers football (soccer), cricket, basketball, baseball, tennis, Formula 1, NFL, hockey, MMA, and esports with live scores, news, standings, and predictions."
+              "text": "Curly Sports covers football (soccer), cricket, basketball, baseball, tennis, Formula 1, NFL, hockey, MMA, golf, boxing, and esports with live scores, news, standings, and predictions."
             }
           },
           {
@@ -178,11 +203,6 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link rel="alternate" hrefLang="en" href="https://curlysports.com/" />
-        <link rel="alternate" hrefLang="es" href="https://curlysports.com/es/" />
-        <link rel="alternate" hrefLang="fr" href="https://curlysports.com/fr/" />
-        <link rel="alternate" hrefLang="ar" href="https://curlysports.com/ar/" />
-        <link rel="alternate" hrefLang="hi" href="https://curlysports.com/hi/" />
-        <link rel="alternate" hrefLang="pt" href="https://curlysports.com/pt/" />
         <link rel="alternate" hrefLang="x-default" href="https://curlysports.com/" />
       </head>
       <body>
