@@ -85,19 +85,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Static pages — use trailing slash to match Google's canonical URLs
   const staticPages: MetadataRoute.Sitemap = [
     { url: `${SITE_URL}/`, lastModified: now, changeFrequency: daily, priority: 1.0 },
-    { url: `${SITE_URL}/dashboard`, lastModified: now, changeFrequency: daily, priority: 1.0 },
-    { url: `${SITE_URL}/live-scores`, lastModified: now, changeFrequency: always, priority: 0.9 },
-    { url: `${SITE_URL}/news`, lastModified: now, changeFrequency: hourly, priority: 0.9 },
-    { url: `${SITE_URL}/teams`, lastModified: now, changeFrequency: weekly, priority: 0.8 },
-    { url: `${SITE_URL}/players`, lastModified: now, changeFrequency: weekly, priority: 0.8 },
-    { url: `${SITE_URL}/leagues`, lastModified: now, changeFrequency: weekly, priority: 0.8 },
-    { url: `${SITE_URL}/debates`, lastModified: now, changeFrequency: daily, priority: 0.7 },
-    { url: `${SITE_URL}/mini-games`, lastModified: now, changeFrequency: weekly, priority: 0.6 },
-    { url: `${SITE_URL}/challenges`, lastModified: now, changeFrequency: daily, priority: 0.7 },
-    { url: `${SITE_URL}/videos`, lastModified: now, changeFrequency: daily, priority: 0.7 },
-    { url: `${SITE_URL}/download`, lastModified: now, changeFrequency: weekly, priority: 0.8 },
-    { url: `${SITE_URL}/privacy`, lastModified: now, changeFrequency: "monthly", priority: 0.3 },
-    { url: `${SITE_URL}/terms`, lastModified: now, changeFrequency: "monthly", priority: 0.3 },
+    { url: `${SITE_URL}/live-scores/`, lastModified: now, changeFrequency: always, priority: 1.0 },
+    { url: `${SITE_URL}/news/`, lastModified: now, changeFrequency: hourly, priority: 1.0 },
+    { url: `${SITE_URL}/teams/`, lastModified: now, changeFrequency: daily, priority: 0.9 },
+    { url: `${SITE_URL}/players/`, lastModified: now, changeFrequency: daily, priority: 0.9 },
+    { url: `${SITE_URL}/leagues/`, lastModified: now, changeFrequency: daily, priority: 0.9 },
+    { url: `${SITE_URL}/debates/`, lastModified: now, changeFrequency: daily, priority: 0.8 },
+    { url: `${SITE_URL}/mini-games/`, lastModified: now, changeFrequency: daily, priority: 0.8 },
+    { url: `${SITE_URL}/challenges/`, lastModified: now, changeFrequency: daily, priority: 0.8 },
+    { url: `${SITE_URL}/videos/`, lastModified: now, changeFrequency: daily, priority: 0.8 },
+    { url: `${SITE_URL}/favorites/`, lastModified: now, changeFrequency: daily, priority: 0.6 },
+    { url: `${SITE_URL}/download/`, lastModified: now, changeFrequency: weekly, priority: 0.9 },
+    { url: `${SITE_URL}/privacy/`, lastModified: now, changeFrequency: "monthly", priority: 0.3 },
+    { url: `${SITE_URL}/terms/`, lastModified: now, changeFrequency: "monthly", priority: 0.3 },
   ];
 
   // Sport landing pages

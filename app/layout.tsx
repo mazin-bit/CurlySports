@@ -17,12 +17,74 @@ export const metadata: Metadata = {
   description:
     "Curly Sports (CurlySports.com) is your free sports hub — live scores, match details, team stats, player profiles, leagues, debates, and breaking sports news for football, cricket, basketball, F1, NFL, tennis & more.",
   keywords: [
-    "curly sports", "curlysports", "curlysports.com", "curly sports app",
-    "curly sports live scores", "curly sports news",
-    "live scores", "football scores", "basketball scores", "cricket scores",
-    "sports news", "match results", "player stats", "team stats",
-    "sports app", "F1 live", "NBA scores", "NFL scores",
-    "free sports app", "sports hub", "sports dashboard",
+    // Brand
+    "curly sports", "curlysports", "curlysports.com", "curly sports app", "curly sports website",
+    "curly sports live scores", "curly sports news", "curly sports download",
+    // Live scores
+    "live scores", "live sports scores", "live scores today", "live score updates",
+    "sports scores today", "scores today", "live sport", "live sports",
+    "real time sports scores", "live match scores", "today match score",
+    "live score app", "free live scores", "sports score tracker",
+    // Football / Soccer
+    "football scores", "football scores today", "soccer scores", "soccer scores today",
+    "premier league scores", "premier league live", "EPL scores",
+    "la liga scores", "serie a scores", "bundesliga scores",
+    "champions league scores", "football results today", "soccer results",
+    "premier league results", "premier league standings",
+    // Cricket
+    "cricket scores", "cricket live scores", "IPL scores", "IPL live score",
+    "IPL 2026", "T20 scores", "cricket results", "live cricket",
+    // Basketball / NBA
+    "basketball scores", "NBA scores", "NBA scores today", "NBA live scores",
+    "NBA standings", "NBA results", "basketball live", "NBA games today",
+    // NFL
+    "NFL scores", "NFL scores today", "NFL live scores", "NFL results",
+    "NFL standings", "NFL games today", "American football scores",
+    // F1
+    "F1 live", "F1 scores", "F1 standings", "F1 results", "Formula 1 live",
+    "F1 driver standings", "F1 constructor standings",
+    // Tennis
+    "tennis scores", "tennis live scores", "ATP scores", "WTA scores",
+    "grand slam results", "Wimbledon scores",
+    // Baseball / MLB
+    "baseball scores", "MLB scores", "MLB scores today", "MLB standings",
+    // Hockey / NHL
+    "hockey scores", "NHL scores", "NHL scores today", "NHL standings",
+    // MMA / UFC
+    "MMA results", "UFC results", "UFC scores", "UFC fight results",
+    // News
+    "sports news", "sports news today", "latest sports news", "breaking sports news",
+    "football news", "soccer news", "cricket news", "NBA news", "NFL news",
+    "F1 news", "tennis news", "sports headlines", "sports updates",
+    // Teams & Players
+    "player stats", "team stats", "sports stats", "player profiles",
+    "team rosters", "team squads", "sports players", "sports teams",
+    // Leagues & Standings
+    "league standings", "league tables", "sports standings",
+    "premier league table", "la liga table", "NBA standings 2026",
+    "NFL standings 2026", "IPL standings", "IPL points table",
+    // Games & Entertainment
+    "sports trivia", "sports quiz", "sports mini games", "sports games online",
+    "sports trivia game", "free sports games", "sports prediction game",
+    "score predictor", "sports guessing game",
+    // Debates & Community
+    "sports debate", "sports debates online", "sports polls",
+    "GOAT debate", "best player debate", "sports community",
+    "sports discussion", "sports forum",
+    // General / App
+    "sports app", "free sports app", "best sports app", "sports hub",
+    "sports dashboard", "sports platform", "sports website",
+    "all sports app", "multi sport app", "sports tracker",
+    "best live score app", "best sports score app",
+    // Predictions & Challenges
+    "sports predictions", "match predictions", "sports challenges",
+    "prediction game", "score predictions",
+    // Videos & Highlights
+    "sports highlights", "match highlights", "sports videos",
+    "football highlights", "NBA highlights", "cricket highlights",
+    // Download / Mobile
+    "download sports app", "sports app iOS", "sports app Android",
+    "free sports app download", "live scores app download",
   ],
   authors: [{ name: "Curly Sports", url: SITE_URL }],
   creator: "Curly Sports",

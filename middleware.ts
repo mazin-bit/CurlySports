@@ -30,6 +30,18 @@ export async function middleware(request: NextRequest) {
     "/delete-account",
     "/feedback",
     "/invite",
+    // Content pages — must be crawlable by Google
+    "/live-scores",
+    "/news",
+    "/teams",
+    "/players",
+    "/leagues",
+    "/debates",
+    "/mini-games",
+    "/videos",
+    "/favorites",
+    "/matches",
+    "/fun-zone",
   ];
   const isPublic = publicPaths.some(
     (p) => pathname === p || pathname.startsWith(p + "?") || pathname.startsWith(p + "/")
