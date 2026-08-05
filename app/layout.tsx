@@ -78,7 +78,6 @@ export const metadata: Metadata = {
     "apple-itunes-app": "app-id=com.curlysports.mobile, app-argument=curlysports://",
     "google-play-app": "app-id=com.curlysports.mobile",
   },
-  // verification: { google: "ADD_YOUR_REAL_CODE_FROM_SEARCH_CONSOLE" },
 };
 
 export const viewport: Viewport = {
