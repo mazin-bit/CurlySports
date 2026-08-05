@@ -82,9 +82,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const hourly = "hourly" as const;
   const always = "always" as const;
 
-  // Static pages
+  // Static pages — use trailing slash to match Google's canonical URLs
   const staticPages: MetadataRoute.Sitemap = [
-    { url: SITE_URL, lastModified: now, changeFrequency: daily, priority: 1.0 },
+    { url: `${SITE_URL}/`, lastModified: now, changeFrequency: daily, priority: 1.0 },
     { url: `${SITE_URL}/dashboard`, lastModified: now, changeFrequency: daily, priority: 1.0 },
     { url: `${SITE_URL}/live-scores`, lastModified: now, changeFrequency: always, priority: 0.9 },
     { url: `${SITE_URL}/news`, lastModified: now, changeFrequency: hourly, priority: 0.9 },

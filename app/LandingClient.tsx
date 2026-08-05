@@ -949,21 +949,21 @@ export default function LandingPage() {
             <div className="l-foot-col">
               <div className="l-foot-col-head">Sports</div>
               <ul>
-                <li><a href="#"><svg width="14" height="14" viewBox="0 0 40 40"><use href="#ball-soccer" /></svg> Football</a></li>
-                <li><a href="#"><svg width="14" height="14" viewBox="0 0 40 40"><use href="#ball-basket" /></svg> Basketball</a></li>
-                <li><a href="#"><svg width="18" height="12" viewBox="0 0 50 30"><use href="#ball-nfl" /></svg> NFL</a></li>
-                <li><a href="#"><svg width="14" height="14" viewBox="0 0 40 40"><use href="#ball-tennis" /></svg> Tennis</a></li>
-                <li><a href="#"><svg width="14" height="14" viewBox="0 0 40 40"><use href="#ball-base" /></svg> Baseball</a></li>
-                <li><a href="#"><svg width="14" height="14" viewBox="0 0 40 40"><use href="#ball-f1" /></svg> Formula 1</a></li>
+                <li><a href="/sports/football"><svg width="14" height="14" viewBox="0 0 40 40"><use href="#ball-soccer" /></svg> Football</a></li>
+                <li><a href="/sports/basketball"><svg width="14" height="14" viewBox="0 0 40 40"><use href="#ball-basket" /></svg> Basketball</a></li>
+                <li><a href="/sports/nfl"><svg width="18" height="12" viewBox="0 0 50 30"><use href="#ball-nfl" /></svg> NFL</a></li>
+                <li><a href="/sports/tennis"><svg width="14" height="14" viewBox="0 0 40 40"><use href="#ball-tennis" /></svg> Tennis</a></li>
+                <li><a href="/sports/baseball"><svg width="14" height="14" viewBox="0 0 40 40"><use href="#ball-base" /></svg> Baseball</a></li>
+                <li><a href="/sports/f1"><svg width="14" height="14" viewBox="0 0 40 40"><use href="#ball-f1" /></svg> Formula 1</a></li>
               </ul>
             </div>
             <div className="l-foot-col">
               <div className="l-foot-col-head">Company</div>
               <ul>
-                <li><a href="#about">About</a></li>
-                <li><a href="#founder">Founder</a></li>
-                <li><a href="#">Careers</a></li>
-                <li><a href="#">Press</a></li>
+                <li><a href="/#about">About</a></li>
+                <li><a href="/#founder">Founder</a></li>
+                <li><a href="/privacy">Privacy</a></li>
+                <li><a href="/terms">Terms</a></li>
               </ul>
             </div>
             <div className="l-foot-col">
