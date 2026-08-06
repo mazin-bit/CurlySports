@@ -119,11 +119,8 @@ function upgradeImageUrl(url: string | null | undefined): string | null {
   if (url.includes("espncdn.com/combiner/i")) {
     return url.replace(/\bw=\d+/, "w=1296").replace(/\bh=\d+/, "h=729");
   }
-  // Guardian media CDN — replace width before the file extension
-  // e.g. /500.jpg → /1200.jpg
-  if (url.includes("media.guim.co.uk")) {
-    return url.replace(/\/\d+(\.(?:jpg|jpeg|png|webp))/, "/1200$1");
-  }
+  // Guardian image CDN — URLs are signed (s= hash) per width, can't modify
+  // The RSS parser already picks the largest width available (700px)
   return url;
 }
 
@@ -223,18 +220,35 @@ function parseRssXml(xml: string, sport: SportSlug | null): NormalizedNews[] {
       .slice(0, 220);
     const pubDate = getText("pubDate") || getText("dc:date") || getText("published");
     // Extract image URL — try various patterns (BBC uses extensionless CDN URLs)
-    const rawImageUrl =
-      // BBC: <media:thumbnail url="https://ichef.bbci.co.uk/..."> (no extension)
-      block.match(/<media:thumbnail[^>]+url="([^"]+)"/i)?.[1]
-      // Standard media:content
-      ?? block.match(/<media:content[^>]+url="([^"]+)"/i)?.[1]
-      // Sky Sports: <enclosure type="image/jpg" url="...">
-      ?? block.match(/<enclosure[^>]+url="([^"]+)"/i)?.[1]
-      // Guardian / any https image URL attribute
-      ?? block.match(/url="(https?:\/\/[^"]+\.(?:jpg|jpeg|png|webp|gif)[^"]*)"/i)?.[1]
-      // Fallback: first https image URL anywhere in the block
-      ?? block.match(/https?:\/\/(?:[^\s"'<>]*\/)?[^\s"'<>]+\.(?:jpg|jpeg|png|webp)(?:[?#][^\s"'<>]*)?/i)?.[0]
-      ?? null;
+    // For media:content, grab the LARGEST width available (Guardian gives 140/460/700)
+    let rawImageUrl: string | null = null;
+    const mediaContents = [...block.matchAll(/<media:content[^>]+width="(\d+)"[^>]+url="([^"]+)"/gi),
+                           ...block.matchAll(/<media:content[^>]+url="([^"]+)"[^>]+width="(\d+)"/gi)];
+    if (mediaContents.length > 0) {
+      // Normalize: each match → { width, url }
+      const parsed = mediaContents.map(m => {
+        // First regex: group1=width, group2=url; Second regex: group1=url, group2=width
+        const isWidthFirst = /width="(\d+)"/.test(m[0].slice(0, m[0].indexOf('url=')));
+        return isWidthFirst ? { width: parseInt(m[1]), url: m[2] } : { width: parseInt(m[2]), url: m[1] };
+      });
+      // Pick the largest width
+      parsed.sort((a, b) => b.width - a.width);
+      rawImageUrl = parsed[0].url.replace(/&amp;/g, "&");
+    }
+    if (!rawImageUrl) {
+      rawImageUrl =
+        // BBC: <media:thumbnail url="https://ichef.bbci.co.uk/..."> (no extension)
+        block.match(/<media:thumbnail[^>]+url="([^"]+)"/i)?.[1]
+        // Standard media:content (no width attr)
+        ?? block.match(/<media:content[^>]+url="([^"]+)"/i)?.[1]
+        // Sky Sports: <enclosure type="image/jpg" url="...">
+        ?? block.match(/<enclosure[^>]+url="([^"]+)"/i)?.[1]
+        // Any https image URL attribute
+        ?? block.match(/url="(https?:\/\/[^"]+\.(?:jpg|jpeg|png|webp|gif)[^"]*)"/i)?.[1]
+        // Fallback: first https image URL anywhere in the block
+        ?? block.match(/https?:\/\/(?:[^\s"'<>]*\/)?[^\s"'<>]+\.(?:jpg|jpeg|png|webp)(?:[?#][^\s"'<>]*)?/i)?.[0]
+        ?? null;
+    }
     const imageUrl = upgradeImageUrl(rawImageUrl);
     if (!title || !link) continue;
     const publishedAt = pubDate ? new Date(pubDate).toISOString() : new Date().toISOString();
