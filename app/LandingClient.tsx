@@ -8,16 +8,16 @@ import PhoneMockup from "@/components/PhoneMockup";
 
 /* ── Sport card data ─────────────────────────────── */
 const SPORT_CARDS = [
-  { tag: "01 · Football", title: "Football\n/ Soccer", leagues: "EPL · LaLiga +12", img: "/curly-guy.png", ball: "ball-soccer", ballBox: "0 0 40 40" },
-  { tag: "02 · Cricket", title: "Cricket", leagues: "IPL · T20 · Test", img: "/curly-guy.png", ball: "ball-cricket", ballBox: "0 0 40 40" },
-  { tag: "03 · Basketball", title: "Basketball", leagues: "NBA · EuroLeague", img: "/curly-guy.png", ball: "ball-basket", ballBox: "0 0 40 40" },
-  { tag: "04 · F1", title: "Formula 1", leagues: "F1 · F2 · F3", img: "/curly-guy.png", ball: "ball-f1", ballBox: "0 0 40 40" },
-  { tag: "05 · NFL", title: "American\nFootball", leagues: "NFL · NCAA", img: "/curly-guy.png", ball: "ball-nfl", ballBox: "0 0 50 30", ballStyle: { bottom: "6%" } },
-  { tag: "06 · Tennis", title: "Tennis", leagues: "ATP · WTA · Grand Slams", img: "/curly-guy.png", ball: "ball-tennis", ballBox: "0 0 40 40" },
-  { tag: "07 · MLB", title: "Baseball", leagues: "MLB · MiLB", img: "/curly-guy.png", ball: "ball-base", ballBox: "0 0 40 40" },
-  { tag: "08 · Hockey", title: "Ice\nHockey", leagues: "NHL · KHL", img: "/curly-guy.png", ball: "ball-hockey", ballBox: "0 0 40 40" },
-  { tag: "09 · Golf", title: "Golf", leagues: "PGA · DP World", img: "/curly-guy.png", ball: "ball-golf", ballBox: "0 0 40 40" },
-  { tag: "10 · Boxing", title: "Boxing", leagues: "WBC · IBF · WBO", img: "/curly-guy.png", ball: "ball-boxing", ballBox: "0 0 40 40" },
+  { tag: "01 · Football", title: "Football\n/ Soccer", leagues: "EPL · LaLiga +12", img: "/curly-football.png", ball: "ball-soccer", ballBox: "0 0 40 40" },
+  { tag: "02 · Cricket", title: "Cricket", leagues: "IPL · T20 · Test", img: "/curly-cricket.png", ball: "ball-cricket", ballBox: "0 0 40 40" },
+  { tag: "03 · Basketball", title: "Basketball", leagues: "NBA · EuroLeague", img: "/curly-basketball.png", ball: "ball-basket", ballBox: "0 0 40 40" },
+  { tag: "04 · F1", title: "Formula 1", leagues: "F1 · F2 · F3", img: "/curly-f1.png", ball: "ball-f1", ballBox: "0 0 40 40" },
+  { tag: "05 · NFL", title: "American\nFootball", leagues: "NFL · NCAA", img: "/curly-nfl.png", ball: "ball-nfl", ballBox: "0 0 50 30", ballStyle: { bottom: "6%" } },
+  { tag: "06 · Tennis", title: "Tennis", leagues: "ATP · WTA · Grand Slams", img: "/curly-tennis.png", ball: "ball-tennis", ballBox: "0 0 40 40" },
+  { tag: "07 · MLB", title: "Baseball", leagues: "MLB · MiLB", img: "/curly-mlb.png", ball: "ball-base", ballBox: "0 0 40 40" },
+  { tag: "08 · Hockey", title: "Ice\nHockey", leagues: "NHL · KHL", img: "/curly-hockey.png", ball: "ball-hockey", ballBox: "0 0 40 40" },
+  { tag: "09 · Golf", title: "Golf", leagues: "PGA · DP World", img: "/curly-golf.png", ball: "ball-golf", ballBox: "0 0 40 40" },
+  { tag: "10 · Boxing", title: "Boxing", leagues: "WBC · IBF · WBO", img: "/curly-boxing.png", ball: "ball-boxing", ballBox: "0 0 40 40" },
 ];
 
 const BACK_STATS: Record<string, { h4: string; stats: [string, string][] }> = {
@@ -558,7 +558,7 @@ export default function LandingPage() {
           <div className="l-sports-head-l">
             <span className="l-section-tag"><span className="num">02</span> · Every sport, every league</span>
             <h2 className="l-kicker"><span className="l-kicker-line">Curly knows</span><span className="l-kicker-line">them&nbsp;all.</span></h2>
-            <p className="l-lede">Football, basketball, NFL, tennis, baseball, F1 — same depth of stats, same playful interface. Hover a card to see what data we track.</p>
+            <p className="l-lede">Football, basketball, NFL, tennis, baseball, F1 — same depth of stats, same playful interface. Tap a card to see what data we track.</p>
           </div>
           <a href="#preview" className="l-btn l-btn-dark">See sample stats ↓</a>
         </div>
@@ -568,7 +568,7 @@ export default function LandingPage() {
               {SPORT_CARDS.map((card) => {
                 const back = BACK_STATS[card.tag];
                 return (
-                  <div key={card.tag + dup} className="l-sport-card">
+                  <div key={card.tag + dup} className="l-sport-card" onClick={(e) => { e.currentTarget.classList.toggle("flipped"); }}>
                     <div className="l-sport-card-inner">
                       <div className="l-sport-face front">
                         <span className="l-sport-card-tag">{card.tag}</span>
@@ -581,7 +581,7 @@ export default function LandingPage() {
                           </div>
                         </div>
                         <div className="l-sport-card-title">{card.title.split("\n").map((line, i) => <span key={i}>{i > 0 && <><br /><span style={{ opacity: 0.7 }}>/</span> </>}{line}</span>)}</div>
-                        <div className="l-sport-card-meta"><span>{card.leagues}</span><span>↳ Hover</span></div>
+                        <div className="l-sport-card-meta"><span>{card.leagues}</span><span className="l-card-hint">↳ Tap</span></div>
                       </div>
                       <div className="l-sport-face back">
                         <span className="back-tag">What we track</span>

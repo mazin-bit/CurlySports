@@ -1042,25 +1042,54 @@ html:has(.landing-root) {
 .landing-root .l-sports-grid:hover .l-sports-track { animation-play-state: paused; }
 .landing-root .l-sports-track { display: flex; gap: 16px; animation: landingInfiniteScroll 80s linear infinite; will-change: transform; }
 @keyframes landingInfiniteScroll { from { transform: translateX(0); } to { transform: translateX(calc(-100% - 16px)); } }
-.landing-root .l-sport-card { min-width: 200px; aspect-ratio: 0.78; perspective: 1000px; cursor: pointer; flex-shrink: 0; }
+.landing-root .l-sport-card { min-width: 200px; aspect-ratio: 0.78; perspective: 1000px; cursor: pointer; flex-shrink: 0; -webkit-tap-highlight-color: transparent; }
 .landing-root .l-sport-card-inner { position: relative; width: 100%; height: 100%; transition: transform 0.7s cubic-bezier(.34,1.56,.64,1); transform-style: preserve-3d; }
-.landing-root .l-sport-card:hover .l-sport-card-inner { transform: rotateY(180deg); }
+/* Desktop: hover to flip */
+@media (hover: hover) {
+  .landing-root .l-sport-card:hover .l-sport-card-inner { transform: rotateY(180deg); }
+}
+/* Touch/click: toggle flip via class */
+.landing-root .l-sport-card.flipped .l-sport-card-inner { transform: rotateY(180deg); }
+/* Press feedback */
+.landing-root .l-sport-card:active .l-sport-card-inner { transform: scale(0.95); transition-duration: 0.15s; }
+.landing-root .l-sport-card.flipped:active .l-sport-card-inner { transform: rotateY(180deg) scale(0.95); transition-duration: 0.15s; }
 .landing-root .l-sport-face {
   position: absolute; inset: 0; border-radius: 22px; border: 2.5px solid var(--ink);
   backface-visibility: hidden; padding: 20px; display: flex; flex-direction: column; overflow: hidden;
 }
 .landing-root .l-sport-face.front { background: var(--paper); box-shadow: 6px 6px 0 var(--ink); }
-.landing-root .l-sport-face.back { transform: rotateY(180deg); background: var(--ink); color: var(--paper); box-shadow: 6px 6px 0 var(--ink); }
-.landing-root .l-sport-card:nth-child(1) .l-sport-face.front { background: var(--lime); }
-.landing-root .l-sport-card:nth-child(2) .l-sport-face.front { background: var(--orange); color: var(--paper); }
-.landing-root .l-sport-card:nth-child(3) .l-sport-face.front { background: var(--purple); color: var(--paper); }
-.landing-root .l-sport-card:nth-child(4) .l-sport-face.front { background: var(--sky); }
-.landing-root .l-sport-card:nth-child(5) .l-sport-face.front { background: var(--pink); color: var(--paper); }
-.landing-root .l-sport-card:nth-child(6) .l-sport-face.front { background: var(--cream-2); }
-.landing-root .l-sport-card:nth-child(7) .l-sport-face.front { background: #4caf50; color: var(--paper); }
-.landing-root .l-sport-card:nth-child(8) .l-sport-face.front { background: #e91e63; color: var(--paper); }
-.landing-root .l-sport-card:nth-child(9) .l-sport-face.front { background: #00bcd4; color: var(--paper); }
-.landing-root .l-sport-card:nth-child(10) .l-sport-face.front { background: #ffeb3b; }
+.landing-root .l-sport-face.back { transform: rotateY(180deg); background: var(--paper); color: var(--ink); box-shadow: -6px 6px 0 var(--ink); }
+/* Front & back share the same sport color */
+.landing-root .l-sport-card:nth-child(1) .l-sport-face.front,
+.landing-root .l-sport-card:nth-child(1) .l-sport-face.back { background: var(--lime); }
+.landing-root .l-sport-card:nth-child(1) .l-sport-face.back { box-shadow: -6px 6px 0 color-mix(in srgb, var(--lime) 60%, #000); }
+.landing-root .l-sport-card:nth-child(2) .l-sport-face.front,
+.landing-root .l-sport-card:nth-child(2) .l-sport-face.back { background: var(--orange); color: var(--paper); }
+.landing-root .l-sport-card:nth-child(2) .l-sport-face.back { box-shadow: -6px 6px 0 color-mix(in srgb, var(--orange) 60%, #000); }
+.landing-root .l-sport-card:nth-child(3) .l-sport-face.front,
+.landing-root .l-sport-card:nth-child(3) .l-sport-face.back { background: var(--purple); color: var(--paper); }
+.landing-root .l-sport-card:nth-child(3) .l-sport-face.back { box-shadow: -6px 6px 0 color-mix(in srgb, var(--purple) 60%, #000); }
+.landing-root .l-sport-card:nth-child(4) .l-sport-face.front,
+.landing-root .l-sport-card:nth-child(4) .l-sport-face.back { background: var(--sky); }
+.landing-root .l-sport-card:nth-child(4) .l-sport-face.back { box-shadow: -6px 6px 0 color-mix(in srgb, var(--sky) 60%, #000); }
+.landing-root .l-sport-card:nth-child(5) .l-sport-face.front,
+.landing-root .l-sport-card:nth-child(5) .l-sport-face.back { background: var(--pink); color: var(--paper); }
+.landing-root .l-sport-card:nth-child(5) .l-sport-face.back { box-shadow: -6px 6px 0 color-mix(in srgb, var(--pink) 60%, #000); }
+.landing-root .l-sport-card:nth-child(6) .l-sport-face.front,
+.landing-root .l-sport-card:nth-child(6) .l-sport-face.back { background: var(--cream-2); }
+.landing-root .l-sport-card:nth-child(6) .l-sport-face.back { box-shadow: -6px 6px 0 color-mix(in srgb, var(--cream-2) 60%, #000); }
+.landing-root .l-sport-card:nth-child(7) .l-sport-face.front,
+.landing-root .l-sport-card:nth-child(7) .l-sport-face.back { background: #4caf50; color: var(--paper); }
+.landing-root .l-sport-card:nth-child(7) .l-sport-face.back { box-shadow: -6px 6px 0 #2e7d32; }
+.landing-root .l-sport-card:nth-child(8) .l-sport-face.front,
+.landing-root .l-sport-card:nth-child(8) .l-sport-face.back { background: #e91e63; color: var(--paper); }
+.landing-root .l-sport-card:nth-child(8) .l-sport-face.back { box-shadow: -6px 6px 0 #ad1457; }
+.landing-root .l-sport-card:nth-child(9) .l-sport-face.front,
+.landing-root .l-sport-card:nth-child(9) .l-sport-face.back { background: #00bcd4; color: var(--paper); }
+.landing-root .l-sport-card:nth-child(9) .l-sport-face.back { box-shadow: -6px 6px 0 #00838f; }
+.landing-root .l-sport-card:nth-child(10) .l-sport-face.front,
+.landing-root .l-sport-card:nth-child(10) .l-sport-face.back { background: #ffeb3b; }
+.landing-root .l-sport-card:nth-child(10) .l-sport-face.back { box-shadow: -6px 6px 0 #f9a825; }
 .landing-root .l-sport-card-tag {
   font-family: var(--mono); font-size: 9px; font-weight: 800;
   letter-spacing: 0.12em; text-transform: uppercase;
@@ -1078,8 +1107,10 @@ html:has(.landing-root) {
   filter: drop-shadow(2px 2px 0 rgba(0,0,0,0.25));
   transition: transform 0.4s cubic-bezier(.34,1.56,.64,1);
 }
-.landing-root .l-sport-card:hover .l-sport-ball-overlay {
-  animation: ballBounce 0.6s cubic-bezier(.34,1.56,.64,1);
+@media (hover: hover) {
+  .landing-root .l-sport-card:hover .l-sport-ball-overlay {
+    animation: ballBounce 0.6s cubic-bezier(.34,1.56,.64,1);
+  }
 }
 @keyframes ballBounce {
   0% { transform: translateY(0) scale(1); }
@@ -1089,12 +1120,28 @@ html:has(.landing-root) {
   100% { transform: translateY(0) scale(1) rotate(0); }
 }
 .landing-root .l-sport-card-meta { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 11px; margin-top: 8px; opacity: 0.7; }
-.landing-root .l-sport-face.back .back-tag { font-family: var(--mono); font-size: 11px; color: var(--lime); font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
-.landing-root .l-sport-face.back h4 { font-family: var(--display); font-size: 22px; letter-spacing: -0.02em; margin: 8px 0 14px; line-height: 1.05; }
+@media (hover: hover) {
+  .landing-root .l-card-hint { font-size: 0; }
+  .landing-root .l-card-hint::after { content: "↳ Hover"; font-size: 11px; }
+}
+.landing-root .l-sport-face.back .back-tag { font-family: var(--mono); font-size: 9px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; background: rgba(12,10,29,0.12); border: 1.5px solid rgba(12,10,29,0.18); padding: 3px 8px; border-radius: 4px; display: inline-block; width: fit-content; }
+.landing-root .l-sport-face.back h4 { font-family: var(--display); font-size: 20px; letter-spacing: -0.02em; margin: 10px 0 14px; line-height: 1.1; }
 .landing-root .l-stat-mini-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: auto; }
-.landing-root .l-stat-mini { background: rgba(255,255,255,0.08); padding: 10px; border-radius: 10px; }
-.landing-root .l-stat-mini .v { font-family: var(--display); font-weight: 700; font-size: 18px; color: var(--lime); }
-.landing-root .l-stat-mini .l { font-size: 9px; text-transform: uppercase; letter-spacing: 0.06em; opacity: 0.7; margin-top: 2px; }
+.landing-root .l-stat-mini { background: rgba(12,10,29,0.1); border: 1.5px solid rgba(12,10,29,0.12); padding: 10px; border-radius: 10px; }
+.landing-root .l-stat-mini .v { font-family: var(--display); font-weight: 800; font-size: 18px; }
+.landing-root .l-stat-mini .l { font-size: 9px; text-transform: uppercase; letter-spacing: 0.06em; opacity: 0.6; margin-top: 2px; }
+/* Light-bg cards (lime, sky, cream, cyan, yellow) use dark text — already inherited from color: var(--ink) */
+/* Dark-bg cards (orange, purple, pink, green, red) use white text — inherited from color: var(--paper) */
+.landing-root .l-sport-card:nth-child(2) .l-sport-face.back .l-stat-mini,
+.landing-root .l-sport-card:nth-child(3) .l-sport-face.back .l-stat-mini,
+.landing-root .l-sport-card:nth-child(5) .l-sport-face.back .l-stat-mini,
+.landing-root .l-sport-card:nth-child(7) .l-sport-face.back .l-stat-mini,
+.landing-root .l-sport-card:nth-child(8) .l-sport-face.back .l-stat-mini { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.2); }
+.landing-root .l-sport-card:nth-child(2) .l-sport-face.back .back-tag,
+.landing-root .l-sport-card:nth-child(3) .l-sport-face.back .back-tag,
+.landing-root .l-sport-card:nth-child(5) .l-sport-face.back .back-tag,
+.landing-root .l-sport-card:nth-child(7) .l-sport-face.back .back-tag,
+.landing-root .l-sport-card:nth-child(8) .l-sport-face.back .back-tag { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.2); }
 
 /* ===== PLATFORM PREVIEW ===== */
 .landing-root .l-preview-wrap { max-width: 1280px; margin: 0 auto; }
