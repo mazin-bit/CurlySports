@@ -138,6 +138,17 @@ export async function PATCH(req: Request) {
   switch (action) {
     case "spin": {
       try {
+        // Verify scheduled time has passed
+        const drawRows = await prisma.$queryRawUnsafe<LuckyDrawRow[]>(
+          `SELECT * FROM lucky_draws WHERE id = $1`, id
+        );
+        if (drawRows.length > 0 && new Date(drawRows[0].scheduledAt) > new Date()) {
+          return NextResponse.json(
+            { error: "Cannot start draw before the scheduled time" },
+            { status: 400 }
+          );
+        }
+
         // Set status to spinning
         await prisma.$executeRawUnsafe(
           `UPDATE lucky_draws SET status = 'spinning', "updatedAt" = now() WHERE id = $1`,

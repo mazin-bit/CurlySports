@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import AdSlot from "@/components/AdSlot";
 import styles from "./dashboard.module.css";
-import { Zap, Newspaper, Trophy, ArrowRightLeft, CircleDot, ChevronRight, Radio, Gift, Check, Clock, Ticket, CheckCircle, AlertCircle, X, Loader2 } from "lucide-react";
+import { Zap, Newspaper, Trophy, ArrowRightLeft, CircleDot, ChevronRight, Radio, Gift, Check, Clock, Ticket, CheckCircle, AlertCircle, X, Loader2, Sparkles, Volume2, VolumeX } from "lucide-react";
 import { useScoresStream } from "@/hooks/useScoresStream";
 import { useNews } from "@/hooks/useNews";
 import { useStandings, useSingleStandings } from "@/hooks/useStandings";
@@ -858,6 +858,140 @@ function WelcomeRedeemPopup() {
   );
 }
 
+/* ── Dashboard Lucky Draw Countdown ──────────────────────── */
+function DashboardLuckyDraw() {
+  const [upcoming, setUpcoming] = useState<{ title: string; prizeName: string; prizeValue?: string; scheduledAt: string } | null>(null);
+  const [countdown, setCountdown] = useState("");
+
+  useEffect(() => {
+    let mounted = true;
+    async function fetchData() {
+      try {
+        const res = await fetch("/api/lucky-draw");
+        if (res.ok && mounted) {
+          const data = await res.json();
+          setUpcoming(data.upcoming || null);
+        }
+      } catch { /* ignore */ }
+    }
+    fetchData();
+    const iv = setInterval(fetchData, 30000);
+    return () => { mounted = false; clearInterval(iv); };
+  }, []);
+
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const [muted, setMuted] = useState(() => {
+    if (typeof window !== "undefined") return localStorage.getItem("luckyDrawMuted") === "1";
+    return false;
+  });
+  const toggleMute = useCallback(() => {
+    setMuted((prev: boolean) => {
+      const next = !prev;
+      localStorage.setItem("luckyDrawMuted", next ? "1" : "0");
+      return next;
+    });
+  }, []);
+  const playTick = useCallback(() => {
+    if (muted) return;
+    try {
+      if (!audioCtxRef.current) audioCtxRef.current = new AudioContext();
+      const ctx = audioCtxRef.current;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.frequency.value = 1800;
+      osc.type = "sine";
+      gain.gain.setValueAtTime(0.08, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.06);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.06);
+    } catch { /* ignore */ }
+  }, [muted]);
+
+  useEffect(() => {
+    if (!upcoming) return;
+    const target = new Date(upcoming.scheduledAt).getTime();
+    function tick() {
+      const now = Date.now();
+      const diff = target - now;
+      if (diff <= 0) { setCountdown("Starting soon!"); return; }
+      const d = Math.floor(diff / 86400000);
+      const h = Math.floor((diff % 86400000) / 3600000);
+      const m = Math.floor((diff % 3600000) / 60000);
+      const s = Math.floor((diff % 60000) / 1000);
+      const parts: string[] = [];
+      if (d > 0) parts.push(`${d}d`);
+      parts.push(`${h}h`, `${m}m`, `${s}s`);
+      setCountdown(parts.join(" "));
+      playTick();
+    }
+    tick();
+    const iv = setInterval(tick, 1000);
+    return () => clearInterval(iv);
+  }, [upcoming, playTick]);
+
+  if (!upcoming) return null;
+
+  return (
+    <div style={{
+      position: "relative", overflow: "hidden",
+      background: "var(--surface, #fffdf7)",
+      border: "2px solid var(--ink, #0c0a1d)",
+      borderRadius: 14,
+      padding: "16px 20px",
+      textAlign: "center",
+      boxShadow: "3px 3px 0 var(--ink, #0c0a1d)",
+    }}>
+      <div style={{
+        position: "absolute", top: 0, left: 0, right: 0, height: 3,
+        background: "linear-gradient(90deg, var(--accent, #c8ff3d), var(--orange, #ff5b3d), var(--accent, #c8ff3d))",
+        backgroundSize: "200% 100%",
+        animation: "shimmer 2s linear infinite",
+      }} />
+      <style>{`@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }`}</style>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, marginBottom: 6 }}>
+        <Sparkles size={14} style={{ color: "var(--orange, #ff5b3d)" }} />
+        <span style={{ fontFamily: "var(--display)", fontWeight: 800, fontSize: 13, color: "var(--ink)", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+          Lucky Draw
+        </span>
+        <Sparkles size={14} style={{ color: "var(--orange, #ff5b3d)" }} />
+      </div>
+      <div style={{
+        fontFamily: "'Courier New', monospace", fontSize: 10,
+        color: "var(--text-mute)", marginBottom: 6, textTransform: "uppercase",
+        letterSpacing: 1,
+      }}>
+        {upcoming.title} — {upcoming.prizeName}
+        {upcoming.prizeValue ? ` (${upcoming.prizeValue})` : ""}
+      </div>
+      <div style={{
+        fontFamily: "'Courier New', monospace", fontSize: 26, fontWeight: 900,
+        color: "var(--ink)", letterSpacing: 2, padding: "4px 0",
+      }}>
+        {countdown}
+      </div>
+      <div style={{ fontSize: 10, color: "var(--text-mute)", marginTop: 2 }}>
+        More referrals = more chances to win
+      </div>
+      <button
+        onClick={toggleMute}
+        title={muted ? "Unmute countdown" : "Mute countdown"}
+        style={{
+          position: "absolute", top: 10, right: 10,
+          background: "none", border: "none", cursor: "pointer",
+          padding: 4, borderRadius: 6, color: "var(--text-mute)",
+          opacity: 0.6, transition: "opacity 0.2s",
+        }}
+        onMouseEnter={(e) => { e.currentTarget.style.opacity = "1"; }}
+        onMouseLeave={(e) => { e.currentTarget.style.opacity = "0.6"; }}
+      >
+        {muted ? <VolumeX size={14} /> : <Volume2 size={14} />}
+      </button>
+    </div>
+  );
+}
+
 export default function DashboardClient() {
   const { activeSport, activeSportConfig } = useActiveSport();
   const { t, locale } = useLanguage();
@@ -940,6 +1074,9 @@ export default function DashboardClient() {
           </div>
           <Link href="/live-scores" className={styles.viewAll}>{t("common.viewAll")}</Link>
         </div>
+
+        {/* Lucky Draw Countdown */}
+        <DashboardLuckyDraw />
 
         {/* Redeem banner + Leaderboard */}
         <RedeemCodeBox />

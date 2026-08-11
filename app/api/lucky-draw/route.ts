@@ -32,11 +32,94 @@ async function ensureLuckyDrawTable() {
   tableEnsured = true;
 }
 
+/* ── Auto-trigger spin when scheduled time arrives ─── */
+async function autoTriggerDueDraws() {
+  // Find any draw whose scheduledAt has passed but is still "scheduled"
+  const dueDraws: Record<string, unknown>[] = await prisma.$queryRawUnsafe(`
+    SELECT * FROM lucky_draws
+    WHERE status = 'scheduled' AND "scheduledAt" <= now()
+    ORDER BY "scheduledAt" ASC
+    LIMIT 1
+  `);
+
+  if (dueDraws.length === 0) return;
+
+  const draw = dueDraws[0];
+  const drawId = String(draw.id);
+
+  // Fetch eligible participants
+  let participants: { userId: string; username: string; avatar: string | null; totalReferrals: number }[] = [];
+  try {
+    participants = await prisma.$queryRawUnsafe(`
+      SELECT rc."userId",
+             COALESCE(u.username, u.name, 'User') as username,
+             u.avatar,
+             rc."totalReferrals"
+      FROM referral_codes rc
+      LEFT JOIN users u ON u.id = rc."userId"
+      WHERE rc."totalReferrals" >= 1
+        AND (rc."isPromo" IS NOT TRUE)
+    `);
+  } catch {
+    try {
+      participants = await prisma.$queryRawUnsafe(`
+        SELECT rc."userId",
+               COALESCE(u.username, u.name, 'User') as username,
+               u.avatar,
+               rc."totalReferrals"
+        FROM referral_codes rc
+        LEFT JOIN users u ON u.id = rc."userId"
+        WHERE rc."totalReferrals" >= 1
+      `);
+    } catch { /* no participants */ }
+  }
+
+  if (participants.length === 0) return;
+
+  // Weighted random selection
+  const totalTickets = participants.reduce((sum, p) => sum + Number(p.totalReferrals), 0);
+  let randomTicket = Math.floor(Math.random() * totalTickets);
+  let winner = participants[0];
+  for (const p of participants) {
+    randomTicket -= Number(p.totalReferrals);
+    if (randomTicket < 0) { winner = p; break; }
+  }
+
+  // Set status to "spinning" and save winner
+  await prisma.$executeRawUnsafe(
+    `UPDATE lucky_draws
+     SET status = 'spinning',
+         "winnerId" = $1, "winnerName" = $2, "winnerReferrals" = $3, "winnerAvatar" = $4,
+         "updatedAt" = now()
+     WHERE id = $5 AND status = 'scheduled'`,
+    winner.userId,
+    winner.username,
+    Number(winner.totalReferrals),
+    winner.avatar || null,
+    drawId
+  );
+
+  // Auto-complete after 15 seconds (animation + display time)
+  setTimeout(async () => {
+    try {
+      await prisma.$executeRawUnsafe(
+        `UPDATE lucky_draws
+         SET status = 'completed', "drawnAt" = now(), "updatedAt" = now()
+         WHERE id = $1 AND status = 'spinning'`,
+        drawId
+      );
+    } catch { /* ignore */ }
+  }, 15000);
+}
+
 export async function GET() {
   try {
     await ensureLuckyDrawTable();
 
-    // Check for a currently spinning draw first
+    // Auto-trigger any due draws before returning data
+    await autoTriggerDueDraws();
+
+    // Check for a currently spinning draw
     const spinning: Record<string, unknown>[] = await prisma.$queryRawUnsafe(`
       SELECT * FROM lucky_draws
       WHERE status = 'spinning'
@@ -46,7 +129,6 @@ export async function GET() {
 
     let spinData = null;
     if (spinning.length > 0) {
-      // Get winner info
       const draw = spinning[0];
       spinData = {
         id: draw.id,
@@ -62,7 +144,7 @@ export async function GET() {
         participants: [] as { userId: string; username: string; avatar: string | null; referrals: number }[],
       };
 
-      // Fetch participants using same query as admin spin
+      // Fetch participants
       try {
         const rows: Record<string, unknown>[] = await prisma.$queryRawUnsafe(`
           SELECT rc."userId",
@@ -82,7 +164,6 @@ export async function GET() {
         }));
       } catch {
         try {
-          // Fallback without isPromo
           const rows: Record<string, unknown>[] = await prisma.$queryRawUnsafe(`
             SELECT rc."userId",
                    COALESCE(u.username, u.name, 'User') as username,

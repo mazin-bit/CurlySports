@@ -3948,6 +3948,36 @@ function SlotMachineSpinner({
   );
 }
 
+function DrawCountdown({ scheduledAt, onReady }: { scheduledAt: string; onReady: () => void }) {
+  const [timeLeft, setTimeLeft] = useState("");
+  useEffect(() => {
+    function update() {
+      const diff = new Date(scheduledAt).getTime() - Date.now();
+      if (diff <= 0) { onReady(); return; }
+      const d = Math.floor(diff / 86400000);
+      const h = Math.floor((diff % 86400000) / 3600000);
+      const m = Math.floor((diff % 3600000) / 60000);
+      const s = Math.floor((diff % 60000) / 1000);
+      setTimeLeft(d > 0 ? `${d}d ${h}h ${m}m ${s}s` : h > 0 ? `${h}h ${m}m ${s}s` : `${m}m ${s}s`);
+    }
+    update();
+    const iv = setInterval(update, 1000);
+    return () => clearInterval(iv);
+  }, [scheduledAt, onReady]);
+
+  return (
+    <div style={{
+      fontSize: 11, fontFamily: "var(--a-mono)", color: "var(--a-ink-dim)",
+      padding: "5px 12px", borderRadius: 6,
+      background: "rgba(93,217,255,0.08)", border: "1px solid rgba(93,217,255,0.2)",
+      whiteSpace: "nowrap",
+    }}>
+      <Clock size={10} style={{ display: "inline", verticalAlign: "-1px", marginRight: 4 }} />
+      Draw in {timeLeft}
+    </div>
+  );
+}
+
 function LuckyDrawTab({ adminToken }: { adminToken: string }) {
   const [draws, setDraws] = useState<LuckyDraw[]>([]);
   const [loading, setLoading] = useState(true);
@@ -4015,6 +4045,11 @@ function LuckyDrawTab({ adminToken }: { adminToken: string }) {
   }
 
   async function startSpin(draw: LuckyDraw) {
+    // Only allow spinning at or after scheduled time
+    if (new Date(draw.scheduledAt) > new Date()) {
+      setError("Cannot start draw before the scheduled time.");
+      return;
+    }
     setSpinning(true);
     setSpinDraw(draw);
     setSpinComplete(false);
@@ -4211,13 +4246,17 @@ function LuckyDrawTab({ adminToken }: { adminToken: string }) {
               )}
 
               {/* Actions */}
-              <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+              <div style={{ display: "flex", gap: 6, flexShrink: 0, alignItems: "center" }}>
                 {d.status === "scheduled" && (
                   <>
-                    <button className={styles.btnSave} style={{ padding: "6px 14px", fontSize: 12 }}
-                      onClick={() => startSpin(d)}>
-                      <Dices size={12} style={{ marginRight: 4 }} /> Start Draw
-                    </button>
+                    {new Date(d.scheduledAt) <= new Date() ? (
+                      <button className={styles.btnSave} style={{ padding: "6px 14px", fontSize: 12 }}
+                        onClick={() => startSpin(d)}>
+                        <Dices size={12} style={{ marginRight: 4 }} /> Start Draw
+                      </button>
+                    ) : (
+                      <DrawCountdown scheduledAt={d.scheduledAt} onReady={() => fetchDraws()} />
+                    )}
                     <button className={styles.btnSmall} onClick={() => cancelDraw(d.id)}>Cancel</button>
                   </>
                 )}

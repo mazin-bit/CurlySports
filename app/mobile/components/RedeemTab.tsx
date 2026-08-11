@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Topbar from './ui/Topbar';
 import Icon from './ui/Icon';
 import { useAuth } from './AuthContext';
@@ -93,189 +93,12 @@ const rankMedal = (rank: number): { color: string; bg: string } => {
 
 /* ── Lucky Draw Types + Spinner ─────────────────────────── */
 
-interface DrawParticipant {
-  userId: string;
-  username: string;
-  avatar: string | null;
-  referrals: number;
-}
-
-function MobileSlotMachineSpinner({
-  participants, winner, title, prizeName, onComplete,
-}: {
-  participants: DrawParticipant[];
-  winner: DrawParticipant;
-  title: string;
-  prizeName: string;
-  onComplete: () => void;
-}) {
-  const [phase, setPhase] = React.useState<'spinning' | 'slowing' | 'done'>('spinning');
-  const [offset, setOffset] = React.useState(0);
-  const CARD_H = 70;
-  const VISIBLE = 3;
-
-  const reel = React.useMemo(() => {
-    const shuffled = [...participants].sort(() => Math.random() - 0.5);
-    const list: DrawParticipant[] = [];
-    for (let i = 0; i < 8; i++) list.push(...shuffled.sort(() => Math.random() - 0.5));
-    list.push(participants[0] || winner);
-    list.push(winner);
-    list.push(participants[1] || participants[0] || winner);
-    return list;
-  }, [participants, winner]);
-
-  const winnerIdx = reel.length - 2;
-  const finalOffset = winnerIdx * CARD_H - CARD_H;
-
-  React.useEffect(() => {
-    let raf: number;
-    let start: number | null = null;
-    const TOTAL = 5500;
-
-    function animate(ts: number) {
-      if (!start) start = ts;
-      const elapsed = ts - start;
-      const progress = Math.min(elapsed / TOTAL, 1);
-      const eased = 1 - Math.pow(1 - progress, 3);
-      setOffset(eased * finalOffset);
-      if (progress < 0.6) setPhase('spinning');
-      else if (progress < 1) setPhase('slowing');
-      if (progress < 1) { raf = requestAnimationFrame(animate); }
-      else { setOffset(finalOffset); setPhase('done'); setTimeout(onComplete, 3000); }
-    }
-
-    raf = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(raf);
-  }, [finalOffset, onComplete]);
-
-  return (
-    <div style={{
-      position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.9)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      zIndex: 10000, flexDirection: 'column', gap: 16,
-    }}>
-      <div style={{ fontSize: 22, fontWeight: 800, color: '#fff', textAlign: 'center' }}>
-        <Icon name="sparkles" size={18} style={{ display: 'inline', verticalAlign: '-2px', marginRight: 6, color: '#c8ff3d' }} />
-        {title}
-      </div>
-      <div style={{
-        fontSize: 10, color: 'rgba(255,255,255,0.5)', fontFamily: "'Courier New', monospace",
-        textTransform: 'uppercase', letterSpacing: 1,
-      }}>
-        Prize: {prizeName}
-      </div>
-
-      <div style={{
-        width: '85vw', maxWidth: 280, height: CARD_H * VISIBLE, overflow: 'hidden',
-        borderRadius: 14, border: '2px solid #c8ff3d',
-        background: '#0d1117', position: 'relative',
-        boxShadow: '0 0 40px rgba(200,255,61,0.1)',
-      }}>
-        <div style={{
-          position: 'absolute', top: CARD_H, left: 0, right: 0, height: CARD_H,
-          border: '2px solid #c8ff3d', borderRadius: 8,
-          background: phase === 'done' ? 'rgba(200,255,61,0.12)' : 'rgba(200,255,61,0.04)',
-          zIndex: 2, pointerEvents: 'none',
-          transition: 'background 0.3s',
-          boxShadow: phase === 'done' ? '0 0 30px rgba(200,255,61,0.3)' : 'none',
-        }} />
-
-        <div style={{ transform: `translateY(-${offset}px)`, willChange: 'transform' }}>
-          {reel.map((p, i) => {
-            const isWin = phase === 'done' && i === winnerIdx;
-            return (
-              <div key={`${p.userId}-${i}`} style={{
-                height: CARD_H, display: 'flex', alignItems: 'center',
-                gap: 10, padding: '0 16px',
-                background: isWin ? 'rgba(200,255,61,0.1)' : 'transparent',
-              }}>
-                <div style={{
-                  width: 36, height: 36, borderRadius: '50%',
-                  background: '#1a1f2e', display: 'flex',
-                  alignItems: 'center', justifyContent: 'center',
-                  fontWeight: 700, fontSize: 12, color: '#c8ff3d',
-                  flexShrink: 0, overflow: 'hidden',
-                  border: isWin ? '2px solid #c8ff3d' : '1px solid rgba(255,255,255,0.1)',
-                }}>
-                  {p.avatar ? (
-                    <img src={p.avatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  ) : (
-                    (p.username || '?').slice(0, 2).toUpperCase()
-                  )}
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{
-                    fontWeight: 700, fontSize: 13, color: isWin ? '#c8ff3d' : '#fff',
-                    whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                  }}>
-                    {p.username}
-                  </div>
-                  <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)' }}>
-                    {p.referrals} referral{p.referrals !== 1 ? 's' : ''}
-                  </div>
-                </div>
-                <div style={{
-                  fontSize: 10, fontFamily: "'Courier New', monospace",
-                  color: 'rgba(255,255,255,0.3)', flexShrink: 0,
-                }}>
-                  {p.referrals} ticket{p.referrals !== 1 ? 's' : ''}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      <div style={{ fontFamily: "'Courier New', monospace", fontSize: 13, color: 'rgba(255,255,255,0.5)', textAlign: 'center' }}>
-        {phase === 'spinning' && 'Spinning...'}
-        {phase === 'slowing' && 'Slowing down...'}
-        {phase === 'done' && (
-          <span style={{ color: '#c8ff3d', fontWeight: 700, fontSize: 16 }}>
-            <Icon name="crown" size={16} style={{ display: 'inline', verticalAlign: '-2px', marginRight: 6 }} />
-            {winner.username} wins!
-          </span>
-        )}
-      </div>
-
-      {phase === 'done' && (
-        <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 10001, overflow: 'hidden' }}>
-          {Array.from({ length: 40 }).map((_, i) => (
-            <div key={i} style={{
-              position: 'absolute',
-              left: `${Math.random() * 100}%`,
-              top: `-${Math.random() * 20}%`,
-              width: Math.random() * 6 + 3,
-              height: Math.random() * 10 + 3,
-              background: ['#c8ff3d', '#ff5b3d', '#5dd9ff', '#ff8c42', '#9c27b0', '#22c55e'][i % 6],
-              borderRadius: Math.random() > 0.5 ? '50%' : '2px',
-              animation: `cs-confettiFall ${1.5 + Math.random() * 2}s ease-in forwards`,
-              animationDelay: `${Math.random() * 0.5}s`,
-              opacity: 0.9,
-            }} />
-          ))}
-          <style>{`
-            @keyframes cs-confettiFall {
-              0% { transform: translateY(0) rotate(0deg); opacity: 1; }
-              100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
-            }
-          `}</style>
-        </div>
-      )}
-    </div>
-  );
-}
-
 /* ── Lucky Draw Section ──────────────────────────────────── */
 
 function LuckyDrawSection() {
   const [upcoming, setUpcoming] = useState<{ title: string; prizeName: string; prizeValue?: string; scheduledAt: string } | null>(null);
   const [pastWinners, setPastWinners] = useState<{ id: string; title: string; prizeName: string; winnerName: string; winnerReferrals: number; drawnAt: string }[]>([]);
   const [countdown, setCountdown] = useState('');
-  const [spinData, setSpinData] = useState<{
-    title: string; prizeName: string;
-    winner: DrawParticipant; participants: DrawParticipant[];
-  } | null>(null);
-  const [spinDone, setSpinDone] = useState(false);
 
   const fetchData = useCallback(async () => {
     try {
@@ -284,25 +107,45 @@ function LuckyDrawSection() {
         const data = await res.json();
         if (data.upcoming) setUpcoming(data.upcoming);
         if (data.pastWinners) setPastWinners(data.pastWinners);
-        if (data.spinning && data.spinning.winner && data.spinning.participants?.length > 0 && !spinDone) {
-          setSpinData({
-            title: data.spinning.title,
-            prizeName: data.spinning.prizeName,
-            winner: data.spinning.winner,
-            participants: data.spinning.participants,
-          });
-        } else if (!data.spinning) {
-          setSpinData(null);
-        }
       }
     } catch { /* ignore */ }
-  }, [spinDone]);
+  }, []);
 
   useEffect(() => {
     fetchData();
     const iv = setInterval(fetchData, 5000);
     return () => clearInterval(iv);
   }, [fetchData]);
+
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const [muted, setMuted] = useState(() => {
+    if (typeof window !== 'undefined') return localStorage.getItem('luckyDrawMuted') === '1';
+    return false;
+  });
+  const toggleMute = useCallback(() => {
+    setMuted((prev: boolean) => {
+      const next = !prev;
+      localStorage.setItem('luckyDrawMuted', next ? '1' : '0');
+      return next;
+    });
+  }, []);
+  const playTick = useCallback(() => {
+    if (muted) return;
+    try {
+      if (!audioCtxRef.current) audioCtxRef.current = new AudioContext();
+      const ctx = audioCtxRef.current;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.frequency.value = 1800;
+      osc.type = 'sine';
+      gain.gain.setValueAtTime(0.08, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.06);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.06);
+    } catch { /* ignore */ }
+  }, [muted]);
 
   useEffect(() => {
     if (!upcoming) return;
@@ -319,26 +162,17 @@ function LuckyDrawSection() {
       if (d > 0) parts.push(`${d}d`);
       parts.push(`${h}h`, `${m}m`, `${s}s`);
       setCountdown(parts.join(' '));
+      playTick();
     }
     tick();
     const iv = setInterval(tick, 1000);
     return () => clearInterval(iv);
-  }, [upcoming]);
+  }, [upcoming, playTick]);
 
-  if (!upcoming && pastWinners.length === 0 && !spinData) return null;
+  if (!upcoming && pastWinners.length === 0) return null;
 
   return (
     <>
-      {spinData && !spinDone && (
-        <MobileSlotMachineSpinner
-          participants={spinData.participants}
-          winner={spinData.winner}
-          title={spinData.title}
-          prizeName={spinData.prizeName}
-          onComplete={() => { setSpinDone(true); setSpinData(null); fetchData(); }}
-        />
-      )}
-
       {upcoming && (
         <div style={{
           ...cardStyle, textAlign: 'center', position: 'relative', overflow: 'hidden',
@@ -367,6 +201,16 @@ function LuckyDrawSection() {
           <div style={{ fontSize: 10, color: 'var(--text-mute)', marginTop: 2 }}>
             More referrals = more chances to win
           </div>
+          <button
+            onClick={toggleMute}
+            style={{
+              position: 'absolute', top: 8, right: 8,
+              background: 'none', border: 'none', padding: 4,
+              color: 'var(--text-mute)', opacity: 0.6,
+            }}
+          >
+            <Icon name={muted ? 'volume-x' : 'volume-2'} size={14} />
+          </button>
         </div>
       )}
 

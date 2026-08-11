@@ -7,6 +7,7 @@ import Topbar from "./Topbar";
 import BottomNav from "./BottomNav";
 import MobileMenu from "./MobileMenu";
 import MaintenanceGuard from "./MaintenanceGuard";
+import LuckyDrawOverlay from "./LuckyDrawOverlay";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 interface AppShellProps {
@@ -38,6 +39,7 @@ export default function AppShell({ active, title, titleKey, subtitle, subtitleKe
         </div>
       </div>
       {menuOpen && <MobileMenu active={active} onClose={() => setMenuOpen(false)} />}
+      <LuckyDrawOverlay />
     </MaintenanceGuard>
   );
 }
