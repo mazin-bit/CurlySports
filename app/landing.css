@@ -72,34 +72,34 @@ html:has(.landing-root) {
 }
 /* Floating nav — detached with rounded corners when scrolled */
 .landing-root nav.l-nav.l-nav-floating {
-  top: 14px;
-  left: 24px;
-  right: 24px;
-  border-radius: 22px;
-  background: rgba(246,237,224,0.82);
-  backdrop-filter: blur(24px) saturate(1.4);
-  -webkit-backdrop-filter: blur(24px) saturate(1.4);
-  border: 1.5px solid rgba(200,255,61,0.15);
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(1100px, calc(100% - 120px));
+  right: auto;
+  border-radius: 16px;
+  background: rgba(246,237,224,0.78);
+  backdrop-filter: blur(24px) saturate(1.6);
+  -webkit-backdrop-filter: blur(24px) saturate(1.6);
+  border: 1px solid rgba(12,10,29,0.08);
   box-shadow:
-    0 8px 40px rgba(12,10,29,0.12),
-    0 2px 12px rgba(12,10,29,0.06),
-    inset 0 1px 0 rgba(255,255,255,0.6),
-    0 0 0 1px rgba(200,255,61,0.06);
+    0 8px 32px rgba(12,10,29,0.12),
+    0 2px 8px rgba(12,10,29,0.06);
 }
 .landing-root nav.l-nav.l-nav-floating .l-nav-inner {
   padding: 10px 24px;
 }
 .landing-root .l-nav-inner {
-  max-width: 1280px; margin: 0 auto;
-  padding: 14px 28px;
-  display: flex; align-items: center; gap: 20px;
+  max-width: 1100px; margin: 0 auto;
+  padding: 14px 32px;
+  display: flex; align-items: center; gap: 16px;
 }
 .landing-root .l-logo {
-  display: flex; align-items: center; gap: 10px;
-  font-family: var(--display); font-weight: 800; font-size: 22px; letter-spacing: -0.02em;
+  display: flex; align-items: center; gap: 8px;
+  font-family: var(--display); font-weight: 800; font-size: 20px; letter-spacing: -0.02em;
 }
 .landing-root .l-logo-mark {
-  width: 40px; height: 40px; background: var(--lime); border-radius: 12px;
+  width: 36px; height: 36px; background: var(--lime); border-radius: 10px;
   display: grid; place-items: center;
   transform: rotate(-6deg); transition: transform 0.3s cubic-bezier(.34,1.56,.64,1);
   overflow: hidden; padding: 0; flex-shrink: 0;
@@ -110,25 +110,25 @@ html:has(.landing-root) {
   display: block;
 }
 .landing-root .l-logo:hover .l-logo-mark { transform: rotate(6deg) scale(1.05); }
-.landing-root .l-nav-links { display: flex; gap: 18px; margin-left: 12px; }
-.landing-root .l-nav-links a { font-size: 13.5px; font-weight: 500; color: var(--ink-soft); transition: color 0.25s; position: relative; white-space: nowrap; }
+.landing-root .l-nav-links { display: flex; gap: 14px; margin-left: 12px; }
+.landing-root .l-nav-links a { font-size: 13px; font-weight: 500; color: var(--ink-soft); transition: color 0.25s; position: relative; white-space: nowrap; letter-spacing: 0.01em; }
 .landing-root .l-nav-links a:hover { color: var(--ink); }
 .landing-root .l-nav-links a.active { color: var(--ink); }
 .landing-root .l-nav-links a::after {
-  content: ""; position: absolute; left: 0; bottom: -6px;
-  width: 100%; height: 3px; background: var(--orange); border-radius: 3px;
+  content: ""; position: absolute; left: 0; bottom: -4px;
+  width: 100%; height: 2px; background: var(--orange); border-radius: 2px;
   transform: scaleX(0); transform-origin: left;
   transition: transform 0.35s cubic-bezier(.34,1.56,.64,1);
 }
 .landing-root .l-nav-links a:hover::after { transform: scaleX(1); }
 .landing-root .l-nav-links a.active::after { transform: scaleX(1); }
-.landing-root .l-nav-cta { margin-left: auto; display: flex; gap: 10px; align-items: center; }
+.landing-root .l-nav-cta { margin-left: auto; display: flex; gap: 6px; align-items: center; }
 
 /* ===== BUTTONS ===== */
 .landing-root .l-btn {
-  display: inline-flex; align-items: center; gap: 8px;
-  padding: 12px 20px; border-radius: 999px;
-  font-size: 14px; font-weight: 600; border: 2px solid transparent;
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 16px; border-radius: 999px;
+  font-size: 13px; font-weight: 600; border: 1.5px solid transparent;
   cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; line-height: 1; white-space: nowrap;
 }
 .landing-root .l-btn:hover { transform: translateY(-2px); }
@@ -144,7 +144,7 @@ html:has(.landing-root) {
 
 /* ===== LAYOUT ===== */
 .landing-root .l-section {
-  max-width: 1280px; margin: 0 auto; padding: 96px 32px; position: relative;
+  max-width: 1100px; margin: 0 auto; padding: 96px 32px; position: relative;
 }
 .landing-root .l-section-tag {
   display: inline-flex; align-items: center; gap: 8px;
@@ -1144,7 +1144,7 @@ html:has(.landing-root) {
 .landing-root .l-sport-card:nth-child(8) .l-sport-face.back .back-tag { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.2); }
 
 /* ===== PLATFORM PREVIEW ===== */
-.landing-root .l-preview-wrap { max-width: 1280px; margin: 0 auto; }
+.landing-root .l-preview-wrap { max-width: 1100px; margin: 0 auto; }
 .landing-root .l-preview-section {
   background: var(--ink); color: var(--paper); border-radius: 36px;
   padding: 80px 64px; position: relative; overflow: hidden; margin: 0 32px;
@@ -1206,7 +1206,7 @@ html:has(.landing-root) {
 .landing-root .l-feat-link { margin-top: auto; font-family: var(--mono); font-size: 12px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; display: inline-flex; align-items: center; gap: 6px; }
 
 /* ===== FOUNDER ===== */
-.landing-root .l-founder-wrap { max-width: 1280px; margin: 0 auto; }
+.landing-root .l-founder-wrap { max-width: 1100px; margin: 0 auto; }
 .landing-root .l-founder { background: var(--ink); color: var(--paper); border-radius: 36px; padding: 80px 64px; margin: 0 32px; position: relative; overflow: hidden; }
 .landing-root .l-founder-grid { display: grid; grid-template-columns: 1fr 1.2fr; gap: 60px; align-items: center; }
 .landing-root .l-founder-portrait { aspect-ratio: 0.92; background: var(--lime); border-radius: 28px; border: 3px solid var(--paper); position: relative; overflow: hidden; box-shadow: 14px 14px 0 var(--orange); }
@@ -1242,7 +1242,7 @@ html:has(.landing-root) {
 .landing-root .l-founder-btns { margin-top: 32px; display: flex; gap: 12px; }
 
 /* ===== DEBATE ===== */
-.landing-root .l-debate-wrap { max-width: 1280px; margin: 0 auto; position: relative; }
+.landing-root .l-debate-wrap { max-width: 1100px; margin: 0 auto; position: relative; }
 .landing-root .l-debate { background: var(--cream-2); border-radius: 36px; padding: 80px 64px; margin: 96px 32px; }
 .landing-root .l-debate-grid { display: grid; grid-template-columns: 1fr 1.2fr; gap: 60px; align-items: center; }
 .landing-root .l-debate-btns { display: flex; gap: 12px; margin-top: 24px; }
@@ -1446,7 +1446,7 @@ html:has(.landing-root) {
 
 /* ===== FOOTER ===== */
 .landing-root footer { background: var(--ink); color: var(--paper); padding: 64px 32px 32px; }
-.landing-root .l-foot-wrap { max-width: 1280px; margin: 0 auto; }
+.landing-root .l-foot-wrap { max-width: 1100px; margin: 0 auto; }
 .landing-root .l-foot-grid { display: grid; grid-template-columns: 2fr repeat(4,1fr); gap: 40px; margin-bottom: 56px; }
 .landing-root .l-foot-brand .l-logo-mark { background: var(--lime); }
 .landing-root .l-foot-tag { font-size: 14px; color: rgba(255,253,247,0.5); margin-top: 16px; max-width: 280px; line-height: 1.5; }
@@ -1464,7 +1464,7 @@ html:has(.landing-root) {
   background: var(--cream-2);
 }
 .landing-root .l-sponsors-inner {
-  max-width: 1280px;
+  max-width: 1100px;
   margin: 0 auto;
   padding: 20px 32px;
   display: flex;
