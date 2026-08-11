@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import {
   LayoutDashboard, Flag, Dumbbell, Wrench, Bell, Menu, X,
@@ -10,7 +10,7 @@ import {
   Star, MessageCircle, BarChart3, Ban, Megaphone, ImagePlus,
   Building2, MapPin, Smartphone, Monitor, TrendingUp, Calendar,
   Send, Target, DollarSign, Award, AlertOctagon, Upload, Pin,
-  Trophy, Gift, Crown, Medal, Download,
+  Trophy, Gift, Crown, Medal, Download, Dices,
 } from "lucide-react";
 import styles from "./admin.module.css";
 import { DEFAULT_FLAGS, AdminFlags } from "@/lib/featureFlags";
@@ -3726,6 +3726,585 @@ function RedeemCodesTab({ adminToken, flags, onSave }: { adminToken: string; fla
   );
 }
 
+/* ── Lucky Draw Tab ───────────────────────────── */
+
+interface LuckyDraw {
+  id: string;
+  title: string;
+  prizeName: string;
+  prizeValue?: string;
+  prizeImage?: string;
+  scheduledAt: string;
+  status: string;
+  winnerId?: string;
+  winnerName?: string;
+  winnerReferrals?: number;
+  winnerAvatar?: string;
+  drawnAt?: string;
+  createdAt: string;
+}
+
+interface DrawParticipant {
+  userId: string;
+  username: string;
+  avatar: string | null;
+  referrals: number;
+}
+
+function SlotMachineSpinner({
+  participants, winner, onComplete,
+}: {
+  participants: DrawParticipant[];
+  winner: DrawParticipant;
+  onComplete: () => void;
+}) {
+  const containerRef = React.useRef<HTMLDivElement>(null);
+  const [phase, setPhase] = React.useState<"spinning" | "slowing" | "done">("spinning");
+  const [offset, setOffset] = React.useState(0);
+  const CARD_H = 80;
+  const VISIBLE = 3;
+
+  // Build a long reel: repeat participants many times, place winner near the end
+  const reel = React.useMemo(() => {
+    const shuffled = [...participants].sort(() => Math.random() - 0.5);
+    const list: DrawParticipant[] = [];
+    for (let i = 0; i < 8; i++) {
+      list.push(...shuffled.sort(() => Math.random() - 0.5));
+    }
+    // Place winner at a known final position
+    list.push(participants[0] || winner); // padding
+    list.push(winner); // this is the final card
+    list.push(participants[1] || participants[0] || winner); // below winner
+    return list;
+  }, [participants, winner]);
+
+  const winnerIdx = reel.length - 2;
+  const finalOffset = winnerIdx * CARD_H - CARD_H; // center the winner card
+
+  React.useEffect(() => {
+    let raf: number;
+    let start: number | null = null;
+    const TOTAL_DURATION = 5500;
+    const totalDistance = finalOffset;
+
+    function animate(ts: number) {
+      if (!start) start = ts;
+      const elapsed = ts - start;
+      const progress = Math.min(elapsed / TOTAL_DURATION, 1);
+
+      // Ease out cubic for deceleration feel
+      const eased = 1 - Math.pow(1 - progress, 3);
+      const currentOffset = eased * totalDistance;
+      setOffset(currentOffset);
+
+      if (progress < 0.6) {
+        setPhase("spinning");
+      } else if (progress < 1) {
+        setPhase("slowing");
+      }
+
+      if (progress < 1) {
+        raf = requestAnimationFrame(animate);
+      } else {
+        setOffset(totalDistance);
+        setPhase("done");
+        setTimeout(onComplete, 500);
+      }
+    }
+
+    raf = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(raf);
+  }, [finalOffset, onComplete]);
+
+  return (
+    <div style={{
+      position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)",
+      display: "flex", alignItems: "center", justifyContent: "center",
+      zIndex: 10000, flexDirection: "column", gap: 24,
+    }}>
+      <div style={{
+        fontFamily: "var(--a-display)", fontSize: 28, fontWeight: 800,
+        color: "var(--a-ink)", textAlign: "center",
+      }}>
+        Lucky Draw
+      </div>
+
+      {/* Slot machine container */}
+      <div style={{
+        width: 320, height: CARD_H * VISIBLE, overflow: "hidden",
+        borderRadius: 16, border: "2px solid var(--a-accent)",
+        background: "var(--a-surface)", position: "relative",
+        boxShadow: "0 0 40px rgba(200,255,61,0.15)",
+      }}>
+        {/* Winner zone indicator */}
+        <div style={{
+          position: "absolute", top: CARD_H, left: 0, right: 0, height: CARD_H,
+          border: "2px solid var(--a-accent)", borderRadius: 8,
+          background: phase === "done" ? "rgba(200,255,61,0.12)" : "rgba(200,255,61,0.05)",
+          zIndex: 2, pointerEvents: "none",
+          transition: "background 0.3s",
+          boxShadow: phase === "done" ? "0 0 30px rgba(200,255,61,0.3)" : "none",
+        }} />
+
+        {/* Scrolling reel */}
+        <div ref={containerRef} style={{
+          transform: `translateY(-${offset}px)`,
+          willChange: "transform",
+        }}>
+          {reel.map((p, i) => {
+            const isWinner = phase === "done" && i === winnerIdx;
+            return (
+              <div key={`${p.userId}-${i}`} style={{
+                height: CARD_H, display: "flex", alignItems: "center",
+                gap: 12, padding: "0 20px",
+                background: isWinner ? "rgba(200,255,61,0.1)" : "transparent",
+                transition: isWinner ? "background 0.5s" : "none",
+              }}>
+                {/* Avatar */}
+                <div style={{
+                  width: 44, height: 44, borderRadius: "50%",
+                  background: "var(--a-surface-2)", display: "flex",
+                  alignItems: "center", justifyContent: "center",
+                  fontWeight: 700, fontSize: 14, color: "var(--a-accent)",
+                  flexShrink: 0, overflow: "hidden",
+                  border: isWinner ? "2px solid var(--a-accent)" : "1px solid var(--a-border)",
+                }}>
+                  {p.avatar ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={p.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  ) : (
+                    (p.username || "?").slice(0, 2).toUpperCase()
+                  )}
+                </div>
+                {/* Name */}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{
+                    fontWeight: 700, fontSize: 14, color: isWinner ? "var(--a-accent)" : "var(--a-ink)",
+                    whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+                  }}>
+                    {p.username}
+                  </div>
+                  <div style={{ fontSize: 11, color: "var(--a-ink-dim)" }}>
+                    {p.referrals} referral{p.referrals !== 1 ? "s" : ""}
+                  </div>
+                </div>
+                {/* Ticket count */}
+                <div style={{
+                  fontSize: 12, fontFamily: "var(--a-mono)", fontWeight: 600,
+                  color: "var(--a-ink-mute)", flexShrink: 0,
+                }}>
+                  {p.referrals} ticket{p.referrals !== 1 ? "s" : ""}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Status text */}
+      <div style={{
+        fontFamily: "var(--a-mono)", fontSize: 13, color: "var(--a-ink-dim)",
+        textAlign: "center",
+      }}>
+        {phase === "spinning" && "Spinning..."}
+        {phase === "slowing" && "Slowing down..."}
+        {phase === "done" && (
+          <span style={{ color: "var(--a-accent)", fontWeight: 700, fontSize: 16 }}>
+            <Crown size={16} style={{ display: "inline", verticalAlign: "-2px", marginRight: 6 }} />
+            {winner.username} wins!
+          </span>
+        )}
+      </div>
+
+      {/* Confetti effect when done */}
+      {phase === "done" && (
+        <div style={{
+          position: "fixed", inset: 0, pointerEvents: "none", zIndex: 10001,
+          overflow: "hidden",
+        }}>
+          {Array.from({ length: 60 }).map((_, i) => (
+            <div key={i} style={{
+              position: "absolute",
+              left: `${Math.random() * 100}%`,
+              top: `-${Math.random() * 20}%`,
+              width: Math.random() * 8 + 4,
+              height: Math.random() * 12 + 4,
+              background: ["#c8ff3d", "#ff5b3d", "#5dd9ff", "#ff8c42", "#9c27b0", "#22c55e"][i % 6],
+              borderRadius: Math.random() > 0.5 ? "50%" : "2px",
+              animation: `confettiFall ${1.5 + Math.random() * 2}s ease-in forwards`,
+              animationDelay: `${Math.random() * 0.5}s`,
+              opacity: 0.9,
+            }} />
+          ))}
+          <style>{`
+            @keyframes confettiFall {
+              0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+              100% { transform: translateY(100vh) rotate(${360 + Math.random() * 720}deg); opacity: 0; }
+            }
+          `}</style>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function LuckyDrawTab({ adminToken }: { adminToken: string }) {
+  const [draws, setDraws] = useState<LuckyDraw[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState({
+    title: "Lucky Draw",
+    prizeName: "",
+    prizeValue: "",
+    scheduledAt: "",
+  });
+  const [creating, setCreating] = useState(false);
+  const [error, setError] = useState("");
+
+  // Spin state
+  const [spinDraw, setSpinDraw] = useState<LuckyDraw | null>(null);
+  const [spinParticipants, setSpinParticipants] = useState<DrawParticipant[]>([]);
+  const [spinWinner, setSpinWinner] = useState<DrawParticipant | null>(null);
+  const [spinning, setSpinning] = useState(false);
+  const [spinComplete, setSpinComplete] = useState(false);
+
+  const headers = { "x-admin-token": adminToken, "content-type": "application/json" };
+
+  const fetchDraws = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/admin/lucky-draw", { headers: { "x-admin-token": adminToken } });
+      if (res.ok) {
+        const data = await res.json();
+        setDraws(data.draws || []);
+      }
+    } catch (e) { console.error(e); }
+    setLoading(false);
+  }, [adminToken]);
+
+  useEffect(() => { fetchDraws(); }, [fetchDraws]);
+
+  async function createDraw(e: React.FormEvent) {
+    e.preventDefault();
+    if (!form.prizeName.trim() || !form.scheduledAt) {
+      setError("Prize name and scheduled date/time are required.");
+      return;
+    }
+    setCreating(true);
+    setError("");
+    try {
+      const res = await fetch("/api/admin/lucky-draw", {
+        method: "POST", headers,
+        body: JSON.stringify({
+          title: form.title || "Lucky Draw",
+          prizeName: form.prizeName,
+          prizeValue: form.prizeValue || undefined,
+          scheduledAt: new Date(form.scheduledAt).toISOString(),
+        }),
+      });
+      if (res.ok) {
+        setShowForm(false);
+        setForm({ title: "Lucky Draw", prizeName: "", prizeValue: "", scheduledAt: "" });
+        fetchDraws();
+      } else {
+        const d = await res.json().catch(() => ({}));
+        setError(d.error || "Failed to create draw.");
+      }
+    } catch { setError("Network error."); }
+    setCreating(false);
+  }
+
+  async function startSpin(draw: LuckyDraw) {
+    setSpinning(true);
+    setSpinDraw(draw);
+    setSpinComplete(false);
+    try {
+      const res = await fetch("/api/admin/lucky-draw", {
+        method: "PATCH", headers,
+        body: JSON.stringify({ id: draw.id, action: "spin" }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setSpinParticipants(data.participants || []);
+        setSpinWinner(data.winner || null);
+      } else {
+        const d = await res.json().catch(() => ({}));
+        setError(d.error || "Failed to spin.");
+        setSpinning(false);
+        setSpinDraw(null);
+      }
+    } catch {
+      setError("Network error.");
+      setSpinning(false);
+      setSpinDraw(null);
+    }
+  }
+
+  async function confirmWinner() {
+    if (!spinDraw || !spinWinner) return;
+    try {
+      await fetch("/api/admin/lucky-draw", {
+        method: "PATCH", headers,
+        body: JSON.stringify({
+          id: spinDraw.id,
+          action: "complete",
+          winnerId: spinWinner.userId,
+          winnerName: spinWinner.username,
+          winnerReferrals: spinWinner.referrals,
+        }),
+      });
+    } catch { /* ignore */ }
+    setSpinning(false);
+    setSpinDraw(null);
+    setSpinWinner(null);
+    setSpinParticipants([]);
+    setSpinComplete(false);
+    fetchDraws();
+  }
+
+  async function cancelDraw(id: string) {
+    await fetch("/api/admin/lucky-draw", {
+      method: "PATCH", headers,
+      body: JSON.stringify({ id, action: "cancel" }),
+    });
+    fetchDraws();
+  }
+
+  async function deleteDraw(id: string) {
+    await fetch("/api/admin/lucky-draw", {
+      method: "DELETE", headers,
+      body: JSON.stringify({ id }),
+    });
+    fetchDraws();
+  }
+
+  const statusBadge = (status: string) => {
+    const colors: Record<string, { bg: string; color: string }> = {
+      scheduled: { bg: "rgba(93,217,255,0.12)", color: "#5dd9ff" },
+      spinning: { bg: "rgba(200,255,61,0.12)", color: "#c8ff3d" },
+      completed: { bg: "rgba(34,197,94,0.12)", color: "#22c55e" },
+      cancelled: { bg: "rgba(239,68,68,0.12)", color: "#ef4444" },
+    };
+    const c = colors[status] || colors.scheduled;
+    return {
+      padding: "2px 10px", borderRadius: 4, fontSize: 11, fontWeight: 600,
+      background: c.bg, color: c.color, textTransform: "uppercase" as const,
+    };
+  };
+
+  return (
+    <div className={styles.tabContent}>
+      <div className={styles.tabHeader}>
+        <h2>Lucky Draw</h2>
+        <span className={styles.tabDesc}>Schedule lucky draws from the referral leaderboard. More referrals = more chances to win.</span>
+      </div>
+
+      {/* Create button */}
+      <div style={{ display: "flex", gap: 10, marginBottom: 20 }}>
+        <button className={styles.btnSave} onClick={() => setShowForm(!showForm)}>
+          {showForm ? "Cancel" : "Schedule New Draw"}
+        </button>
+      </div>
+
+      {/* Create form */}
+      {showForm && (
+        <form onSubmit={createDraw} style={{
+          background: "var(--a-surface)", border: "1px solid var(--a-border)",
+          borderRadius: 10, padding: 20, marginBottom: 24,
+        }}>
+          <div className={styles.formRow}>
+            <div className={styles.formGroup}>
+              <label className={styles.formLabel}>Title</label>
+              <input className={styles.input} placeholder="Lucky Draw"
+                value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} />
+            </div>
+            <div className={styles.formGroup}>
+              <label className={styles.formLabel}>Prize Name *</label>
+              <input className={styles.input} placeholder="e.g. $50 Amazon Gift Card"
+                value={form.prizeName} onChange={e => setForm(f => ({ ...f, prizeName: e.target.value }))} />
+            </div>
+          </div>
+          <div className={styles.formRow}>
+            <div className={styles.formGroup}>
+              <label className={styles.formLabel}>Prize Value</label>
+              <input className={styles.input} placeholder="e.g. $50"
+                value={form.prizeValue} onChange={e => setForm(f => ({ ...f, prizeValue: e.target.value }))} />
+            </div>
+            <div className={styles.formGroup}>
+              <label className={styles.formLabel}>Scheduled Date & Time *</label>
+              <input className={styles.input} type="datetime-local"
+                value={form.scheduledAt} onChange={e => setForm(f => ({ ...f, scheduledAt: e.target.value }))} />
+            </div>
+          </div>
+          {error && <div className={styles.dangerBanner}><AlertTriangle size={14} /> {error}</div>}
+          <button className={styles.btnSave} type="submit" disabled={creating}>
+            {creating ? "Creating..." : "Schedule Draw"}
+          </button>
+        </form>
+      )}
+
+      {/* Draws list */}
+      {loading ? (
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {[1, 2, 3].map(i => (
+            <div key={i} style={{
+              height: 60, background: "var(--a-surface)", borderRadius: 8,
+              animation: "pulse 1.5s infinite",
+            }} />
+          ))}
+        </div>
+      ) : draws.length === 0 ? (
+        <div style={{
+          textAlign: "center", padding: 40, color: "var(--a-ink-dim)",
+          background: "var(--a-surface)", borderRadius: 10,
+        }}>
+          <Dices size={32} style={{ marginBottom: 8, opacity: 0.4 }} />
+          <div>No lucky draws scheduled yet.</div>
+        </div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {draws.map(d => (
+            <div key={d.id} style={{
+              background: "var(--a-surface)", border: "1px solid var(--a-border)",
+              borderRadius: 10, padding: "14px 18px", display: "flex",
+              alignItems: "center", gap: 16, flexWrap: "wrap",
+            }}>
+              {/* Info */}
+              <div style={{ flex: 2, minWidth: 140 }}>
+                <div style={{ fontWeight: 700, fontSize: 14, color: "var(--a-ink)" }}>{d.title}</div>
+                <div style={{ fontSize: 12, color: "var(--a-ink-dim)", marginTop: 2 }}>
+                  <Gift size={11} style={{ display: "inline", verticalAlign: "-1px", marginRight: 4 }} />
+                  {d.prizeName}{d.prizeValue ? ` (${d.prizeValue})` : ""}
+                </div>
+              </div>
+
+              {/* Scheduled time */}
+              <div style={{ flex: 1, minWidth: 120 }}>
+                <div style={{ fontSize: 11, color: "var(--a-ink-mute)", marginBottom: 2 }}>
+                  <Calendar size={10} style={{ display: "inline", verticalAlign: "-1px", marginRight: 4 }} />
+                  Scheduled
+                </div>
+                <div style={{ fontSize: 12, color: "var(--a-ink-dim)", fontFamily: "var(--a-mono)" }}>
+                  {new Date(d.scheduledAt).toLocaleString()}
+                </div>
+              </div>
+
+              {/* Status */}
+              <div style={{ flex: 0 }}>
+                <span style={statusBadge(d.status)}>{d.status}</span>
+              </div>
+
+              {/* Winner */}
+              {d.status === "completed" && d.winnerName && (
+                <div style={{ flex: 1, minWidth: 120 }}>
+                  <div style={{ fontSize: 11, color: "var(--a-ink-mute)", marginBottom: 2 }}>
+                    <Crown size={10} style={{ display: "inline", verticalAlign: "-1px", marginRight: 4 }} />
+                    Winner
+                  </div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: "var(--a-accent)" }}>
+                    {d.winnerName}
+                    <span style={{ fontWeight: 400, color: "var(--a-ink-dim)", marginLeft: 6, fontSize: 11 }}>
+                      ({d.winnerReferrals} referrals)
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* Actions */}
+              <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+                {d.status === "scheduled" && (
+                  <>
+                    <button className={styles.btnSave} style={{ padding: "6px 14px", fontSize: 12 }}
+                      onClick={() => startSpin(d)}>
+                      <Dices size={12} style={{ marginRight: 4 }} /> Start Draw
+                    </button>
+                    <button className={styles.btnSmall} onClick={() => cancelDraw(d.id)}>Cancel</button>
+                  </>
+                )}
+                {(d.status === "cancelled" || d.status === "completed") && (
+                  <button className={styles.btnDanger} style={{ padding: "4px 10px" }}
+                    onClick={() => deleteDraw(d.id)}>
+                    <Trash2 size={12} />
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Slot Machine Overlay */}
+      {spinning && spinWinner && spinParticipants.length > 0 && (
+        <SlotMachineSpinner
+          participants={spinParticipants}
+          winner={spinWinner}
+          onComplete={() => setSpinComplete(true)}
+        />
+      )}
+
+      {/* Confirm Winner Overlay */}
+      {spinComplete && spinWinner && (
+        <div style={{
+          position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          zIndex: 10002, flexDirection: "column", gap: 20,
+        }}>
+          <div style={{
+            background: "var(--a-surface)", border: "2px solid var(--a-accent)",
+            borderRadius: 16, padding: 32, textAlign: "center", maxWidth: 380,
+            boxShadow: "0 0 60px rgba(200,255,61,0.2)",
+          }}>
+            <Crown size={40} style={{ color: "var(--a-accent)", marginBottom: 12 }} />
+            <div style={{ fontFamily: "var(--a-display)", fontSize: 22, fontWeight: 800, marginBottom: 4 }}>
+              Winner!
+            </div>
+            <div style={{
+              width: 64, height: 64, borderRadius: "50%", margin: "12px auto",
+              background: "var(--a-surface-2)", display: "flex",
+              alignItems: "center", justifyContent: "center",
+              border: "2px solid var(--a-accent)", overflow: "hidden",
+              fontSize: 22, fontWeight: 700, color: "var(--a-accent)",
+            }}>
+              {spinWinner.avatar ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={spinWinner.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              ) : (
+                (spinWinner.username || "?").slice(0, 2).toUpperCase()
+              )}
+            </div>
+            <div style={{ fontSize: 18, fontWeight: 700, color: "var(--a-accent)", marginBottom: 4 }}>
+              {spinWinner.username}
+            </div>
+            <div style={{ fontSize: 13, color: "var(--a-ink-dim)", marginBottom: 4 }}>
+              {spinWinner.referrals} referral{spinWinner.referrals !== 1 ? "s" : ""}
+            </div>
+            {spinDraw && (
+              <div style={{ fontSize: 12, color: "var(--a-ink-mute)", marginBottom: 20 }}>
+                Prize: {spinDraw.prizeName}{spinDraw.prizeValue ? ` (${spinDraw.prizeValue})` : ""}
+              </div>
+            )}
+            <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
+              <button className={styles.btnSave} onClick={confirmWinner}>
+                Confirm Winner
+              </button>
+              <button className={styles.btnGhost} onClick={() => {
+                setSpinning(false);
+                setSpinDraw(null);
+                setSpinWinner(null);
+                setSpinParticipants([]);
+                setSpinComplete(false);
+                fetchDraws();
+              }}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ── Nav items (grouped into sections) ────────── */
 const NAV_SECTIONS = [
   {
@@ -3750,6 +4329,7 @@ const NAV_SECTIONS = [
       { key: "notifications", label: "Notifications", icon: Megaphone },
       { key: "challenges",    label: "Challenges",    icon: Trophy },
       { key: "redeem-codes",   label: "Redeem Codes",  icon: Gift },
+      { key: "lucky-draw",     label: "Lucky Draw",    icon: Dices },
       { key: "ads",            label: "Ads",           icon: DollarSign },
       { key: "sponsors",       label: "Sponsors",      icon: Building2 },
     ],
@@ -3915,6 +4495,7 @@ export default function AdminPage() {
           {tab === "debates"        && <DebatesTab adminToken={token()} />}
           {tab === "challenges"    && <ChallengesTab adminToken={token()} />}
           {tab === "redeem-codes"  && <RedeemCodesTab adminToken={token()} flags={flags} onSave={saveFlags} />}
+          {tab === "lucky-draw"    && <LuckyDrawTab adminToken={token()} />}
           {tab === "flags"          && <FlagsTab flags={flags} onSave={saveFlags} />}
           {tab === "sports"         && <SportsTab flags={flags} onSave={saveFlags} />}
           {tab === "feedback"       && <FeedbackTab adminToken={token()} />}

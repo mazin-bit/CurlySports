@@ -572,6 +572,133 @@
   }
 }
 
+/* ── Copied state ────────────────────────────────────────── */
+.codeBtnCopied {
+  background: #22c55e !important;
+  border-color: #22c55e !important;
+  color: #fff !important;
+  transform: scale(0.97);
+}
+
+/* ── Share Popup ─────────────────────────────────────────── */
+.shareOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.15s ease;
+}
+.sharePopup {
+  background: var(--surface);
+  border-radius: 16px;
+  width: 90%;
+  max-width: 380px;
+  padding: 24px;
+  animation: scaleIn 0.2s ease;
+}
+.sharePopupHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  font-family: "Bricolage Grotesque", sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.sharePopupClose {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-mute);
+  padding: 4px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.sharePopupClose:hover {
+  background: var(--border);
+}
+.shareOptions {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+.shareOption {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 8px;
+  background: none;
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink);
+  transition: background 0.15s, border-color 0.15s;
+}
+.shareOption:hover {
+  background: var(--bg-card);
+  border-color: var(--ink);
+}
+.shareIconWa {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #25d366;
+  color: #fff;
+}
+.shareIconGmail {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #ea4335;
+  color: #fff;
+}
+.shareIconX {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #000;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 800;
+}
+.shareIconLink {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--ink);
+  color: #fff;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes scaleIn {
+  from { transform: scale(0.85); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
 /* ── Responsive ──────────────────────────────────────────── */
 @media (max-width: 540px) {
   .statsGrid {
