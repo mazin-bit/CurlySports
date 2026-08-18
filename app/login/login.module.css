@@ -1,412 +1,423 @@
-/* Login page — Curly Sports cream/paper theme */
+/* Login page — Split layout: Newspaper left + Form right */
 .layout {
-  display: grid;
-  grid-template-columns: 1.05fr 1fr;
-  height: 100vh;
-  background: #f6ede0;
-  color: #0c0a1d;
+  position: relative;
+  min-height: 100vh;
+  display: flex;
   font-family: var(--body);
+  color: #0c0a1d;
   overflow: hidden;
 }
 
-/* ===== LEFT: Stage ===== */
-.stage {
+/* ── LEFT SIDE: Sports poster hero ── */
+.heroSide {
+  flex: 1;
+  min-width: 0;
+  background: #f6ede0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 50px 40px;
   position: relative;
   overflow: hidden;
-  background: linear-gradient(135deg, #c8ff3d 0%, #ff8c32 25%, #7c3aed 50%, #ff5b3d 75%, #c8ff3d 100%);
-  background-size: 400% 400%;
-  animation: stageGradient 12s ease infinite;
-  border-right: 3px solid rgba(12,10,29,0.15);
-  display: flex; flex-direction: column;
-  justify-content: space-between;
-  height: 100vh;
-}
-@keyframes stageGradient {
-  0% { background-position: 0% 50%; }
-  25% { background-position: 100% 0%; }
-  50% { background-position: 100% 100%; }
-  75% { background-position: 0% 100%; }
-  100% { background-position: 0% 50%; }
 }
 
-/* Subtle noise texture + dark veil for contrast */
-.stageNoise {
+/* Decorative dot grid */
+.heroDots {
   position: absolute; inset: 0;
-  background:
-    url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.06'/%3E%3C/svg%3E"),
-    linear-gradient(to bottom, rgba(12,10,29,0.10) 0%, rgba(12,10,29,0.02) 50%, rgba(12,10,29,0.10) 100%);
-  pointer-events: none; z-index: 3;
-}
-
-.brand {
-  position: relative; z-index: 10;
-  padding: 32px 32px 0;
-  display: flex; align-items: center; gap: 12px;
-  font-family: var(--display); font-weight: 800; font-size: 22px; letter-spacing: -0.02em;
-  color: #fff; text-decoration: none;
-  text-shadow: 0 1px 4px rgba(12,10,29,0.3);
-}
-.brandMark {
-  width: 44px; height: 44px; background: #0c0a1d; border-radius: 12px;
-  display: grid; place-items: center; color: #c8ff3d; font-size: 22px;
-  transform: rotate(-6deg); font-family: var(--display); font-weight: 800;
-  transition: transform 0.3s cubic-bezier(.34,1.56,.64,1);
-  box-shadow: 4px 4px 0 rgba(12,10,29,0.35);
-}
-.brand:hover .brandMark { transform: rotate(6deg) scale(1.1); }
-.dot { color: var(--orange, #ff5b3d); }
-
-/* Interaction guide */
-.guideBar {
-  position: relative; z-index: 10;
-  display: flex; align-items: center; justify-content: center; gap: 16px;
-  padding: 12px 32px 0;
-}
-.guideItem {
-  display: inline-flex; align-items: center; gap: 6px;
-  font-family: var(--body); font-size: 11px; font-weight: 500;
-  color: rgba(255,255,255,0.6);
-  letter-spacing: 0.02em;
-  text-shadow: 0 1px 2px rgba(12,10,29,0.2);
-}
-.guideKbd {
-  display: inline-flex; align-items: center; justify-content: center;
-  padding: 2px 8px; border-radius: 6px;
-  background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.25);
-  font-family: var(--mono, 'JetBrains Mono', monospace);
-  font-size: 10px; font-weight: 600;
-  color: rgba(255,255,255,0.85);
-  line-height: 1.6;
-  backdrop-filter: blur(4px);
-}
-.guideSep {
-  width: 1px; height: 14px;
-  background: rgba(255,255,255,0.25);
-}
-
-/* Center — holographic match card */
-.stageCenter {
-  position: relative; z-index: 5;
-  flex: 1 1 0; min-height: 0;
-  display: flex; align-items: center; justify-content: center;
-  padding: 20px;
-}
-
-/* Drag wrapper */
-.holoWrapper {
-  position: relative;
-  perspective: 800px;
-  user-select: none;
-  -webkit-user-select: none;
-}
-
-/* Inner flip container */
-.holoInner {
-  position: relative;
-  width: 320px;
-  transform-style: preserve-3d;
-  transition: transform 0.15s ease-out;
-}
-
-/* Front face */
-.holoFront {
-  position: relative;
-  background: rgba(12,10,29,0.85);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border: 2px solid #0c0a1d;
-  border-radius: 24px;
-  padding: 28px 24px 20px;
-  box-shadow: 6px 6px 0 rgba(12,10,29,0.25);
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
-}
-.holoInner:hover .holoFront {
-  box-shadow: 8px 8px 0 rgba(12,10,29,0.35), 0 0 60px rgba(200,255,61,0.15);
-}
-
-/* Back face */
-.holoBack {
-  position: absolute; inset: 0;
-  background: rgba(12,10,29,0.85);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border: 2px solid #0c0a1d;
-  border-radius: 24px;
-  padding: 24px;
-  box-shadow: 6px 6px 0 rgba(12,10,29,0.25);
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
-  transform: rotateY(180deg);
-  display: flex; flex-direction: column; justify-content: center; gap: 8px;
-}
-
-.backTitle {
-  font-family: var(--display); font-size: 16px; font-weight: 800;
-  color: #fff; letter-spacing: -0.02em;
-  text-align: center; margin-bottom: 8px;
-  text-transform: uppercase; letter-spacing: 0.08em;
-}
-
-.statRow {
-  display: flex; align-items: center; justify-content: space-between;
-}
-.statVal {
-  font-family: var(--mono, 'JetBrains Mono', monospace);
-  font-size: 13px; font-weight: 700;
-  color: rgba(255,255,255,0.85);
-  min-width: 36px;
-}
-.statVal:last-child { text-align: right; }
-.statLabel {
-  font-family: var(--body); font-size: 11px; font-weight: 500;
-  color: rgba(255,255,255,0.4);
-  text-transform: uppercase; letter-spacing: 0.06em;
-  text-align: center; flex: 1;
-}
-.statBar {
-  height: 3px; border-radius: 2px;
-  background: rgba(255,255,255,0.12);
-  margin-bottom: 4px;
-}
-.statBarFill {
-  height: 100%; border-radius: 2px;
-  transition: width 0.6s ease;
-}
-
-.backFlipHint {
-  font-family: var(--mono, 'JetBrains Mono', monospace);
-  font-size: 9px; font-weight: 600;
-  letter-spacing: 0.1em; text-transform: uppercase;
-  color: rgba(255,255,255,0.2);
-  text-align: center; margin-top: 8px;
-}
-
-/* Glare overlay */
-.holoGlare {
-  position: absolute; inset: 0;
-  border-radius: 24px;
+  background-image: radial-gradient(circle, rgba(12,10,29,0.04) 1.5px, transparent 1.5px);
+  background-size: 24px 24px;
   pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.2s ease;
-  z-index: 10;
+  z-index: 0;
 }
 
-/* LIVE badge */
-.holoLive {
-  display: inline-flex; align-items: center; gap: 6px;
-  font-family: var(--mono, 'JetBrains Mono', monospace);
-  font-size: 10px; font-weight: 700;
-  letter-spacing: 0.12em;
-  color: #ff5b3d;
-  margin-bottom: 6px;
+/* Diagonal accent stripe */
+.heroStripe {
+  position: absolute;
+  top: -20%;
+  right: -10%;
+  width: 200px;
+  height: 160%;
+  background: var(--accent, #c8ff3d);
+  transform: rotate(-12deg);
+  opacity: 0.15;
+  z-index: 0;
+  border-radius: 40px;
 }
-.holoLiveDot {
-  width: 6px; height: 6px; border-radius: 50%;
+.heroStripe2 {
+  position: absolute;
+  bottom: -10%;
+  left: -5%;
+  width: 120px;
+  height: 140%;
   background: #ff5b3d;
-  animation: livePulse 1.5s ease-in-out infinite;
+  transform: rotate(8deg);
+  opacity: 0.06;
+  z-index: 0;
+  border-radius: 30px;
+}
+
+/* Content */
+.heroContent {
+  position: relative;
+  z-index: 2;
+  max-width: 420px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+/* Brand badge at top */
+.heroBrand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 36px;
+  padding: 8px 18px 8px 8px;
+  background: #fffdf7;
+  border: 2px solid #0c0a1d;
+  border-radius: 999px;
+  box-shadow: 3px 3px 0 #0c0a1d;
+}
+.heroBrandLogo {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: contain;
+}
+.heroBrandText {
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 16px;
+  color: #0c0a1d;
+  letter-spacing: -0.02em;
+}
+.heroBrandDot {
+  color: #ff5b3d;
+}
+
+/* ── Mascot PFP ── */
+.mascotPfp {
+  position: relative;
+  width: 180px;
+  height: 180px;
+  margin-top: 8px;
+}
+
+.mascotPfpRing {
+  width: 140px;
+  height: 140px;
+  margin: 20px auto 0;
+  border-radius: 50%;
+  background: var(--accent, #c8ff3d);
+  border: 3px solid #0c0a1d;
+  box-shadow: 5px 5px 0 #0c0a1d;
+  overflow: hidden;
+  animation: pfpBob 3s ease-in-out infinite;
+}
+.mascotPfpImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 10%;
+  transform: scale(1.55);
+  transform-origin: center 35%;
+}
+
+@keyframes pfpBob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+/* Live badge pinned on pfp */
+.mascotLiveBadge {
+  position: absolute;
+  bottom: 18px;
+  right: 8px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: #ff5b3d;
+  color: #fffdf7;
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 2px solid #0c0a1d;
+  box-shadow: 2px 2px 0 #0c0a1d;
+  animation: livePulse 2s ease-in-out infinite;
+  z-index: 4;
+}
+.liveDot {
+  width: 6px;
+  height: 6px;
+  background: #fffdf7;
+  border-radius: 50%;
+  animation: liveBlink 1s ease-in-out infinite;
 }
 @keyframes livePulse {
-  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(255,91,61,0.5); }
-  50% { opacity: 0.5; box-shadow: 0 0 0 4px rgba(255,91,61,0); }
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
 }
-
-/* Mascot logo top-right */
-.holoMascot {
-  position: absolute;
-  top: 14px; right: 14px;
-  width: 52px; height: 52px;
-  object-fit: cover;
-  object-position: top center;
-  background: var(--lime, #c8ff3d);
-  border-radius: 14px;
-  padding: 4px 4px 0 4px;
-  box-shadow: 2px 3px 0 var(--ink, #07090b);
-  border: 2px solid var(--ink, #07090b);
-  z-index: 3;
-}
-
-/* League label */
-.holoLeague {
-  font-family: var(--mono, 'JetBrains Mono', monospace);
-  font-size: 10px; font-weight: 600;
-  letter-spacing: 0.1em; text-transform: uppercase;
-  color: rgba(255,255,255,0.35);
-  margin-bottom: 24px;
-}
-
-/* Match row */
-.holoMatch {
-  display: flex; align-items: center; justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 16px;
-}
-.holoTeam {
-  display: flex; flex-direction: column; align-items: center; gap: 8px;
-  flex: 1;
-}
-.holoTeamIcon {
-  width: 48px; height: 48px; border-radius: 14px;
-  display: grid; place-items: center;
-  color: #fff; font-family: var(--display); font-weight: 800; font-size: 20px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-}
-.holoTeamName {
-  font-family: var(--display); font-size: 14px; font-weight: 700;
-  color: rgba(255,255,255,0.85);
-  letter-spacing: -0.01em;
-}
-.holoScore {
-  display: flex; align-items: center; gap: 4px;
-  font-family: var(--display); font-size: 44px; font-weight: 900;
-  color: #fff;
-  letter-spacing: -0.03em;
-  line-height: 1;
-}
-.holoScoreSep {
-  color: rgba(255,255,255,0.25);
-  font-size: 32px;
-  animation: sepBlink 2s ease-in-out infinite;
-}
-@keyframes sepBlink {
+@keyframes liveBlink {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.3; }
 }
 
-/* Match minute */
-.holoMinute {
-  text-align: center;
-  font-family: var(--mono, 'JetBrains Mono', monospace);
-  font-size: 13px; font-weight: 700;
-  color: var(--accent, #c8ff3d);
+/* Floating sport orbs */
+.sportOrb {
+  position: absolute;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 2px solid #0c0a1d;
+  display: grid;
+  place-items: center;
+  box-shadow: 2px 2px 0 #0c0a1d;
+  z-index: 3;
+}
+.sportOrb1 {
+  top: 12px; left: 2px;
+  background: #ff5b3d;
+  color: #fffdf7;
+  animation: orbFloat1 5s ease-in-out infinite;
+}
+.sportOrb2 {
+  top: 18px; right: 0;
+  background: #7c5cff;
+  color: #fffdf7;
+  animation: orbFloat2 6s ease-in-out infinite;
+}
+.sportOrb3 {
+  bottom: 8px; left: 10px;
+  background: var(--accent, #c8ff3d);
+  color: #0c0a1d;
+  animation: orbFloat3 5.5s ease-in-out infinite;
+}
+
+@keyframes orbFloat1 {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  50% { transform: translate(6px, -10px) rotate(15deg); }
+}
+@keyframes orbFloat2 {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  50% { transform: translate(-8px, 8px) rotate(-12deg); }
+}
+@keyframes orbFloat3 {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  50% { transform: translate(10px, 6px) rotate(10deg); }
+}
+/* ── Tagline ── */
+.heroTagline {
   margin-bottom: 20px;
-  letter-spacing: 0.05em;
 }
-
-/* Scorers */
-.holoScorers {
-  display: flex; justify-content: space-between;
-  border-top: 1px solid rgba(255,255,255,0.08);
-  padding-top: 16px;
+.heroTagSmall {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #ff5b3d;
+  display: block;
+  margin-bottom: 6px;
 }
-.holoScorerSide {
-  display: flex; flex-direction: column; gap: 4px;
-  font-family: var(--body); font-size: 12px;
-  color: rgba(255,255,255,0.45);
-}
-.holoScorerSide:last-child {
-  text-align: right;
-}
-
-/* (holoHint removed — guide bar used instead) */
-
-/* ── Bottom: phrase ticker ── */
-.stageBottom {
-  position: relative; z-index: 5;
-  padding: 0 32px 28px;
-  text-align: center;
-  flex-shrink: 0;
-}
-
-.phraseTicker {
-  display: flex; align-items: center; justify-content: center; gap: 6px;
-  min-height: 32px;
-}
-.phraseQuote {
-  font-family: var(--display); font-size: 28px; font-weight: 900;
-  color: #fff;
+.heroHeadline {
+  font-family: var(--display);
+  font-weight: 900;
+  font-size: 56px;
+  letter-spacing: -0.05em;
   line-height: 1;
-  text-shadow: 0 2px 6px rgba(12,10,29,0.3);
-}
-.phraseText {
-  font-family: var(--display); font-size: 16px; font-weight: 600;
-  font-style: italic;
-  color: rgba(255,255,255,0.85);
-  text-shadow: 0 1px 4px rgba(12,10,29,0.3);
+  color: #0c0a1d;
   margin: 0;
-  animation: phraseIn 0.5s ease-out;
 }
-@keyframes phraseIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.phraseDotsRow {
-  display: flex; justify-content: center; gap: 6px;
-  margin-top: 12px;
-}
-.phraseDot {
-  width: 6px; height: 6px; border-radius: 50%;
-  background: rgba(255,255,255,0.3);
-  transition: all 0.3s ease;
-}
-.phraseDotActive {
-  background: #fff;
-  width: 20px;
-  border-radius: 3px;
+.heroHeadlineAccent {
+  background: var(--accent, #c8ff3d);
+  padding: 0 14px;
+  border-radius: 12px;
+  display: inline-block;
+  transform: rotate(-2deg);
+  border: 3px solid #0c0a1d;
+  box-shadow: 4px 4px 0 #0c0a1d;
 }
 
-.lime { color: var(--accent, #c8ff3d); }
+/* Sport ticker */
+.sportTicker {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.sportTickerItem {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 5px 14px;
+  border-radius: 999px;
+  border: 2px solid rgba(12,10,29,0.15);
+  color: rgba(12,10,29,0.35);
+  background: transparent;
+  transition: all 0.4s cubic-bezier(.34,1.56,.64,1);
+}
+.sportTickerActive {
+  background: #0c0a1d;
+  color: var(--accent, #c8ff3d);
+  border-color: #0c0a1d;
+  box-shadow: 3px 3px 0 #ff5b3d;
+  transform: scale(1.08) rotate(-1deg);
+}
 
-/* ===== RIGHT: Form ===== */
+/* Stats row */
+.heroStats {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 16px 28px;
+  background: #fffdf7;
+  border: 2px solid #0c0a1d;
+  border-radius: 20px;
+  box-shadow: 4px 4px 0 #0c0a1d;
+}
+.heroStat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.heroStatNum {
+  font-family: var(--display);
+  font-weight: 900;
+  font-size: 22px;
+  letter-spacing: -0.03em;
+  color: #0c0a1d;
+}
+.heroStatLabel {
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(12,10,29,0.45);
+}
+.heroStatDivider {
+  width: 1px;
+  height: 28px;
+  background: rgba(12,10,29,0.12);
+}
+
+/* ── RIGHT SIDE: Form ── */
 .formSide {
-  padding: 60px 48px; display: flex; flex-direction: column;
-  justify-content: center; max-width: 560px; margin: 0 auto; width: 100%;
-  background: #f6ede0;
+  flex: 1;
+  min-width: 0;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  background: #fffdf7;
+  border-left: 2px solid rgba(12, 10, 29, 0.08);
+  position: relative;
   overflow-y: auto;
 }
+
+.formCard {
+  width: 100%;
+  max-width: 380px;
+}
+
+/* ── Brand header inside card ── */
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 20px;
+  letter-spacing: -0.02em;
+  color: #0c0a1d;
+  text-decoration: none;
+  margin-bottom: 28px;
+}
+.brandMark {
+  width: 40px; height: 40px;
+  background: var(--accent, #c8ff3d);
+  border-radius: 12px;
+  border: 2px solid #0c0a1d;
+  display: grid; place-items: center;
+  transform: rotate(-6deg);
+  overflow: hidden; flex-shrink: 0;
+  box-shadow: 3px 3px 0 #0c0a1d;
+  transition: transform 0.3s cubic-bezier(.34,1.56,.64,1);
+}
+.brand:hover .brandMark { transform: rotate(6deg) scale(1.1); }
+.brandMark img {
+  width: 100%; height: 100%;
+  object-fit: contain; display: block;
+}
+.dot { color: var(--orange, #ff5b3d); }
+
+/* ── Form tag / heading ── */
 .formTag {
   display: inline-flex; align-items: center; gap: 8px;
   font-family: var(--mono); font-size: 11px; font-weight: 700;
   letter-spacing: 0.08em; text-transform: uppercase;
-  color: var(--orange, #ff5b3d); margin-bottom: 16px;
+  color: var(--orange, #ff5b3d); margin-bottom: 12px;
 }
 .formTag::before { content: ""; width: 24px; height: 2px; background: var(--orange, #ff5b3d); }
 
 .formTitle {
-  font-family: var(--display); font-weight: 800; font-size: clamp(28px, 3.5vw, 48px);
-  letter-spacing: -0.03em; line-height: 1; margin-bottom: 16px; color: #0c0a1d;
-  overflow-wrap: normal; word-break: keep-all;
+  font-family: var(--display); font-weight: 800; font-size: 32px;
+  letter-spacing: -0.03em; line-height: 1.05; margin-bottom: 10px; color: #0c0a1d;
 }
 .formTitle em {
   font-style: italic; background: var(--accent, #c8ff3d); color: #0c0a1d;
-  padding: 0 12px; display: inline-block; border-radius: 12px;
-  transform: rotate(-1deg); margin: 0 -4px;
+  padding: 0 10px; display: inline-block; border-radius: 10px;
+  transform: rotate(-1deg); margin: 0 -3px;
 }
-.formSub { font-size: 17px; color: #2a2540; margin-bottom: 36px; max-width: 480px; line-height: 1.5; }
+.formSub {
+  font-size: 14px; color: #2a2540; margin-bottom: 28px; line-height: 1.5;
+}
 
+/* ── Toggle ── */
 .toggle {
   display: inline-flex;
-  background: #fffdf7;
+  background: rgba(12, 10, 29, 0.04);
   border: 2px solid #0c0a1d;
-  border-radius: 999px; padding: 4px; margin-bottom: 28px;
+  border-radius: 999px; padding: 3px; margin-bottom: 24px;
 }
 .toggle button {
   border: none; background: transparent; font-family: var(--body); font-size: 13px; font-weight: 600;
-  padding: 8px 16px; border-radius: 999px; cursor: pointer; color: #2a2540;
+  padding: 7px 16px; border-radius: 999px; cursor: pointer; color: #2a2540;
   transition: background 0.2s, color 0.2s;
 }
-.toggle button:hover:not(.toggleActive) { background: rgba(12,10,29,0.05); }
+.toggle button:hover:not(.toggleActive) { background: rgba(12,10,29,0.06); }
 .toggleActive { background: #0c0a1d !important; color: #fffdf7 !important; }
 
-.field { margin-bottom: 16px; }
+/* ── Fields ── */
+.field { margin-bottom: 14px; }
 .field label {
   display: block; font-family: var(--mono); font-size: 11px; font-weight: 700;
-  text-transform: uppercase; letter-spacing: 0.06em; color: #2a2540; margin-bottom: 8px;
+  text-transform: uppercase; letter-spacing: 0.06em; color: #2a2540; margin-bottom: 6px;
 }
 .field input {
   width: 100%;
   background: #fffdf7;
-  border: 2px solid #0c0a1d;
+  border: 2px solid rgba(12, 10, 29, 0.12);
   border-radius: 14px;
-  padding: 14px 18px; font-family: var(--body); font-size: 15px; color: #0c0a1d;
+  padding: 13px 16px; font-family: var(--body); font-size: 15px; color: #0c0a1d;
   outline: none;
-  transition: box-shadow 0.15s, transform 0.1s;
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.1s;
 }
-.field input:hover:not(:focus) { background: #fff; }
+.field input:hover:not(:focus) { border-color: rgba(12,10,29,0.25); }
 .field input:focus {
-  box-shadow: 4px 4px 0 var(--orange, #ff5b3d);
-  transform: translate(-2px, -2px);
+  border-color: var(--orange, #ff5b3d);
+  box-shadow: 0 0 0 3px rgba(255,91,61,0.12);
+  transform: translateY(-1px);
 }
 .field input::placeholder { color: rgba(12,10,29,0.3); }
 .fieldRow { display: flex; justify-content: space-between; align-items: center; }
@@ -414,7 +425,6 @@
   background: none; border: none; padding: 0;
   font-family: var(--body); font-size: 12px; color: var(--purple, #7c5cff);
   font-weight: 600; cursor: pointer; text-decoration: none;
-  transition: text-decoration 0.15s;
 }
 .forgot:hover { text-decoration: underline; }
 .passwordWrap { position: relative; }
@@ -435,19 +445,21 @@
 .adminHint strong { color: var(--orange, #ff5b3d); }
 .adminHint code { font-family: var(--mono); background: #fffdf7; padding: 1px 6px; border-radius: 4px; font-size: 12px; }
 
-.checkbox { display: flex; align-items: center; gap: 10px; margin-bottom: 24px; cursor: pointer; }
+/* ── Checkbox ── */
+.checkbox { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; cursor: pointer; }
 .checkbox input[type="checkbox"] { display: none; }
 .checkBox {
-  width: 22px; height: 22px; border: 2px solid #0c0a1d; border-radius: 6px;
+  width: 22px; height: 22px; border: 2px solid rgba(12,10,29,0.2); border-radius: 6px;
   background: #fffdf7; display: grid; place-items: center; flex-shrink: 0;
 }
 .checkbox input[type="checkbox"]:checked + .checkBox { background: var(--accent, #c8ff3d); border-color: #0c0a1d; }
 .checkbox input[type="checkbox"]:checked + .checkBox::after { content: "\2713"; font-weight: 800; color: #0c0a1d; }
 .checkbox span:last-child { font-size: 13px; color: #2a2540; }
 
+/* ── Primary button ── */
 .btnPrimary {
   display: flex; align-items: center; justify-content: center; gap: 8px;
-  width: 100%; padding: 16px 24px; border-radius: 999px;
+  width: 100%; padding: 14px 24px; border-radius: 999px;
   font-family: var(--body); font-size: 15px; font-weight: 700;
   border: 2px solid #0c0a1d; cursor: pointer;
   background: #0c0a1d; color: var(--accent, #c8ff3d);
@@ -460,36 +472,39 @@
 .btnPrimary:active:not(:disabled) { transform: translate(0,0); box-shadow: none; }
 .btnPrimary:disabled { opacity: 0.4; cursor: not-allowed; }
 
+/* ── Divider ── */
 .divider {
   display: flex; align-items: center; gap: 14px;
-  margin: 24px 0; color: #2a2540;
+  margin: 20px 0; color: #2a2540;
   font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
 }
-.divider::before, .divider::after { content: ""; flex: 1; height: 1.5px; background: rgba(12,10,29,0.15); }
+.divider::before, .divider::after { content: ""; flex: 1; height: 1px; background: rgba(12,10,29,0.12); }
 
+/* ── Social buttons ── */
 .socialRow { display: flex; flex-direction: column; gap: 10px; }
 .btnSocial {
   display: flex; align-items: center; justify-content: center; gap: 10px;
   background: #fffdf7;
-  border: 2px solid #0c0a1d;
+  border: 2px solid rgba(12,10,29,0.12);
   border-radius: 999px;
-  padding: 13px 24px; font-family: var(--body); font-size: 14px; font-weight: 600;
+  padding: 12px 24px; font-family: var(--body); font-size: 14px; font-weight: 600;
   color: #0c0a1d; cursor: pointer;
-  transition: transform 0.15s, box-shadow 0.15s;
+  transition: transform 0.15s, box-shadow 0.15s, background 0.15s;
   width: 100%;
 }
 .btnSocial:hover {
+  background: #f6ede0;
   transform: translate(-2px, -2px);
-  box-shadow: 4px 4px 0 #0c0a1d;
+  box-shadow: 4px 4px 0 rgba(12,10,29,0.15);
 }
 .btnSocial:active { transform: translate(0,0); box-shadow: none; }
 
 /* ── Error banner ── */
 .errorBanner {
-  margin-bottom: 16px;
+  margin-bottom: 14px;
   padding: 10px 14px;
   background: rgba(239,68,68,0.1);
-  border: 2px solid rgba(239,68,68,0.3);
+  border: 1.5px solid rgba(239,68,68,0.25);
   border-radius: 10px;
   font-size: 13px;
   font-weight: 600;
@@ -498,10 +513,10 @@
 
 /* ── Email sent box ── */
 .emailSentBox {
-  margin-top: 24px;
-  padding: 20px;
+  margin-top: 20px;
+  padding: 18px;
   background: rgba(200,255,61,0.12);
-  border: 2px solid rgba(12,10,29,0.1);
+  border: 1.5px solid rgba(12,10,29,0.1);
   border-radius: 12px;
   display: flex;
   gap: 14px;
@@ -520,70 +535,83 @@
   margin: 0;
 }
 .inlineLink {
-  background: none;
-  border: none;
-  padding: 0;
-  color: var(--purple, #7c5cff);
-  font-weight: 700;
-  font-size: 13px;
-  text-decoration: underline;
-  cursor: pointer;
+  background: none; border: none; padding: 0;
+  color: var(--purple, #7c5cff); font-weight: 700; font-size: 13px;
+  text-decoration: underline; cursor: pointer;
 }
 .inlineLink:hover { text-decoration: none; }
 
-
-.below { margin-top: 24px; font-size: 13px; color: #2a2540; }
+/* ── Bottom links ── */
+.below { margin-top: 20px; font-size: 13px; color: #2a2540; text-align: center; }
 .below a { color: var(--purple, #7c5cff); font-weight: 700; text-decoration: underline; }
 .below a:hover { text-decoration: none; }
 
-.terms { margin-top: 32px; font-size: 11px; color: rgba(12,10,29,0.5); line-height: 1.5; }
+.terms { margin-top: 24px; font-size: 11px; color: rgba(12,10,29,0.45); line-height: 1.5; text-align: center; }
 .terms a { color: var(--purple, #7c5cff); text-decoration: underline; }
 
-/* Mobile brand header (hidden on desktop) */
-.mobileBrand {
-  display: none;
-  align-items: center; gap: 10px;
-  font-family: var(--display); font-weight: 800; font-size: 20px; letter-spacing: -0.02em;
-  color: #0c0a1d; text-decoration: none; margin-bottom: 28px;
-}
-.mobileBrandMark {
-  width: 40px; height: 40px; background: var(--accent, #c8ff3d); border-radius: 12px;
-  border: 2px solid #0c0a1d; display: grid; place-items: center;
-  transform: rotate(-6deg); overflow: hidden; flex-shrink: 0;
-  box-shadow: 3px 3px 0 #0c0a1d;
-}
-.mobileBrandMark img { width: 100%; height: 100%; object-fit: contain; display: block; }
+/* ── Old stage — hidden ── */
+.stage { display: none; }
 
-@media (max-width: 900px) {
-  .layout { grid-template-columns: 1fr; }
-  .stage { display: none; }
-  .mobileBrand { display: flex; }
-  .formSide {
-    padding: 40px 24px;
-    border-top: 3px solid #a8d930;
-    background: #f6ede0;
+/* ── Noise / orbs — hidden in split mode ── */
+.bgNoise { display: none; }
+.orb { display: none; }
+
+/* ===== Responsive ===== */
+@media (max-width: 960px) {
+  .layout { flex-direction: column; }
+  .heroSide {
+    flex: none;
+    min-height: auto;
+    padding: 16px 20px;
   }
-  .formTitle { font-size: 40px; }
-  .socialRow { grid-template-columns: 1fr; }
+  .heroContent {
+    max-width: 100%;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+  }
+  /* Hide most hero elements on mobile — just show brand + mascot */
+  .heroBrand { margin-bottom: 0; }
+  .heroTagline { display: none; }
+  .sportTicker { display: none; }
+  .heroStats { display: none; }
+  .heroStripe, .heroStripe2, .heroDots { display: none; }
+  .mascotPfp { width: 50px; height: 50px; margin-top: 0; }
+  .mascotPfpRing { width: 44px; height: 44px; margin: 0; border-width: 2px; box-shadow: 2px 2px 0 #0c0a1d; }
+  .sportOrb { display: none; }
+  .mascotLiveBadge { display: none; }
+  .formSide {
+    flex: 1;
+    min-height: auto;
+    border-left: none;
+    border-top: 2px solid rgba(12, 10, 29, 0.08);
+    padding: 28px 24px 32px;
+  }
+  .brand { display: none; }
+  .mobileBrand { display: none; }
 }
-@media (max-width: 640px) {
-  .formTitle { font-size: 32px; }
-  .formSide { padding: 32px 20px; }
-  .socialRow { grid-template-columns: 1fr; }
+
+@media (max-width: 540px) {
+  .heroSide { padding: 14px 16px; }
+  .heroBrand { padding: 6px 14px 6px 6px; box-shadow: 2px 2px 0 #0c0a1d; }
+  .heroBrandLogo { width: 24px; height: 24px; }
+  .heroBrandText { font-size: 14px; }
+  .mascotPfp { width: 44px; height: 44px; }
+  .mascotPfpRing { width: 38px; height: 38px; }
+  .formSide { padding: 24px 16px 28px; }
+  .formTitle { font-size: 26px; }
+  .formSub { font-size: 13px; margin-bottom: 20px; }
 }
+
 @media (max-width: 400px) {
-  .formTitle { font-size: 28px; }
-  .formSide { padding: 24px 16px; }
-  .formSub { font-size: 14px; margin-bottom: 24px; }
+  .heroSide { padding: 12px 14px; }
+  .formCard { padding: 0; }
+  .formTitle { font-size: 24px; }
   .field input { padding: 12px 14px; font-size: 14px; }
-  .btnPrimary { padding: 14px 20px; font-size: 14px; }
+  .btnPrimary { padding: 12px 20px; font-size: 14px; }
   .otpInput { width: 40px; height: 48px; font-size: 20px; }
   .otpGroup { gap: 6px; }
-}
-
-/* Stage responsive (only visible above 900px) */
-@media (min-width: 901px) and (max-width: 1100px) {
-  .stageCenter { padding: 0 16px; }
 }
 
 /* ── OTP verification ── */
@@ -597,7 +625,7 @@
   width: 48px;
   height: 56px;
   background: #fffdf7;
-  border: 2px solid #0c0a1d;
+  border: 2px solid rgba(12,10,29,0.15);
   border-radius: 12px;
   font-family: var(--mono);
   font-size: 24px;
@@ -606,15 +634,14 @@
   color: #0c0a1d;
   outline: none;
   caret-color: var(--orange, #ff5b3d);
-  transition: box-shadow 0.15s, transform 0.1s;
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.1s;
 }
 .otpInput:focus {
-  box-shadow: 4px 4px 0 var(--orange, #ff5b3d);
-  transform: translate(-2px, -2px);
+  border-color: var(--orange, #ff5b3d);
+  box-shadow: 0 0 0 3px rgba(255,91,61,0.15);
+  transform: translateY(-1px);
 }
-.otpInput::placeholder {
-  color: rgba(12,10,29,0.2);
-}
+.otpInput::placeholder { color: rgba(12,10,29,0.2); }
 .otpTimer {
   text-align: center;
   font-family: var(--mono);
@@ -624,9 +651,21 @@
   color: #2a2540;
   margin-bottom: 16px;
 }
-.otpTimer strong {
-  color: var(--orange, #ff5b3d);
+.otpTimer strong { color: var(--orange, #ff5b3d); }
+
+.lime { color: var(--accent, #c8ff3d); }
+
+/* Mobile brand (hidden on desktop — newspaper has branding) */
+.mobileBrand {
+  display: none;
 }
+.mobileBrandMark {
+  width: 40px; height: 40px; background: var(--accent, #c8ff3d); border-radius: 12px;
+  border: 2px solid #0c0a1d; display: grid; place-items: center;
+  transform: rotate(-6deg); overflow: hidden; flex-shrink: 0;
+  box-shadow: 3px 3px 0 #0c0a1d;
+}
+.mobileBrandMark img { width: 100%; height: 100%; object-fit: contain; display: block; }
 
 /* ── RTL overrides ── */
 :global([dir="rtl"]) .passwordWrap input { padding-right: 18px; padding-left: 48px; }

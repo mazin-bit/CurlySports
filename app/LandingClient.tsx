@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Lenis from "lenis";
 import "./landing.css";
-import { Target, MapPin, Zap, Shield, Globe, Trophy, Activity, TrendingUp, MessageSquareMore } from "lucide-react";
+import { Target, MapPin, Zap, Shield, Globe, Trophy, Activity, TrendingUp, MessageSquareMore, ChevronUp } from "lucide-react";
 import PhoneMockup from "@/components/PhoneMockup";
 
 /* ── Sport card data ─────────────────────────────── */
@@ -56,6 +56,7 @@ export default function LandingPage() {
   const rootRef = useRef<HTMLDivElement>(null);
   const [activeSection, setActiveSection] = useState("hero");
   const [navFloating, setNavFloating] = useState(false);
+  const [showScrollTop, setShowScrollTop] = useState(false);
   // Smooth scroll to section (Lenis handles the smooth physics)
   const scrollTo = (e: React.MouseEvent, id: string) => {
     e.preventDefault();
@@ -110,6 +111,7 @@ export default function LandingPage() {
 
       // Floating nav
       setNavFloating(scrollY > 60);
+      setShowScrollTop(scrollY > 400);
 
       // Active section detection
       let current = SECTION_ORDER[0];
@@ -982,6 +984,15 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
+
+      {/* Scroll to top button */}
+      <button
+        className={`l-scroll-top${showScrollTop ? " visible" : ""}`}
+        onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+        aria-label="Scroll to top"
+      >
+        <ChevronUp size={22} strokeWidth={2.5} />
+      </button>
     </div>
   );
 }

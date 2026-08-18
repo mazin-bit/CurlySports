@@ -58,25 +58,23 @@ html:has(.landing-root) {
 
 /* ===== NAV ===== */
 .landing-root nav.l-nav {
-  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  position: fixed; top: 0; left: 50%; transform: translateX(-50%);
+  width: 100%; z-index: 100;
   background: rgba(246,237,224,0.92);
   backdrop-filter: blur(16px);
   border-bottom: 1px solid rgba(12,10,29,0.06);
-  transition: top 0.4s cubic-bezier(.34,1.56,.64,1),
-              left 0.4s cubic-bezier(.34,1.56,.64,1),
-              right 0.4s cubic-bezier(.34,1.56,.64,1),
-              border-radius 0.4s cubic-bezier(.34,1.56,.64,1),
-              background 0.3s ease,
-              box-shadow 0.4s ease,
-              border-color 0.3s ease;
+  transition: top 0.6s cubic-bezier(.25,.1,.25,1),
+              width 0.6s cubic-bezier(.25,.1,.25,1),
+              border-radius 0.6s cubic-bezier(.25,.1,.25,1),
+              background 0.5s cubic-bezier(.25,.1,.25,1),
+              box-shadow 0.6s cubic-bezier(.25,.1,.25,1),
+              border-color 0.5s cubic-bezier(.25,.1,.25,1),
+              backdrop-filter 0.5s cubic-bezier(.25,.1,.25,1);
 }
 /* Floating nav — detached with rounded corners when scrolled */
 .landing-root nav.l-nav.l-nav-floating {
   top: 12px;
-  left: 50%;
-  transform: translateX(-50%);
   width: min(1100px, calc(100% - 120px));
-  right: auto;
   border-radius: 16px;
   background: rgba(246,237,224,0.78);
   backdrop-filter: blur(24px) saturate(1.6);
@@ -2240,4 +2238,38 @@ html:has(.landing-root) {
   .landing-root .l-quote-text { font-size: clamp(18px, 6vw, 30px); }
   .landing-root .l-foot-grid { grid-template-columns: 1fr; }
   .landing-root .l-founder-meta { grid-template-columns: 1fr; gap: 10px; }
+}
+
+/* ── Scroll to top button ──────────────────────── */
+.landing-root .l-scroll-top {
+  position: fixed;
+  bottom: 32px;
+  right: 32px;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: var(--ink);
+  color: var(--lime);
+  border: 2px solid var(--ink);
+  box-shadow: 3px 3px 0 var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(16px);
+  transition: opacity 0.3s, transform 0.3s;
+  z-index: 999;
+}
+.landing-root .l-scroll-top.visible {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+.landing-root .l-scroll-top:hover {
+  background: var(--lime);
+  color: var(--ink);
+  box-shadow: 2px 2px 0 var(--ink);
+  transform: translateY(-2px);
 }

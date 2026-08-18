@@ -758,6 +758,97 @@ function PhoneOtpScreen({ onBack, onVerified }: { onBack: () => void; onVerified
   );
 }
 
+/* ── Hero left-side panel — Sports poster style ──── */
+function HeroSide() {
+  const [activeIdx, setActiveIdx] = useState(0);
+  const sports = ["Football", "Basketball", "Cricket", "Tennis", "F1"];
+
+  useEffect(() => {
+    const iv = setInterval(() => setActiveIdx((i) => (i + 1) % sports.length), 3000);
+    return () => clearInterval(iv);
+  }, [sports.length]);
+
+  return (
+    <div className={styles.heroSide}>
+      {/* Background layers */}
+      <div className={styles.heroDots} />
+      <div className={styles.heroStripe} />
+      <div className={styles.heroStripe2} />
+
+      <div className={styles.heroContent}>
+        {/* Top brand badge */}
+        <div className={styles.heroBrand}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/curly-mark.png" alt="Curly" className={styles.heroBrandLogo} />
+          <span className={styles.heroBrandText}>curly<span className={styles.heroBrandDot}>.</span>sports</span>
+        </div>
+
+        {/* Bold tagline — moved above mascot */}
+        <div className={styles.heroTagline}>
+          <span className={styles.heroTagSmall}>THE HOME OF</span>
+          <h1 className={styles.heroHeadline}>
+            Every<br />
+            <span className={styles.heroHeadlineAccent}>Score.</span>
+          </h1>
+        </div>
+
+        {/* Sport ticker */}
+        <div className={styles.sportTicker}>
+          {sports.map((sport, i) => (
+            <span
+              key={sport}
+              className={`${styles.sportTickerItem} ${i === activeIdx ? styles.sportTickerActive : ""}`}
+            >
+              {sport}
+            </span>
+          ))}
+        </div>
+
+        {/* Mascot PFP — lower, cropped to face */}
+        <div className={styles.mascotPfp}>
+          <div className={styles.mascotPfpRing}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/curly-guy.png" alt="Curly mascot" className={styles.mascotPfpImg} />
+          </div>
+          {/* Live badge on pfp */}
+          <div className={styles.mascotLiveBadge}>
+            <span className={styles.liveDot} />
+            LIVE
+          </div>
+          {/* Floating sport orbs — smaller, tighter around pfp */}
+          <div className={`${styles.sportOrb} ${styles.sportOrb1}`}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg>
+          </div>
+          <div className={`${styles.sportOrb} ${styles.sportOrb2}`}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><path d="M4.93 4.93l4.24 4.24"/><path d="M14.83 9.17l4.24-4.24"/><path d="M14.83 14.83l4.24 4.24"/><path d="M9.17 14.83l-4.24 4.24"/><circle cx="12" cy="12" r="4"/></svg>
+          </div>
+          <div className={`${styles.sportOrb} ${styles.sportOrb3}`}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 2v20"/><path d="M2 12h20"/></svg>
+          </div>
+        </div>
+
+        {/* Stats row */}
+        <div className={styles.heroStats}>
+          <div className={styles.heroStat}>
+            <span className={styles.heroStatNum}>20+</span>
+            <span className={styles.heroStatLabel}>Leagues</span>
+          </div>
+          <div className={styles.heroStatDivider} />
+          <div className={styles.heroStat}>
+            <span className={styles.heroStatNum}>50K+</span>
+            <span className={styles.heroStatLabel}>Fans</span>
+          </div>
+          <div className={styles.heroStatDivider} />
+          <div className={styles.heroStat}>
+            <span className={styles.heroStatNum}>24/7</span>
+            <span className={styles.heroStatLabel}>Live</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function LoginPage() {
   return (
     <Suspense>
@@ -918,11 +1009,13 @@ function LoginPageContent() {
   if (mode === "phone") {
     return (
       <div className={styles.layout}>
-        <Stage />
+        <HeroSide />
+        <div className={styles.formSide}>
         <PhoneOtpScreen
           onBack={() => switchMode("login")}
           onVerified={() => { router.replace(redirectAfterLogin); router.refresh(); }}
         />
+        </div>
       </div>
     );
   }
@@ -931,7 +1024,8 @@ function LoginPageContent() {
   if (needsVerification) {
     return (
       <div className={styles.layout}>
-        <Stage />
+        <HeroSide />
+        <div className={styles.formSide}>
         <OtpScreen
           email={verificationEmail}
           error={error}
@@ -939,6 +1033,7 @@ function LoginPageContent() {
           onBack={() => { setNeedsVerification(false); setError(null); switchMode("login"); }}
           onVerified={() => { router.replace("/dashboard"); }}
         />
+        </div>
       </div>
     );
   }
@@ -947,10 +1042,11 @@ function LoginPageContent() {
   if (emailSent) {
     return (
       <div className={styles.layout}>
-        <Stage />
+        <HeroSide />
         <div className={styles.formSide}>
-          <a href="/" className={styles.mobileBrand}>
-            <div className={styles.mobileBrandMark}>
+        <div className={styles.formCard}>
+          <a href="/" className={styles.brand}>
+            <div className={styles.brandMark}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/curly-guy.png" alt="Curly" />
             </div>
@@ -982,6 +1078,7 @@ function LoginPageContent() {
             {t("auth.backToLogin")}
           </button>
         </div>
+        </div>
       </div>
     );
   }
@@ -989,11 +1086,13 @@ function LoginPageContent() {
   /* ── Main form ──────────────────────────────────────────────── */
   return (
     <div className={styles.layout}>
-      <Stage />
+      <HeroSide />
 
+      {/* ── RIGHT SIDE: Form ── */}
       <div className={styles.formSide}>
-        <a href="/" className={styles.mobileBrand}>
-          <div className={styles.mobileBrandMark}>
+      <div className={styles.formCard}>
+        <a href="/" className={styles.brand}>
+          <div className={styles.brandMark}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/curly-guy.png" alt="Curly" />
           </div>
@@ -1188,6 +1287,7 @@ function LoginPageContent() {
         <p className={styles.terms}>
           {t("auth.termsText")}
         </p>
+      </div>
       </div>
     </div>
   );
